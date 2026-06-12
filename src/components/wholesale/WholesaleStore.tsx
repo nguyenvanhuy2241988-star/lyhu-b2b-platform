@@ -1465,10 +1465,18 @@ export default function WholesaleStore({
                         <div className="w-full md:w-1/2 bg-gray-50 flex flex-col p-6 border-r border-gray-100 shrink-0 relative h-auto md:h-full overflow-visible md:overflow-y-auto">
                             {/* Product Main Image & Thumbnails */}
                             {(() => {
-                                const allImages = [selectedProduct.image_url, ...(selectedProduct.extra_images || [])].filter(Boolean);
                                 const hasVideo = !!selectedProduct.video_url;
-                                const totalMedia = allImages.length + (hasVideo ? 1 : 0);
-                                const safeIdx = Math.max(0, Math.min(activeImageIdx, totalMedia - 1));
+                                const allImages = [selectedProduct.image_url, ...(selectedProduct.extra_images || [])].filter(Boolean);
+                                
+                                const mediaList: { type: 'video' | 'image', url: string }[] = [];
+                                if (hasVideo) {
+                                    mediaList.push({ type: 'video', url: selectedProduct.video_url! });
+                                }
+                                allImages.forEach(img => mediaList.push({ type: 'image', url: img }));
+
+                                const totalMedia = mediaList.length;
+                                const safeIdx = Math.max(0, Math.min(activeImageIdx, Math.max(0, totalMedia - 1)));
+                                const activeMedia = mediaList[safeIdx];
                                 
                                 const getEmbedUrl = (url: string) => {
                                     if (!url) return '';
@@ -1485,15 +1493,15 @@ export default function WholesaleStore({
                                                 <div className="w-full h-full bg-white flex items-center justify-center">
                                                     <ShoppingCart className="w-24 h-24 text-gray-300" />
                                                 </div>
-                                            ) : safeIdx < allImages.length ? (
+                                            ) : activeMedia?.type === 'image' ? (
                                                 <div className="relative w-full h-full flex items-center justify-center cursor-pointer" onClick={() => { setImageViewerMode('product'); setIsImageViewerOpen(true); }} onContextMenu={e => e.preventDefault()}>
-                                                    <img src={allImages[safeIdx]} alt="" loading="lazy" decoding="async" className="w-full h-full object-contain bg-white" />
+                                                    <img src={activeMedia.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-contain bg-white" />
                                                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
                                                         <span className="text-black/10 font-black text-6xl -rotate-12 tracking-[0.5em] select-none">LYHU</span>
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <iframe src={getEmbedUrl(selectedProduct.video_url!)} className="w-full h-full bg-black" frameBorder="0" allowFullScreen></iframe>
+                                                <iframe src={getEmbedUrl(activeMedia?.url || '')} className="w-full h-full bg-black" frameBorder="0" allowFullScreen></iframe>
                                             )}
                                             
                                             {totalMedia > 1 && (
@@ -1510,25 +1518,21 @@ export default function WholesaleStore({
                                         
                                         {totalMedia > 0 && (
                                             <div className="flex gap-2 w-full overflow-x-auto hide-scrollbar py-1">
-                                                {allImages.map((imgUrl, idx) => (
+                                                {mediaList.map((media, idx) => (
                                                     <div 
                                                         key={idx} 
                                                         onClick={() => setActiveImageIdx(idx)}
-                                                        className={`w-16 h-16 border-2 rounded-sm flex-shrink-0 cursor-pointer transition-all ${idx === safeIdx ? 'border-primary-500' : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100'}`}
+                                                        className={`w-16 h-16 border-2 rounded-sm flex-shrink-0 cursor-pointer transition-all relative ${idx === safeIdx ? 'border-primary-500' : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100'} ${media.type === 'video' ? 'bg-gray-900 flex items-center justify-center' : ''}`}
                                                     >
-                                                        <img src={imgUrl} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                                                        {media.type === 'image' ? (
+                                                            <img src={media.url} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
+                                                                <ChevronRight className="w-3 h-3 text-white ml-0.5" />
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
-                                                {hasVideo && (
-                                                    <div 
-                                                        onClick={() => setActiveImageIdx(allImages.length)}
-                                                        className={`w-16 h-16 border-2 rounded-sm flex-shrink-0 cursor-pointer transition-all relative ${safeIdx === allImages.length ? 'border-primary-500' : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100'} bg-gray-900 flex items-center justify-center`}
-                                                    >
-                                                        <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
-                                                            <ChevronRight className="w-3 h-3 text-white ml-0.5" />
-                                                        </div>
-                                                    </div>
-                                                )}
                                             </div>
                                         )}
                                     </>
