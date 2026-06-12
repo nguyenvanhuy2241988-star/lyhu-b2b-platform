@@ -98,8 +98,12 @@ export default function AnalyticsDashboard() {
                 .limit(50);
 
             if (excludeInternal) {
-                visitorsQuery = visitorsQuery.eq('is_bot', false);
-                // Exclude common internal paths if needed, here we just trust is_bot
+                visitorsQuery = visitorsQuery.eq('is_bot', false)
+                                             .not('pathname', 'like', '/admin%')
+                                             .not('pathname', 'like', '/marketing%')
+                                             .not('pathname', 'like', '/recruitment%')
+                                             .not('pathname', 'like', '/chat%')
+                                             .not('pathname', 'like', '/login%');
             }
 
             const { data: recentVisitors } = await visitorsQuery;
