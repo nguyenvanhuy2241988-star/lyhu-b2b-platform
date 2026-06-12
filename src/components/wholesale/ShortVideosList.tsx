@@ -105,7 +105,7 @@ export default function ShortVideosList() {
                                 muted
                                 loop
                                 playsInline
-                                // Optional: can play on hover
+                                preload="metadata"
                                 onMouseEnter={(e) => e.currentTarget.play()}
                                 onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
                             />
@@ -144,6 +144,7 @@ export default function ShortVideosList() {
                             className="w-full h-full object-cover cursor-pointer"
                             loop
                             playsInline
+                            preload="metadata"
                             muted={isMuted}
                             onClick={togglePlay}
                         />
