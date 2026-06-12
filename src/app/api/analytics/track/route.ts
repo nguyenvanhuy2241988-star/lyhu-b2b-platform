@@ -155,6 +155,16 @@ export async function POST(req: NextRequest) {
         let geo = { city: null as string | null, region: null as string | null, country: null as string | null };
         if (!is_bot && ip) {
             geo = await getGeoFromIP(ip);
+
+            // Post-geo bot detection: Meta/Facebook crawlers often disguise as normal Desktop browsers 
+            // but originate from their datacenters to scrape OpenGraph tags for link previews.
+            const metaDatacenters = ["Prineville", "Fort Worth", "Forest City", "Luleå", "Ashburn", "Boardman", "Altoona", "Los Lunas", "New Albany", "Papillion", "Eagle Mountain", "Gallatin", "DeKalb", "Stanton", "Mesa", "Kuna", "Dublin", "Clonee", "Odense"];
+            if (geo.city && metaDatacenters.includes(geo.city)) {
+                if (cleanReferrer && cleanReferrer.includes("facebook.com")) {
+                    is_bot = true;
+                    bot_name = "Facebook Crawler (Cloaked)";
+                }
+            }
         }
 
         // Insert to DB
