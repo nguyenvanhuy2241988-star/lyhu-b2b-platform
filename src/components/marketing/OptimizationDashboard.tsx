@@ -23,7 +23,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
         setIsAnalyzing(true);
         setHasAnalyzed(false);
         try {
-            const res = await fetch('/api/marketing/auto-optimize', {
+            const res = await fetch(`/api/marketing/auto-optimize?t=${Date.now()}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ accessToken, adAccountId })

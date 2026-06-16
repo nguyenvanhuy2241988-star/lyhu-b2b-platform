@@ -15,7 +15,7 @@ export async function POST(req: Request) {
         const adSets = await fetchAllAdSetsWithInsights(accessToken, adAccountId);
         
         if (!adSets || adSets.length === 0) {
-            return NextResponse.json({ error: 'No ad sets found or unable to fetch insights.' }, { status: 404 });
+            return NextResponse.json({ error: 'No ad sets found or unable to fetch insights.' }, { status: 400 });
         }
 
         const activeAdSets = adSets.filter((a: any) => a.status === 'ACTIVE' || a.status === 'PAUSED').map((a: any) => {
