@@ -73,7 +73,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
     const formatObjective = (obj: string) => {
         const map: any = {
             'OUTCOME_TRAFFIC': 'Lưu lượng truy cập (Traffic)',
-            'OUTCOME_ENGAGEMENT': 'Lượt tương tác (Tin nhắn/Bình luận)',
+            'OUTCOME_ENGAGEMENT': 'Lượt tương tác (Tin nhắn, Video, Post)',
             'OUTCOME_SALES': 'Doanh số (Sales)',
             'OUTCOME_LEADS': 'Khách hàng tiềm năng (Leads)',
             'OUTCOME_AWARENESS': 'Mức độ nhận biết (Awareness)'
@@ -115,9 +115,9 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                 }
 
                 if (cpc > 5000) {
-                    advice += `- ⚠️ Giá Click (CPC) đắt. Nếu Cost per Result (Giá mỗi tin nhắn) cũng đắt, nên tắt ngay nhóm quảng cáo này.\\n`;
+                    advice += `- ⚠️ Giá Click (CPC) đắt. Nếu Cost per Result (Giá mỗi kết quả) cũng đắt, nên tắt ngay nhóm quảng cáo này.\n`;
                 } else if (cpc > 0 && cpc <= 2000) {
-                    advice += `- 🚀 Giá Click (CPC) rất tốt! Đây là Campaign WIN, khuyên bạn TĂNG NGÂN SÁCH (Scale up) khoảng 20% mỗi ngày để thu về nhiều tin nhắn nhất.\\n`;
+                    advice += `- 🚀 Giá Click (CPC) rất tốt! Đây là Campaign WIN, khuyên bạn TĂNG NGÂN SÁCH (Scale up) khoảng 20% mỗi ngày để tối đa hóa hiệu quả.\n`;
                 }
             }
             setAiAnalysis(advice);

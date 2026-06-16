@@ -224,7 +224,7 @@ export default function CampaignsPage() {
     const formatObjective = (obj: string) => {
         const map: any = {
             'OUTCOME_TRAFFIC': 'Lưu lượng truy cập',
-            'OUTCOME_ENGAGEMENT': 'Tương tác (Tin nhắn)',
+            'OUTCOME_ENGAGEMENT': 'Tương tác (Tin nhắn, Video, Post)',
             'OUTCOME_SALES': 'Doanh số',
             'OUTCOME_LEADS': 'Khách hàng tiềm năng',
             'OUTCOME_AWARENESS': 'Nhận biết thương hiệu'
@@ -363,7 +363,7 @@ export default function CampaignsPage() {
                         onChange={(e) => setObjectiveFilter(e.target.value)}
                     >
                         <option value="all">Tất cả mục tiêu FB</option>
-                        <option value="OUTCOME_ENGAGEMENT">Tương tác (Tin nhắn)</option>
+                        <option value="OUTCOME_ENGAGEMENT">Tương tác (Tin nhắn, Video...)</option>
                         <option value="OUTCOME_TRAFFIC">Lưu lượng truy cập</option>
                         <option value="OUTCOME_SALES">Doanh số</option>
                     </select>
