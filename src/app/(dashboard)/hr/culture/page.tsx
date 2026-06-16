@@ -315,6 +315,12 @@ export default function HRCulturePage() {
         ? `https://img.vietqr.io/image/${bankConfig.bankId}-${bankConfig.accountNo}-compact.png?amount=${monthlyPerPerson}&addInfo=${encodeURIComponent(qrMemo)}&accountName=${encodeURIComponent(bankConfig.accountName)}`
         : '';
 
+    const bankNames: Record<string, string> = {
+        'MB': 'MB Bank', 'VCB': 'Vietcombank', 'TCB': 'Techcombank', 'ACB': 'ACB',
+        'BIDV': 'BIDV', 'VTB': 'VietinBank', 'TPB': 'TPBank', 'VPB': 'VPBank',
+        'STB': 'Sacombank', 'MSB': 'MSB', 'SHB': 'SHB', 'EIB': 'Eximbank',
+    };
+
     const MonthNav = ({ month, year, setMonth, setYear }: { month: number; year: number; setMonth: (m: number | ((p: number) => number)) => void; setYear: (y: number | ((p: number) => number)) => void }) => (
         <div className="flex items-center gap-2">
             <button onClick={() => { if (month === 1) { setMonth(12); setYear((y: number) => y - 1); } else setMonth((m: number) => m - 1); }}
