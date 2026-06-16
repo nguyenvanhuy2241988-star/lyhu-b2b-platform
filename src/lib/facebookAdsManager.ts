@@ -115,7 +115,7 @@ export const fetchFbCampaignInsights = async (
 ) => {
     try {
         const baseUrl = `https://graph.facebook.com/v19.0`;
-        const url = `${baseUrl}/${campaignId}/insights?fields=spend,impressions,clicks,cpc,ctr,actions&date_preset=${datePreset}&access_token=${accessToken}`;
+        const url = `${baseUrl}/${campaignId}/insights?fields=spend,impressions,clicks,cpc,ctr,actions,reach,frequency,cost_per_action_type&date_preset=${datePreset}&access_token=${accessToken}`;
         
         const res = await fetch(url);
         if (!res.ok) {
@@ -128,5 +128,26 @@ export const fetchFbCampaignInsights = async (
     } catch (e: any) {
         console.error("fetchFbCampaignInsights Error:", e);
         throw e;
+    }
+};
+
+export const fetchFbCampaignDetails = async (accessToken: string, campaignId: string) => {
+    try {
+        const baseUrl = `https://graph.facebook.com/v19.0`;
+        // Fetch AdSets (for Targeting)
+        const adSetRes = await fetch(`${baseUrl}/${campaignId}/adsets?fields=name,targeting,daily_budget&access_token=${accessToken}`);
+        const adSetData = await adSetRes.json();
+        
+        // Fetch Ads (for Creative info)
+        const adRes = await fetch(`${baseUrl}/${campaignId}/ads?fields=name,creative{image_url,body,title,object_story_spec}&access_token=${accessToken}`);
+        const adData = await adRes.json();
+        
+        return {
+            adSets: adSetData.data || [],
+            ads: adData.data || []
+        };
+    } catch (e: any) {
+        console.error("fetchFbCampaignDetails Error:", e);
+        return { adSets: [], ads: [] };
     }
 };
