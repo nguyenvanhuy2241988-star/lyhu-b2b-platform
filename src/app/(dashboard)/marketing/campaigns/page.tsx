@@ -505,6 +505,7 @@ export default function CampaignsPage() {
                                         </div>
                                     </td>
                                 </tr>
+                                );
                             })}
                             {filteredCampaigns.length === 0 && filteredFbCampaigns.length === 0 && (
                                 <tr>
