@@ -197,6 +197,17 @@ export default function CampaignsPage() {
         return matchesSearch && matchesStatus;
     });
 
+    const filteredFbCampaigns = fbCampaigns.filter(c => {
+        const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
+        let matchesStatus = true;
+        if (statusFilter !== 'all') {
+            if (statusFilter === 'active') matchesStatus = c.status === 'ACTIVE';
+            else if (statusFilter === 'paused') matchesStatus = c.status === 'PAUSED';
+            else matchesStatus = false;
+        }
+        return matchesSearch && matchesStatus;
+    });
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -392,7 +403,7 @@ export default function CampaignsPage() {
                                 </tr>
                             ))}
                             {/* Render FB Campaigns */}
-                            {fbCampaigns.map((fbCamp) => (
+                            {filteredFbCampaigns.map((fbCamp) => (
                                 <tr key={`fb-${fbCamp.id}`} className="hover:bg-blue-50/50 transition-colors bg-blue-50/10">
                                     <td className="px-6 py-4 font-medium text-slate-900">
                                         <div className="flex items-center gap-2">
@@ -431,7 +442,7 @@ export default function CampaignsPage() {
                                     </td>
                                 </tr>
                             ))}
-                            {filteredCampaigns.length === 0 && fbCampaigns.length === 0 && (
+                            {filteredCampaigns.length === 0 && filteredFbCampaigns.length === 0 && (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                                         {searchTerm || statusFilter !== 'all' ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có chiến dịch nào'}
