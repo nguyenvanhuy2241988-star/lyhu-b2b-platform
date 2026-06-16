@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { StatsSkeleton } from "@/components/ui/SkeletonUI";
 import { fetchMarketingStats, fetchCampaignPerformance, CampaignPerformance } from "@/lib/marketingStore";
 import OptimizationDashboard from "@/components/marketing/OptimizationDashboard";
+import AutoCampaignGenerator from "@/components/marketing/AutoCampaignGenerator";
 
 export default function MarketingDashboard() {
     const { user, session, isLoading: authIsLoading } = useAuth();
@@ -19,6 +20,7 @@ export default function MarketingDashboard() {
     const [performance, setPerformance] = useState<CampaignPerformance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isOptimizeOpen, setIsOptimizeOpen] = useState(false);
+    const [isAutoCampOpen, setIsAutoCampOpen] = useState(false);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -99,13 +101,22 @@ export default function MarketingDashboard() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-slate-800">Tổng quan Marketing</h2>
-                <button 
-                    onClick={() => setIsOptimizeOpen(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-medium shadow-sm flex items-center gap-2 transition-all hover:shadow-md"
-                >
-                    <Bot className="w-4 h-4" />
-                    AI Tối ưu tài khoản
-                </button>
+                <div className="flex items-center gap-3">
+                    <button 
+                        onClick={() => setIsAutoCampOpen(true)}
+                        className="px-4 py-2 bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 rounded-xl font-medium shadow-sm flex items-center gap-2 transition-all"
+                    >
+                        <Sparkles className="w-4 h-4" />
+                        AI Tự Lên Camp
+                    </button>
+                    <button 
+                        onClick={() => setIsOptimizeOpen(true)}
+                        className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-medium shadow-sm flex items-center gap-2 transition-all hover:shadow-md"
+                    >
+                        <Bot className="w-4 h-4" />
+                        AI Tối ưu tài khoản
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -295,6 +306,12 @@ export default function MarketingDashboard() {
                 onClose={() => setIsOptimizeOpen(false)}
                 accessToken={session?.access_token || ''}
                 adAccountId={session?.user?.id || ''} // Mocking adAccountId using user id for now
+            />
+
+            <AutoCampaignGenerator
+                isOpen={isAutoCampOpen}
+                onClose={() => setIsAutoCampOpen(false)}
+                onSuccess={() => {}}
             />
         </div>
     );

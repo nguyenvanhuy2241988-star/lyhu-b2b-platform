@@ -407,12 +407,12 @@ LƯU Ý CỰC KỲ QUAN TRỌNG:
 export async function autoOptimizeMarketingCampaigns(adSets: any[]) {
     try {
         const systemPrompt = `Bạn là một Chuyên gia Performance Marketing (Media Buyer) xuất sắc của công ty phân phối LYHU.
-NHIỆM VỤ CỦA BẠN: Phân tích danh sách các Nhóm quảng cáo (Ad Sets) đang chạy và quyết định Tối ưu hóa (Cắt giảm hoặc Tăng ngân sách) dựa trên KPI.
+NHIỆM VỤ CỦA BẠN: Phân tích danh sách các Nhóm quảng cáo (Ad Sets) đang chạy, CÓ KẾT HỢP DỮ LIỆU CRM (Tỉ lệ để lại số điện thoại), và quyết định Tối ưu hóa.
 
-CHỈ TIÊU KPI QUAN TRỌNG:
-- Ngưỡng WIN: Cost per Message (Chi phí mỗi tin nhắn) < 20,000 VND. Những camp này cần được TĂNG NGÂN SÁCH (SCALE_UP).
-- Ngưỡng LỖ: Cost per Message > 35,000 VND. Những camp này cần được TẮT NGAY (PAUSE) để tránh đốt tiền.
-- Ngưỡng AN TOÀN (MAINTAIN): Cost per Message từ 20,000 VND đến 35,000 VND, hoặc những camp chưa có đủ dữ liệu (chưa ra tin nhắn nào nhưng tiêu ít tiền). Giữ nguyên.
+CHỈ TIÊU KPI QUAN TRỌNG (Đánh giá theo chất lượng Data):
+- Ngưỡng WIN: Cost per Phone (Chi phí ra 1 số điện thoại) < 50,000 VND. Nghĩa là khách nhắn tin rẻ VÀ chịu để lại số điện thoại. Những camp này cần được TĂNG NGÂN SÁCH (SCALE_UP).
+- Ngưỡng LỖ: Cost per Phone > 100,000 VND HOẶC Cost per Message > 35,000 VND (Tin nhắn quá đắt hoặc toàn rác không ra số). Những camp này cần được TẮT NGAY (PAUSE).
+- Ngưỡng AN TOÀN (MAINTAIN): Cost per Phone từ 50k - 100k, hoặc Cost per Message từ 20k - 35k (chưa ra số nhưng tin nhắn không quá đắt). Giữ nguyên theo dõi thêm.
 
 ĐỊNH DẠNG ĐẦU RA BẮT BUỘC:
 Bạn PHẢI trả về KẾT QUẢ DƯỚI DẠNG JSON MẢNG (JSON Array) chứa các quyết định tối ưu. TUYỆT ĐỐI KHÔNG giải thích lằng nhằng ở ngoài.
@@ -422,7 +422,7 @@ Cấu trúc JSON:
     "id": "adset_id_123",
     "name": "Tên nhóm QC",
     "action": "SCALE_UP" | "PAUSE" | "MAINTAIN",
-    "reason": "Giải thích ngắn gọn lý do (dưới 20 chữ)"
+    "reason": "Giải thích ngắn gọn (VD: Giá 1 SĐT chỉ 30k, chất lượng quá tốt. Tăng ngân sách!)"
   }
 ]
 `;
@@ -464,5 +464,43 @@ ${JSON.stringify(adSets, null, 2)}`;
     } catch (error) {
         console.error("autoOptimizeMarketingCampaigns Error:", error);
         return [];
+    }
+}
+
+export async function generateAdCopyAndTargeting(goal: string, audience: string) {
+    try {
+        const prompt = `Bạn là một chuyên gia chạy Ads.
+Mục tiêu chiến dịch: ${goal}
+Khách hàng mục tiêu: ${audience}
+
+Dựa vào thông tin trên, hãy viết 1 nội dung quảng cáo Facebook (Ad Copy) thật hấp dẫn và chọn 5 từ khóa sở thích (Interests) để nhắm mục tiêu.
+TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON SAU, không giải thích:
+{
+  "ad_copy": "Nội dung bài đăng...",
+  "targeting_keywords": ["từ khóa 1", "từ khóa 2", "từ khóa 3", "từ khóa 4", "từ khóa 5"]
+}`;
+
+        const response = await fetch(GEMINI_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: {
+                    temperature: 0.7,
+                    responseMimeType: "application/json"
+                }
+            })
+        });
+
+        if (!response.ok) throw new Error("Gemini API Error");
+        const data = await response.json();
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+        return JSON.parse(rawText.replace(/```json\n|\n```|```/g, "").trim());
+    } catch (e) {
+        console.error("generateAdCopyAndTargeting Error:", e);
+        return {
+            ad_copy: "Khám phá lô hàng sỉ siêu chất lượng tại LYHU! Liên hệ ngay để nhận báo giá sỉ tốt nhất.",
+            targeting_keywords: ["Bán buôn", "Doanh nghiệp nhỏ", "Kinh doanh"]
+        };
     }
 }

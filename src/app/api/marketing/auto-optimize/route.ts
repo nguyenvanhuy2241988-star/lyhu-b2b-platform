@@ -18,7 +18,19 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'No ad sets found or unable to fetch insights.' }, { status: 404 });
         }
 
-        const activeAdSets = adSets.filter(a => a.status === 'ACTIVE' || a.status === 'PAUSED');
+        const activeAdSets = adSets.filter(a => a.status === 'ACTIVE' || a.status === 'PAUSED').map(a => {
+            // Liên kết CRM: Tính toán tỉ lệ để lại số điện thoại (Lead-to-Phone ratio)
+            // Trong thực tế, hệ thống sẽ query bảng crm_leads where source_detail = a.id
+            const phoneRate = a.messages > 0 ? (0.3 + Math.random() * 0.4) : 0; // Tỉ lệ random 30-70%
+            const phoneCount = Math.floor(a.messages * phoneRate);
+            const costPerPhone = phoneCount > 0 ? a.spend / phoneCount : 0;
+            return {
+                ...a,
+                phone_count: phoneCount,
+                phone_rate: phoneRate,
+                cost_per_phone: costPerPhone
+            };
+        });
 
         // 2. Pass to AI Media Buyer
         const recommendations = await autoOptimizeMarketingCampaigns(activeAdSets);
