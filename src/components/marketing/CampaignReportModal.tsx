@@ -130,7 +130,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                 spend: insights.spend || 0,
                 results: resultCount,
                 actions: insights.actions || [],
-                costPerAction: insights.cost_per_action_type || [],
+                costPerAction: insights.cost_per_action_type?.filter((a: any) => a.action_type === primaryAction) || [],
                 cpc: insights.cpc || 0,
                 ctr: insights.ctr || 0,
                 reach: insights.reach || 0,

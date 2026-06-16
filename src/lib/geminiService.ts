@@ -382,7 +382,7 @@ LƯU Ý CỰC KỲ QUAN TRỌNG:
                 contents,
                 generationConfig: {
                     temperature: 0.5,
-                    maxOutputTokens: 800,
+                    maxOutputTokens: 2500,
                     topP: 0.9,
                 }
             }),
