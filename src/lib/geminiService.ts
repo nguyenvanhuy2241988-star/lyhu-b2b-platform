@@ -399,3 +399,70 @@ LƯU Ý CỰC KỲ QUAN TRỌNG:
         return 'Không thể kết nối đến máy chủ AI lúc này. Vui lòng thử lại sau.';
     }
 }
+
+/**
+ * AI Media Buyer: Analyzes a list of Ad Sets and decides whether to SCALE, PAUSE, or MAINTAIN based on KPIs.
+ * Target Cost per Message: < 20,000 VND
+ */
+export async function autoOptimizeMarketingCampaigns(adSets: any[]) {
+    try {
+        const systemPrompt = `Bạn là một Chuyên gia Performance Marketing (Media Buyer) xuất sắc của công ty phân phối LYHU.
+NHIỆM VỤ CỦA BẠN: Phân tích danh sách các Nhóm quảng cáo (Ad Sets) đang chạy và quyết định Tối ưu hóa (Cắt giảm hoặc Tăng ngân sách) dựa trên KPI.
+
+CHỈ TIÊU KPI QUAN TRỌNG:
+- Ngưỡng WIN: Cost per Message (Chi phí mỗi tin nhắn) < 20,000 VND. Những camp này cần được TĂNG NGÂN SÁCH (SCALE_UP).
+- Ngưỡng LỖ: Cost per Message > 35,000 VND. Những camp này cần được TẮT NGAY (PAUSE) để tránh đốt tiền.
+- Ngưỡng AN TOÀN (MAINTAIN): Cost per Message từ 20,000 VND đến 35,000 VND, hoặc những camp chưa có đủ dữ liệu (chưa ra tin nhắn nào nhưng tiêu ít tiền). Giữ nguyên.
+
+ĐỊNH DẠNG ĐẦU RA BẮT BUỘC:
+Bạn PHẢI trả về KẾT QUẢ DƯỚI DẠNG JSON MẢNG (JSON Array) chứa các quyết định tối ưu. TUYỆT ĐỐI KHÔNG giải thích lằng nhằng ở ngoài.
+Cấu trúc JSON:
+[
+  {
+    "id": "adset_id_123",
+    "name": "Tên nhóm QC",
+    "action": "SCALE_UP" | "PAUSE" | "MAINTAIN",
+    "reason": "Giải thích ngắn gọn lý do (dưới 20 chữ)"
+  }
+]
+`;
+        const userPrompt = `Dữ liệu các Nhóm Quảng Cáo đang chạy trong 7 ngày qua:
+${JSON.stringify(adSets, null, 2)}`;
+
+        const response = await fetch(GEMINI_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [
+                    { role: "user", parts: [{ text: systemPrompt }] },
+                    { role: "user", parts: [{ text: userPrompt }] }
+                ],
+                generationConfig: {
+                    temperature: 0.1, // Low temp for strictly following rules
+                    maxOutputTokens: 2000,
+                    responseMimeType: "application/json"
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Gemini API Error: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+        
+        try {
+            const jsonStr = rawText.replace(/```json\n|\n```|```/g, "").trim();
+            const recommendations = JSON.parse(jsonStr);
+            return recommendations;
+        } catch (parseError) {
+            console.error("Failed to parse Gemini JSON:", parseError, rawText);
+            return [];
+        }
+    } catch (error) {
+        console.error("autoOptimizeMarketingCampaigns Error:", error);
+        return [];
+    }
+}

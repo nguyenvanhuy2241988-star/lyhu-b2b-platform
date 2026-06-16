@@ -222,3 +222,69 @@ export const updateFbAdSetTargeting = async (accessToken: string, adSetId: strin
         throw e;
     }
 };
+
+export const fetchAllAdSetsWithInsights = async (accessToken: string, adAccountId: string) => {
+    const actId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
+    const baseUrl = `https://graph.facebook.com/v19.0/${actId}`;
+    
+    try {
+        // Fetch ad sets and their insights in one batch
+        const url = `${baseUrl}/adsets?fields=id,name,status,daily_budget,campaign{name,objective},insights.date_preset(last_7d){spend,actions,cost_per_action_type}&access_token=${accessToken}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data.error) throw new Error(data.error.message);
+        
+        const adSets = data.data || [];
+        return adSets.map((adset: any) => {
+            const insights = adset.insights?.data?.[0] || {};
+            const actions = insights.actions || [];
+            const cpaTypes = insights.cost_per_action_type || [];
+            
+            // Look for messaging conversations
+            const msgCpa = cpaTypes.find((a: any) => a.action_type === 'onsite_conversion.messaging_conversation_started_7d')?.value || 
+                           cpaTypes.find((a: any) => a.action_type === 'onsite_conversion.messaging_first_reply')?.value;
+            
+            const msgCount = actions.find((a: any) => a.action_type === 'onsite_conversion.messaging_conversation_started_7d')?.value || 0;
+
+            return {
+                id: adset.id,
+                name: adset.name,
+                status: adset.status,
+                daily_budget: adset.daily_budget,
+                campaign_name: adset.campaign?.name,
+                spend: insights.spend || 0,
+                cost_per_message: msgCpa ? parseFloat(msgCpa) : null,
+                messages: parseInt(msgCount)
+            };
+        });
+    } catch (e) {
+        console.error("fetchAllAdSetsWithInsights Error:", e);
+        return [];
+    }
+};
+
+export const executeFbOptimizationRule = async (accessToken: string, adSetId: string, action: 'PAUSE' | 'SCALE_UP', currentBudget?: string) => {
+    try {
+        const payload: any = {};
+        if (action === 'PAUSE') {
+            payload.status = 'PAUSED';
+        } else if (action === 'SCALE_UP' && currentBudget) {
+            // Increase budget by 20%
+            payload.daily_budget = Math.round(parseInt(currentBudget) * 1.2);
+        }
+
+        const updateRes = await fetch(`https://graph.facebook.com/v19.0/${adSetId}?access_token=${accessToken}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const updateData = await updateRes.json();
+        if (updateData.error) throw new Error(updateData.error.message);
+        return { success: true, new_budget: payload.daily_budget, status: payload.status };
+    } catch (e: any) {
+        console.error("executeFbOptimizationRule Error:", e);
+        return { success: false, error: e.message };
+    }
+};
