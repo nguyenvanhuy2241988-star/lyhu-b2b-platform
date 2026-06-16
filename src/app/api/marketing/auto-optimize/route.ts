@@ -36,8 +36,24 @@ export async function POST(req: Request) {
             };
         });
 
-        // 2. Pass to AI Media Buyer
-        const recommendations = await autoOptimizeMarketingCampaigns(activeAdSets);
+        const validAdSets = activeAdSets.filter((a: any) => a.spend > 0 || a.messages > 0);
+        const zeroAdSets = activeAdSets.filter((a: any) => a.spend === 0 && a.messages === 0);
+
+        // 2. Pass to AI Media Buyer ONLY for ad sets that have data
+        const aiRecommendations = validAdSets.length > 0 
+            ? await autoOptimizeMarketingCampaigns(validAdSets) 
+            : [];
+
+        // 3. Combine AI recommendations with local auto-maintain for zero spend ad sets
+        const recommendations = [
+            ...aiRecommendations,
+            ...zeroAdSets.map((a: any) => ({
+                id: a.id,
+                name: a.name,
+                action: "MAINTAIN",
+                reason: "Chưa đủ dữ liệu (0đ / 0 tin nhắn)."
+            }))
+        ];
 
         return NextResponse.json({ 
             success: true, 
