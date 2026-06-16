@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, TrendingUp, BarChart3, Clock, DollarSign, MousePointerClick, Activity, Bot, Image as ImageIcon, Users, MapPin, Target, PlayCircle, Tag } from "lucide-react";
 import { fetchFbCampaignInsights, fetchFbCampaignDetails } from "@/lib/facebookAdsManager";
 import { toast } from "sonner";
+import ReactMarkdown from 'react-markdown';
 
 interface CampaignReportModalProps {
     campaignId: string;
@@ -87,43 +88,49 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
     const cprObj = insights?.cost_per_action_type?.find((a: any) => a.action_type === 'onsite_conversion.messaging_conversation_started_7d');
     const cpr = cprObj?.value ? formatCurrency(cprObj.value) : (insights?.cpc ? formatCurrency(insights.cpc) : "N/A");
 
-    const handleAiAnalyze = () => {
-        if (!insights) return;
+    const handleAiAnalyze = async () => {
+        if (!insights || !details) return;
         setIsAnalyzing(true);
         
-        setTimeout(() => {
-            const spend = Number(insights.spend || 0);
-            const cpc = Number(insights.cpc || 0);
-            const ctr = Number(insights.ctr || 0);
+        try {
+            const reqData = {
+                name: campaignName,
+                objective: details.campaign?.objective,
+                status: details.campaign?.status,
+                ageMin: details.adsets?.[0]?.targeting?.age_min,
+                ageMax: details.adsets?.[0]?.targeting?.age_max,
+                countries: details.adsets?.[0]?.targeting?.geo_locations?.countries?.join(', '),
+                spend: insights.spend || 0,
+                results: insights.results || 0,
+                cpc: insights.cpc || 0,
+                ctr: insights.ctr || 0,
+                reach: insights.reach || 0,
+                frequency: insights.frequency || 0,
+                adBody: details.ads?.[0]?.creative?.body || "Không rõ"
+            };
 
-            let advice = "💡 Báo Cáo Phân Tích Chuyên Sâu (Deep Analytics):\\n\\n";
-            advice += `👥 Về Đối Tượng: Quảng cáo đang nhắm đến độ tuổi ${ageMin}-${ageMax} tại ${countries}. Tần suất hiển thị (Frequency) là ${Number(frequency).toFixed(2)}. `;
-            if (Number(frequency) > 2.5) {
-                advice += "Tần suất khá cao, tệp khách hàng bắt đầu bị 'nhàm', nên làm mới hình ảnh hoặc nới lỏng target.\\n";
+            const res = await fetch('/api/marketing/analyze-campaign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reqData)
+            });
+
+            if (!res.ok) throw new Error('API request failed');
+
+            const result = await res.json();
+            
+            if (result.error) {
+                toast.error(result.error);
             } else {
-                advice += "Tần suất an toàn, khách hàng mới tiếp cận nội dung khoảng 1-2 lần.\\n";
+                setAiAnalysis(result.analysis);
+                toast.success("Phân tích chuyên sâu hoàn tất!");
             }
-
-            advice += `\\n📊 Về Hiệu Quả: \\n`;
-            if (spend === 0) {
-                advice += "- Chiến dịch chưa cắn tiền. Hãy kiểm tra lại trạng thái chiến dịch hoặc thử tăng giá thầu.\\n";
-            } else {
-                if (ctr < 1) {
-                    advice += `- ⚠️ Tỷ lệ Click (CTR = ${ctr}%) ĐANG RẤT THẤP. Hình ảnh/Nội dung hiện tại ("${adBody.substring(0,20)}...") không đủ sức hút. Khuyến nghị: Thay đổi mẫu quảng cáo gấp.\\n`;
-                } else {
-                    advice += `- ✅ Tỷ lệ Click (CTR = ${ctr}%) tốt. Khách hàng hứng thú với hình ảnh và nội dung này.\\n`;
-                }
-
-                if (cpc > 5000) {
-                    advice += `- ⚠️ Giá Click (CPC) đắt. Nếu Cost per Result (Giá mỗi kết quả) cũng đắt, nên tắt ngay nhóm quảng cáo này.\n`;
-                } else if (cpc > 0 && cpc <= 2000) {
-                    advice += `- 🚀 Giá Click (CPC) rất tốt! Đây là Campaign WIN, khuyên bạn TĂNG NGÂN SÁCH (Scale up) khoảng 20% mỗi ngày để tối đa hóa hiệu quả.\n`;
-                }
-            }
-            setAiAnalysis(advice);
+        } catch (error) {
+            console.error('Lỗi khi gọi AI:', error);
+            toast.error("Lỗi khi kết nối với máy chủ AI. Vui lòng thử lại.");
+        } finally {
             setIsAnalyzing(false);
-            toast.success("Phân tích chuyên sâu hoàn tất!");
-        }, 1500);
+        }
     };
 
     return (
@@ -291,11 +298,9 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                             <div className="p-6 bg-slate-50 min-h-[150px]">
                                 {aiAnalysis ? (
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-indigo-100">
-                                        <div className="space-y-3">
-                                            {aiAnalysis.split('\\n').map((line, idx) => (
-                                                line && <p key={idx} className="text-slate-800 leading-relaxed font-medium">{line}</p>
-                                            ))}
-                                        </div>
+                                        <article className="prose prose-indigo max-w-none text-slate-800 prose-p:leading-relaxed prose-li:my-1 prose-headings:text-indigo-900">
+                                            <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+                                        </article>
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-full py-8 text-slate-400">

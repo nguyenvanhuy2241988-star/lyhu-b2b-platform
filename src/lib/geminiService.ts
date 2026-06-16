@@ -311,3 +311,74 @@ export async function getAIResponse(
         state: 'fallback'
     };
 }
+
+/**
+ * AI Deep Analytics for Facebook Ads Campaigns
+ */
+export async function analyzeMarketingCampaign(data: any): Promise<string> {
+    if (!GEMINI_API_KEY) {
+        console.error('GEMINI_API_KEY not configured');
+        return 'Hệ thống chưa được cấu hình API Key cho AI. Vui lòng liên hệ quản trị viên.';
+    }
+
+    const systemPrompt = `Bạn là một Chuyên gia Performance Marketing (Ads Optimizer) xuất sắc của công ty phân phối LYHU.
+Nhiệm vụ của bạn là phân tích dữ liệu chiến dịch quảng cáo Facebook và đưa ra lời khuyên tối ưu sắc bén.
+
+BỐ CỤC TRẢ LỜI BẮT BUỘC (Sử dụng Markdown):
+1. 🩺 **Chẩn đoán Nhanh**: Tóm tắt tình trạng chiến dịch trong 1-2 câu.
+2. 📊 **Phân tích Chỉ số**: Đánh giá các chỉ số (tốt/xấu, đắt/rẻ).
+3. 🎯 **Đề xuất Hành động (Actionable Insights)**: Liệt kê 2-3 hành động cụ thể để tối ưu.
+
+QUY TẮC:
+- Xưng "mình" hoặc "hệ thống", gọi người dùng là "bạn".
+- Khách quan, dựa trên số liệu. Nếu chiến dịch kém, hãy nói thẳng nhưng lịch sự.
+- Tận dụng thông tin nội dung bài viết và targeting để đoán lý do quảng cáo hiệu quả hay thất bại.
+`;
+
+    const userPrompt = `Dữ liệu chiến dịch cần phân tích:
+- Tên chiến dịch: ${data.name}
+- Mục tiêu: ${data.objective}
+- Trạng thái: ${data.status}
+- Tuổi: ${data.ageMin}-${data.ageMax} | Vị trí: ${data.countries}
+- Đã chi tiêu: ${data.spend} đ
+- Kết quả (Results): ${data.results}
+- Giá mỗi kết quả (CPR/CPC): ${data.cpc} đ
+- Tỷ lệ Click (CTR): ${data.ctr}%
+- Lượt tiếp cận (Reach): ${data.reach}
+- Tần suất (Frequency): ${data.frequency}
+- Nội dung bài quảng cáo: "${data.adBody}"
+
+Hãy đưa ra bài phân tích chuyên sâu cho tôi.`;
+
+    const contents = [
+        { role: 'user', parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }
+    ];
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 20000);
+
+        const res = await fetch(GEMINI_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents,
+                generationConfig: {
+                    temperature: 0.5,
+                    maxOutputTokens: 800,
+                    topP: 0.9,
+                }
+            }),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+        const resData = await res.json();
+        if (resData.error) return 'Lỗi từ máy chủ AI: ' + resData.error.message;
+
+        const reply = resData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        return reply || 'AI không đưa ra được nhận xét nào cho dữ liệu này.';
+    } catch (e: any) {
+        return 'Không thể kết nối đến máy chủ AI lúc này. Vui lòng thử lại sau.';
+    }
+}
