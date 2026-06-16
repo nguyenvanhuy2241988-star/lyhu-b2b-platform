@@ -57,7 +57,56 @@ export interface MarketingStats {
     budget_active: number;
 }
 
-// --- Campaigns ---
+export interface DashboardStats {
+    total_campaigns: number;
+    budget_active: number;
+}
+
+export const getFbAdsConfig = async (token: string | undefined) => {
+    if (!token) return null;
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?select=id,facebook_ads_config&limit=1`, { headers });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data[0] || null;
+    } catch (e) {
+        return null;
+    }
+};
+
+export const updateFbAdsConfig = async (id: string, fbConfig: any, token: string | undefined) => {
+    if (!token) return false;
+    try {
+        const headers = getHeaders(token);
+        headers['Prefer'] = 'return=minimal';
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?id=eq.${id}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify({ facebook_ads_config: fbConfig })
+        });
+        return res.ok;
+    } catch (e) {
+        return false;
+    }
+};
+
+export const fetchFbAdsCampaigns = async (accessToken: string, adAccountId: string) => {
+    try {
+        // Use v19.0 of Graph API
+        const actId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
+        const res = await fetch(`https://graph.facebook.com/v19.0/${actId}/campaigns?fields=id,name,status,daily_budget,lifetime_budget,objective&limit=50&access_token=${accessToken}`);
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error?.message || 'FB API Error');
+        }
+        const data = await res.json();
+        return data.data || [];
+    } catch (e: any) {
+        console.error("FB Ads Error:", e);
+        throw e;
+    }
+};// --- Campaigns ---
 export const fetchCampaigns = async (token?: string): Promise<MarketingCampaign[]> => {
     try {
         const headers = getHeaders(token);

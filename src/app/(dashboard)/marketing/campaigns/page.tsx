@@ -4,16 +4,24 @@ import { useEffect, useState } from "react";
 import { Plus, Search, Megaphone, Calendar, Filter, X, Edit2, Trash2 } from "lucide-react";
 import Link from 'next/link';
 import { useAuth } from "@/components/auth/AuthProvider";
-import { fetchCampaigns, MarketingCampaign, createCampaign, deleteCampaign, updateCampaign } from "@/lib/marketingStore";
+import { fetchCampaigns, MarketingCampaign, createCampaign, deleteCampaign, updateCampaign, getFbAdsConfig, updateFbAdsConfig, fetchFbAdsCampaigns } from "@/lib/marketingStore";
 import { TableSkeleton } from "@/components/ui/SkeletonUI";
 import { toast } from "sonner";
+import { Facebook } from "lucide-react";
 
 export default function CampaignsPage() {
     const { user, session } = useAuth();
     const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
+    const [fbCampaigns, setFbCampaigns] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // Facebook Integration State
+    const [isFbModalOpen, setIsFbModalOpen] = useState(false);
+    const [fbConfigId, setFbConfigId] = useState<string | null>(null);
+    const [fbConfig, setFbConfig] = useState({ accessToken: "", adAccountId: "" });
+    const [isSyncingFb, setIsSyncingFb] = useState(false);
 
     // Search & Filter
     const [searchTerm, setSearchTerm] = useState("");
@@ -32,6 +40,22 @@ export default function CampaignsPage() {
         setIsLoading(true);
         const data = await fetchCampaigns(session?.access_token);
         setCampaigns(data);
+        
+        // Load FB Ads Config & Campaigns
+        const fbData = await getFbAdsConfig(session?.access_token);
+        if (fbData) {
+            setFbConfigId(fbData.id);
+            if (fbData.facebook_ads_config?.accessToken) {
+                setFbConfig(fbData.facebook_ads_config);
+                try {
+                    const fbCamps = await fetchFbAdsCampaigns(fbData.facebook_ads_config.accessToken, fbData.facebook_ads_config.adAccountId);
+                    setFbCampaigns(fbCamps);
+                } catch (e: any) {
+                    toast.error("Lỗi đồng bộ FB Ads: " + e.message);
+                }
+            }
+        }
+        
         setIsLoading(false);
     };
 
@@ -93,6 +117,23 @@ export default function CampaignsPage() {
         }
     };
 
+    const handleSaveFbConfig = async () => {
+        if (!fbConfigId) {
+            toast.error("Chưa có ID cấu hình");
+            return;
+        }
+        setIsSyncingFb(true);
+        const success = await updateFbAdsConfig(fbConfigId, fbConfig, session?.access_token);
+        if (success) {
+            toast.success("Đã lưu cấu hình Facebook Ads");
+            setIsFbModalOpen(false);
+            loadCampaigns();
+        } else {
+            toast.error("Lỗi lưu cấu hình");
+        }
+        setIsSyncingFb(false);
+    };
+
     // Filter Logic
     const filteredCampaigns = campaigns.filter(c => {
         const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -111,12 +152,20 @@ export default function CampaignsPage() {
                     <p className="text-sm text-slate-500">Lên kế hoạch và theo dõi hiệu quả các chiến dịch Marketing</p>
                 </div>
 
-                <button
-                    onClick={handleOpenCreate}
-                    className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2 gap-2"
-                >
-                    <Plus className="w-4 h-4" /> Tạo chiến dịch
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setIsFbModalOpen(true)}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 h-10 px-4 py-2 gap-2"
+                    >
+                        <Facebook className="w-4 h-4" /> Kết nối FB Ads
+                    </button>
+                    <button
+                        onClick={handleOpenCreate}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2 gap-2"
+                    >
+                        <Plus className="w-4 h-4" /> Tạo chiến dịch
+                    </button>
+                </div>
             </div>
 
             {/* Modal */}
@@ -280,7 +329,38 @@ export default function CampaignsPage() {
                                     </td>
                                 </tr>
                             ))}
-                            {filteredCampaigns.length === 0 && (
+                            {/* Render FB Campaigns */}
+                            {fbCampaigns.map((fbCamp) => (
+                                <tr key={`fb-${fbCamp.id}`} className="hover:bg-blue-50/50 transition-colors bg-blue-50/10">
+                                    <td className="px-6 py-4 font-medium text-slate-900">
+                                        <div className="flex items-center gap-2">
+                                            <Facebook className="w-4 h-4 text-blue-600 shrink-0" />
+                                            <span>{fbCamp.name}</span>
+                                        </div>
+                                        <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                            ID: {fbCamp.id}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                                            fbCamp.status === 'ACTIVE' ? 'bg-green-50 text-green-700 border-green-200' :
+                                            fbCamp.status === 'PAUSED' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                            'bg-slate-100 text-slate-600 border-slate-200'
+                                        }`}>
+                                            {fbCamp.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-slate-600">Facebook Ads</td>
+                                    <td className="px-6 py-4 text-right font-medium text-slate-900">
+                                        {fbCamp.daily_budget ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(fbCamp.daily_budget) + '/ngày' :
+                                         fbCamp.lifetime_budget ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(fbCamp.lifetime_budget) + ' (Tổng)' : '-'}
+                                    </td>
+                                    <td className="px-6 py-4 text-right space-x-2">
+                                        <span className="text-xs text-blue-600 font-medium">Synced</span>
+                                    </td>
+                                </tr>
+                            ))}
+                            {filteredCampaigns.length === 0 && fbCampaigns.length === 0 && (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                                         {searchTerm || statusFilter !== 'all' ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có chiến dịch nào'}
@@ -351,6 +431,60 @@ export default function CampaignsPage() {
                                 {searchTerm || statusFilter !== 'all' ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có chiến dịch nào'}
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+            {/* MODAL KẾT NỐI FACEBOOK ADS */}
+            {isFbModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+                        <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+                            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <Facebook className="w-5 h-5 text-blue-600" />
+                                Cấu hình Facebook Ads
+                            </h3>
+                            <button onClick={() => setIsFbModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Access Token (Dùng nội bộ)</label>
+                                <input
+                                    type="text"
+                                    value={fbConfig.accessToken}
+                                    onChange={(e) => setFbConfig({ ...fbConfig, accessToken: e.target.value })}
+                                    className="w-full px-3 py-2 border rounded-md"
+                                    placeholder="EAAG..."
+                                />
+                                <p className="text-xs text-slate-500">Lấy System User Token từ Facebook Business Manager.</p>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Ad Account ID</label>
+                                <input
+                                    type="text"
+                                    value={fbConfig.adAccountId}
+                                    onChange={(e) => setFbConfig({ ...fbConfig, adAccountId: e.target.value })}
+                                    className="w-full px-3 py-2 border rounded-md"
+                                    placeholder="act_..."
+                                />
+                            </div>
+                        </div>
+                        <div className="px-6 py-4 border-t bg-slate-50 flex justify-end gap-2">
+                            <button
+                                onClick={() => setIsFbModalOpen(false)}
+                                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-md"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleSaveFbConfig}
+                                disabled={isSyncingFb}
+                                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {isSyncingFb ? "Đang đồng bộ..." : "Lưu & Đồng bộ"}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
