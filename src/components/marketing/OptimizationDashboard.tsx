@@ -16,6 +16,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
     const [isExecuting, setIsExecuting] = useState(false);
     const [recommendations, setRecommendations] = useState<any[]>([]);
     const [hasAnalyzed, setHasAnalyzed] = useState(false);
+    const [rawCount, setRawCount] = useState(0);
 
     if (!isOpen) return null;
 
@@ -44,6 +45,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                 };
             });
 
+            setRawCount(data.rawAdSets?.length || 0);
             setRecommendations(enhancedRecommendations);
             setHasAnalyzed(true);
             toast.success('AI đã phân tích xong toàn bộ tài khoản!');
@@ -127,9 +129,12 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                     ) : (
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
-                                <h3 className="font-bold text-slate-800">Đề xuất từ chuyên gia AI</h3>
+                                <div className="flex flex-col">
+                                    <h3 className="font-bold text-slate-800">Đề xuất từ chuyên gia AI</h3>
+                                    <span className="text-xs text-slate-400">Đã quét {rawCount} nhóm quảng cáo từ Facebook</span>
+                                </div>
                                 <span className="text-sm font-medium text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
-                                    {recommendations.length} nhóm quảng cáo
+                                    {recommendations.length} nhóm cần tối ưu
                                 </span>
                             </div>
 

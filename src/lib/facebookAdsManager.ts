@@ -229,7 +229,8 @@ export const fetchAllAdSetsWithInsights = async (accessToken: string, adAccountI
     
     try {
         // Fetch up to 500 ad sets and their lifetime insights, including ARCHIVED and DELETED
-        const url = `${baseUrl}/adsets?fields=id,name,status,effective_status,daily_budget,campaign{name,objective},insights.date_preset(maximum){spend,actions,cost_per_action_type}&effective_status=['ACTIVE','PAUSED','DELETED','ARCHIVED']&limit=500&access_token=${accessToken}`;
+        const effectiveStatus = encodeURIComponent('["ACTIVE","PAUSED","DELETED","ARCHIVED"]');
+        const url = `${baseUrl}/adsets?fields=id,name,status,effective_status,daily_budget,campaign{name,objective},insights.date_preset(maximum){spend,actions,cost_per_action_type}&effective_status=${effectiveStatus}&limit=500&access_token=${accessToken}`;
         const res = await fetch(url);
         const data = await res.json();
         
