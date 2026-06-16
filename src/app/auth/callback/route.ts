@@ -31,23 +31,18 @@ export async function GET(request: Request) {
     // Priority: 1. Keep localhost if currently on localhost. 2. NEXT_PUBLIC_SITE_URL. 3. Vercel URL.
     let baseUrl = url.origin;
 
-    // BỎ QUA VIỆC OVERRIDE baseUrl.
-    // Nếu callback rơi vào domain nào (vercel.app hay lyhu.com.vn) thì BẮT BUỘC phải redirect
-    // về đúng domain đó để trình duyệt giữ lại Cookie (tránh lỗi cross-domain login).
-    let baseUrl = url.origin;
-
-    const error = url.searchParams.get("error");
+    const authError = url.searchParams.get("error");
     const error_description = url.searchParams.get("error_description");
-    if (error || error_description) {
-        return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(error_description || error || "unknown")}`);
+    if (authError || error_description) {
+        return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(error_description || authError || "unknown")}`);
     }
 
     if (!code) return NextResponse.redirect(`${baseUrl}/login?error=no_code`);
 
     const supabase = getSupabase();
 
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) return NextResponse.redirect(`${baseUrl}/login?error=oauth_exchange_failed`);
+    const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    if (exchangeError) return NextResponse.redirect(`${baseUrl}/login?error=oauth_exchange_failed`);
 
     const user = data.user;
     if (!user) return NextResponse.redirect(`${baseUrl}/login?error=no_user`);
