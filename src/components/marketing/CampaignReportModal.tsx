@@ -88,7 +88,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
     const frequency = insights?.frequency || 0;
 
     // Extract Interests & Behaviors
-    const flexibleSpec = details?.adsets?.[0]?.targeting?.flexible_spec || [];
+    const flexibleSpec = adSet?.targeting?.flexible_spec || [];
     let interests: string[] = [];
     flexibleSpec.forEach((spec: any) => {
         if (spec.interests) interests = [...interests, ...spec.interests.map((i: any) => i.name)];
@@ -124,9 +124,9 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                 name: campaignName,
                 objective: details.campaign?.objective,
                 status: details.campaign?.status,
-                ageMin: details.adsets?.[0]?.targeting?.age_min,
-                ageMax: details.adsets?.[0]?.targeting?.age_max,
-                countries: details.adsets?.[0]?.targeting?.geo_locations?.countries?.join(', '),
+                ageMin: adSet?.targeting?.age_min,
+                ageMax: adSet?.targeting?.age_max,
+                countries: adSet?.targeting?.geo_locations?.countries?.join(', '),
                 interests: targetingDetails,
                 spend: insights.spend || 0,
                 results: resultCount,
@@ -171,7 +171,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
             const res = await fetch('/api/marketing/update-targeting', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adSetId: details.adsets?.[0]?.id, keywords: suggestedKeywords })
+                body: JSON.stringify({ adSetId: adSet?.id, keywords: suggestedKeywords })
             });
             const data = await res.json();
             if (data.success) {
@@ -391,7 +391,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                                                 </div>
                                                 <button 
                                                     onClick={applyTargeting}
-                                                    disabled={isApplyingTargeting || !details.adsets?.[0]?.id}
+                                                    disabled={isApplyingTargeting || !adSet?.id}
                                                     className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-md transition-all whitespace-nowrap disabled:opacity-50 active:scale-95 flex items-center gap-2"
                                                 >
                                                     {isApplyingTargeting ? "Đang cập nhật FB..." : "Áp dụng tự động lên Facebook"}
