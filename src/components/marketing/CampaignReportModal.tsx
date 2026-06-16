@@ -85,7 +85,23 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
     // Advanced Metrics
     const reach = insights?.reach || 0;
     const frequency = insights?.frequency || 0;
-    const cprObj = insights?.cost_per_action_type?.find((a: any) => a.action_type === 'onsite_conversion.messaging_conversation_started_7d');
+
+    // Determine primary action type based on objective
+    let primaryAction = 'link_click';
+    if (objective === 'PAGE_LIKES') primaryAction = 'like';
+    else if (objective === 'OUTCOME_ENGAGEMENT' || objective === 'MESSAGES') primaryAction = 'onsite_conversion.messaging_conversation_started_7d';
+    
+    // Find the result object
+    let resultObj = insights?.actions?.find((a: any) => a.action_type === primaryAction);
+    
+    // Fallbacks for Engagement
+    if (!resultObj && (objective === 'OUTCOME_ENGAGEMENT' || objective === 'MESSAGES')) {
+        resultObj = insights?.actions?.find((a: any) => ['post_engagement', 'video_view', 'thruplay'].includes(a.action_type));
+        if (resultObj) primaryAction = resultObj.action_type;
+    }
+
+    const resultCount = resultObj?.value || 0;
+    const cprObj = insights?.cost_per_action_type?.find((a: any) => a.action_type === primaryAction);
     const cpr = cprObj?.value ? formatCurrency(cprObj.value) : (insights?.cpc ? formatCurrency(insights.cpc) : "N/A");
 
     const handleAiAnalyze = async () => {
@@ -101,6 +117,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                 ageMax: details.adsets?.[0]?.targeting?.age_max,
                 countries: details.adsets?.[0]?.targeting?.geo_locations?.countries?.join(', '),
                 spend: insights.spend || 0,
+                results: resultCount,
                 actions: insights.actions || [],
                 costPerAction: insights.cost_per_action_type || [],
                 cpc: insights.cpc || 0,
@@ -258,22 +275,30 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                                         Chỉ Số Hiệu Quả (KPIs)
                                     </h3>
                                 </div>
-                                <div className="p-5 flex-1 grid grid-cols-2 gap-4">
-                                    <div className="bg-black/20 rounded-lg p-4">
-                                        <p className="text-xs text-indigo-200 uppercase tracking-wider font-semibold mb-1">Số tiền đã tiêu</p>
-                                        <p className="text-xl font-bold">{insights ? formatCurrency(insights.spend) : "0 ₫"}</p>
+                                <div className="p-4 flex-1 grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <div className="bg-black/20 rounded-lg p-3">
+                                        <p className="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold mb-1 truncate">Số tiền tiêu</p>
+                                        <p className="text-lg font-bold">{insights ? formatCurrency(insights.spend) : "0 ₫"}</p>
                                     </div>
-                                    <div className="bg-black/20 rounded-lg p-4">
-                                        <p className="text-xs text-indigo-200 uppercase tracking-wider font-semibold mb-1">Giá / Kết quả (CPR)</p>
-                                        <p className="text-xl font-bold text-emerald-300">{cpr}</p>
+                                    <div className="bg-black/20 rounded-lg p-3">
+                                        <p className="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold mb-1 truncate">Số Kết quả</p>
+                                        <p className="text-lg font-bold text-yellow-300">{new Intl.NumberFormat('vi-VN').format(resultCount)}</p>
                                     </div>
-                                    <div className="bg-black/20 rounded-lg p-4">
-                                        <p className="text-xs text-indigo-200 uppercase tracking-wider font-semibold mb-1">Người tiếp cận (Reach)</p>
-                                        <p className="text-xl font-bold">{new Intl.NumberFormat('vi-VN').format(reach)}</p>
+                                    <div className="bg-black/20 rounded-lg p-3">
+                                        <p className="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold mb-1 truncate">Giá / KQ (CPR)</p>
+                                        <p className="text-lg font-bold text-emerald-300">{cpr}</p>
                                     </div>
-                                    <div className="bg-black/20 rounded-lg p-4">
-                                        <p className="text-xs text-indigo-200 uppercase tracking-wider font-semibold mb-1">Số Clicks (CTR)</p>
-                                        <p className="text-xl font-bold">{insights ? new Intl.NumberFormat('vi-VN').format(insights.clicks) : 0} <span className="text-sm font-normal text-indigo-200">({insights?.ctr || 0}%)</span></p>
+                                    <div className="bg-black/20 rounded-lg p-3">
+                                        <p className="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold mb-1 truncate">Tiếp cận (Reach)</p>
+                                        <p className="text-lg font-bold">{new Intl.NumberFormat('vi-VN').format(reach)}</p>
+                                    </div>
+                                    <div className="bg-black/20 rounded-lg p-3">
+                                        <p className="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold mb-1 truncate">Tần suất</p>
+                                        <p className="text-lg font-bold">{Number(frequency).toFixed(2)}</p>
+                                    </div>
+                                    <div className="bg-black/20 rounded-lg p-3">
+                                        <p className="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold mb-1 truncate">Clicks (CTR)</p>
+                                        <p className="text-lg font-bold">{insights ? new Intl.NumberFormat('vi-VN').format(insights.clicks) : 0} <span className="text-xs font-normal text-indigo-200">({insights?.ctr || 0}%)</span></p>
                                     </div>
                                 </div>
                             </div>
