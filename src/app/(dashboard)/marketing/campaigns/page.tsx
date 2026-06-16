@@ -4,18 +4,32 @@ import { useEffect, useState } from "react";
 import { Plus, Search, Megaphone, Calendar, Filter, X, Edit2, Trash2 } from "lucide-react";
 import Link from 'next/link';
 import { useAuth } from "@/components/auth/AuthProvider";
-import { fetchCampaigns, MarketingCampaign, createCampaign, deleteCampaign, updateCampaign, getFbAdsConfig, updateFbAdsConfig, fetchFbAdsCampaigns } from "@/lib/marketingStore";
+import { fetchCampaigns, MarketingCampaign, createCampaign, deleteCampaign, updateCampaign, getFbAdsConfig, updateFbAdsConfig, fetchFbAdsCampaigns, fetchFacebookPages, FacebookPage } from "@/lib/marketingStore";
+import { autoSetupFacebookAds } from "@/lib/facebookAdsManager";
 import { TableSkeleton } from "@/components/ui/SkeletonUI";
 import { toast } from "sonner";
-import { Facebook } from "lucide-react";
+import { Facebook, Rocket } from "lucide-react";
 
 export default function CampaignsPage() {
     const { user, session } = useAuth();
     const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
     const [fbCampaigns, setFbCampaigns] = useState<any[]>([]);
+    const [fbPages, setFbPages] = useState<FacebookPage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // Facebook Auto Setup State
+    const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
+    const [isSettingUpFb, setIsSettingUpFb] = useState(false);
+    const [fbSetupData, setFbSetupData] = useState({
+        campaignName: "",
+        objective: "OUTCOME_ENGAGEMENT" as "OUTCOME_TRAFFIC" | "OUTCOME_ENGAGEMENT",
+        dailyBudget: 50000,
+        pageId: "",
+        message: "",
+    });
+    const [fbImageFile, setFbImageFile] = useState<File | null>(null);
     
     // Facebook Integration State
     const [isFbModalOpen, setIsFbModalOpen] = useState(false);
@@ -56,6 +70,13 @@ export default function CampaignsPage() {
             }
         }
         
+        // Fetch FB Pages for Auto Setup
+        const pages = await fetchFacebookPages(session?.access_token);
+        setFbPages(pages);
+        if (pages.length > 0 && !fbSetupData.pageId) {
+            setFbSetupData(prev => ({ ...prev, pageId: pages[0].page_id }));
+        }
+
         setIsLoading(false);
     };
 
@@ -134,6 +155,39 @@ export default function CampaignsPage() {
         setIsSyncingFb(false);
     };
 
+    const handleAutoSetupFbAds = async () => {
+        if (!fbConfig.accessToken || !fbConfig.adAccountId) {
+            toast.error("Vui lòng Kết nối FB Ads trước!");
+            return;
+        }
+        if (!fbSetupData.campaignName || !fbSetupData.pageId || !fbSetupData.message || !fbImageFile) {
+            toast.error("Vui lòng điền đầy đủ thông tin và tải ảnh lên!");
+            return;
+        }
+        setIsSettingUpFb(true);
+        try {
+            toast.info("Đang tự động thiết lập chiến dịch trên Facebook...");
+            await autoSetupFacebookAds({
+                accessToken: fbConfig.accessToken,
+                adAccountId: fbConfig.adAccountId,
+                campaignName: fbSetupData.campaignName,
+                objective: fbSetupData.objective,
+                dailyBudget: fbSetupData.dailyBudget,
+                pageId: fbSetupData.pageId,
+                message: fbSetupData.message,
+                imageFile: fbImageFile
+            });
+            toast.success("Thiết lập thành công! Quá trình mất 1 phút để đồng bộ.");
+            setIsSetupModalOpen(false);
+            setFbSetupData({ ...fbSetupData, campaignName: "", message: "" });
+            setFbImageFile(null);
+            loadCampaigns();
+        } catch (e: any) {
+            toast.error(e.message);
+        }
+        setIsSettingUpFb(false);
+    };
+
     // Filter Logic
     const filteredCampaigns = campaigns.filter(c => {
         const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -155,13 +209,19 @@ export default function CampaignsPage() {
                 <div className="flex gap-2">
                     <button
                         onClick={() => setIsFbModalOpen(true)}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 h-10 px-4 py-2 gap-2"
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 h-10 px-4 py-2 gap-2"
                     >
                         <Facebook className="w-4 h-4" /> Kết nối FB Ads
                     </button>
                     <button
+                        onClick={() => setIsSetupModalOpen(true)}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 h-10 px-4 py-2 gap-2 shadow-sm"
+                    >
+                        <Rocket className="w-4 h-4" /> Auto Setup Ads
+                    </button>
+                    <button
                         onClick={handleOpenCreate}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2 gap-2"
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-slate-800 text-white hover:bg-slate-900 h-10 px-4 py-2 gap-2"
                     >
                         <Plus className="w-4 h-4" /> Tạo chiến dịch
                     </button>
@@ -483,6 +543,125 @@ export default function CampaignsPage() {
                                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 flex items-center gap-2"
                             >
                                 {isSyncingFb ? "Đang đồng bộ..." : "Lưu & Đồng bộ"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* MODAL AUTO SETUP FB ADS */}
+            {isSetupModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden my-8">
+                        <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+                            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <Rocket className="w-5 h-5 text-indigo-600" />
+                                Tự động Thiết lập Quảng cáo FB
+                            </h3>
+                            <button onClick={() => setIsSetupModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Tên chiến dịch</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-600 outline-none"
+                                        placeholder="VD: Khuyến mãi Tháng 6"
+                                        value={fbSetupData.campaignName}
+                                        onChange={(e) => setFbSetupData({ ...fbSetupData, campaignName: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Fanpage đăng tải</label>
+                                    <select
+                                        className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-600 outline-none"
+                                        value={fbSetupData.pageId}
+                                        onChange={(e) => setFbSetupData({ ...fbSetupData, pageId: e.target.value })}
+                                    >
+                                        <option value="">-- Chọn Fanpage --</option>
+                                        {fbPages.map(page => (
+                                            <option key={page.id} value={page.page_id}>{page.page_id} (Đã kết nối)</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Mục tiêu chiến dịch</label>
+                                    <select
+                                        className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-600 outline-none"
+                                        value={fbSetupData.objective}
+                                        onChange={(e) => setFbSetupData({ ...fbSetupData, objective: e.target.value as any })}
+                                    >
+                                        <option value="OUTCOME_ENGAGEMENT">Lượt tương tác (Nhắn tin)</option>
+                                        <option value="OUTCOME_TRAFFIC">Lưu lượng truy cập (Web)</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Ngân sách hàng ngày (VNĐ)</label>
+                                    <input
+                                        type="number"
+                                        className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-600 outline-none"
+                                        value={fbSetupData.dailyBudget}
+                                        onChange={(e) => setFbSetupData({ ...fbSetupData, dailyBudget: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-700">Nội dung bài viết (Text)</label>
+                                <textarea
+                                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-600 outline-none h-24 resize-none"
+                                    placeholder="Viết nội dung quảng cáo siêu cuốn hút tại đây..."
+                                    value={fbSetupData.message}
+                                    onChange={(e) => setFbSetupData({ ...fbSetupData, message: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-slate-700">Hình ảnh quảng cáo</label>
+                                <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 transition-colors">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        id="fb-ad-image-upload"
+                                        onChange={(e) => {
+                                            if (e.target.files && e.target.files[0]) {
+                                                setFbImageFile(e.target.files[0]);
+                                            }
+                                        }}
+                                    />
+                                    <label htmlFor="fb-ad-image-upload" className="cursor-pointer flex flex-col items-center justify-center">
+                                        <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-2">
+                                            <Plus className="w-6 h-6" />
+                                        </div>
+                                        <span className="text-sm font-medium text-slate-700">
+                                            {fbImageFile ? fbImageFile.name : "Tải lên hoặc kéo thả ảnh (từ AI Poster Studio)"}
+                                        </span>
+                                        <span className="text-xs text-slate-500 mt-1">PNG, JPG tối đa 5MB</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div className="px-6 py-4 border-t bg-slate-50 flex justify-end gap-2">
+                            <button
+                                onClick={() => setIsSetupModalOpen(false)}
+                                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-md"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleAutoSetupFbAds}
+                                disabled={isSettingUpFb}
+                                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-md disabled:opacity-50 flex items-center gap-2 shadow-sm"
+                            >
+                                {isSettingUpFb ? "Đang xử lý ngầm (5 bước)..." : "Khởi chạy Quảng Cáo"}
+                                <Rocket className="w-4 h-4" />
                             </button>
                         </div>
                     </div>
