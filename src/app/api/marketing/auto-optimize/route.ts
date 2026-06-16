@@ -12,20 +12,14 @@ export async function POST(req: Request) {
         }
 
         // 1. Fetch all active ad sets with insights
-        let adSets = [];
-        try {
-            adSets = await fetchAllAdSetsWithInsights(accessToken, adAccountId);
-        } catch (err) {
-            console.warn("FB API fetch failed, using mock data for demo purposes:", err);
-        }
+        const adSets = await fetchAllAdSetsWithInsights(accessToken, adAccountId);
         
         if (!adSets || adSets.length === 0) {
-            // MOCK DATA for Prototype Demonstration
-            adSets = [
-                { id: "adset_1", name: "Chiến dịch A - Áo thun (Win)", status: "ACTIVE", spend: 150000, messages: 12, cost_per_message: 12500 },
-                { id: "adset_2", name: "Chiến dịch B - Giày Sneaker (Lỗ)", status: "ACTIVE", spend: 300000, messages: 4, cost_per_message: 75000 },
-                { id: "adset_3", name: "Chiến dịch C - Phụ kiện (An toàn)", status: "ACTIVE", spend: 100000, messages: 4, cost_per_message: 25000 },
-            ];
+            return NextResponse.json({ 
+                success: true, 
+                data: [],
+                rawAdSets: []
+            });
         }
 
         const activeAdSets = adSets.map((a: any) => {
