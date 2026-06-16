@@ -5,7 +5,7 @@ import { Plus, Search, Megaphone, Calendar, Filter, X, Edit2, Trash2 } from "luc
 import Link from 'next/link';
 import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchCampaigns, MarketingCampaign, createCampaign, deleteCampaign, updateCampaign, getFbAdsConfig, updateFbAdsConfig, fetchFbAdsCampaigns, fetchFacebookPages, FacebookPage } from "@/lib/marketingStore";
-import { autoSetupFacebookAds } from "@/lib/facebookAdsManager";
+import { autoSetupFacebookAds, fetchAllCampaignsInsights } from "@/lib/facebookAdsManager";
 import { TableSkeleton } from "@/components/ui/SkeletonUI";
 import { CampaignReportModal } from "@/components/marketing/CampaignReportModal";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ export default function CampaignsPage() {
     const { user, session } = useAuth();
     const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
     const [fbCampaigns, setFbCampaigns] = useState<any[]>([]);
+    const [fbInsights, setFbInsights] = useState<any[]>([]);
     const [fbPages, setFbPages] = useState<FacebookPage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -39,9 +40,10 @@ export default function CampaignsPage() {
     const [fbConfig, setFbConfig] = useState({ accessToken: "", adAccountId: "" });
     const [isSyncingFb, setIsSyncingFb] = useState(false);
 
-    // Search & Filter
+    // Search & Filters
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [objectiveFilter, setObjectiveFilter] = useState("all");
 
     // Form State
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -64,8 +66,12 @@ export default function CampaignsPage() {
             if (fbData.facebook_ads_config?.accessToken) {
                 setFbConfig(fbData.facebook_ads_config);
                 try {
-                    const fbCamps = await fetchFbAdsCampaigns(fbData.facebook_ads_config.accessToken, fbData.facebook_ads_config.adAccountId);
+                    const [fbCamps, insights] = await Promise.all([
+                        fetchFbAdsCampaigns(fbData.facebook_ads_config.accessToken, fbData.facebook_ads_config.adAccountId),
+                        fetchAllCampaignsInsights(fbData.facebook_ads_config.accessToken, fbData.facebook_ads_config.adAccountId)
+                    ]);
                     setFbCampaigns(fbCamps);
+                    setFbInsights(insights);
                 } catch (e: any) {
                     toast.error("Lỗi đồng bộ FB Ads: " + e.message);
                 }
@@ -199,14 +205,39 @@ export default function CampaignsPage() {
 
     const filteredFbCampaigns = fbCampaigns.filter(c => {
         const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
+        
         let matchesStatus = true;
         if (statusFilter !== 'all') {
             if (statusFilter === 'active') matchesStatus = c.status === 'ACTIVE';
             else if (statusFilter === 'paused') matchesStatus = c.status === 'PAUSED';
             else matchesStatus = false;
         }
-        return matchesSearch && matchesStatus;
+
+        let matchesObjective = true;
+        if (objectiveFilter !== 'all') {
+            matchesObjective = c.objective === objectiveFilter;
+        }
+
+        return matchesSearch && matchesStatus && matchesObjective;
     });
+
+    const formatObjective = (obj: string) => {
+        const map: any = {
+            'OUTCOME_TRAFFIC': 'Lưu lượng truy cập',
+            'OUTCOME_ENGAGEMENT': 'Tương tác (Tin nhắn)',
+            'OUTCOME_SALES': 'Doanh số',
+            'OUTCOME_LEADS': 'Khách hàng tiềm năng',
+            'OUTCOME_AWARENESS': 'Nhận biết thương hiệu'
+        };
+        return map[obj] || obj || 'Chưa rõ';
+    };
+
+    const getScoreBadge = (score: number) => {
+        if (score >= 8) return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-700">🟢 {score.toFixed(1)}/10</span>;
+        if (score >= 5) return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700">🟡 {score.toFixed(1)}/10</span>;
+        if (score > 0) return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-700">🔴 {score.toFixed(1)}/10</span>;
+        return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500">Chưa cắn tiền</span>;
+    };
 
     return (
         <div className="space-y-6">
@@ -328,6 +359,16 @@ export default function CampaignsPage() {
                     <Filter className="w-4 h-4 text-slate-500" />
                     <select
                         className="h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                        value={objectiveFilter}
+                        onChange={(e) => setObjectiveFilter(e.target.value)}
+                    >
+                        <option value="all">Tất cả mục tiêu FB</option>
+                        <option value="OUTCOME_ENGAGEMENT">Tương tác (Tin nhắn)</option>
+                        <option value="OUTCOME_TRAFFIC">Lưu lượng truy cập</option>
+                        <option value="OUTCOME_SALES">Doanh số</option>
+                    </select>
+                    <select
+                        className="h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
                     >
@@ -403,15 +444,34 @@ export default function CampaignsPage() {
                                 </tr>
                             ))}
                             {/* Render FB Campaigns */}
-                            {filteredFbCampaigns.map((fbCamp) => (
+                            {filteredFbCampaigns.map((fbCamp) => {
+                                const insight = fbInsights.find(i => i.campaign_id === fbCamp.id);
+                                const ctr = Number(insight?.ctr || 0);
+                                const spend = Number(insight?.spend || 0);
+                                let score = 0;
+                                if (spend > 0) {
+                                    score = 5; // Base score
+                                    if (ctr > 2) score += 2;
+                                    else if (ctr > 1) score += 1;
+                                    else score -= 2;
+                                    
+                                    const cprObj = insight?.cost_per_action_type?.find((a: any) => a.action_type === 'onsite_conversion.messaging_conversation_started_7d');
+                                    const cpr = cprObj?.value ? Number(cprObj.value) : 0;
+                                    if (cpr > 0 && cpr < 30000) score += 3;
+                                    else if (cpr > 0 && cpr > 100000) score -= 3;
+                                    
+                                    score = Math.max(1, Math.min(10, score)); // clamp 1-10
+                                }
+
+                                return (
                                 <tr key={`fb-${fbCamp.id}`} className="hover:bg-blue-50/50 transition-colors bg-blue-50/10">
                                     <td className="px-6 py-4 font-medium text-slate-900">
                                         <div className="flex items-center gap-2">
                                             <Facebook className="w-4 h-4 text-blue-600 shrink-0" />
                                             <span>{fbCamp.name}</span>
                                         </div>
-                                        <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                                            ID: {fbCamp.id}
+                                        <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                                            <span>Mục tiêu: <strong className="text-slate-700">{formatObjective(fbCamp.objective)}</strong></span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -422,11 +482,15 @@ export default function CampaignsPage() {
                                         }`}>
                                             {fbCamp.status}
                                         </span>
+                                        <div className="mt-2">
+                                            {getScoreBadge(score)}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4 text-slate-600">Facebook Ads</td>
                                     <td className="px-6 py-4 text-right font-medium text-slate-900">
                                         {fbCamp.daily_budget ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(fbCamp.daily_budget) + '/ngày' :
-                                         fbCamp.lifetime_budget ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(fbCamp.lifetime_budget) + ' (Tổng)' : '-'}
+                                         fbCamp.lifetime_budget ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(fbCamp.lifetime_budget) + ' (Tổng)' : 
+                                         <span className="text-xs text-slate-500 font-normal border border-slate-200 rounded px-2 py-0.5 bg-slate-50">CBO Off (Cấp Nhóm)</span>}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex items-center justify-end gap-3">
@@ -441,7 +505,7 @@ export default function CampaignsPage() {
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                            })}
                             {filteredCampaigns.length === 0 && filteredFbCampaigns.length === 0 && (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-12 text-center text-slate-500">

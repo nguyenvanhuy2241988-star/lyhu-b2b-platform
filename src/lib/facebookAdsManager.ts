@@ -157,3 +157,22 @@ export const fetchFbCampaignDetails = async (accessToken: string, campaignId: st
         return { campaign: null, adSets: [], ads: [] };
     }
 };
+
+export const fetchAllCampaignsInsights = async (accessToken: string, adAccountId: string) => {
+    try {
+        const baseUrl = `https://graph.facebook.com/v19.0`;
+        const actId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
+        // Fetch insights grouped by campaign for the last 7 days
+        const res = await fetch(`${baseUrl}/${actId}/insights?level=campaign&fields=campaign_id,spend,cpc,ctr,cost_per_action_type&date_preset=last_7d&limit=100&access_token=${accessToken}`);
+        
+        if (!res.ok) {
+            console.error("fetchAllCampaignsInsights Error Response", await res.text());
+            return [];
+        }
+        const data = await res.json();
+        return data.data || [];
+    } catch (e: any) {
+        console.error("fetchAllCampaignsInsights Error:", e);
+        return [];
+    }
+};
