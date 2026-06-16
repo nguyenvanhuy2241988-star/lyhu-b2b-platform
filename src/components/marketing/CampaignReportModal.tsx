@@ -171,7 +171,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
             const res = await fetch('/api/marketing/update-targeting', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adSetId: adSet?.id, keywords: suggestedKeywords })
+                body: JSON.stringify({ adSetId: adSet?.id, keywords: suggestedKeywords, accessToken })
             });
             const data = await res.json();
             if (data.success) {
