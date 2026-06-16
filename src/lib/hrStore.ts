@@ -358,8 +358,8 @@ export const getFundBalance = async () => {
     const contribBalance = (contribData || []).reduce((acc: number, curr: any) => acc + Number(curr.amount), 0);
 
     // 3. Initial Balance from Settings
-    const { data: configData } = await supabase.from('app_settings').select('value').eq('key', 'bank_config').single();
-    const initialBalance = configData?.value?.initialBalance || 0;
+    const { data: configData } = await supabase.from('app_settings').select('fund_bank_config').single();
+    const initialBalance = configData?.fund_bank_config?.initialBalance || 0;
 
     return transBalance + contribBalance + Number(initialBalance);
 };
