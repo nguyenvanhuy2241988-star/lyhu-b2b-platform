@@ -34,6 +34,16 @@ function LoginPageContent() {
     const [msg, setMsg] = useState<string | null>(null);
     const [logoError, setLogoError] = useState(false);
 
+    useEffect(() => {
+        const err = searchParams.get("error");
+        if (err) {
+            if (err === "no_code") setMsg("Đăng nhập thất bại: Không nhận được mã xác thực từ máy chủ (no_code). Vui lòng kiểm tra lại cấu hình PKCE trên Supabase.");
+            else if (err === "oauth_exchange_failed") setMsg("Đăng nhập thất bại: Không thể trao đổi mã xác thực (oauth_exchange_failed).");
+            else if (err === "no_user") setMsg("Đăng nhập thất bại: Không tìm thấy thông tin người dùng.");
+            else setMsg(`Đăng nhập thất bại: ${err}`);
+        }
+    }, [searchParams]);
+
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
