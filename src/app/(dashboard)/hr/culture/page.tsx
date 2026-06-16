@@ -529,7 +529,7 @@ export default function HRCulturePage() {
                                                 <span className={`text-sm font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-900'}`}>
                                                     {t.type === 'income' ? '+' : '-'}{fmt(t.amount)}
                                                 </span>
-                                                {isSuperAdmin && (
+                                                {isAdmin && (
                                                     <div className="hidden group-hover:flex items-center gap-1">
                                                         <button onClick={() => openEditTransaction(t)} className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors"><Edit3 className="w-4 h-4" /></button>
                                                         <button onClick={() => setDeletingTransId(t.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"><Trash2 className="w-4 h-4" /></button>
@@ -861,9 +861,9 @@ export default function HRCulturePage() {
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Số dư ban đầu (VNĐ)</label>
-                                <input type="number" disabled={!isSuperAdmin} className={`w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors ${!isSuperAdmin ? 'bg-slate-50 cursor-not-allowed text-slate-400' : ''}`}
+                                <input type="number" disabled={!isAdmin} className={`w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors ${!isAdmin ? 'bg-slate-50 cursor-not-allowed text-slate-400' : ''}`}
                                     placeholder="0" value={editBank.initialBalance} onChange={e => setEditBank({ ...editBank, initialBalance: Number(e.target.value) })} />
-                                {!isSuperAdmin && <p className="text-[10px] text-slate-400 mt-1">Chỉ Admin và Kế toán được sửa số dư đầu kỳ.</p>}
+                                {!isAdmin && <p className="text-[10px] text-slate-400 mt-1">Chỉ Admin và Kế toán được sửa số dư đầu kỳ.</p>}
                             </div>
                         </div>
                         <div className="px-5 pb-5">
