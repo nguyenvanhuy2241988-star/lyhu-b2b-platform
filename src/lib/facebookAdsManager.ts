@@ -134,20 +134,26 @@ export const fetchFbCampaignInsights = async (
 export const fetchFbCampaignDetails = async (accessToken: string, campaignId: string) => {
     try {
         const baseUrl = `https://graph.facebook.com/v19.0`;
+        
+        // Fetch Campaign Info (for Objective)
+        const campRes = await fetch(`${baseUrl}/${campaignId}?fields=name,objective&access_token=${accessToken}`);
+        const campData = await campRes.json();
+
         // Fetch AdSets (for Targeting)
         const adSetRes = await fetch(`${baseUrl}/${campaignId}/adsets?fields=name,targeting,daily_budget&access_token=${accessToken}`);
         const adSetData = await adSetRes.json();
         
         // Fetch Ads (for Creative info)
-        const adRes = await fetch(`${baseUrl}/${campaignId}/ads?fields=name,creative{image_url,body,title,object_story_spec}&access_token=${accessToken}`);
+        const adRes = await fetch(`${baseUrl}/${campaignId}/ads?fields=name,creative{image_url,body,title,object_story_spec,video_id}&access_token=${accessToken}`);
         const adData = await adRes.json();
         
         return {
+            campaign: campData,
             adSets: adSetData.data || [],
             ads: adData.data || []
         };
     } catch (e: any) {
         console.error("fetchFbCampaignDetails Error:", e);
-        return { adSets: [], ads: [] };
+        return { campaign: null, adSets: [], ads: [] };
     }
 };

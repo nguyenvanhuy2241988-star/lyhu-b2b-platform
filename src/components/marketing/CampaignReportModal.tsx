@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, TrendingUp, BarChart3, Clock, DollarSign, MousePointerClick, Activity, Bot, Image as ImageIcon, Users, MapPin, Target } from "lucide-react";
+import { X, TrendingUp, BarChart3, Clock, DollarSign, MousePointerClick, Activity, Bot, Image as ImageIcon, Users, MapPin, Target, PlayCircle, Tag } from "lucide-react";
 import { fetchFbCampaignInsights, fetchFbCampaignDetails } from "@/lib/facebookAdsManager";
 import { toast } from "sonner";
 
@@ -56,8 +56,22 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
     // Extract creative info from Ads
     const ad = details?.ads?.[0];
     const creative = ad?.creative;
-    const adBody = creative?.body || creative?.object_story_spec?.link_data?.message || "Không có nội dung text";
+    const adBody = creative?.body || creative?.object_story_spec?.link_data?.message || creative?.object_story_spec?.video_data?.message || "Không có nội dung text";
     const adImageUrl = creative?.image_url || creative?.object_story_spec?.link_data?.picture || creative?.object_story_spec?.video_data?.image_url || creative?.thumbnail_url;
+    const isVideo = creative?.video_id || creative?.object_story_spec?.video_data || false;
+
+    // Extract Campaign Info
+    const objective = details?.campaign?.objective || "Chưa xác định";
+    const formatObjective = (obj: string) => {
+        const map: any = {
+            'OUTCOME_TRAFFIC': 'Lưu lượng truy cập (Traffic)',
+            'OUTCOME_ENGAGEMENT': 'Lượt tương tác (Tin nhắn/Bình luận)',
+            'OUTCOME_SALES': 'Doanh số (Sales)',
+            'OUTCOME_LEADS': 'Khách hàng tiềm năng (Leads)',
+            'OUTCOME_AWARENESS': 'Mức độ nhận biết (Awareness)'
+        };
+        return map[obj] || obj;
+    };
 
     // Advanced Metrics
     const reach = insights?.reach || 0;
@@ -160,13 +174,20 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                                         Mẫu Quảng Cáo (Creative)
                                     </h3>
                                 </div>
-                                <div className="p-5 flex-1 bg-slate-50/30">
+                                <div className="p-5 flex-1 bg-slate-50/30 relative">
                                     {adImageUrl ? (
-                                        <img src={adImageUrl} alt="Ad Creative" className="w-full h-48 object-cover rounded-lg border border-slate-200 mb-4 shadow-sm" />
+                                        <div className="relative mb-4">
+                                            <img src={adImageUrl} alt="Ad Creative" className="w-full h-48 object-cover rounded-lg border border-slate-200 shadow-sm" />
+                                            {isVideo && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
+                                                    <PlayCircle className="w-12 h-12 text-white opacity-90 shadow-sm" />
+                                                </div>
+                                            )}
+                                        </div>
                                     ) : (
                                         <div className="w-full h-48 bg-slate-200 rounded-lg mb-4 flex flex-col items-center justify-center text-slate-400 border border-slate-300 border-dashed">
-                                            <ImageIcon className="w-8 h-8 mb-2" />
-                                            <span>Không tìm thấy hình ảnh</span>
+                                            {isVideo ? <PlayCircle className="w-8 h-8 mb-2" /> : <ImageIcon className="w-8 h-8 mb-2" />}
+                                            <span>Không tìm thấy hình ảnh/video</span>
                                         </div>
                                     )}
                                     <div className="bg-white p-3 rounded-lg border border-slate-200 text-sm text-slate-700 line-clamp-4 leading-relaxed">
@@ -184,6 +205,13 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                                     </h3>
                                 </div>
                                 <div className="p-5 flex-1 space-y-4">
+                                    <div className="flex items-start gap-3">
+                                        <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600"><Tag className="w-5 h-5" /></div>
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Loại Chiến Dịch (Mục Tiêu)</p>
+                                            <p className="text-sm font-medium text-slate-800 mt-1">{formatObjective(objective)}</p>
+                                        </div>
+                                    </div>
                                     <div className="flex items-start gap-3">
                                         <div className="p-2 bg-blue-50 rounded-lg text-blue-600"><MapPin className="w-5 h-5" /></div>
                                         <div>
