@@ -413,9 +413,10 @@ CHỈ TIÊU KPI QUAN TRỌNG (Đánh giá theo chất lượng Data):
 - Ngưỡng WIN: Cost per Phone (Chi phí ra 1 số điện thoại) < 50,000 VND. Nghĩa là khách nhắn tin rẻ VÀ chịu để lại số điện thoại. Những camp này cần được TĂNG NGÂN SÁCH (SCALE_UP).
 - Ngưỡng LỖ: Cost per Phone > 100,000 VND HOẶC Cost per Message > 35,000 VND (Tin nhắn quá đắt hoặc toàn rác không ra số). Những camp này cần được TẮT NGAY (PAUSE).
 - Ngưỡng AN TOÀN (MAINTAIN): Cost per Phone từ 50k - 100k, hoặc Cost per Message từ 20k - 35k (chưa ra số nhưng tin nhắn không quá đắt). Giữ nguyên theo dõi thêm.
+- CHƯA ĐỦ DỮ LIỆU: Nếu nhóm quảng cáo chưa cắn tiền (spend = 0) hoặc chưa có kết quả (messages = 0), BẮT BUỘC trả về "MAINTAIN" và ghi lý do "Chưa đủ dữ liệu để đánh giá".
 
 ĐỊNH DẠNG ĐẦU RA BẮT BUỘC:
-Bạn PHẢI trả về KẾT QUẢ DƯỚI DẠNG JSON MẢNG (JSON Array) chứa các quyết định tối ưu. TUYỆT ĐỐI KHÔNG giải thích lằng nhằng ở ngoài.
+Bạn PHẢI trả về KẾT QUẢ DƯỚI DẠNG JSON MẢNG (JSON Array) chứa quyết định cho TẤT CẢ CÁC NHÓM QUẢNG CÁO TRONG DANH SÁCH (Không được bỏ sót bất kỳ nhóm nào). TUYỆT ĐỐI KHÔNG giải thích lằng nhằng ở ngoài.
 Cấu trúc JSON:
 [
   {
