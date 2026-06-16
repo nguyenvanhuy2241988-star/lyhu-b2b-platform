@@ -426,7 +426,7 @@ Cấu trúc JSON:
   }
 ]
 `;
-        const userPrompt = `Dữ liệu các Nhóm Quảng Cáo đang chạy trong 7 ngày qua:
+        const userPrompt = `Dữ liệu các Nhóm Quảng Cáo đang chạy trong toàn thời gian (Lifetime):
 ${JSON.stringify(adSets, null, 2)}`;
 
         const response = await fetch(GEMINI_URL, {
