@@ -8,11 +8,11 @@ import {
     getCultureEvents, getFundTransactions, getFundBalance, getUpcomingBirthdays,
     addFundTransaction, updateFundTransaction, deleteFundTransaction,
     getFundContributions, upsertFundContribution, confirmFundContribution, unmarkFundPaid,
-    getFundMonthlyReport, getHRProfiles, hideHRProfile
+    getFundMonthlyReport, getHRProfiles, hideHRProfile, unhideHRProfile
 } from "@/lib/hrStore";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Calendar, TrendingUp, TrendingDown, Wallet, X, Cake, Plus, QrCode, ChevronLeft, ChevronRight, Check, Clock, Receipt, Settings, Pencil, Trash2, EyeOff } from "lucide-react";
+import { Calendar, TrendingUp, TrendingDown, Wallet, X, Cake, Plus, QrCode, ChevronLeft, ChevronRight, Check, Clock, Receipt, Settings, Pencil, Trash2, EyeOff, Eye } from "lucide-react";
 
 import { supabase } from "@/lib/supabaseClient";
 
@@ -34,6 +34,7 @@ export default function HRCulturePage() {
     const [balance, setBalance] = useState(0);
     const [loading, setLoading] = useState(true);
     const [allProfiles, setAllProfiles] = useState<any[]>([]);
+    const [showHidden, setShowHidden] = useState(false);
 
     // Bank config from DB
     const [bankConfig, setBankConfig] = useState(DEFAULT_BANK_CONFIG);
@@ -79,9 +80,13 @@ export default function HRCulturePage() {
     }, []);
 
     const refreshProfiles = useCallback(() => {
-        getHRProfiles().then(p => { setAllProfiles(p); });
+        getHRProfiles(undefined, showHidden).then(setAllProfiles);
         getUpcomingBirthdays().then(setBirthdays);
-    }, []);
+    }, [showHidden]);
+
+    useEffect(() => {
+        refreshProfiles();
+    }, [refreshProfiles]);
 
     const loadBankConfig = useCallback(async () => {
         try {
@@ -119,18 +124,14 @@ export default function HRCulturePage() {
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [eventsData, transData, balanceData, birthdaysData, profiles] = await Promise.all([
+                const [eventsData, transData, balanceData] = await Promise.all([
                     getCultureEvents(),
                     getFundTransactions(),
-                    getFundBalance(),
-                    getUpcomingBirthdays(),
-                    getHRProfiles()
+                    getFundBalance()
                 ]);
                 setEvents(eventsData);
                 setTransactions(transData);
                 setBalance(balanceData);
-                setBirthdays(birthdaysData);
-                setAllProfiles(profiles);
             } catch (error) {
                 console.error("Failed to load culture data", error);
             } finally {
@@ -275,10 +276,18 @@ export default function HRCulturePage() {
         } catch (e) { console.error(e); alert("Lỗi ẩn nhân sự"); }
     };
 
+    const handleUnhideProfile = async (userId: string, name: string) => {
+        if (!confirm(`Khôi phục lại nhân sự ${name}?`)) return;
+        try {
+            await unhideHRProfile(userId);
+            refreshProfiles();
+        } catch (e) { console.error(e); alert("Lỗi khôi phục nhân sự"); }
+    };
+
     const fmt = (amount: number) =>
         new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
-    const employeeCount = allProfiles.length;
+    const employeeCount = allProfiles.filter(p => p.status !== 'inactive').length;
     const monthlyPerPerson = bankConfig.monthlyAmount || 50000;
     const monthlyCompany = bankConfig.companyAmount || (monthlyPerPerson * employeeCount);
 
@@ -291,7 +300,8 @@ export default function HRCulturePage() {
                 avatarUrl: p.avatar_url,
                 status: contrib?.status || 'pending',
                 contribId: contrib?.id,
-                confirmedAt: contrib?.confirmed_at
+                confirmedAt: contrib?.confirmed_at,
+                profileStatus: p.status
             };
         });
     }, [allProfiles, contributions]);
@@ -304,12 +314,6 @@ export default function HRCulturePage() {
     const qrUrl = bankConfig.accountNo
         ? `https://img.vietqr.io/image/${bankConfig.bankId}-${bankConfig.accountNo}-compact.png?amount=${monthlyPerPerson}&addInfo=${encodeURIComponent(qrMemo)}&accountName=${encodeURIComponent(bankConfig.accountName)}`
         : '';
-
-    const bankNames: Record<string, string> = {
-        'MB': 'MB Bank', 'VCB': 'Vietcombank', 'TCB': 'Techcombank', 'ACB': 'ACB',
-        'BIDV': 'BIDV', 'VTB': 'VietinBank', 'TPB': 'TPBank', 'VPB': 'VPBank',
-        'STB': 'Sacombank', 'MSB': 'MSB', 'SHB': 'SHB', 'EIB': 'Eximbank',
-    };
 
     const MonthNav = ({ month, year, setMonth, setYear }: { month: number; year: number; setMonth: (m: number | ((p: number) => number)) => void; setYear: (y: number | ((p: number) => number)) => void }) => (
         <div className="flex items-center gap-2">
@@ -535,9 +539,17 @@ export default function HRCulturePage() {
                     </div>
 
                     <section className="bg-white rounded-xl border border-slate-200">
-                        <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+                        <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
                             <h3 className="text-sm font-semibold text-slate-900">Danh sách đóng quỹ</h3>
-                            <span className="text-xs text-slate-400">{fmt(monthlyPerPerson)}/người</span>
+                            <div className="flex items-center gap-4">
+                                {isAdmin && (
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} className="rounded text-primary-600 focus:ring-primary-500" />
+                                        <span className="text-xs text-slate-500">Hiển thị người bị ẩn</span>
+                                    </label>
+                                )}
+                                <span className="text-xs text-slate-400">{fmt(monthlyPerPerson)}/người</span>
+                            </div>
                         </div>
                         <div className="divide-y divide-slate-100">
                             {contributionList.map((c) => (
@@ -571,6 +583,14 @@ export default function HRCulturePage() {
                                                 {isAdmin && (
                                                     <button onClick={() => handleMarkUnpaid(c.userId)}
                                                         className="text-xs text-rose-600 hover:text-rose-700 font-medium ml-2">Bỏ</button>
+                                                )}
+                                            </div>
+                                        ) : c.profileStatus === 'inactive' ? (
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-slate-400 italic">Đã ẩn</span>
+                                                {isAdmin && (
+                                                    <button onClick={() => handleUnhideProfile(c.userId, c.fullName)} title="Khôi phục lại nhân sự"
+                                                        className="text-primary-600 hover:text-primary-700 p-1 rounded transition-colors"><Eye className="w-4 h-4" /></button>
                                                 )}
                                             </div>
                                         ) : (
