@@ -135,11 +135,11 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
 
                             <div className="grid gap-4">
                                 {recommendations.map((rec, idx) => (
-                                    <div key={idx} className={\`p-4 rounded-xl border \${
+                                    <div key={idx} className={`p-4 rounded-xl border ${
                                         rec.action === 'SCALE_UP' ? 'border-green-200 bg-green-50' :
                                         rec.action === 'PAUSE' ? 'border-red-200 bg-red-50' :
                                         'border-slate-200 bg-white'
-                                    }\`}>
+                                    }`}>
                                         <div className="flex items-start justify-between">
                                             <div>
                                                 <div className="flex items-center gap-2 mb-1">
