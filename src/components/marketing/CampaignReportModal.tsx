@@ -86,6 +86,16 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
     const reach = insights?.reach || 0;
     const frequency = insights?.frequency || 0;
 
+    // Extract Interests & Behaviors
+    const flexibleSpec = details?.adsets?.[0]?.targeting?.flexible_spec || [];
+    let interests: string[] = [];
+    flexibleSpec.forEach((spec: any) => {
+        if (spec.interests) interests = [...interests, ...spec.interests.map((i: any) => i.name)];
+        if (spec.behaviors) interests = [...interests, ...spec.behaviors.map((i: any) => i.name)];
+        if (spec.work_positions) interests = [...interests, ...spec.work_positions.map((i: any) => i.name)];
+    });
+    const targetingDetails = interests.length > 0 ? interests.join(', ') : 'Mở rộng (Broad)';
+
     // Determine primary action type based on objective
     let primaryAction = 'link_click';
     if (objective === 'PAGE_LIKES') primaryAction = 'like';
@@ -116,6 +126,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                 ageMin: details.adsets?.[0]?.targeting?.age_min,
                 ageMax: details.adsets?.[0]?.targeting?.age_max,
                 countries: details.adsets?.[0]?.targeting?.geo_locations?.countries?.join(', '),
+                interests: targetingDetails,
                 spend: insights.spend || 0,
                 results: resultCount,
                 actions: insights.actions || [],
@@ -257,6 +268,13 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                                         <div>
                                             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Độ tuổi</p>
                                             <p className="text-sm font-medium text-slate-800 mt-1">{ageMin} - {ageMax} tuổi</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="p-2 bg-orange-50 rounded-lg text-orange-600"><Target className="w-5 h-5" /></div>
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sở thích / Hành vi</p>
+                                            <p className="text-sm font-medium text-slate-800 mt-1">{targetingDetails}</p>
                                         </div>
                                     </div>
                                     <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-100">
