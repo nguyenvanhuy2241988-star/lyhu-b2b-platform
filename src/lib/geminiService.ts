@@ -335,20 +335,29 @@ QUY TẮC:
 - Tận dụng thông tin nội dung bài viết và targeting để đoán lý do quảng cáo hiệu quả hay thất bại.
 `;
 
+    const actionsStr = data.actions && data.actions.length > 0 
+        ? data.actions.map((a: any) => `${a.action_type}: ${a.value}`).join(', ') 
+        : 'Không có';
+        
+    const cpaStr = data.costPerAction && data.costPerAction.length > 0
+        ? data.costPerAction.map((a: any) => `${a.action_type}: ${a.value} đ`).join(', ') 
+        : 'Không có';
+
     const userPrompt = `Dữ liệu chiến dịch cần phân tích:
 - Tên chiến dịch: ${data.name}
 - Mục tiêu: ${data.objective}
 - Trạng thái: ${data.status}
 - Tuổi: ${data.ageMin}-${data.ageMax} | Vị trí: ${data.countries}
 - Đã chi tiêu: ${data.spend} đ
-- Kết quả (Results): ${data.results}
-- Giá mỗi kết quả (CPR/CPC): ${data.cpc} đ
+- Các hành động tạo ra (Actions): ${actionsStr}
+- Giá mỗi hành động (Cost per Action): ${cpaStr}
+- Giá mỗi Click (CPC): ${data.cpc} đ
 - Tỷ lệ Click (CTR): ${data.ctr}%
 - Lượt tiếp cận (Reach): ${data.reach}
 - Tần suất (Frequency): ${data.frequency}
 - Nội dung bài quảng cáo: "${data.adBody}"
 
-Hãy đưa ra bài phân tích chuyên sâu cho tôi.`;
+Hãy đưa ra bài phân tích chuyên sâu cho tôi. Lưu ý cực kỳ quan trọng: Hãy tự đối chiếu "Mục tiêu" (objective) với "Các hành động tạo ra" (Actions) để đánh giá đúng hiệu quả. Ví dụ: Nếu mục tiêu là OUTCOME_ENGAGEMENT nhưng ra nhiều "video_view" hoặc "thruplay" thì bản chất đó là chiến dịch tối ưu lượt xem video, nên đánh giá chi phí lượt xem video thay vì báo lỗi không có tin nhắn. Nếu ra "post_engagement" thì đó là chạy tương tác bài viết.`;
 
     const contents = [
         { role: 'user', parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }
