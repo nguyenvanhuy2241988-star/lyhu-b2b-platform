@@ -643,7 +643,7 @@ export default function WholesaleStore({
             const { error } = await supabase.auth.signInWithOAuth({
                 provider,
                 options: {
-                    redirectTo: window.location.origin + '/auth/callback?next=/wholesale',
+                    redirectTo: window.location.origin + '/auth/callback',
                 }
             });
             if (error) throw error;
@@ -657,13 +657,20 @@ export default function WholesaleStore({
         setIsRegistering(true);
         setRegisterError('');
         try {
-            const { error } = await supabase.auth.signUp({
+            const { data, error } = await supabase.auth.signUp({
                 email: registerEmail,
                 password: registerPassword,
             });
             if (error) throw error;
-            closeAuthModal();
-            window.location.reload();
+            
+            if (data.user && data.session === null) {
+                // Email confirmation is required
+                alert('Đăng ký thành công! Vui lòng kiểm tra email (bao gồm cả thư mục Spam/Quảng cáo) để xác thực tài khoản.');
+                closeAuthModal();
+            } else {
+                closeAuthModal();
+                window.location.reload();
+            }
         } catch (err: any) {
             setRegisterError(err.message || 'Đăng ký thất bại. Vui lòng thử lại.');
         } finally {
