@@ -140,7 +140,7 @@ export const fetchFbCampaignDetails = async (accessToken: string, campaignId: st
         const campData = await campRes.json();
 
         // Fetch AdSets (for Targeting)
-        const adSetRes = await fetch(`${baseUrl}/${campaignId}/adsets?fields=name,targeting,daily_budget&access_token=${accessToken}`);
+        const adSetRes = await fetch(`${baseUrl}/${campaignId}/adsets?fields=id,name,targeting,daily_budget&access_token=${accessToken}`);
         const adSetData = await adSetRes.json();
         
         // Fetch Ads (for Creative info)
@@ -174,5 +174,51 @@ export const fetchAllCampaignsInsights = async (accessToken: string, adAccountId
     } catch (e: any) {
         console.error("fetchAllCampaignsInsights Error:", e);
         return [];
+    }
+};
+
+export const searchFbInterests = async (accessToken: string, keyword: string) => {
+    try {
+        const res = await fetch(`https://graph.facebook.com/v19.0/search?type=adinterest&q=${encodeURIComponent(keyword)}&access_token=${accessToken}`);
+        const data = await res.json();
+        return data.data || [];
+    } catch (e) {
+        console.error("searchFbInterests Error:", e);
+        return [];
+    }
+};
+
+export const updateFbAdSetTargeting = async (accessToken: string, adSetId: string, newInterests: any[]) => {
+    try {
+        // 1. Get current targeting
+        const getRes = await fetch(`https://graph.facebook.com/v19.0/${adSetId}?fields=targeting&access_token=${accessToken}`);
+        const getData = await getRes.json();
+        if (getData.error) throw new Error(getData.error.message);
+        let targeting = getData.targeting || {};
+
+        // 2. Prepare new interests array
+        const interestsToApply = newInterests.map(i => ({ id: i.id, name: i.name }));
+
+        // 3. Update flexible_spec
+        let flexibleSpec = targeting.flexible_spec || [];
+        if (flexibleSpec.length === 0) {
+            flexibleSpec.push({ interests: interestsToApply });
+        } else {
+            flexibleSpec[0].interests = interestsToApply;
+        }
+        targeting.flexible_spec = flexibleSpec;
+
+        // 4. Update the AdSet
+        const updateRes = await fetch(`https://graph.facebook.com/v19.0/${adSetId}?access_token=${accessToken}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targeting })
+        });
+        const updateData = await updateRes.json();
+        if (updateData.error) throw new Error(updateData.error.message);
+        return updateData;
+    } catch (e) {
+        console.error("updateFbAdSetTargeting Error:", e);
+        throw e;
     }
 };

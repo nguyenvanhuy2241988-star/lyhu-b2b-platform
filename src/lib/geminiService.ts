@@ -333,10 +333,10 @@ BỐ CỤC TRẢ LỜI BẮT BUỘC (Sử dụng Markdown):
 2. 📊 **Phân tích Chỉ số**: Đánh giá các chỉ số (tốt/xấu, đắt/rẻ).
 3. 🎯 **Đề xuất Hành động (Actionable Insights)**: Liệt kê 2-3 hành động cụ thể để tối ưu. Đặc biệt, nếu Targeting đang quá rộng (Broad) hoặc sai tệp, BẮT BUỘC phải gợi ý 3-5 từ khóa "Sở thích/Hành vi" cụ thể trên Facebook để target chuẩn khách sỉ, tạp hóa (Vd: Bán buôn, Doanh nghiệp nhỏ, Quản trị viên Trang kinh doanh...).
 
-QUY TẮC:
-- Xưng "mình" hoặc "hệ thống", gọi người dùng là "bạn".
-- Khách quan, dựa trên số liệu. Nếu chiến dịch kém, hãy nói thẳng nhưng lịch sự.
-- Tận dụng thông tin nội dung bài viết và targeting để đoán lý do quảng cáo hiệu quả hay thất bại.
+QUY TẮC CỰC KỲ QUAN TRỌNG:
+- Ở dòng CÙNG của câu trả lời, BẮT BUỘC bạn phải in ra một thẻ cấu trúc chứa danh sách các từ khóa tiếng Anh chuẩn của Facebook mà bạn đề xuất (Ví dụ: Wholesale, Retail, Small business owner, Fast-moving consumer goods).
+- Định dạng thẻ phải chính xác tuyệt đối như sau: \`<<<TARGETING:keyword1|keyword2|keyword3>>>\`
+- Không được thiếu thẻ này ở cuối bài.
 `;
 
     const actionsStr = data.actions && data.actions.length > 0 

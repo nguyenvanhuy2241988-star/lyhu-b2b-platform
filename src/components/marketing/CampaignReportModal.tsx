@@ -20,6 +20,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
     const [isLoading, setIsLoading] = useState(true);
     const [aiAnalysis, setAiAnalysis] = useState<string>("");
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [isApplyingTargeting, setIsApplyingTargeting] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -149,18 +150,44 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
             const result = await res.json();
             
             if (result.error) {
-                toast.error(result.error);
+                toast.error("AI Error: " + result.error);
+                setAiAnalysis("Đã có lỗi xảy ra khi gọi AI.");
             } else {
-                setAiAnalysis(result.analysis);
-                toast.success("Phân tích chuyên sâu hoàn tất!");
+                setAiAnalysis(result.reply);
             }
-        } catch (error) {
-            console.error('Lỗi khi gọi AI:', error);
-            toast.error("Lỗi khi kết nối với máy chủ AI. Vui lòng thử lại.");
+        } catch (e: any) {
+            toast.error("Lỗi hệ thống: " + e.message);
+            setAiAnalysis("Không thể kết nối đến máy chủ AI.");
         } finally {
             setIsAnalyzing(false);
         }
     };
+
+    const applyTargeting = async () => {
+        if (!suggestedKeywords.length) return;
+        setIsApplyingTargeting(true);
+        try {
+            const res = await fetch('/api/marketing/update-targeting', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adSetId: details.adsets?.[0]?.id, keywords: suggestedKeywords })
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success('Áp dụng Targeting tự động thành công! Đã thêm ' + data.appliedInterests.length + ' từ khóa. Hãy tải lại trang để thấy cập nhật.');
+            } else {
+                toast.error('Lỗi: ' + data.error);
+            }
+        } catch (e) {
+            toast.error('Lỗi kết nối khi cập nhật Targeting');
+        } finally {
+            setIsApplyingTargeting(false);
+        }
+    };
+
+    const targetingMatch = aiAnalysis?.match(/<<<TARGETING:(.*?)>>>/);
+    const suggestedKeywords = targetingMatch ? targetingMatch[1].split('|') : [];
+    const cleanAiAdvice = aiAnalysis ? aiAnalysis.replace(/<<<TARGETING:.*?>>>/, '') : '';
 
     return (
         <div className="fixed inset-0 z-[60] flex flex-col bg-slate-100 animate-in fade-in duration-200">
@@ -341,10 +368,35 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                             
                             <div className="p-6 bg-slate-50 min-h-[150px]">
                                 {aiAnalysis ? (
-                                    <div className="bg-white rounded-xl p-6 shadow-sm border border-indigo-100">
-                                        <article className="prose prose-indigo max-w-none text-slate-800 prose-p:leading-relaxed prose-li:my-1 prose-headings:text-indigo-900">
-                                            <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
-                                        </article>
+                                    <div className="flex flex-col gap-4">
+                                        <div className="bg-white rounded-xl p-6 shadow-sm border border-indigo-100">
+                                            <article className="prose prose-indigo max-w-none text-slate-800 prose-p:leading-relaxed prose-li:my-1 prose-headings:text-indigo-900">
+                                                <ReactMarkdown>{cleanAiAdvice}</ReactMarkdown>
+                                            </article>
+                                        </div>
+                                        
+                                        {suggestedKeywords.length > 0 && (
+                                            <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-5 mt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                                <div className="flex-1">
+                                                    <h5 className="font-bold text-indigo-900 flex items-center gap-2 mb-2">
+                                                        <Target className="w-5 h-5" /> Tối ưu Targeting Nhanh
+                                                    </h5>
+                                                    <p className="text-sm text-indigo-700 mb-3">AI đã tìm ra {suggestedKeywords.length} từ khóa B2B tiềm năng. Bạn có muốn áp dụng chúng trực tiếp vào chiến dịch không?</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {suggestedKeywords.map((kw: string, i: number) => (
+                                                            <span key={i} className="px-3 py-1 bg-white text-indigo-600 font-semibold text-xs rounded-full border border-indigo-200 shadow-sm">{kw}</span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <button 
+                                                    onClick={applyTargeting}
+                                                    disabled={isApplyingTargeting || !details.adsets?.[0]?.id}
+                                                    className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-md transition-all whitespace-nowrap disabled:opacity-50 active:scale-95 flex items-center gap-2"
+                                                >
+                                                    {isApplyingTargeting ? "Đang cập nhật FB..." : "Áp dụng tự động lên Facebook"}
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-full py-8 text-slate-400">
