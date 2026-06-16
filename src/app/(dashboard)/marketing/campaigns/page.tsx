@@ -417,8 +417,17 @@ export default function CampaignsPage() {
                                         {fbCamp.daily_budget ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(fbCamp.daily_budget) + '/ngày' :
                                          fbCamp.lifetime_budget ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(fbCamp.lifetime_budget) + ' (Tổng)' : '-'}
                                     </td>
-                                    <td className="px-6 py-4 text-right space-x-2">
-                                        <span className="text-xs text-blue-600 font-medium">Synced</span>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div className="flex items-center justify-end gap-3">
+                                            <button 
+                                                onClick={() => setReportCampaign({ id: fbCamp.id, name: fbCamp.name })}
+                                                className="text-indigo-600 hover:text-indigo-900 transition-colors flex items-center gap-1"
+                                                title="Báo cáo & Phân tích"
+                                            >
+                                                <BarChart3 className="w-4 h-4" /> Báo cáo
+                                            </button>
+                                            <span className="text-xs text-blue-600 font-medium">Synced</span>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
