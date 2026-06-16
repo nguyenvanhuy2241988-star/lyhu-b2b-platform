@@ -114,6 +114,7 @@ export default function HRCulturePage() {
                 .eq('id', settingsId);
             if (error) throw error;
             setBankConfig(editBank);
+            refreshBalance();
             setShowBankSettings(false);
         } catch (e) {
             console.error(e);
