@@ -57,7 +57,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
     const ad = details?.ads?.[0];
     const creative = ad?.creative;
     const adBody = creative?.body || creative?.object_story_spec?.link_data?.message || "Không có nội dung text";
-    const adImageUrl = creative?.image_url;
+    const adImageUrl = creative?.image_url || creative?.object_story_spec?.link_data?.picture || creative?.object_story_spec?.video_data?.image_url || creative?.thumbnail_url;
 
     // Advanced Metrics
     const reach = insights?.reach || 0;
