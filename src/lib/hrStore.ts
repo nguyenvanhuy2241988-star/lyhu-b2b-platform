@@ -75,7 +75,7 @@ export const getHRProfiles = async (departmentId?: string) => {
 };
 
 export const hideHRProfile = async (id: string) => {
-    const { error } = await supabase.from('profiles').update({ status: 'inactive' }).eq('id', id);
+    const { error } = await supabase.rpc('hide_hr_profile_rpc', { p_user_id: id });
     if (error) throw error;
 };
 
