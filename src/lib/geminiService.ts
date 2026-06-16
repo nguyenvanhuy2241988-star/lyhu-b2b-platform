@@ -357,7 +357,11 @@ QUY TẮC:
 - Tần suất (Frequency): ${data.frequency}
 - Nội dung bài quảng cáo: "${data.adBody}"
 
-Hãy đưa ra bài phân tích chuyên sâu cho tôi. Lưu ý cực kỳ quan trọng: Hãy tự đối chiếu "Mục tiêu" (objective) với "Các hành động tạo ra" (Actions) để đánh giá đúng hiệu quả. Ví dụ: Nếu mục tiêu là OUTCOME_ENGAGEMENT nhưng ra nhiều "video_view" hoặc "thruplay" thì bản chất đó là chiến dịch tối ưu lượt xem video, nên đánh giá chi phí lượt xem video thay vì báo lỗi không có tin nhắn. Nếu ra "post_engagement" thì đó là chạy tương tác bài viết.`;
+Hãy đưa ra bài phân tích chuyên sâu. 
+LƯU Ý CỰC KỲ QUAN TRỌNG: 
+1. CHỈ ĐÁNH GIÁ ĐẮT/RẺ DỰA TRÊN MỤC TIÊU CHÍNH. Ví dụ mục tiêu là PAGE_LIKES thì chỉ xét giá của 'like' (khoảng 1000-3000đ/like là bình thường). Nếu mục tiêu là tin nhắn thì xét 'messaging_conversation_started'.
+2. TUYỆT ĐỐI KHÔNG lấy Tổng Chi Tiêu chia cho các hành động phụ (như link_click, tin nhắn trong chiến dịch like page) rồi kết luận là đắt hay tệ. Các hành động phụ chỉ là hệ quả đi kèm miễn phí, hãy khen ngợi nếu có nhiều hành động phụ (ví dụ chạy Like Page mà vẫn ra nhiều Video View hoặc Post Engagement là rất tốt).
+3. Không liệt kê lắt nhắt từng loại action phụ. Chỉ tập trung vào Mục tiêu chính, Tần suất, CTR, và CPC.`;
 
     const contents = [
         { role: 'user', parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }
