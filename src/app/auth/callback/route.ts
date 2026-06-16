@@ -34,7 +34,13 @@ export async function GET(request: Request) {
     // BỎ QUA VIỆC OVERRIDE baseUrl.
     // Nếu callback rơi vào domain nào (vercel.app hay lyhu.com.vn) thì BẮT BUỘC phải redirect
     // về đúng domain đó để trình duyệt giữ lại Cookie (tránh lỗi cross-domain login).
-    // let baseUrl = url.origin; (đã khai báo ở trên)
+    let baseUrl = url.origin;
+
+    const error = url.searchParams.get("error");
+    const error_description = url.searchParams.get("error_description");
+    if (error || error_description) {
+        return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent(error_description || error || "unknown")}`);
+    }
 
     if (!code) return NextResponse.redirect(`${baseUrl}/login?error=no_code`);
 
