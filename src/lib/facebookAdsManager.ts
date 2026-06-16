@@ -107,3 +107,26 @@ export const autoSetupFacebookAds = async (params: FbAdSetupParams): Promise<boo
         throw new Error(err.message || "Có lỗi xảy ra khi gọi API Facebook");
     }
 };
+
+export const fetchFbCampaignInsights = async (
+    accessToken: string,
+    campaignId: string,
+    datePreset: 'today' | 'yesterday' | 'last_7d' | 'last_30d' | 'this_month' | 'lifetime' = 'last_7d'
+) => {
+    try {
+        const baseUrl = `https://graph.facebook.com/v19.0`;
+        const url = `${baseUrl}/${campaignId}/insights?fields=spend,impressions,clicks,cpc,ctr,actions&date_preset=${datePreset}&access_token=${accessToken}`;
+        
+        const res = await fetch(url);
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error?.message || 'FB Insights API Error');
+        }
+        
+        const data = await res.json();
+        return data.data && data.data.length > 0 ? data.data[0] : null;
+    } catch (e: any) {
+        console.error("fetchFbCampaignInsights Error:", e);
+        throw e;
+    }
+};

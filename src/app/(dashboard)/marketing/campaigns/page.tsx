@@ -7,8 +7,9 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchCampaigns, MarketingCampaign, createCampaign, deleteCampaign, updateCampaign, getFbAdsConfig, updateFbAdsConfig, fetchFbAdsCampaigns, fetchFacebookPages, FacebookPage } from "@/lib/marketingStore";
 import { autoSetupFacebookAds } from "@/lib/facebookAdsManager";
 import { TableSkeleton } from "@/components/ui/SkeletonUI";
+import { CampaignReportModal } from "@/components/marketing/CampaignReportModal";
 import { toast } from "sonner";
-import { Facebook, Rocket } from "lucide-react";
+import { Facebook, Rocket, BarChart3 } from "lucide-react";
 
 export default function CampaignsPage() {
     const { user, session } = useAuth();
@@ -30,6 +31,7 @@ export default function CampaignsPage() {
         message: "",
     });
     const [fbImageFile, setFbImageFile] = useState<File | null>(null);
+    const [reportCampaign, setReportCampaign] = useState<{ id: string, name: string } | null>(null);
     
     // Facebook Integration State
     const [isFbModalOpen, setIsFbModalOpen] = useState(false);
@@ -666,6 +668,16 @@ export default function CampaignsPage() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* MODAL BÁO CÁO CHIẾN DỊCH FB */}
+            {reportCampaign && fbConfig.accessToken && (
+                <CampaignReportModal 
+                    campaignId={reportCampaign.id}
+                    campaignName={reportCampaign.name}
+                    accessToken={fbConfig.accessToken}
+                    onClose={() => setReportCampaign(null)}
+                />
             )}
         </div>
     );
