@@ -26,7 +26,7 @@ const DEFAULT_BANK_CONFIG = {
 
 export default function HRCulturePage() {
     const { role, user } = useAuth();
-    const isAdmin = role === ROLES.ADMIN || role === ROLES.ACCOUNTANT;
+    const isAdmin = role === ROLES.ADMIN || role === ROLES.ACCOUNTANT || role === ROLES.RECRUITER;
 
     const [events, setEvents] = useState<CultureEvent[]>([]);
     const [transactions, setTransactions] = useState<FundTransaction[]>([]);
