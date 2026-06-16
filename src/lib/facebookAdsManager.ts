@@ -228,15 +228,27 @@ export const fetchAllAdSetsWithInsights = async (accessToken: string, adAccountI
     const baseUrl = `https://graph.facebook.com/v19.0/${actId}`;
     
     try {
-        // Fetch up to 500 ad sets and their lifetime insights, including ARCHIVED and DELETED
-        const effectiveStatus = encodeURIComponent('["ACTIVE","PAUSED","DELETED","ARCHIVED"]');
-        const url = `${baseUrl}/adsets?fields=id,name,status,effective_status,daily_budget,campaign{name,objective},insights.date_preset(maximum){spend,actions,cost_per_action_type}&effective_status=${effectiveStatus}&limit=500&access_token=${accessToken}`;
+        // Fetch campaigns and their nested ad sets with lifetime insights
+        const url = `${baseUrl}/campaigns?fields=id,name,objective,adsets.limit(500){id,name,status,daily_budget,insights.date_preset(maximum){spend,actions,cost_per_action_type}}&limit=50&access_token=${accessToken}`;
         const res = await fetch(url);
         const data = await res.json();
         
         if (data.error) throw new Error(data.error.message);
         
-        const adSets = data.data || [];
+        const campaigns = data.data || [];
+        const adSets: any[] = [];
+
+        // Extract ad sets from each campaign
+        campaigns.forEach((camp: any) => {
+            if (camp.adsets && camp.adsets.data) {
+                camp.adsets.data.forEach((adset: any) => {
+                    adSets.push({
+                        ...adset,
+                        campaign: { name: camp.name, objective: camp.objective }
+                    });
+                });
+            }
+        });
         return adSets.map((adset: any) => {
             const insights = adset.insights?.data?.[0] || {};
             const actions = insights.actions || [];
