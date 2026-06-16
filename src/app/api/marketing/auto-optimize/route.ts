@@ -28,7 +28,7 @@ export async function POST(req: Request) {
             ];
         }
 
-        const activeAdSets = adSets.filter((a: any) => a.status === 'ACTIVE' || a.status === 'PAUSED').map((a: any) => {
+        const activeAdSets = adSets.map((a: any) => {
             // Liên kết CRM: Tính toán tỉ lệ để lại số điện thoại (Lead-to-Phone ratio)
             // Trong thực tế, hệ thống sẽ query bảng crm_leads where source_detail = a.id
             const phoneRate = a.messages > 0 ? (0.3 + Math.random() * 0.4) : 0; // Tỉ lệ random 30-70%
