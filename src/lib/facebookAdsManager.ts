@@ -144,7 +144,7 @@ export const fetchFbCampaignDetails = async (accessToken: string, campaignId: st
         const adSetData = await adSetRes.json();
         
         // Fetch Ads (for Creative info)
-        const adRes = await fetch(`${baseUrl}/${campaignId}/ads?fields=name,creative{image_url,body,title,object_story_spec,video_id}&access_token=${accessToken}`);
+        const adRes = await fetch(`${baseUrl}/${campaignId}/ads?fields=name,creative{image_url,thumbnail_url,body,title,object_story_spec,video_id,asset_feed_spec}&access_token=${accessToken}`);
         const adData = await adRes.json();
         
         return {

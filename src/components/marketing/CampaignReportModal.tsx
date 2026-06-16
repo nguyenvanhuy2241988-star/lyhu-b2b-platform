@@ -56,9 +56,17 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
     // Extract creative info from Ads
     const ad = details?.ads?.[0];
     const creative = ad?.creative;
-    const adBody = creative?.body || creative?.object_story_spec?.link_data?.message || creative?.object_story_spec?.video_data?.message || "Không có nội dung text";
-    const adImageUrl = creative?.image_url || creative?.object_story_spec?.link_data?.picture || creative?.object_story_spec?.video_data?.image_url || creative?.thumbnail_url;
-    const isVideo = creative?.video_id || creative?.object_story_spec?.video_data || false;
+    const adBody = creative?.body || creative?.object_story_spec?.link_data?.message || creative?.object_story_spec?.video_data?.message || creative?.asset_feed_spec?.bodies?.[0]?.text || "Không có nội dung text";
+    
+    // Attempt to extract image from various possible Facebook API structures
+    const adImageUrl = creative?.image_url 
+        || creative?.thumbnail_url
+        || creative?.object_story_spec?.link_data?.picture 
+        || creative?.object_story_spec?.video_data?.image_url 
+        || creative?.asset_feed_spec?.images?.[0]?.url
+        || creative?.asset_feed_spec?.video_titles?.[0]?.url;
+        
+    const isVideo = creative?.video_id || creative?.object_story_spec?.video_data || creative?.asset_feed_spec?.videos?.length > 0 || false;
 
     // Extract Campaign Info
     const objective = details?.campaign?.objective || "Chưa xác định";
