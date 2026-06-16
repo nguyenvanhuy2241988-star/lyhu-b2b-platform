@@ -44,10 +44,10 @@ CREATE POLICY "Users manage own columns" ON task_user_columns FOR ALL USING (aut
 CREATE POLICY "Users manage own placements" ON task_column_placements FOR ALL USING (auth.uid() = user_id);
 
 -- 4. Function: Create default columns for a user
-CREATE OR REPLACE FUNCTION create_default_task_columns(p_user_id UUID)
+CREATE OR REPLACE FUNCTION public.create_default_task_columns(p_user_id UUID)
 RETURNS void AS $$
 BEGIN
-    INSERT INTO task_user_columns (user_id, label, column_type, position) VALUES
+    INSERT INTO public.task_user_columns (user_id, label, column_type, position) VALUES
         (p_user_id, 'Quá hạn',       'date_overdue',    0),
         (p_user_id, 'Hộp thư đến',   'system_inbox',   10),
         (p_user_id, 'Hôm nay',       'date_today',     20),
@@ -56,16 +56,16 @@ BEGIN
         (p_user_id, 'Đã xong',       'system_done',    50)
     ON CONFLICT DO NOTHING;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 5. Trigger: auto-create columns when new profile is created
-CREATE OR REPLACE FUNCTION trigger_create_default_columns()
+CREATE OR REPLACE FUNCTION public.trigger_create_default_columns()
 RETURNS TRIGGER AS $$
 BEGIN
-    PERFORM create_default_task_columns(NEW.id);
+    PERFORM public.create_default_task_columns(NEW.id);
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS trg_create_default_columns ON profiles;
 CREATE TRIGGER trg_create_default_columns
