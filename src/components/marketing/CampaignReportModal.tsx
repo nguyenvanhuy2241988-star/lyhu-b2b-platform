@@ -153,7 +153,8 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                 toast.error("AI Error: " + result.error);
                 setAiAnalysis("Đã có lỗi xảy ra khi gọi AI.");
             } else {
-                setAiAnalysis(result.reply);
+                setAiAnalysis(result.analysis);
+                toast.success("Phân tích chuyên sâu hoàn tất!");
             }
         } catch (e: any) {
             toast.error("Lỗi hệ thống: " + e.message);
