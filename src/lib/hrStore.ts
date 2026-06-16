@@ -320,6 +320,7 @@ export interface FundTransaction {
     description: string;
     category?: string;
     created_at: string;
+    attachment_url?: string;
 }
 
 export const getCultureEvents = async () => {
@@ -388,12 +389,28 @@ export const updateFundTransaction = async (id: string, updates: Partial<Omit<Fu
 };
 
 export const deleteFundTransaction = async (id: string) => {
-    const { error } = await supabase
-        .from('fund_transactions')
-        .delete()
-        .eq('id', id);
-
+    const { error } = await supabase.from('fund_transactions').delete().eq('id', id);
     if (error) throw error;
+};
+
+export const uploadReceiptImages = async (files: File[]) => {
+    const urls: string[] = [];
+    for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+        const { error, data } = await supabase.storage
+            .from('hr-assets')
+            .upload(`receipts/${fileName}`, file);
+            
+        if (error) throw error;
+        
+        const { data: urlData } = supabase.storage
+            .from('hr-assets')
+            .getPublicUrl(`receipts/${fileName}`);
+            
+        urls.push(urlData.publicUrl);
+    }
+    return urls;
 };
 
 // -- FUND CONTRIBUTIONS --

@@ -8,11 +8,11 @@ import {
     getCultureEvents, getFundTransactions, getFundBalance, getUpcomingBirthdays,
     addFundTransaction, updateFundTransaction, deleteFundTransaction,
     getFundContributions, upsertFundContribution, confirmFundContribution, unmarkFundPaid,
-    getFundMonthlyReport, getHRProfiles, hideHRProfile, unhideHRProfile
+    getFundMonthlyReport, getHRProfiles, hideHRProfile, unhideHRProfile, uploadReceiptImages
 } from "@/lib/hrStore";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Calendar, TrendingUp, TrendingDown, Wallet, X, Cake, Plus, QrCode, ChevronLeft, ChevronRight, Check, Clock, Receipt, Settings, Pencil, Trash2, EyeOff, Eye } from "lucide-react";
+import { Calendar, TrendingUp, TrendingDown, Wallet, X, Cake, Plus, QrCode, ChevronLeft, ChevronRight, Check, Clock, Receipt, Settings, Pencil, Trash2, EyeOff, Eye, Edit3 } from "lucide-react";
 
 import { supabase } from "@/lib/supabaseClient";
 
@@ -26,8 +26,9 @@ const DEFAULT_BANK_CONFIG = {
 };
 
 export default function HRCulturePage() {
-    const { role, user } = useAuth();
-    const isAdmin = role === ROLES.ADMIN || role === ROLES.ACCOUNTANT || role === ROLES.RECRUITER;
+    const { role: userRole, user } = useAuth();
+    const isAdmin = userRole === ROLES.ADMIN || userRole === ROLES.ACCOUNTANT || userRole === ROLES.RECRUITER;
+    const isSuperAdmin = userRole === ROLES.ADMIN || userRole === ROLES.ACCOUNTANT;
 
     const [events, setEvents] = useState<CultureEvent[]>([]);
     const [transactions, setTransactions] = useState<FundTransaction[]>([]);
@@ -64,6 +65,8 @@ export default function HRCulturePage() {
     const [isTransModalOpen, setIsTransModalOpen] = useState(false);
     const [editingTrans, setEditingTrans] = useState<FundTransaction | null>(null);
     const [newTrans, setNewTrans] = useState({ description: '', amount: '', type: 'expense', category: 'Ăn uống', created_at: '' });
+    const [receiptFiles, setReceiptFiles] = useState<File[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
 
     // Delete confirmation
     const [deletingTransId, setDeletingTransId] = useState<string | null>(null);
@@ -194,6 +197,7 @@ export default function HRCulturePage() {
     const openAddTransaction = () => {
         setEditingTrans(null);
         setNewTrans({ description: '', amount: '', type: 'expense', category: 'Ăn uống', created_at: format(new Date(), "yyyy-MM-dd'T'HH:mm") });
+        setReceiptFiles([]);
         setIsTransModalOpen(true);
     };
 
@@ -206,18 +210,31 @@ export default function HRCulturePage() {
             category: t.category || 'Khác',
             created_at: format(new Date(t.created_at), "yyyy-MM-dd'T'HH:mm")
         });
+        setReceiptFiles([]);
         setIsTransModalOpen(true);
     };
 
     const handleSaveTransaction = async () => {
         if (!newTrans.description || !newTrans.amount) return;
+        setIsUploading(true);
         try {
+            let uploadedUrls: string[] = [];
+            if (receiptFiles.length > 0) {
+                uploadedUrls = await uploadReceiptImages(receiptFiles);
+            }
+            
+            // Retain old attachments if no new ones are uploaded during edit
+            const attachment_url = uploadedUrls.length > 0 
+                ? JSON.stringify(uploadedUrls) 
+                : editingTrans?.attachment_url;
+
             if (editingTrans) {
                 await updateFundTransaction(editingTrans.id, {
                     description: newTrans.description,
                     amount: Number(newTrans.amount),
                     type: newTrans.type as 'income' | 'expense',
                     category: newTrans.category,
+                    attachment_url,
                     ...(newTrans.created_at ? { created_at: new Date(newTrans.created_at).toISOString() } : {})
                 });
             } else {
@@ -226,6 +243,7 @@ export default function HRCulturePage() {
                     amount: Number(newTrans.amount),
                     type: newTrans.type as 'income' | 'expense',
                     category: newTrans.category,
+                    attachment_url,
                     ...(newTrans.created_at ? { created_at: new Date(newTrans.created_at).toISOString() } : {})
                 });
             }
@@ -233,9 +251,12 @@ export default function HRCulturePage() {
             refreshBalance();
             setIsTransModalOpen(false);
             setEditingTrans(null);
+            setReceiptFiles([]);
         } catch (error) {
             console.error(error);
             alert("Lỗi lưu giao dịch");
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -488,24 +509,30 @@ export default function HRCulturePage() {
                                     {filteredTransactions.length === 0 ? (
                                         <p className="text-sm text-slate-400 text-center py-6">Không có giao dịch nào trong tháng này.</p>
                                     ) : filteredTransactions.map(t => (
-                                        <div key={t.id} className="px-5 py-3 flex items-start justify-between gap-3 group">
-                                            <div className="flex items-start gap-3 min-w-0">
-                                                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${t.type === 'income' ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'}`}>
-                                                    {t.type === 'income' ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                                        <div key={t.id} className="p-4 flex items-center justify-between border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors group">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-medium text-slate-900">{t.description}</p>
+                                                    {t.attachment_url && (
+                                                        <a href={JSON.parse(t.attachment_url)[0]} target="_blank" rel="noreferrer" title="Xem hóa đơn/chứng từ" className="text-slate-400 hover:text-primary-600 transition-colors">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                                        </a>
+                                                    )}
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-sm text-slate-900 truncate">{t.description}</p>
-                                                    <p className="text-[11px] text-slate-400">{format(new Date(t.created_at), 'dd/MM/yyyy HH:mm')} · {t.category}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-xs text-slate-500">{format(new Date(t.created_at), 'dd/MM/yyyy HH:mm')}</span>
+                                                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                                    <span className="text-xs text-slate-500">{t.category}</span>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <span className={`text-sm font-semibold whitespace-nowrap ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-700'}`}>
+                                            <div className="flex items-center gap-4">
+                                                <span className={`text-sm font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-900'}`}>
                                                     {t.type === 'income' ? '+' : '-'}{fmt(t.amount)}
                                                 </span>
-                                                {isAdmin && (
+                                                {isSuperAdmin && (
                                                     <div className="hidden group-hover:flex items-center gap-1">
-                                                        <button onClick={() => openEditTransaction(t)} className="p-1 text-slate-400 hover:text-primary-600 rounded"><Pencil className="w-3 h-3" /></button>
-                                                        <button onClick={() => setDeletingTransId(t.id)} className="p-1 text-slate-400 hover:text-rose-600 rounded"><Trash2 className="w-3 h-3" /></button>
+                                                        <button onClick={() => openEditTransaction(t)} className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors"><Edit3 className="w-4 h-4" /></button>
+                                                        <button onClick={() => setDeletingTransId(t.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"><Trash2 className="w-4 h-4" /></button>
                                                     </div>
                                                 )}
                                             </div>
@@ -834,8 +861,9 @@ export default function HRCulturePage() {
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Số dư ban đầu (VNĐ)</label>
-                                <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                <input type="number" disabled={!isSuperAdmin} className={`w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors ${!isSuperAdmin ? 'bg-slate-50 cursor-not-allowed text-slate-400' : ''}`}
                                     placeholder="0" value={editBank.initialBalance} onChange={e => setEditBank({ ...editBank, initialBalance: Number(e.target.value) })} />
+                                {!isSuperAdmin && <p className="text-[10px] text-slate-400 mt-1">Chỉ Admin và Kế toán được sửa số dư đầu kỳ.</p>}
                             </div>
                         </div>
                         <div className="px-5 pb-5">
@@ -889,11 +917,22 @@ export default function HRCulturePage() {
                                 <input type="datetime-local" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
                                     value={newTrans.created_at} onChange={e => setNewTrans({ ...newTrans, created_at: e.target.value })} />
                             </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1.5">Hóa đơn / Chứng từ (Nhiều ảnh)</label>
+                                <input type="file" multiple accept="image/*" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                                    onChange={e => setReceiptFiles(e.target.files ? Array.from(e.target.files) : [])} />
+                                {editingTrans?.attachment_url && receiptFiles.length === 0 && (
+                                    <p className="text-xs text-emerald-600 mt-2 font-medium flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        Đã có hóa đơn đính kèm
+                                    </p>
+                                )}
+                            </div>
                         </div>
                         <div className="px-5 pb-5">
-                            <button onClick={handleSaveTransaction}
-                                className="w-full py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors">
-                                {editingTrans ? 'Cập nhật' : 'Xác nhận'}
+                            <button onClick={handleSaveTransaction} disabled={isUploading}
+                                className={`w-full py-2.5 text-white rounded-lg text-sm font-medium transition-colors ${isUploading ? 'bg-slate-400 cursor-not-allowed' : 'bg-primary-600 hover:bg-primary-700'}`}>
+                                {isUploading ? 'Đang lưu và tải ảnh...' : 'Lưu giao dịch'}
                             </button>
                         </div>
                     </div>
