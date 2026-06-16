@@ -5,7 +5,7 @@ import { FileText, Calendar, Database, LayoutDashboard, Search, Users, UserPlus,
 import Link from 'next/link';
 import { useAuth } from "@/components/auth/AuthProvider";
 import { StatsSkeleton } from "@/components/ui/SkeletonUI";
-import { fetchMarketingStats, fetchCampaignPerformance, CampaignPerformance } from "@/lib/marketingStore";
+import { fetchMarketingStats, fetchCampaignPerformance, CampaignPerformance, getFbAdsConfig } from "@/lib/marketingStore";
 import OptimizationDashboard from "@/components/marketing/OptimizationDashboard";
 import AutoCampaignGenerator from "@/components/marketing/AutoCampaignGenerator";
 
@@ -21,6 +21,8 @@ export default function MarketingDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [isOptimizeOpen, setIsOptimizeOpen] = useState(false);
     const [isAutoCampOpen, setIsAutoCampOpen] = useState(false);
+    const [fbToken, setFbToken] = useState('');
+    const [fbAccountId, setFbAccountId] = useState('');
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -28,9 +30,10 @@ export default function MarketingDashboard() {
             setIsLoading(true);
             try {
                 // Fetch stats from Supabase
-                const [statData, perfData] = await Promise.all([
+                const [statData, perfData, fbData] = await Promise.all([
                     fetchMarketingStats(session.access_token),
-                    fetchCampaignPerformance(session.access_token)
+                    fetchCampaignPerformance(session.access_token),
+                    getFbAdsConfig(session.access_token)
                 ]);
 
                 setStats({
@@ -40,6 +43,11 @@ export default function MarketingDashboard() {
                     budgetUsed: statData.budget_active
                 });
                 setPerformance(perfData);
+
+                if (fbData) {
+                    setFbToken(fbData.facebook_ads_config.accessToken);
+                    setFbAccountId(fbData.facebook_ads_config.adAccountId);
+                }
 
             } catch (error) {
                 console.error("Error fetching marketing stats:", error);
@@ -304,8 +312,8 @@ export default function MarketingDashboard() {
             <OptimizationDashboard 
                 isOpen={isOptimizeOpen}
                 onClose={() => setIsOptimizeOpen(false)}
-                accessToken={session?.access_token || ''}
-                adAccountId={session?.user?.id || ''} // Mocking adAccountId using user id for now
+                accessToken={fbToken}
+                adAccountId={fbAccountId}
             />
 
             <AutoCampaignGenerator
