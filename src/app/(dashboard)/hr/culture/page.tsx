@@ -22,6 +22,7 @@ const DEFAULT_BANK_CONFIG = {
     accountName: '',
     monthlyAmount: 50000,
     companyAmount: 950000,
+    initialBalance: 0
 };
 
 export default function HRCulturePage() {
@@ -62,7 +63,7 @@ export default function HRCulturePage() {
     // Transaction Modal (add/edit)
     const [isTransModalOpen, setIsTransModalOpen] = useState(false);
     const [editingTrans, setEditingTrans] = useState<FundTransaction | null>(null);
-    const [newTrans, setNewTrans] = useState({ description: '', amount: '', type: 'expense', category: 'Ăn uống' });
+    const [newTrans, setNewTrans] = useState({ description: '', amount: '', type: 'expense', category: 'Ăn uống', created_at: '' });
 
     // Delete confirmation
     const [deletingTransId, setDeletingTransId] = useState<string | null>(null);
@@ -191,7 +192,7 @@ export default function HRCulturePage() {
     // ADD / EDIT transaction
     const openAddTransaction = () => {
         setEditingTrans(null);
-        setNewTrans({ description: '', amount: '', type: 'expense', category: 'Ăn uống' });
+        setNewTrans({ description: '', amount: '', type: 'expense', category: 'Ăn uống', created_at: format(new Date(), "yyyy-MM-dd'T'HH:mm") });
         setIsTransModalOpen(true);
     };
 
@@ -201,7 +202,8 @@ export default function HRCulturePage() {
             description: t.description,
             amount: String(t.amount),
             type: t.type,
-            category: t.category || 'Khác'
+            category: t.category || 'Khác',
+            created_at: format(new Date(t.created_at), "yyyy-MM-dd'T'HH:mm")
         });
         setIsTransModalOpen(true);
     };
@@ -214,14 +216,16 @@ export default function HRCulturePage() {
                     description: newTrans.description,
                     amount: Number(newTrans.amount),
                     type: newTrans.type as 'income' | 'expense',
-                    category: newTrans.category
+                    category: newTrans.category,
+                    ...(newTrans.created_at ? { created_at: new Date(newTrans.created_at).toISOString() } : {})
                 });
             } else {
                 await addFundTransaction({
                     description: newTrans.description,
                     amount: Number(newTrans.amount),
                     type: newTrans.type as 'income' | 'expense',
-                    category: newTrans.category
+                    category: newTrans.category,
+                    ...(newTrans.created_at ? { created_at: new Date(newTrans.created_at).toISOString() } : {})
                 });
             }
             refreshTransactions();
@@ -827,6 +831,11 @@ export default function HRCulturePage() {
                                 <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
                                     placeholder="950000" value={editBank.companyAmount} onChange={e => setEditBank({ ...editBank, companyAmount: Number(e.target.value) })} />
                             </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1.5">Số dư ban đầu (VNĐ)</label>
+                                <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                    placeholder="0" value={editBank.initialBalance} onChange={e => setEditBank({ ...editBank, initialBalance: Number(e.target.value) })} />
+                            </div>
                         </div>
                         <div className="px-5 pb-5">
                             <button onClick={saveBankConfig} className="w-full py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors">Lưu cài đặt</button>
@@ -873,6 +882,11 @@ export default function HRCulturePage() {
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Mô tả</label>
                                 <input className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors" placeholder="Nội dung giao dịch..."
                                     value={newTrans.description} onChange={e => setNewTrans({ ...newTrans, description: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1.5">Thời gian giao dịch</label>
+                                <input type="datetime-local" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                    value={newTrans.created_at} onChange={e => setNewTrans({ ...newTrans, created_at: e.target.value })} />
                             </div>
                         </div>
                         <div className="px-5 pb-5">

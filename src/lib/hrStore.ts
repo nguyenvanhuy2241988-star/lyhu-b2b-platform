@@ -345,23 +345,26 @@ export const getFundTransactions = async () => {
 };
 
 export const getFundBalance = async () => {
-    // Simple calculation from recent history or creating a separate RPC/View is better for real apps
-    // For MVP/Demo: Fetch all and sum (warning: performance heavy later)
-    // Optimization: We will just fetch all for now as dataset is small.
-    const { data, error } = await supabase
-        .from('fund_transactions')
-        .select('amount, type');
-
-    if (error) throw error;
-
-    const balance = (data || []).reduce((acc: number, curr: any) => {
+    // 1. Transactions (Income/Expense)
+    const { data: transData, error: transErr } = await supabase.from('fund_transactions').select('amount, type');
+    if (transErr) throw transErr;
+    const transBalance = (transData || []).reduce((acc: number, curr: any) => {
         return curr.type === 'income' ? acc + Number(curr.amount) : acc - Number(curr.amount);
     }, 0);
 
-    return balance;
+    // 2. Confirmed Contributions
+    const { data: contribData, error: contribErr } = await supabase.from('fund_contributions').select('amount').eq('status', 'confirmed');
+    if (contribErr) throw contribErr;
+    const contribBalance = (contribData || []).reduce((acc: number, curr: any) => acc + Number(curr.amount), 0);
+
+    // 3. Initial Balance from Settings
+    const { data: configData } = await supabase.from('app_settings').select('value').eq('key', 'bank_config').single();
+    const initialBalance = configData?.value?.initialBalance || 0;
+
+    return transBalance + contribBalance + Number(initialBalance);
 };
 
-export const addFundTransaction = async (transaction: Omit<FundTransaction, 'id' | 'created_at'>) => {
+export const addFundTransaction = async (transaction: Partial<FundTransaction> & Omit<FundTransaction, 'id' | 'created_at'>) => {
     const { data, error } = await supabase
         .from('fund_transactions')
         .insert([transaction])
