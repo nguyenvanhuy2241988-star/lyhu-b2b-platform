@@ -7,12 +7,12 @@ import {
     CultureEvent, FundTransaction, FundContribution,
     getCultureEvents, getFundTransactions, getFundBalance, getUpcomingBirthdays,
     addFundTransaction, updateFundTransaction, deleteFundTransaction,
-    getFundContributions, upsertFundContribution, confirmFundContribution,
-    getFundMonthlyReport, getHRProfiles
+    getFundContributions, upsertFundContribution, confirmFundContribution, unmarkFundPaid,
+    getFundMonthlyReport, getHRProfiles, hideHRProfile
 } from "@/lib/hrStore";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Calendar, TrendingUp, TrendingDown, Wallet, X, Cake, Plus, QrCode, ChevronLeft, ChevronRight, Check, Clock, Receipt, Settings, Pencil, Trash2 } from "lucide-react";
+import { Calendar, TrendingUp, TrendingDown, Wallet, X, Cake, Plus, QrCode, ChevronLeft, ChevronRight, Check, Clock, Receipt, Settings, Pencil, Trash2, EyeOff } from "lucide-react";
 
 import { supabase } from "@/lib/supabaseClient";
 
@@ -258,6 +258,21 @@ export default function HRCulturePage() {
             await upsertFundContribution(userId, contribMonth, contribYear, 'confirmed');
             getFundContributions(contribMonth, contribYear).then(setContributions);
         } catch (e) { console.error(e); alert("Lỗi"); }
+    };
+
+    const handleMarkUnpaid = async (userId: string) => {
+        try {
+            await unmarkFundPaid(userId, contribMonth, contribYear);
+            getFundContributions(contribMonth, contribYear).then(setContributions);
+        } catch (e) { console.error(e); alert("Lỗi"); }
+    };
+
+    const handleHideProfile = async (userId: string, name: string) => {
+        if (!confirm(`Bạn có chắc muốn ẩn nhân sự ${name}?`)) return;
+        try {
+            await hideHRProfile(userId);
+            refreshProfiles();
+        } catch (e) { console.error(e); alert("Lỗi ẩn nhân sự"); }
     };
 
     const fmt = (amount: number) =>
@@ -535,9 +550,15 @@ export default function HRCulturePage() {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         {c.status === 'confirmed' ? (
-                                            <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
-                                                <Check className="w-3 h-3" /> Đã đóng
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
+                                                    <Check className="w-3 h-3" /> Đã đóng
+                                                </span>
+                                                {isAdmin && (
+                                                    <button onClick={() => handleMarkUnpaid(c.userId)}
+                                                        className="text-xs text-rose-600 hover:text-rose-700 font-medium ml-2">Bỏ đã đóng</button>
+                                                )}
+                                            </div>
                                         ) : c.status === 'paid' ? (
                                             <div className="flex items-center gap-2">
                                                 <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">
@@ -547,13 +568,21 @@ export default function HRCulturePage() {
                                                     <button onClick={() => handleConfirmContribution(c.contribId!)}
                                                         className="text-xs text-primary-600 hover:text-primary-700 font-medium">Xác nhận</button>
                                                 )}
+                                                {isAdmin && (
+                                                    <button onClick={() => handleMarkUnpaid(c.userId)}
+                                                        className="text-xs text-rose-600 hover:text-rose-700 font-medium ml-2">Bỏ</button>
+                                                )}
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-2">
                                                 <span className="text-xs text-slate-400">Chưa đóng</span>
                                                 {isAdmin && (
-                                                    <button onClick={() => handleMarkPaid(c.userId)}
-                                                        className="text-xs text-primary-600 hover:text-primary-700 font-medium">Đánh dấu đã đóng</button>
+                                                    <div className="flex items-center gap-3">
+                                                        <button onClick={() => handleMarkPaid(c.userId)}
+                                                            className="text-xs text-primary-600 hover:text-primary-700 font-medium">Đánh dấu đã đóng</button>
+                                                        <button onClick={() => handleHideProfile(c.userId, c.fullName)} title="Ẩn nhân sự khỏi danh sách"
+                                                            className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors"><EyeOff className="w-4 h-4" /></button>
+                                                    </div>
                                                 )}
                                             </div>
                                         )}

@@ -62,6 +62,7 @@ export const getHRProfiles = async (departmentId?: string) => {
             *,
             department:departments!profiles_department_id_fkey(name)
         `)
+        .neq('status', 'inactive')
         .order('full_name');
 
     if (departmentId) {
@@ -71,6 +72,11 @@ export const getHRProfiles = async (departmentId?: string) => {
     const { data, error } = await query;
     if (error) throw error;
     return data as HRProfile[];
+};
+
+export const hideHRProfile = async (id: string) => {
+    const { error } = await supabase.from('profiles').update({ status: 'inactive' }).eq('id', id);
+    if (error) throw error;
 };
 
 export const updateHRProfile = async (id: string, updates: Partial<HRProfile>) => {
@@ -424,7 +430,17 @@ export const upsertFundContribution = async (userId: string, month: number, year
         .single();
 
     if (error) throw error;
-    return data;
+    return data as FundContribution;
+};
+
+export const unmarkFundPaid = async (userId: string, month: number, year: number) => {
+    const { error } = await supabase
+        .from('fund_contributions')
+        .delete()
+        .eq('user_id', userId)
+        .eq('month', month)
+        .eq('year', year);
+    if (error) throw error;
 };
 
 export const confirmFundContribution = async (contributionId: string, adminId: string) => {
