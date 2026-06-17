@@ -223,13 +223,28 @@ export const updateFbAdSetTargeting = async (accessToken: string, adSetId: strin
     }
 };
 
-export const fetchAllAdSetsWithInsights = async (accessToken: string, adAccountId: string) => {
+export const fetchAllAdSetsWithInsights = async (
+    accessToken: string, 
+    adAccountId: string,
+    timeFilter: string = 'maximum',
+    objectiveFilter: string = 'all'
+) => {
     const actId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
     const baseUrl = `https://graph.facebook.com/v19.0/${actId}`;
     
     try {
-        // Fetch campaigns and their nested ad sets with lifetime insights
-        const url = `${baseUrl}/campaigns?fields=id,name,objective,adsets.limit(500){id,name,status,daily_budget,insights.date_preset(maximum){spend,actions,cost_per_action_type}}&limit=50&access_token=${accessToken}`;
+        // Construct insights query based on timeFilter
+        let insightsQuery = 'insights.date_preset(maximum)';
+        if (timeFilter === 'last_30d') insightsQuery = 'insights.date_preset(last_30d)';
+        else if (timeFilter === 'this_month') insightsQuery = 'insights.date_preset(this_month)';
+        else if (timeFilter === 'last_month') insightsQuery = 'insights.date_preset(last_month)';
+        else if (timeFilter === 'since_oct_2025') {
+            const today = new Date().toISOString().split('T')[0];
+            insightsQuery = `insights.time_range({'since':'2025-10-01','until':'${today}'})`;
+        }
+
+        // Fetch campaigns and their nested ad sets with insights
+        const url = `${baseUrl}/campaigns?fields=id,name,objective,adsets.limit(500){id,name,status,daily_budget,${insightsQuery}{spend,actions,cost_per_action_type}}&limit=50&access_token=${accessToken}`;
         const res = await fetch(url);
         const data = await res.json();
         
@@ -240,6 +255,10 @@ export const fetchAllAdSetsWithInsights = async (accessToken: string, adAccountI
 
         // Extract ad sets from each campaign
         campaigns.forEach((camp: any) => {
+            // Apply objective filter if needed
+            if (objectiveFilter === 'messages' && camp.objective !== 'OUTCOME_ENGAGEMENT') return; // Note: In newer FB API, messages are often OUTCOME_ENGAGEMENT. In older, it was MESSAGES.
+            if (objectiveFilter === 'conversions' && camp.objective !== 'OUTCOME_SALES' && camp.objective !== 'OUTCOME_LEADS' && camp.objective !== 'CONVERSIONS') return;
+
             if (camp.adsets && camp.adsets.data) {
                 camp.adsets.data.forEach((adset: any) => {
                     adSets.push({

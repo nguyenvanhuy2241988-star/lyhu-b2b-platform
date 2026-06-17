@@ -86,6 +86,7 @@ export default function BotActivityLog({ userId }: { userId?: string }) {
                             {log.action_type === 'defense' && <span className="text-purple-400 font-bold mr-2">[DEFENSE]</span>}
                             {log.action_type === 'search' && <span className="text-blue-400 font-bold mr-2">[SEARCH]</span>}
                             {log.action_type === 'invite' && <span className="text-green-400 font-bold mr-2">[INVITE]</span>}
+                            {log.action_type === 'AI_OPTIMIZATION' && <span className="text-pink-400 font-bold mr-2">[AI OPTIMIZE]</span>}
 
                             <span className={
                                 log.status === 'error' ? 'text-red-400' :

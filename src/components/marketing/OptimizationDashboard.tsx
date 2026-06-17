@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Bot, Play, Pause, TrendingUp, AlertCircle, CheckCircle2, ChevronRight, X } from 'lucide-react';
+import { Bot, Play, Pause, TrendingUp, AlertCircle, CheckCircle2, ChevronRight, X, Filter, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface OptimizationDashboardProps {
@@ -18,16 +18,32 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
     const [hasAnalyzed, setHasAnalyzed] = useState(false);
     const [rawCount, setRawCount] = useState(0);
 
+    // Filters
+    const [objectiveFilter, setObjectiveFilter] = useState('messages');
+    const [timeFilter, setTimeFilter] = useState('since_oct_2025');
+    const [sinceDate, setSinceDate] = useState('2025-10-01');
+    const [untilDate, setUntilDate] = useState(new Date().toISOString().split('T')[0]);
+
     if (!isOpen) return null;
 
     const handleAnalyze = async () => {
         setIsAnalyzing(true);
         setHasAnalyzed(false);
         try {
+            let actualTimeRange = timeFilter;
+            if (timeFilter === 'custom') {
+                actualTimeRange = `custom_${sinceDate}_${untilDate}`;
+            }
+
             const res = await fetch(`/api/marketing/auto-optimize?t=${Date.now()}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accessToken, adAccountId })
+                body: JSON.stringify({ 
+                    accessToken, 
+                    adAccountId,
+                    objectiveFilter,
+                    timeRange: actualTimeRange
+                })
             });
             const data = await res.json();
             
@@ -54,6 +70,37 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
         } finally {
             setIsAnalyzing(false);
         }
+    };
+
+    const handleExportCSV = () => {
+        if (!recommendations || recommendations.length === 0) {
+            toast.error("Không có dữ liệu để xuất");
+            return;
+        }
+
+        const headers = ["Tên Nhóm QC", "Quyết định AI", "Lý do", "Chi tiêu (VND)", "Tin nhắn", "Giá/Tin", "Số SĐT", "Giá/SĐT"];
+        
+        const rows = recommendations.map(r => [
+            `"${r.name.replace(/"/g, '""')}"`,
+            r.action,
+            `"${r.reason.replace(/"/g, '""')}"`,
+            r.spend || 0,
+            r.messages || 0,
+            r.cost_per_message || 0,
+            r.phone_count || 0,
+            r.cost_per_phone || 0
+        ]);
+
+        const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Bot_AI_Optimization_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Đã xuất file báo cáo!");
     };
 
     const handleExecute = async () => {
@@ -106,8 +153,61 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                             </div>
                             <h3 className="text-xl font-bold text-slate-800 mb-2">Sẵn sàng tối ưu</h3>
                             <p className="text-slate-500 mb-8 max-w-md mx-auto">
-                                AI sẽ quét toàn bộ chiến dịch đang chạy, tính toán Cost per Message và đề xuất Tắt/Tăng ngân sách tự động để tối đa hóa lợi nhuận cho bạn.
+                                Cài đặt bộ lọc để AI tập trung vào đúng các chiến dịch bạn muốn đánh giá.
                             </p>
+
+                            <div className="max-w-md mx-auto bg-slate-50 p-5 rounded-xl border border-slate-200 mb-8 text-left space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
+                                        <Filter className="w-4 h-4" /> Mục tiêu quảng cáo
+                                    </label>
+                                    <select 
+                                        className="w-full border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                        value={objectiveFilter}
+                                        onChange={(e) => setObjectiveFilter(e.target.value)}
+                                    >
+                                        <option value="messages">Chỉ chiến dịch Tin Nhắn</option>
+                                        <option value="conversions">Chỉ chiến dịch Chuyển đổi</option>
+                                        <option value="all">Tất cả mục tiêu</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
+                                        <Calendar className="w-4 h-4" /> Thời gian phân tích
+                                    </label>
+                                    <select 
+                                        className="w-full border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 mb-2"
+                                        value={timeFilter}
+                                        onChange={(e) => setTimeFilter(e.target.value)}
+                                    >
+                                        <option value="maximum">Toàn thời gian (Lifetime)</option>
+                                        <option value="since_oct_2025">Từ tháng 10/2025 trở đi</option>
+                                        <option value="last_30d">30 ngày qua</option>
+                                        <option value="this_month">Tháng này</option>
+                                        <option value="custom">Tùy chỉnh khoảng thời gian</option>
+                                    </select>
+
+                                    {timeFilter === 'custom' && (
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <input 
+                                                type="date" 
+                                                className="flex-1 border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm"
+                                                value={sinceDate}
+                                                onChange={(e) => setSinceDate(e.target.value)}
+                                            />
+                                            <span className="text-slate-500">-</span>
+                                            <input 
+                                                type="date" 
+                                                className="flex-1 border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm"
+                                                value={untilDate}
+                                                onChange={(e) => setUntilDate(e.target.value)}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             <button 
                                 onClick={handleAnalyze}
                                 disabled={isAnalyzing}
@@ -121,7 +221,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                 ) : (
                                     <>
                                         <Play className="w-5 h-5" />
-                                        Bắt đầu Quét toàn hệ thống
+                                        Bắt đầu Quét & Phân tích
                                     </>
                                 )}
                             </button>
@@ -212,6 +312,12 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                             Bấm "Thực thi" để áp dụng các thay đổi này vào Tài khoản Facebook của bạn.
                         </p>
                         <div className="flex gap-3">
+                            <button 
+                                onClick={handleExportCSV}
+                                className="px-5 py-2.5 text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-xl font-medium transition-colors"
+                            >
+                                Xuất Excel
+                            </button>
                             <button 
                                 onClick={() => setHasAnalyzed(false)}
                                 className="px-5 py-2.5 text-slate-600 hover:bg-slate-200 rounded-xl font-medium transition-colors"
