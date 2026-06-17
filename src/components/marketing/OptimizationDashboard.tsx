@@ -57,7 +57,10 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                     current_budget: matchedRaw?.daily_budget || "0",
                     cost_per_message: matchedRaw?.cost_per_message || 0,
                     spend: matchedRaw?.spend || 0,
-                    messages: matchedRaw?.messages || 0
+                    messages: matchedRaw?.messages || 0,
+                    phone_count: matchedRaw?.phone_count || 0,
+                    phone_rate: matchedRaw?.phone_rate || 0,
+                    cost_per_phone: matchedRaw?.cost_per_phone || 0
                 };
             });
 
