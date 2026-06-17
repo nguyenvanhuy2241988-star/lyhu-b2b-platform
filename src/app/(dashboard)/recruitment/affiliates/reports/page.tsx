@@ -17,11 +17,8 @@ export default function AffiliateReportsPage() {
 
   const isAdminRole = ['admin', 'manager', 'hr_manager', 'director'].includes(role || '');
 
-  if (role && !isAdminRole) {
-    return <HrDailyView />;
-  }
-
   const fetchReports = async () => {
+    if (!isAdminRole) return; // Don't fetch if not admin
     setLoading(true);
     let start = dayjs().format('YYYY-MM-DD');
     let end = dayjs().format('YYYY-MM-DD');
@@ -48,7 +45,11 @@ export default function AffiliateReportsPage() {
 
   useEffect(() => {
     fetchReports();
-  }, [dateRange]);
+  }, [dateRange, isAdminRole]);
+
+  if (role && !isAdminRole) {
+    return <HrDailyView />;
+  }
 
   const renderProgress = (actual: number, target: number) => {
     const percent = target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0;
