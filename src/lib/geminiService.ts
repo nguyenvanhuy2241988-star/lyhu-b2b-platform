@@ -349,7 +349,8 @@ QUY TẮC CỰC KỲ QUAN TRỌNG:
 
     const userPrompt = `Dữ liệu chiến dịch cần phân tích:
 - Tên chiến dịch: ${data.name}
-- Mục tiêu: ${data.objective}
+- Mục tiêu chiến dịch (Objective): ${data.objective}
+- Mục tiêu tối ưu của nhóm quảng cáo (Optimization Goal): ${data.optimizationGoal || 'Không rõ'}
 - Trạng thái: ${data.status}
 - Tuổi: ${data.ageMin}-${data.ageMax} | Vị trí: ${data.countries}
 - Đã chi tiêu: ${data.spend} đ
@@ -363,9 +364,9 @@ QUY TẮC CỰC KỲ QUAN TRỌNG:
 
 Hãy đưa ra bài phân tích chuyên sâu. 
 LƯU Ý CỰC KỲ QUAN TRỌNG: 
-1. CHỈ ĐÁNH GIÁ ĐẮT/RẺ DỰA TRÊN MỤC TIÊU CHÍNH. Ví dụ mục tiêu là PAGE_LIKES thì chỉ xét giá của 'like' (khoảng 1000-3000đ/like là bình thường). Nếu mục tiêu là tin nhắn thì xét 'messaging_conversation_started'.
+1. CHỈ ĐÁNH GIÁ ĐẮT/RẺ DỰA TRÊN MỤC TIÊU TỐI ƯU CỦA NHÓM QUẢNG CÁO (Optimization Goal). Ví dụ Mục tiêu tối ưu là PAGE_LIKES thì chỉ xét giá của 'like' (khoảng 1000-3000đ/like là bình thường). Nếu mục tiêu là CONVERSATIONS thì xét 'messaging_conversation_started'.
 2. TUYỆT ĐỐI KHÔNG lấy Tổng Chi Tiêu chia cho các hành động phụ (như link_click, tin nhắn trong chiến dịch like page) rồi kết luận là đắt hay tệ. Các hành động phụ chỉ là hệ quả đi kèm miễn phí, hãy khen ngợi nếu có nhiều hành động phụ (ví dụ chạy Like Page mà vẫn ra nhiều Video View hoặc Post Engagement là rất tốt).
-3. Không liệt kê lắt nhắt từng loại action phụ. Chỉ tập trung vào Mục tiêu chính, Tần suất, CTR, và CPC.`;
+3. Không liệt kê lắt nhắt từng loại action phụ. Chỉ tập trung vào Mục tiêu tối ưu chính, Tần suất, CTR, và CPC.`;
 
     const contents = [
         { role: 'user', parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }

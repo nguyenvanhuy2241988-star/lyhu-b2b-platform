@@ -140,6 +140,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
             const reqData = {
                 name: campaignName,
                 objective: details.campaign?.objective,
+                optimizationGoal: optimizationGoal,
                 status: details.campaign?.status,
                 ageMin: adSet?.targeting?.age_min,
                 ageMax: adSet?.targeting?.age_max,
