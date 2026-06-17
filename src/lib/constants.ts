@@ -308,6 +308,7 @@ export const NAV_ITEMS = {
         { label: "Trung tâm BOT Tự động", href: "/shared/bot-center", icon: Bot },
         { label: "Hộp thư (Inbox)", href: "/marketing/inbox", icon: MessageCircle },
         { label: "Chiến dịch", href: "/marketing/campaigns", icon: Megaphone },
+        { label: "Lịch sử Tối ưu AI", href: "/marketing/ai-history", icon: Bot },
         { label: "Leads", href: "/marketing/leads", icon: Users },
         { label: "Content & Lịch", href: "/marketing/content", icon: Calendar },
         { label: "Tin tức & Blog", href: "/marketing/blog", icon: BookOpen },

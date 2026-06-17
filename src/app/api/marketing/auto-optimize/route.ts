@@ -5,15 +5,20 @@ import { autoOptimizeMarketingCampaigns } from '@/lib/geminiService';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { accessToken, adAccountId, timeRange = 'maximum', objectiveFilter = 'all' } = body;
+        const { accessToken, adAccountId, timeRange = 'maximum', objectiveFilter = 'all', statusFilter = 'ACTIVE' } = body;
 
         if (!accessToken || !adAccountId) {
             console.warn("No accessToken or adAccountId, but proceeding with mock data");
         }
 
         // 1. Fetch all active ad sets with insights
-        const adSets = await fetchAllAdSetsWithInsights(accessToken, adAccountId, timeRange, objectiveFilter);
+        let adSets = await fetchAllAdSetsWithInsights(accessToken, adAccountId, timeRange, objectiveFilter);
         
+        // Filter by Status
+        if (statusFilter !== 'ALL') {
+            adSets = adSets.filter((a: any) => a.status === statusFilter);
+        }
+
         if (!adSets || adSets.length === 0) {
             return NextResponse.json({ 
                 success: true, 

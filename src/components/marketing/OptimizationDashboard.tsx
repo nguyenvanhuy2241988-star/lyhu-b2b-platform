@@ -21,6 +21,8 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
     // Filters
     const [objectiveFilter, setObjectiveFilter] = useState('messages');
     const [timeFilter, setTimeFilter] = useState('since_oct_2025');
+    const [statusFilter, setStatusFilter] = useState('ACTIVE');
+    const [sortBy, setSortBy] = useState('spend_desc');
     const [sinceDate, setSinceDate] = useState('2025-10-01');
     const [untilDate, setUntilDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -42,7 +44,8 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                     accessToken, 
                     adAccountId,
                     objectiveFilter,
-                    timeRange: actualTimeRange
+                    timeRange: actualTimeRange,
+                    statusFilter
                 })
             });
             const data = await res.json();
@@ -64,8 +67,16 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                 };
             });
 
+            let sortedRecommendations = [...enhancedRecommendations];
+            if (sortBy === 'spend_desc') sortedRecommendations.sort((a, b) => b.spend - a.spend);
+            if (sortBy === 'spend_asc') sortedRecommendations.sort((a, b) => a.spend - b.spend);
+            if (sortBy === 'messages_desc') sortedRecommendations.sort((a, b) => b.messages - a.messages);
+            if (sortBy === 'phones_desc') sortedRecommendations.sort((a, b) => b.phone_count - a.phone_count);
+            if (sortBy === 'cpm_desc') sortedRecommendations.sort((a, b) => b.cost_per_message - a.cost_per_message);
+            if (sortBy === 'cpp_desc') sortedRecommendations.sort((a, b) => b.cost_per_phone - a.cost_per_phone);
+
             setRawCount(data.rawAdSets?.length || 0);
-            setRecommendations(enhancedRecommendations);
+            setRecommendations(sortedRecommendations);
             setHasAnalyzed(true);
             toast.success('AI đã phân tích xong toàn bộ tài khoản!');
         } catch (error: any) {
@@ -160,6 +171,40 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                             </p>
 
                             <div className="max-w-md mx-auto bg-slate-50 p-5 rounded-xl border border-slate-200 mb-8 text-left space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
+                                            <Filter className="w-4 h-4" /> Trạng thái
+                                        </label>
+                                        <select 
+                                            className="w-full border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                            value={statusFilter}
+                                            onChange={(e) => setStatusFilter(e.target.value)}
+                                        >
+                                            <option value="ACTIVE">Đang chạy</option>
+                                            <option value="PAUSED">Đang tắt</option>
+                                            <option value="ALL">Tất cả trạng thái</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
+                                            <TrendingUp className="w-4 h-4" /> Sắp xếp theo
+                                        </label>
+                                        <select 
+                                            className="w-full border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                            value={sortBy}
+                                            onChange={(e) => setSortBy(e.target.value)}
+                                        >
+                                            <option value="spend_desc">Chi phí (Cao &gt; Thấp)</option>
+                                            <option value="spend_asc">Chi phí (Thấp &gt; Cao)</option>
+                                            <option value="messages_desc">Nhiều Tin nhắn nhất</option>
+                                            <option value="phones_desc">Nhiều Số ĐT nhất</option>
+                                            <option value="cpm_desc">Giá/Tin đắt nhất</option>
+                                            <option value="cpp_desc">Giá/SĐT đắt nhất</option>
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
                                         <Filter className="w-4 h-4" /> Mục tiêu quảng cáo
