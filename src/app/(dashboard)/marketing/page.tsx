@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useAuth } from "@/components/auth/AuthProvider";
 import { StatsSkeleton } from "@/components/ui/SkeletonUI";
 import { fetchMarketingStats, fetchCampaignPerformance, CampaignPerformance, getFbAdsConfig } from "@/lib/marketingStore";
-import { fetchMarketingStats, fetchCampaignPerformance, CampaignPerformance, getFbAdsConfig } from "@/lib/marketingStore";
 
 export default function MarketingDashboard() {
     const { user, session, isLoading: authIsLoading } = useAuth();
@@ -288,6 +287,7 @@ export default function MarketingDashboard() {
                         )}
                     </div>
                 </>
+            </div>
         </div>
     );
 }
