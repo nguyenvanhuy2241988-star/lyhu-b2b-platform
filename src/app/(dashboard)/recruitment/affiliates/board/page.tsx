@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { Plus, Image as ImageIcon, MessageSquare, MoreHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { AffiliateModal } from './components/AffiliateModal';
 import { toast } from 'sonner';
 
@@ -103,10 +102,10 @@ export default function AffiliateBoardPage() {
           <h1 className="text-2xl font-bold text-slate-800">Quản lý Affiliate (CTV, KOL, KOC)</h1>
           <p className="text-slate-500">Kéo thả để cập nhật trạng thái chiêu mộ</p>
         </div>
-        <Button onClick={handleAddNew} className="bg-emerald-600 hover:bg-emerald-700">
+        <button onClick={handleAddNew} className="flex items-center px-4 py-2 text-sm text-white rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors">
           <Plus className="w-4 h-4 mr-2" />
           Thêm Đối Tác
-        </Button>
+        </button>
       </div>
 
       <DragDropContext onDragEnd={onDragEnd}>

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { BarChart, Search, Users, PhoneCall, CheckCircle, XCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import dayjs from 'dayjs';
 
@@ -81,14 +80,14 @@ export default function AffiliateReportsPage() {
         </div>
       ) : (
         <>
-          <Card className="mb-6 shadow-sm border-slate-200">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center text-slate-800">
+          <div className="mb-6 bg-white rounded-xl shadow-sm border border-slate-200">
+            <div className="p-6 pb-3">
+              <h3 className="text-lg font-semibold flex items-center text-slate-800">
                 <BarChart className="w-5 h-5 mr-2 text-emerald-600" />
                 Tiến độ Target Toàn Bộ Team
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+              </h3>
+            </div>
+            <div className="p-6 pt-0">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
                   <div className="flex items-center space-x-3 mb-3">
@@ -133,17 +132,17 @@ export default function AffiliateReportsPage() {
                   <div className="text-xs text-slate-500 mt-1">Lượt từ chối</div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="shadow-sm border-slate-200">
-            <CardHeader className="pb-3 border-b border-slate-100">
-              <CardTitle className="text-lg flex items-center text-slate-800">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+            <div className="p-6 pb-3 border-b border-slate-100">
+              <h3 className="text-lg font-semibold flex items-center text-slate-800">
                 <Users className="w-5 h-5 mr-2 text-indigo-600" />
                 Tiến độ KPI Cá nhân
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
+              </h3>
+            </div>
+            <div className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead className="bg-slate-50 text-slate-600 font-medium border-b">
@@ -201,8 +200,8 @@ export default function AffiliateReportsPage() {
                   </tbody>
                 </table>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </>
       )}
     </div>

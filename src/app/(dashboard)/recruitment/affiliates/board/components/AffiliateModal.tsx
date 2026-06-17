@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Save, Upload, XCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 export function AffiliateModal({ isOpen, onClose, partner, onSaved }: any) {
@@ -214,11 +213,11 @@ export function AffiliateModal({ isOpen, onClose, partner, onSaved }: any) {
         </div>
 
         <div className="flex justify-end space-x-3 p-6 border-t bg-slate-50 sticky bottom-0">
-          <Button variant="outline" onClick={onClose} disabled={loading}>Hủy</Button>
-          <Button onClick={handleSave} disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">
+          <button onClick={onClose} disabled={loading} className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50">Hủy</button>
+          <button onClick={handleSave} disabled={loading} className="flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors">
             <Save className="w-4 h-4 mr-2" />
             {loading ? 'Đang lưu...' : 'Lưu Hồ Sơ'}
-          </Button>
+          </button>
         </div>
       </div>
     </div>
