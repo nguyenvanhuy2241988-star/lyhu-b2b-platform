@@ -14,7 +14,7 @@ interface CampaignReportModalProps {
 }
 
 export function CampaignReportModal({ campaignId, campaignName, accessToken, onClose }: CampaignReportModalProps) {
-    const [datePreset, setDatePreset] = useState<'today' | 'yesterday' | 'last_7d' | 'last_30d' | 'this_month' | 'lifetime'>('last_7d');
+    const [datePreset, setDatePreset] = useState<string>('last_7d');
     const [insights, setInsights] = useState<any>(null);
     const [details, setDetails] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -216,6 +216,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                         value={datePreset}
                         onChange={(e: any) => setDatePreset(e.target.value)}
                     >
+                        <option value="since_oct_2025">Từ T10/2025</option>
                         <option value="today">Hôm nay</option>
                         <option value="yesterday">Hôm qua</option>
                         <option value="last_7d">7 Ngày qua</option>

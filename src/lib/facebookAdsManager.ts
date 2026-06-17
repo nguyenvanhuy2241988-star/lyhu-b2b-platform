@@ -111,11 +111,18 @@ export const autoSetupFacebookAds = async (params: FbAdSetupParams): Promise<boo
 export const fetchFbCampaignInsights = async (
     accessToken: string,
     campaignId: string,
-    datePreset: 'today' | 'yesterday' | 'last_7d' | 'last_30d' | 'this_month' | 'lifetime' = 'last_7d'
+    datePreset: string = 'last_7d'
 ) => {
     try {
         const baseUrl = `https://graph.facebook.com/v19.0`;
-        const url = `${baseUrl}/${campaignId}/insights?fields=spend,impressions,clicks,cpc,ctr,actions,reach,frequency,cost_per_action_type&date_preset=${datePreset}&access_token=${accessToken}`;
+        
+        let insightsQuery = `date_preset=${datePreset}`;
+        if (datePreset === 'since_oct_2025') {
+            const today = new Date().toISOString().split('T')[0];
+            insightsQuery = `time_range={'since':'2025-10-01','until':'${today}'}`;
+        }
+        
+        const url = `${baseUrl}/${campaignId}/insights?fields=spend,impressions,clicks,cpc,ctr,actions,reach,frequency,cost_per_action_type&${insightsQuery}&access_token=${accessToken}`;
         
         const res = await fetch(url);
         if (!res.ok) {
@@ -158,12 +165,22 @@ export const fetchFbCampaignDetails = async (accessToken: string, campaignId: st
     }
 };
 
-export const fetchAllCampaignsInsights = async (accessToken: string, adAccountId: string) => {
+export const fetchAllCampaignsInsights = async (accessToken: string, adAccountId: string, timeFilter: string = 'since_oct_2025') => {
     try {
         const baseUrl = `https://graph.facebook.com/v19.0`;
         const actId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
-        // Fetch insights grouped by campaign for the last 7 days
-        const res = await fetch(`${baseUrl}/${actId}/insights?level=campaign&fields=campaign_id,spend,cpc,ctr,cost_per_action_type&date_preset=last_7d&limit=100&access_token=${accessToken}`);
+        
+        let insightsQuery = 'date_preset=last_7d';
+        if (timeFilter === 'last_30d') insightsQuery = 'date_preset=last_30d';
+        else if (timeFilter === 'this_month') insightsQuery = 'date_preset=this_month';
+        else if (timeFilter === 'since_oct_2025') {
+            const today = new Date().toISOString().split('T')[0];
+            insightsQuery = `time_range={'since':'2025-10-01','until':'${today}'}`;
+        } else if (timeFilter === 'maximum') {
+            insightsQuery = 'date_preset=maximum';
+        }
+
+        const res = await fetch(`${baseUrl}/${actId}/insights?level=campaign&fields=campaign_id,spend,cpc,ctr,cost_per_action_type&${insightsQuery}&limit=100&access_token=${accessToken}`);
         
         if (!res.ok) {
             console.error("fetchAllCampaignsInsights Error Response", await res.text());

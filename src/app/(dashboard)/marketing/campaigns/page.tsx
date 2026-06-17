@@ -50,6 +50,7 @@ export default function CampaignsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [objectiveFilter, setObjectiveFilter] = useState("all");
+    const [timeFilter, setTimeFilter] = useState("since_oct_2025");
 
     // Form State
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -74,7 +75,7 @@ export default function CampaignsPage() {
                 try {
                     const [fbCamps, insights] = await Promise.all([
                         fetchFbAdsCampaigns(fbData.facebook_ads_config.accessToken, fbData.facebook_ads_config.adAccountId),
-                        fetchAllCampaignsInsights(fbData.facebook_ads_config.accessToken, fbData.facebook_ads_config.adAccountId)
+                        fetchAllCampaignsInsights(fbData.facebook_ads_config.accessToken, fbData.facebook_ads_config.adAccountId, timeFilter)
                     ]);
                     setFbCampaigns(fbCamps);
                     setFbInsights(insights);
@@ -96,7 +97,7 @@ export default function CampaignsPage() {
 
     useEffect(() => {
         if (user) loadCampaigns();
-    }, [user]);
+    }, [user, timeFilter]);
 
     const handleOpenCreate = () => {
         setEditingId(null);
@@ -371,6 +372,17 @@ export default function CampaignsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4 text-slate-500" />
+                    <select
+                        className="h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                        value={timeFilter}
+                        onChange={(e) => setTimeFilter(e.target.value)}
+                    >
+                        <option value="since_oct_2025">Từ T10/2025 đến nay</option>
+                        <option value="last_30d">30 ngày qua</option>
+                        <option value="this_month">Tháng này</option>
+                        <option value="last_7d">7 ngày qua</option>
+                        <option value="maximum">Toàn thời gian</option>
+                    </select>
                     <select
                         className="h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                         value={objectiveFilter}
