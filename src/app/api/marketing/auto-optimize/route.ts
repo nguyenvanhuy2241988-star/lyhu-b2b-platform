@@ -60,7 +60,23 @@ export async function POST(req: Request) {
             }))
         ];
 
-        // 4. Lưu lại lịch sử đánh giá vào database
+        // 4. Enhance recommendations with full stats for the UI and History
+        const enhancedRecommendations = recommendations.map(rec => {
+            const matchedRaw = activeAdSets.find((a: any) => a.id === rec.id);
+            return {
+                ...rec,
+                current_budget: matchedRaw?.daily_budget || "0",
+                cost_per_message: matchedRaw?.cost_per_message || 0,
+                spend: matchedRaw?.spend || 0,
+                messages: matchedRaw?.messages || 0,
+                phone_count: matchedRaw?.phone_count || 0,
+                phone_rate: matchedRaw?.phone_rate || 0,
+                cost_per_phone: matchedRaw?.cost_per_phone || 0,
+                status: matchedRaw?.status || 'ACTIVE'
+            };
+        });
+
+        // 5. Lưu lại lịch sử đánh giá vào database
         try {
             const { createClient } = require('@supabase/supabase-js');
             const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
@@ -69,7 +85,7 @@ export async function POST(req: Request) {
                 status: 'info',
                 details: {
                     message: `Đã phân tích ${activeAdSets.length} nhóm quảng cáo (Mục tiêu: ${objectiveFilter}, Thời gian: ${timeRange}). Có ${aiRecommendations.length} nhóm được tối ưu bởi AI.`,
-                    recommendations: recommendations
+                    recommendations: enhancedRecommendations
                 }
             });
         } catch (dbError) {
@@ -78,7 +94,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ 
             success: true, 
-            data: recommendations,
+            data: enhancedRecommendations,
             rawAdSets: activeAdSets 
         });
 
