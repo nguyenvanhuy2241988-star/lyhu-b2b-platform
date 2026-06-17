@@ -142,6 +142,32 @@ export default function AffiliatePostLogManager({ userId, date, onUpdate, readOn
                     date: date,
                     ...logData
                 });
+
+                // Auto-sync to Kanban CRM if it's a KOL/KOC or CTV profile
+                if (logData.post_type === 'kol_koc' || logData.post_type === 'ctv') {
+                    const typeMap = logData.post_type === 'kol_koc' ? 'KOL' : 'CTV';
+                    const combinedNotes = [
+                        logData.industry ? `Ngành: ${logData.industry}` : '',
+                        logData.follower_count ? `Follow: ${logData.follower_count}` : '',
+                        logData.booking_cost ? `Chi phí: ${logData.booking_cost}` : '',
+                        logData.potential_rating ? `Đánh giá: ${logData.potential_rating}` : '',
+                        logData.group_notes ? `Ghi chú: ${logData.group_notes}` : ''
+                    ].filter(Boolean).join('. ');
+
+                    await fetch('/api/recruitment/affiliates', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: logData.group_name || 'Liên hệ mới',
+                            type: typeMap,
+                            platform: logData.platform,
+                            profile_link: logData.group_link,
+                            phone: logData.contact_info,
+                            notes: combinedNotes,
+                            evidence_images: logData.image_url ? [logData.image_url] : []
+                        })
+                    }).catch(err => console.error("Auto-sync to CRM failed:", err));
+                }
             }
 
             handleCancel();
