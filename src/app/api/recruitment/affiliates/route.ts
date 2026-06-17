@@ -22,10 +22,7 @@ export async function GET(req: Request) {
         
         const { data, error } = await supabase
             .from('affiliate_partners')
-            .select(`
-                *,
-                hr_in_charge:profiles!hr_in_charge(id, full_name, email)
-            `)
+            .select('*')
             .order('created_at', { ascending: false });
 
         if (error) throw error;
