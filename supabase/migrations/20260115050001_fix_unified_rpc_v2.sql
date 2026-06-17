@@ -1,6 +1,8 @@
 -- Force update get_unified_tasks RPC to ensure owner visibility works
 -- Date: 2026-01-15
 
+DROP FUNCTION IF EXISTS get_unified_tasks(TIMESTAMPTZ, TIMESTAMPTZ, UUID);
+
 CREATE OR REPLACE FUNCTION get_unified_tasks(
     p_start_date TIMESTAMPTZ,
     p_end_date TIMESTAMPTZ,
