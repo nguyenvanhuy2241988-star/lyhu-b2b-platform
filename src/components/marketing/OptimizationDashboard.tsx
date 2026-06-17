@@ -421,10 +421,10 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                                 <p className="text-sm text-slate-600 mb-3">{rec.reason}</p>
                                                 
                                                 <div className="flex items-center gap-4 text-xs font-medium text-slate-500 flex-wrap">
-                                                    <span>Chi tiêu: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(rec.spend)}</span>
-                                                    <span>Tin nhắn: {rec.messages}</span>
-                                                    <span className={rec.cost_per_message < 20000 && rec.messages > 0 ? "text-green-600" : rec.cost_per_message > 35000 ? "text-red-600" : ""}>
-                                                        Giá/Tin: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(rec.cost_per_message)}
+                                                    <span>Chi tiêu: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(rec.spend || 0)}</span>
+                                                    <span>Tin nhắn: {rec.messages || 0}</span>
+                                                    <span className={(rec.cost_per_message || 0) < 20000 && (rec.messages || 0) > 0 ? "text-green-600" : (rec.cost_per_message || 0) > 35000 ? "text-red-600" : ""}>
+                                                        Giá/Tin: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(rec.cost_per_message || 0)}
                                                     </span>
                                                     <div className="w-px h-3 bg-slate-300"></div>
                                                     <span className="text-blue-600 font-bold">Số ĐT thu về: {rec.phone_count || 0}</span>
