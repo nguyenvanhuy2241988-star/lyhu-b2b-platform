@@ -244,7 +244,7 @@ export const fetchAllAdSetsWithInsights = async (
         }
 
         // Fetch campaigns and their nested ad sets with insights
-        const url = `${baseUrl}/campaigns?fields=id,name,objective,adsets.limit(500){id,name,status,daily_budget,${insightsQuery}{spend,actions,cost_per_action_type}}&limit=500&access_token=${accessToken}`;
+        const url = `${baseUrl}/campaigns?fields=id,name,objective,adsets.limit(500){id,name,status,daily_budget,ads{id},${insightsQuery}{spend,actions,cost_per_action_type}}&limit=500&access_token=${accessToken}`;
         const res = await fetch(url);
         const data = await res.json();
         
@@ -287,7 +287,8 @@ export const fetchAllAdSetsWithInsights = async (
                 campaign_name: adset.campaign?.name,
                 spend: insights.spend || 0,
                 cost_per_message: msgCpa ? parseFloat(msgCpa) : null,
-                messages: parseInt(msgCount)
+                messages: parseInt(msgCount),
+                ads: adset.ads?.data?.map((ad: any) => ad.id) || []
             };
         });
     } catch (e) {

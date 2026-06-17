@@ -27,11 +27,47 @@ export async function POST(req: Request) {
             });
         }
 
+        const { createClient } = require('@supabase/supabase-js');
+        const getSupabaseAdmin = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '');
+        const supabase = getSupabaseAdmin();
+
+        // 1.5. Lấy tất cả các ad_id từ các adSets đang có
+        const allAdIds: string[] = [];
+        adSets.forEach((a: any) => {
+            if (a.ads && a.ads.length > 0) {
+                allAdIds.push(...a.ads);
+            }
+        });
+
+        let phoneCountsByAdId: Record<string, number> = {};
+
+        if (allAdIds.length > 0) {
+            // Lấy danh sách cuộc hội thoại có chứa SĐT, được query theo ad_id
+            const { data: convs } = await supabase
+                .from('social_conversations')
+                .select('ad_id')
+                .not('customer_phone', 'is', null)
+                .in('ad_id', allAdIds);
+
+            if (convs) {
+                convs.forEach((c: any) => {
+                    if (c.ad_id) {
+                        phoneCountsByAdId[c.ad_id] = (phoneCountsByAdId[c.ad_id] || 0) + 1;
+                    }
+                });
+            }
+        }
+
         const activeAdSets = adSets.map((a: any) => {
-            // Liên kết CRM: Tính toán tỉ lệ để lại số điện thoại (Lead-to-Phone ratio)
-            // Trong thực tế, hệ thống sẽ query bảng crm_leads where source_detail = a.id
-            const phoneRate = a.messages > 0 ? (0.3 + Math.random() * 0.4) : 0; // Tỉ lệ random 30-70%
-            const phoneCount = Math.floor(a.messages * phoneRate);
+            // Liên kết CRM: Lấy số lượng SĐT thật từ Database
+            let phoneCount = 0;
+            if (a.ads && a.ads.length > 0) {
+                a.ads.forEach((adId: string) => {
+                    phoneCount += (phoneCountsByAdId[adId] || 0);
+                });
+            }
+            
+            const phoneRate = a.messages > 0 ? (phoneCount / a.messages) : 0;
             const costPerPhone = phoneCount > 0 ? a.spend / phoneCount : 0;
             return {
                 ...a,
