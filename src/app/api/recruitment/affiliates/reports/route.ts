@@ -26,8 +26,9 @@ export async function GET(req: Request) {
         if (activitiesError) throw activitiesError;
 
         // Fetch targets for all users who have activities
-        const userIds = [...new Set(activities?.map(a => a.user_id) || [])];
-        let targets = [];
+        const allUserIds = activities?.map(a => a.user_id) || [];
+        const userIds = allUserIds.filter((v, i, a) => a.indexOf(v) === i);
+        let targets: any[] = [];
         if (userIds.length > 0) {
             const { data: targetsData } = await supabase
                 .from('affiliate_kpi_settings')
