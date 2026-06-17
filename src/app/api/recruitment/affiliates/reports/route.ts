@@ -1,27 +1,44 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import dayjs from 'dayjs';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+function getSupabase() {
+    const cookieStore = cookies();
+    return createServerClient(supabaseUrl, supabaseKey, {
+        cookies: {
+            get(name: string) {
+                return cookieStore.get(name)?.value;
+            },
+        },
+    });
+}
 
 export async function GET(req: Request) {
     try {
-        const url = new URL(req.url);
-        const startDate = url.searchParams.get('start') || new Date().toISOString().split('T')[0];
-        const endDate = url.searchParams.get('end') || new Date().toISOString().split('T')[0];
-
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { searchParams } = new URL(req.url);
+        const timeRange = searchParams.get('timeRange') || 'today';
         
-        // Fetch all activities in the date range
+        let startDate = dayjs().startOf('day').format('YYYY-MM-DD');
+        let endDate = dayjs().endOf('day').format('YYYY-MM-DD');
+        
+        if (timeRange === 'week') {
+            startDate = dayjs().startOf('week').format('YYYY-MM-DD');
+        } else if (timeRange === 'month') {
+            startDate = dayjs().startOf('month').format('YYYY-MM-DD');
+        }
+
+        const supabase = getSupabase();
+        
+        // Fetch activities within date range
         const { data: activities, error: activitiesError } = await supabase
             .from('affiliate_daily_activities')
-            .select(`
-                *,
-                user:profiles(id, full_name, email, avatar_url)
-            `)
+            .select('*, hr:profiles!user_id(id, full_name, email)')
             .gte('date', startDate)
-            .lte('date', endDate)
-            .order('date', { ascending: false });
+            .lte('date', endDate);
 
         if (activitiesError) throw activitiesError;
 
@@ -44,7 +61,7 @@ export async function GET(req: Request) {
             if (!userStats[act.user_id]) {
                 const target = targets.find(t => t.user_id === act.user_id);
                 userStats[act.user_id] = {
-                    user: act.user,
+                    user: act.hr,
                     target: {
                         found: target?.found_target || 50,
                         contacted: target?.contacted_target || 30,

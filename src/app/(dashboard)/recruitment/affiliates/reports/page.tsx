@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { BarChart, Search, Users, PhoneCall, CheckCircle, XCircle } from 'lucide-react';
+import { BarChart, Search, Users, PhoneCall, CheckCircle, XCircle, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import dayjs from 'dayjs';
+import { AffiliateKpiModal } from './components/AffiliateKpiModal';
 
 export default function AffiliateReportsPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState('today'); // today, week, month
+  const [isKpiModalOpen, setIsKpiModalOpen] = useState(false);
 
   const fetchReports = async () => {
     setLoading(true);
@@ -67,10 +69,16 @@ export default function AffiliateReportsPage() {
           <h1 className="text-2xl font-bold text-slate-800">Báo cáo KPI Affiliate</h1>
           <p className="text-slate-500">Đo lường hiệu quả tìm kiếm CTV, KOL, KOC</p>
         </div>
-        <div className="flex space-x-2 bg-white rounded-lg p-1 border shadow-sm">
-          <button onClick={() => setDateRange('today')} className={`px-4 py-1.5 text-sm rounded-md font-medium transition-colors ${dateRange === 'today' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`}>Hôm nay</button>
-          <button onClick={() => setDateRange('week')} className={`px-4 py-1.5 text-sm rounded-md font-medium transition-colors ${dateRange === 'week' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`}>Tuần này</button>
-          <button onClick={() => setDateRange('month')} className={`px-4 py-1.5 text-sm rounded-md font-medium transition-colors ${dateRange === 'month' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`}>Tháng này</button>
+        <div className="flex items-center space-x-4">
+          <div className="flex space-x-2 bg-white rounded-lg p-1 border shadow-sm">
+            <button onClick={() => setDateRange('today')} className={`px-4 py-1.5 text-sm rounded-md font-medium transition-colors ${dateRange === 'today' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`}>Hôm nay</button>
+            <button onClick={() => setDateRange('week')} className={`px-4 py-1.5 text-sm rounded-md font-medium transition-colors ${dateRange === 'week' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`}>Tuần này</button>
+            <button onClick={() => setDateRange('month')} className={`px-4 py-1.5 text-sm rounded-md font-medium transition-colors ${dateRange === 'month' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`}>Tháng này</button>
+          </div>
+          <button onClick={() => setIsKpiModalOpen(true)} className="flex items-center px-4 py-2 text-sm text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm transition-colors">
+            <Settings className="w-4 h-4 mr-2" />
+            Cài đặt KPI
+          </button>
         </div>
       </div>
 
@@ -203,6 +211,14 @@ export default function AffiliateReportsPage() {
             </div>
           </div>
         </>
+      )}
+
+      {isKpiModalOpen && (
+        <AffiliateKpiModal 
+          isOpen={isKpiModalOpen} 
+          onClose={() => setIsKpiModalOpen(false)} 
+          onSaved={fetchReports} 
+        />
       )}
     </div>
   );
