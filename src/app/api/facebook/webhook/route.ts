@@ -434,7 +434,7 @@ export async function POST(request: Request) {
                     mid = `postback_${Date.now()}`;
                 }
 
-                if (text || attachments.length > 0) {
+                if (text || attachments.length > 0 || event.referral) {
                     // Retrieve Page Data early (needed for fallback fetch)
                     const { data: pageData } = await supabase
                         .from('facebook_pages')
@@ -459,7 +459,7 @@ export async function POST(request: Request) {
                     const isNewConversation = !existingConv;
 
                     // 1. Get Conversation or Create
-                    let referral = (event.message && event.message.referral) || (event.postback && event.postback.referral);
+                    let referral = event.referral || (event.message && event.message.referral) || (event.postback && event.postback.referral);
 
                     // Fetch referral from Graph API for:
                     // 1. NEW conversations (always check)
