@@ -50,7 +50,7 @@ export async function createAndAssignLead(data: LeadCreateData): Promise<{
     try {
         // 1. Check for duplicate (same conversation already has a lead)
         if (data.conversationId) {
-            const { data: existing } = await supabase
+            const { data: existing } = await getSupabase()
                 .from('marketing_leads')
                 .select('id, assigned_to')
                 .eq('conversation_id', data.conversationId)
@@ -63,7 +63,7 @@ export async function createAndAssignLead(data: LeadCreateData): Promise<{
         }
 
         // 2. Insert the marketing lead
-        const { data: lead, error: insertError } = await supabase
+        const { data: lead, error: insertError } = await getSupabase()
             .from('marketing_leads')
             .insert({
                 conversation_id: data.conversationId,
@@ -128,7 +128,7 @@ export async function assignLeadToTelesales(
             chosen = { user_id: targetUserId, full_name: targetUserName };
         } else {
             // Real-time mode: query for best eligible user (least leads first)
-            const { data: eligibleUsers, error: rpcError } = await supabase
+            const { data: eligibleUsers, error: rpcError } = await getSupabase()
                 .rpc('get_online_eligible_telesales');
 
             if (rpcError) {
@@ -146,7 +146,7 @@ export async function assignLeadToTelesales(
         }
 
         // Get the lead data for creating CRM record
-        const { data: lead } = await supabase
+        const { data: lead } = await getSupabase()
             .from('marketing_leads')
             .select('*')
             .eq('id', marketingLeadId)
@@ -155,7 +155,7 @@ export async function assignLeadToTelesales(
         if (!lead) return { assignedTo: null, assignedName: null };
 
         // Update marketing lead
-        await supabase
+        await getSupabase()
             .from('marketing_leads')
             .update({
                 assigned_to: chosen.user_id,
@@ -170,7 +170,7 @@ export async function assignLeadToTelesales(
 
         // 1. Find or create customer by phone
         let customerId: string | null = null;
-        const { data: existingCustomer } = await supabase
+        const { data: existingCustomer } = await getSupabase()
             .from('customers')
             .select('id')
             .eq('phone', lead.customer_phone)
@@ -179,7 +179,7 @@ export async function assignLeadToTelesales(
         if (existingCustomer) {
             customerId = existingCustomer.id;
         } else {
-            const { data: newCustomer, error: custError } = await supabase
+            const { data: newCustomer, error: custError } = await getSupabase()
                 .from('customers')
                 .insert({
                     name: lead.customer_name || 'Khách FB',
@@ -201,7 +201,7 @@ export async function assignLeadToTelesales(
 
         // 2. Create CRM deal
         if (customerId) {
-            const { error: dealError } = await supabase
+            const { error: dealError } = await getSupabase()
                 .from('crm_deals')
                 .insert({
                     title: `[FB] ${lead.customer_name} - ${regionText}`,
@@ -249,7 +249,7 @@ export async function assignLeadToTelesales(
 export async function processQueuedLeads(): Promise<number> {
     try {
         // 1. Get all pending leads (oldest first)
-        const { data: pendingLeads, error } = await supabase
+        const { data: pendingLeads, error } = await getSupabase()
             .from('marketing_leads')
             .select('id')
             .eq('status', 'pending')
@@ -260,7 +260,7 @@ export async function processQueuedLeads(): Promise<number> {
         }
 
         // 2. Get online eligible telesales (sorted by least leads first by SQL)
-        const { data: eligibleUsers, error: rpcError } = await supabase
+        const { data: eligibleUsers, error: rpcError } = await getSupabase()
             .rpc('get_online_eligible_telesales');
 
         if (rpcError) {
