@@ -639,6 +639,14 @@ export default function WholesaleStore({
     };
 
     const handleOAuthLogin = async (provider: 'google' | 'facebook') => {
+        if (provider === 'google') {
+            const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
+            if (/(FBAN|FBAV|Zalo|Instagram|Messenger|trill|ByteLocale)/i.test(ua)) {
+                alert("Lỗi bảo mật của Google: Không thể đăng nhập bằng Gmail khi mở web bên trong ứng dụng Zalo/Facebook/TikTok.\n\nVui lòng nhấn vào dấu 3 chấm (⋮) ở góc màn hình và chọn 'Mở bằng trình duyệt' (Chrome/Safari) để có thể đăng nhập bằng Google.");
+                return;
+            }
+        }
+
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider,
