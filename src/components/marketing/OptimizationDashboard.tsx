@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from 'react';
-import { Bot, Play, Pause, TrendingUp, AlertCircle, CheckCircle2, ChevronRight, X, Filter, Calendar } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bot, Play, Pause, TrendingUp, AlertCircle, CheckCircle2, ChevronRight, X, Filter, Calendar, History, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { createClient } from '@/lib/supabaseClient';
+import dayjs from 'dayjs';
 
 interface OptimizationDashboardProps {
     isOpen: boolean;
@@ -25,6 +27,45 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
     const [sortBy, setSortBy] = useState('spend_desc');
     const [sinceDate, setSinceDate] = useState('2025-10-01');
     const [untilDate, setUntilDate] = useState(new Date().toISOString().split('T')[0]);
+
+    // History Tab State
+    const [activeTab, setActiveTab] = useState<'new' | 'history'>('new');
+    const [historyLogs, setHistoryLogs] = useState<any[]>([]);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [viewingHistoryDate, setViewingHistoryDate] = useState<string | null>(null);
+
+    const supabase = createClient();
+
+    useEffect(() => {
+        if (activeTab === 'history' && historyLogs.length === 0) {
+            fetchHistory();
+        }
+    }, [activeTab]);
+
+    const fetchHistory = async () => {
+        setIsLoadingHistory(true);
+        const { data } = await supabase
+            .from('marketing_action_logs')
+            .select('*')
+            .eq('action_type', 'AI_OPTIMIZATION')
+            .order('created_at', { ascending: false })
+            .limit(20);
+        
+        if (data) setHistoryLogs(data);
+        setIsLoadingHistory(false);
+    };
+
+    const handleViewHistoryItem = (log: any) => {
+        if (!log.details?.recommendations) {
+            toast.error("Bản ghi này không có chi tiết quảng cáo");
+            return;
+        }
+        setRecommendations(log.details.recommendations);
+        setRawCount(log.details.recommendations.length);
+        setHasAnalyzed(true);
+        setViewingHistoryDate(log.created_at);
+        setActiveTab('new'); // Switch back to the detail view
+    };
 
     if (!isOpen) return null;
 
@@ -159,8 +200,73 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                     </button>
                 </div>
 
+                <div className="flex border-b border-slate-200 px-6 pt-2 bg-slate-50">
+                    <button 
+                        onClick={() => {
+                            setActiveTab('new');
+                            if (viewingHistoryDate) {
+                                setHasAnalyzed(false);
+                                setRecommendations([]);
+                                setViewingHistoryDate(null);
+                            }
+                        }}
+                        className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'new' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}
+                    >
+                        <TrendingUp className="w-4 h-4" />
+                        Phân tích Mới
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('history')}
+                        className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'history' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}
+                    >
+                        <History className="w-4 h-4" />
+                        Lịch sử Tối ưu
+                    </button>
+                </div>
+
                 <div className="p-6 overflow-y-auto flex-1">
-                    {!hasAnalyzed ? (
+                    {activeTab === 'history' ? (
+                        <div className="space-y-4">
+                            {isLoadingHistory ? (
+                                <div className="flex justify-center items-center py-12">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                                </div>
+                            ) : historyLogs.length === 0 ? (
+                                <div className="text-center py-12 text-slate-500">
+                                    Chưa có bản ghi lịch sử nào.
+                                </div>
+                            ) : (
+                                <div className="grid gap-4">
+                                    {historyLogs.map(log => (
+                                        <div 
+                                            key={log.id} 
+                                            onClick={() => handleViewHistoryItem(log)}
+                                            className="bg-white border border-slate-200 rounded-xl p-4 hover:border-purple-400 hover:shadow-md transition-all cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4"
+                                        >
+                                            <div>
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <span className="text-sm font-semibold text-slate-800 flex items-center gap-1">
+                                                        <Calendar className="w-4 h-4 text-slate-400" /> {dayjs(log.created_at).format('DD/MM/YYYY')}
+                                                    </span>
+                                                    <span className="text-sm text-slate-500 flex items-center gap-1">
+                                                        <Clock className="w-4 h-4" /> {dayjs(log.created_at).format('HH:mm:ss')}
+                                                    </span>
+                                                </div>
+                                                <p className="text-slate-600 text-sm">
+                                                    {log.details?.message || `Đã phân tích ${log.details?.recommendations?.length || 0} chiến dịch`}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <div className="px-3 py-1.5 bg-purple-50 text-purple-600 text-sm font-semibold rounded-lg flex items-center gap-1">
+                                                    Xem chi tiết <ChevronRight className="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : !hasAnalyzed ? (
                         <div className="text-center py-12">
                             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-purple-50 mb-6">
                                 <TrendingUp className="w-10 h-10 text-purple-500" />
@@ -286,8 +392,14 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                 </span>
                             </div>
 
-                            <div className="grid gap-4">
-                                {recommendations.map((rec, idx) => (
+                                {viewingHistoryDate && (
+                                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm flex items-center gap-2">
+                                        <History className="w-4 h-4" />
+                                        Bạn đang xem lại kết quả phân tích lúc: <strong>{dayjs(viewingHistoryDate).format('HH:mm:ss DD/MM/YYYY')}</strong>
+                                    </div>
+                                )}
+                                <div className="space-y-4">
+                                    {recommendations.map((rec, idx) => (
                                     <div key={idx} className={`p-4 rounded-xl border ${
                                         rec.action === 'SCALE_UP' ? 'border-green-200 bg-green-50' :
                                         rec.action === 'PAUSE' ? 'border-red-200 bg-red-50' :
@@ -367,27 +479,33 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                 Xuất Excel
                             </button>
                             <button 
-                                onClick={() => setHasAnalyzed(false)}
+                                onClick={() => {
+                                    setHasAnalyzed(false);
+                                    setRecommendations([]);
+                                    setViewingHistoryDate(null);
+                                }}
                                 className="px-5 py-2.5 text-slate-600 hover:bg-slate-200 rounded-xl font-medium transition-colors"
                             >
                                 Quét lại
                             </button>
-                            <button 
-                                onClick={handleExecute}
-                                disabled={isExecuting}
-                                className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
-                            >
-                                {isExecuting ? (
-                                    <>
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Đang cập nhật FB...
-                                    </>
-                                ) : (
-                                    <>
-                                        Thực thi ngay <ChevronRight className="w-4 h-4" />
-                                    </>
-                                )}
-                            </button>
+                            {!viewingHistoryDate && (
+                                <button 
+                                    onClick={handleExecute}
+                                    disabled={isExecuting}
+                                    className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {isExecuting ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Đang cập nhật FB...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Thực thi ngay <ChevronRight className="w-4 h-4" />
+                                        </>
+                                    )}
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
