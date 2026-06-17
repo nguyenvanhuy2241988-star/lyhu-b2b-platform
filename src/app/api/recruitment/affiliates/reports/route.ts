@@ -101,11 +101,6 @@ export async function GET(req: Request) {
         });
 
         // Calculate Team Totals
-        const teamTotal = {
-            target: { found: 0, contacted: 0, won: 0 },
-            actual: { found: 0, contacted: 0, won: 0, lost: 0 }
-        };
-
         Object.values(userStats).forEach((stat: any) => {
             teamTotal.target.found += stat.target.found;
             teamTotal.target.contacted += stat.target.contacted;
@@ -119,7 +114,8 @@ export async function GET(req: Request) {
 
         return NextResponse.json({
             teamTotal,
-            userStats: Object.values(userStats)
+            userStats: Object.values(userStats),
+            isAdmin
         });
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });
