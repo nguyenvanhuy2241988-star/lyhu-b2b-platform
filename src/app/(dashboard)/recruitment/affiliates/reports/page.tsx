@@ -75,10 +75,12 @@ export default function AffiliateReportsPage() {
             <button onClick={() => setDateRange('week')} className={`px-4 py-1.5 text-sm rounded-md font-medium transition-colors ${dateRange === 'week' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`}>Tuần này</button>
             <button onClick={() => setDateRange('month')} className={`px-4 py-1.5 text-sm rounded-md font-medium transition-colors ${dateRange === 'month' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`}>Tháng này</button>
           </div>
-          <button onClick={() => setIsKpiModalOpen(true)} className="flex items-center px-4 py-2 text-sm text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm transition-colors">
-            <Settings className="w-4 h-4 mr-2" />
-            Cài đặt KPI
-          </button>
+          {data?.isAdmin && (
+            <button onClick={() => setIsKpiModalOpen(true)} className="flex items-center px-4 py-2 text-sm text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm transition-colors">
+              <Settings className="w-4 h-4 mr-2" />
+              Cài đặt KPI
+            </button>
+          )}
         </div>
       </div>
 
@@ -88,60 +90,62 @@ export default function AffiliateReportsPage() {
         </div>
       ) : (
         <>
-          <div className="mb-6 bg-white rounded-xl shadow-sm border border-slate-200">
-            <div className="p-6 pb-3">
-              <h3 className="text-lg font-semibold flex items-center text-slate-800">
-                <BarChart className="w-5 h-5 mr-2 text-emerald-600" />
-                Tiến độ Target Toàn Bộ Team
-              </h3>
-            </div>
-            <div className="p-6 pt-0">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                      <Search className="w-5 h-5" />
+          {data?.isAdmin && (
+            <div className="mb-6 bg-white rounded-xl shadow-sm border border-slate-200">
+              <div className="p-6 pb-3">
+                <h3 className="text-lg font-semibold flex items-center text-slate-800">
+                  <BarChart className="w-5 h-5 mr-2 text-emerald-600" />
+                  Tiến độ Target Toàn Bộ Team
+                </h3>
+              </div>
+              <div className="p-6 pt-0">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                        <Search className="w-5 h-5" />
+                      </div>
+                      <span className="font-medium text-slate-700">Tìm thấy mới</span>
                     </div>
-                    <span className="font-medium text-slate-700">Tìm thấy mới</span>
+                    {renderProgress(team?.actual?.found || 0, team?.target?.found || 0)}
                   </div>
-                  {renderProgress(team?.actual?.found || 0, team?.target?.found || 0)}
-                </div>
 
-                <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-100">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
-                      <PhoneCall className="w-5 h-5" />
+                  <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-100">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
+                        <PhoneCall className="w-5 h-5" />
+                      </div>
+                      <span className="font-medium text-slate-700">Đã liên hệ</span>
                     </div>
-                    <span className="font-medium text-slate-700">Đã liên hệ</span>
+                    {renderProgress(team?.actual?.contacted || 0, team?.target?.contacted || 0)}
                   </div>
-                  {renderProgress(team?.actual?.contacted || 0, team?.target?.contacted || 0)}
-                </div>
 
-                <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
-                      <CheckCircle className="w-5 h-5" />
+                  <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
+                        <CheckCircle className="w-5 h-5" />
+                      </div>
+                      <span className="font-medium text-slate-700">Chốt hợp tác</span>
                     </div>
-                    <span className="font-medium text-slate-700">Chốt hợp tác</span>
+                    {renderProgress(team?.actual?.won || 0, team?.target?.won || 0)}
                   </div>
-                  {renderProgress(team?.actual?.won || 0, team?.target?.won || 0)}
-                </div>
 
-                <div className="bg-rose-50/50 p-4 rounded-xl border border-rose-100">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="p-2 bg-rose-100 text-rose-600 rounded-lg">
-                      <XCircle className="w-5 h-5" />
+                  <div className="bg-rose-50/50 p-4 rounded-xl border border-rose-100">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="p-2 bg-rose-100 text-rose-600 rounded-lg">
+                        <XCircle className="w-5 h-5" />
+                      </div>
+                      <span className="font-medium text-slate-700">Thất bại / Hủy</span>
                     </div>
-                    <span className="font-medium text-slate-700">Thất bại / Hủy</span>
+                    <div className="text-2xl font-bold text-slate-800">
+                      {team?.actual?.lost || 0}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">Lượt từ chối</div>
                   </div>
-                  <div className="text-2xl font-bold text-slate-800">
-                    {team?.actual?.lost || 0}
-                  </div>
-                  <div className="text-xs text-slate-500 mt-1">Lượt từ chối</div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           <div className="bg-white rounded-xl shadow-sm border border-slate-200">
             <div className="p-6 pb-3 border-b border-slate-100">

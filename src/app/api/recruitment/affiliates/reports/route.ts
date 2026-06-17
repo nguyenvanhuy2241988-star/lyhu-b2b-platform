@@ -33,12 +33,31 @@ export async function GET(req: Request) {
 
         const supabase = getSupabase();
         
+        // Get current user and role
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Unauthorized');
+        
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+            
+        const isAdmin = ['admin', 'manager', 'hr_manager', 'director'].includes(profile?.role || '');
+
         // Fetch activities within date range
-        const { data: activities, error: activitiesError } = await supabase
+        let query = supabase
             .from('affiliate_daily_activities')
             .select('*, hr:profiles!user_id(id, full_name, email)')
             .gte('date', startDate)
             .lte('date', endDate);
+            
+        // If not admin, only fetch their own data
+        if (!isAdmin) {
+            query = query.eq('user_id', user.id);
+        }
+
+        const { data: activities, error: activitiesError } = await query;
 
         if (activitiesError) throw activitiesError;
 
@@ -54,7 +73,12 @@ export async function GET(req: Request) {
             targets = targetsData || [];
         }
 
-        // Group by user to calculate totals
+        // Aggregate data
+        const teamTotal = {
+            target: { found: 0, contacted: 0, won: 0 },
+            actual: { found: 0, contacted: 0, won: 0, lost: 0 }
+        };
+
         const userStats: any = {};
         
         activities?.forEach(act => {
@@ -67,12 +91,7 @@ export async function GET(req: Request) {
                         contacted: target?.contacted_target || 30,
                         won: target?.won_target || 5
                     },
-                    actual: {
-                        found: 0,
-                        contacted: 0,
-                        won: 0,
-                        lost: 0
-                    }
+                    actual: { found: 0, contacted: 0, won: 0, lost: 0 }
                 };
             }
             userStats[act.user_id].actual.found += (act.found_actual || 0);
