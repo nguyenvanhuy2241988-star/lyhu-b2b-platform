@@ -440,7 +440,7 @@ ${JSON.stringify(adSets, null, 2)}`;
                 ],
                 generationConfig: {
                     temperature: 0.1, // Low temp for strictly following rules
-                    maxOutputTokens: 2000,
+                    maxOutputTokens: 8192,
                     responseMimeType: "application/json"
                 }
             })

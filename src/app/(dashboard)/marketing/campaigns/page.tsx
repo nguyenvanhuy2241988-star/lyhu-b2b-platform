@@ -9,7 +9,9 @@ import { autoSetupFacebookAds, fetchAllCampaignsInsights } from "@/lib/facebookA
 import { TableSkeleton } from "@/components/ui/SkeletonUI";
 import { CampaignReportModal } from "@/components/marketing/CampaignReportModal";
 import { toast } from "sonner";
-import { Facebook, Rocket, BarChart3 } from "lucide-react";
+import { Facebook, Rocket, BarChart3, Bot, Sparkles } from "lucide-react";
+import OptimizationDashboard from "@/components/marketing/OptimizationDashboard";
+import AutoCampaignGenerator from "@/components/marketing/AutoCampaignGenerator";
 
 export default function CampaignsPage() {
     const { user, session } = useAuth();
@@ -39,6 +41,10 @@ export default function CampaignsPage() {
     const [fbConfigId, setFbConfigId] = useState<string | null>(null);
     const [fbConfig, setFbConfig] = useState({ accessToken: "", adAccountId: "" });
     const [isSyncingFb, setIsSyncingFb] = useState(false);
+    
+    // AI Modals
+    const [isOptimizeOpen, setIsOptimizeOpen] = useState(false);
+    const [isAutoCampOpen, setIsAutoCampOpen] = useState(false);
 
     // Search & Filters
     const [searchTerm, setSearchTerm] = useState("");
@@ -255,13 +261,21 @@ export default function CampaignsPage() {
                         onClick={() => setIsFbModalOpen(true)}
                         className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 h-10 px-4 py-2 gap-2"
                     >
-                        <Facebook className="w-4 h-4" /> Kết nối FB Ads
+                        <Facebook className="w-4 h-4" /> Kết nối FB
                     </button>
-                    <button
-                        onClick={() => setIsSetupModalOpen(true)}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 h-10 px-4 py-2 gap-2 shadow-sm"
+                    <button 
+                        onClick={() => setIsAutoCampOpen(true)}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 h-10 px-4 py-2 gap-2 shadow-sm transition-all"
                     >
-                        <Rocket className="w-4 h-4" /> Auto Setup Ads
+                        <Sparkles className="w-4 h-4" />
+                        AI Lên Camp
+                    </button>
+                    <button 
+                        onClick={() => setIsOptimizeOpen(true)}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 h-10 px-4 py-2 gap-2 shadow-sm transition-all hover:shadow-md"
+                    >
+                        <Bot className="w-4 h-4" />
+                        AI Tối ưu
                     </button>
                     <button
                         onClick={handleOpenCreate}
@@ -764,6 +778,19 @@ export default function CampaignsPage() {
                     onClose={() => setReportCampaign(null)}
                 />
             )}
+
+            <OptimizationDashboard 
+                isOpen={isOptimizeOpen}
+                onClose={() => setIsOptimizeOpen(false)}
+                accessToken={fbConfig.accessToken}
+                adAccountId={fbConfig.adAccountId}
+            />
+
+            <AutoCampaignGenerator
+                isOpen={isAutoCampOpen}
+                onClose={() => setIsAutoCampOpen(false)}
+                onSuccess={() => loadCampaigns()}
+            />
         </div>
     );
 }
