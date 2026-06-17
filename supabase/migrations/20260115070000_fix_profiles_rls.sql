@@ -9,11 +9,13 @@ TO authenticated
 USING ( true );
 
 -- Ensure update/insert is still restricted to own profile (if needed)
+DROP POLICY IF EXISTS "Users can insert their own profile" ON profiles;
 CREATE POLICY "Users can insert their own profile" 
 ON profiles FOR INSERT 
 TO authenticated 
 WITH CHECK ( auth.uid() = id );
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
 CREATE POLICY "Users can update their own profile" 
 ON profiles FOR UPDATE 
 TO authenticated 

@@ -8,6 +8,7 @@ ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS orders_telesales_user_id_fke
 
 -- 2. ADD FK TO PROFILES (Safe Table)
 -- Ensure we point to public.profiles, NOT auth.users
+ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS fk_orders_telesales_profile;
 ALTER TABLE public.orders 
 ADD CONSTRAINT fk_orders_telesales_profile
 FOREIGN KEY (telesales_user_id) 

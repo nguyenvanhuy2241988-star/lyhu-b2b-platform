@@ -5,12 +5,21 @@ import { BarChart, Search, Users, PhoneCall, CheckCircle, XCircle, Settings } fr
 import { toast } from 'sonner';
 import dayjs from 'dayjs';
 import { AffiliateKpiModal } from './components/AffiliateKpiModal';
+import HrDailyView from './HrDailyView';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function AffiliateReportsPage() {
+  const { role } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState('today'); // today, week, month
+  const [dateRange, setDateRange] = useState('today');
   const [isKpiModalOpen, setIsKpiModalOpen] = useState(false);
+
+  const isAdminRole = ['admin', 'manager', 'hr_manager', 'director'].includes(role || '');
+
+  if (role && !isAdminRole) {
+    return <HrDailyView />;
+  }
 
   const fetchReports = async () => {
     setLoading(true);

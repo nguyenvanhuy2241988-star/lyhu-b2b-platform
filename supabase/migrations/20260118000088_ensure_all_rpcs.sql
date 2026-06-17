@@ -302,7 +302,8 @@ GRANT EXECUTE ON FUNCTION public.get_orders_v2 TO authenticated, anon, service_r
 GRANT EXECUTE ON FUNCTION public.create_order_v2 TO authenticated, anon, service_role;
 GRANT EXECUTE ON FUNCTION public.update_order_v2 TO authenticated, anon, service_role;
 GRANT EXECUTE ON FUNCTION public.has_prior_orders TO authenticated, anon, service_role;
-GRANT EXECUTE ON FUNCTION public.create_financial_transaction_v2 TO authenticated, anon, service_role;
+-- Removed to avoid non-unique function name error
+-- GRANT EXECUTE ON FUNCTION public.create_financial_transaction_v2 TO authenticated, anon, service_role;
 GRANT EXECUTE ON FUNCTION public.update_order_status TO authenticated, anon, service_role;
 
 COMMIT;
