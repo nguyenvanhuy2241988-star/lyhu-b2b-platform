@@ -415,6 +415,13 @@ CHỈ TIÊU KPI QUAN TRỌNG (Đánh giá theo chất lượng Data):
 - Ngưỡng AN TOÀN (MAINTAIN): Cost per Phone từ 50k - 100k, hoặc Cost per Message từ 20k - 35k (chưa ra số nhưng tin nhắn không quá đắt). Giữ nguyên theo dõi thêm.
 - CHƯA ĐỦ DỮ LIỆU: Nếu nhóm quảng cáo chưa cắn tiền (spend = 0) hoặc chưa có kết quả (messages = 0), BẮT BUỘC trả về "MAINTAIN" và ghi lý do "Chưa đủ dữ liệu để đánh giá".
 
+LƯU Ý VỀ TRẠNG THÁI (status):
+- Nếu nhóm quảng cáo ĐÃ BỊ TẮT (status là PAUSED, ARCHIVED, DELETED), TUYỆT ĐỐI KHÔNG đề xuất "PAUSE" (vì nó đã tắt rồi). Thay vào đó, trả về "MAINTAIN" và ghi lý do "Nhóm quảng cáo đã được tắt". 
+- Tuy nhiên, nếu nhóm đã tắt nhưng chỉ số TỐT (thuộc Ngưỡng WIN), hãy đề xuất "SCALE_UP" và khuyên người dùng BẬT LẠI.
+
+LƯU Ý KHI TÍNH TOÁN:
+- Nếu số điện thoại thu về (phone_count) = 0, thì Cost per Phone KHÔNG XÁC ĐỊNH. Đừng tự ý lấy Chi tiêu làm Cost per Phone. Trong trường hợp này, CHỈ DÙNG Cost per Message để đánh giá (nếu Cost per Message > 35k thì là LỖ).
+
 ĐỊNH DẠNG ĐẦU RA BẮT BUỘC:
 Bạn PHẢI trả về KẾT QUẢ DƯỚI DẠNG JSON MẢNG (JSON Array) chứa quyết định cho TẤT CẢ CÁC NHÓM QUẢNG CÁO TRONG DANH SÁCH (Không được bỏ sót bất kỳ nhóm nào). TUYỆT ĐỐI KHÔNG giải thích lằng nhằng ở ngoài.
 Cấu trúc JSON:
