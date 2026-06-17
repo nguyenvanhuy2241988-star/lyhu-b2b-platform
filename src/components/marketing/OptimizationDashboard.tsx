@@ -104,20 +104,13 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                     messages: matchedRaw?.messages || 0,
                     phone_count: matchedRaw?.phone_count || 0,
                     phone_rate: matchedRaw?.phone_rate || 0,
-                    cost_per_phone: matchedRaw?.cost_per_phone || 0
+                    cost_per_phone: matchedRaw?.cost_per_phone || 0,
+                    status: matchedRaw?.status || 'ACTIVE'
                 };
             });
 
-            let sortedRecommendations = [...enhancedRecommendations];
-            if (sortBy === 'spend_desc') sortedRecommendations.sort((a, b) => b.spend - a.spend);
-            if (sortBy === 'spend_asc') sortedRecommendations.sort((a, b) => a.spend - b.spend);
-            if (sortBy === 'messages_desc') sortedRecommendations.sort((a, b) => b.messages - a.messages);
-            if (sortBy === 'phones_desc') sortedRecommendations.sort((a, b) => b.phone_count - a.phone_count);
-            if (sortBy === 'cpm_desc') sortedRecommendations.sort((a, b) => b.cost_per_message - a.cost_per_message);
-            if (sortBy === 'cpp_desc') sortedRecommendations.sort((a, b) => b.cost_per_phone - a.cost_per_phone);
-
             setRawCount(data.rawAdSets?.length || 0);
-            setRecommendations(sortedRecommendations);
+            setRecommendations(enhancedRecommendations);
             setHasAnalyzed(true);
             toast.success('AI đã phân tích xong toàn bộ tài khoản!');
         } catch (error: any) {
@@ -181,6 +174,18 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
             setIsExecuting(false);
         }
     };
+
+    const displayRecs = recommendations
+        .filter(r => statusFilter === 'ALL' || r.status === statusFilter || (!r.status && statusFilter === 'ACTIVE'))
+        .sort((a, b) => {
+            if (sortBy === 'spend_desc') return b.spend - a.spend;
+            if (sortBy === 'spend_asc') return a.spend - b.spend;
+            if (sortBy === 'messages_desc') return b.messages - a.messages;
+            if (sortBy === 'phones_desc') return (b.phone_count || 0) - (a.phone_count || 0);
+            if (sortBy === 'cpm_desc') return b.cost_per_message - a.cost_per_message;
+            if (sortBy === 'cpp_desc') return (b.cost_per_phone || 0) - (a.cost_per_phone || 0);
+            return 0;
+        });
 
     return (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -277,39 +282,6 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                             </p>
 
                             <div className="max-w-md mx-auto bg-slate-50 p-5 rounded-xl border border-slate-200 mb-8 text-left space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
-                                            <Filter className="w-4 h-4" /> Trạng thái
-                                        </label>
-                                        <select 
-                                            className="w-full border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                                            value={statusFilter}
-                                            onChange={(e) => setStatusFilter(e.target.value)}
-                                        >
-                                            <option value="ACTIVE">Đang chạy</option>
-                                            <option value="PAUSED">Đang tắt</option>
-                                            <option value="ALL">Tất cả trạng thái</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
-                                            <TrendingUp className="w-4 h-4" /> Sắp xếp theo
-                                        </label>
-                                        <select 
-                                            className="w-full border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                                            value={sortBy}
-                                            onChange={(e) => setSortBy(e.target.value)}
-                                        >
-                                            <option value="spend_desc">Chi phí (Cao &gt; Thấp)</option>
-                                            <option value="spend_asc">Chi phí (Thấp &gt; Cao)</option>
-                                            <option value="messages_desc">Nhiều Tin nhắn nhất</option>
-                                            <option value="phones_desc">Nhiều Số ĐT nhất</option>
-                                            <option value="cpm_desc">Giá/Tin đắt nhất</option>
-                                            <option value="cpp_desc">Giá/SĐT đắt nhất</option>
-                                        </select>
-                                    </div>
-                                </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
@@ -398,8 +370,41 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                         Bạn đang xem lại kết quả phân tích lúc: <strong>{dayjs(viewingHistoryDate).format('HH:mm:ss DD/MM/YYYY')}</strong>
                                     </div>
                                 )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                    <div className="flex items-center gap-3">
+                                        <Filter className="w-4 h-4 text-slate-500" />
+                                        <span className="text-sm font-medium text-slate-700 whitespace-nowrap">Trạng thái:</span>
+                                        <select 
+                                            className="w-full border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm"
+                                            value={statusFilter}
+                                            onChange={(e) => setStatusFilter(e.target.value)}
+                                        >
+                                            <option value="ACTIVE">Đang chạy</option>
+                                            <option value="PAUSED">Đang tắt</option>
+                                            <option value="ALL">Tất cả trạng thái</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <TrendingUp className="w-4 h-4 text-slate-500" />
+                                        <span className="text-sm font-medium text-slate-700 whitespace-nowrap">Sắp xếp:</span>
+                                        <select 
+                                            className="w-full border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm"
+                                            value={sortBy}
+                                            onChange={(e) => setSortBy(e.target.value)}
+                                        >
+                                            <option value="spend_desc">Chi phí (Cao &gt; Thấp)</option>
+                                            <option value="spend_asc">Chi phí (Thấp &gt; Cao)</option>
+                                            <option value="messages_desc">Nhiều Tin nhắn nhất</option>
+                                            <option value="phones_desc">Nhiều Số ĐT nhất</option>
+                                            <option value="cpm_desc">Giá/Tin đắt nhất</option>
+                                            <option value="cpp_desc">Giá/SĐT đắt nhất</option>
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <div className="space-y-4">
-                                    {recommendations.map((rec, idx) => (
+                                    {displayRecs.map((rec, idx) => (
                                     <div key={idx} className={`p-4 rounded-xl border ${
                                         rec.action === 'SCALE_UP' ? 'border-green-200 bg-green-50' :
                                         rec.action === 'PAUSE' ? 'border-red-200 bg-red-50' :
@@ -454,13 +459,13 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+                                    ))}
 
-                                {recommendations.length === 0 && (
-                                    <div className="text-center py-8 text-slate-500">
-                                        AI không tìm thấy quảng cáo nào cần tối ưu lúc này.
-                                    </div>
-                                )}
+                                    {displayRecs.length === 0 && (
+                                        <div className="text-center py-8 text-slate-500">
+                                            Không có quảng cáo nào khớp với bộ lọc hiện tại.
+                                        </div>
+                                    )}
                             </div>
                         </div>
                     )}

@@ -14,10 +14,10 @@ export async function POST(req: Request) {
         // 1. Fetch all active ad sets with insights
         let adSets = await fetchAllAdSetsWithInsights(accessToken, adAccountId, timeRange, objectiveFilter);
         
-        // Filter by Status
-        if (statusFilter !== 'ALL') {
-            adSets = adSets.filter((a: any) => a.status === statusFilter);
-        }
+        // Filter by Status (Removed to allow frontend dynamic filtering)
+        // if (statusFilter !== 'ALL') {
+        //     adSets = adSets.filter((a: any) => a.status === statusFilter);
+        // }
 
         if (!adSets || adSets.length === 0) {
             return NextResponse.json({ 
