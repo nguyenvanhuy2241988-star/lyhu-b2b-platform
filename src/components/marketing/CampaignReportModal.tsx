@@ -97,17 +97,34 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
     });
     const targetingDetails = interests.length > 0 ? interests.join(', ') : 'Mở rộng (Broad)';
 
-    // Determine primary action type based on objective
+    const optimizationGoal = adSet?.optimization_goal || '';
+
+    // Determine primary action type based on optimization_goal or objective
     let primaryAction = 'link_click';
-    if (objective === 'PAGE_LIKES') primaryAction = 'like';
-    else if (objective === 'OUTCOME_ENGAGEMENT' || objective === 'MESSAGES') primaryAction = 'onsite_conversion.messaging_conversation_started_7d';
+    if (optimizationGoal === 'PAGE_LIKES') primaryAction = 'like';
+    else if (optimizationGoal === 'CONVERSATIONS') primaryAction = 'onsite_conversion.messaging_conversation_started_7d';
+    else if (optimizationGoal === 'THRUPLAY') primaryAction = 'thruplay';
+    else if (optimizationGoal === 'POST_ENGAGEMENT') primaryAction = 'post_engagement';
+    else if (optimizationGoal === 'LEAD_GENERATION') primaryAction = 'lead';
+    else if (optimizationGoal === 'LINK_CLICKS') primaryAction = 'link_click';
+    else {
+        // Fallback to objective if optimization_goal is missing or unmapped
+        if (objective === 'PAGE_LIKES') primaryAction = 'like';
+        else if (objective === 'OUTCOME_ENGAGEMENT' || objective === 'MESSAGES') primaryAction = 'onsite_conversion.messaging_conversation_started_7d';
+    }
     
     // Find the result object
     let resultObj = insights?.actions?.find((a: any) => a.action_type === primaryAction);
     
-    // Fallbacks for Engagement
+    // Fallbacks if exactly that action is not found (e.g. lead can be lead_grouped)
+    if (!resultObj && primaryAction === 'lead') {
+        resultObj = insights?.actions?.find((a: any) => a.action_type === 'onsite_conversion.lead_grouped');
+        if (resultObj) primaryAction = 'onsite_conversion.lead_grouped';
+    }
+
+    // Fallbacks for Engagement if still not found
     if (!resultObj && (objective === 'OUTCOME_ENGAGEMENT' || objective === 'MESSAGES')) {
-        resultObj = insights?.actions?.find((a: any) => ['post_engagement', 'video_view', 'thruplay'].includes(a.action_type));
+        resultObj = insights?.actions?.find((a: any) => ['like', 'post_engagement', 'video_view', 'thruplay'].includes(a.action_type));
         if (resultObj) primaryAction = resultObj.action_type;
     }
 

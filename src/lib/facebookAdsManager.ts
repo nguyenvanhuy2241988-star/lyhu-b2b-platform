@@ -146,8 +146,8 @@ export const fetchFbCampaignDetails = async (accessToken: string, campaignId: st
         const campRes = await fetch(`${baseUrl}/${campaignId}?fields=name,objective&access_token=${accessToken}`);
         const campData = await campRes.json();
 
-        // Fetch AdSets (for Targeting)
-        const adSetRes = await fetch(`${baseUrl}/${campaignId}/adsets?fields=id,name,targeting,daily_budget&access_token=${accessToken}`);
+        // Fetch AdSets (for Targeting and Optimization Goal)
+        const adSetRes = await fetch(`${baseUrl}/${campaignId}/adsets?fields=id,name,targeting,daily_budget,optimization_goal&access_token=${accessToken}`);
         const adSetData = await adSetRes.json();
         
         // Fetch Ads (for Creative info)
