@@ -606,26 +606,31 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
             
             {showWelcomeModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transform scale-100 animate-in fade-in zoom-in duration-300">
-                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-8 text-center relative overflow-hidden">
-                            <PartyPopper className="w-16 h-16 text-white mx-auto mb-4 animate-bounce drop-shadow-md" />
-                            <h3 className="text-2xl font-bold text-white relative z-10 drop-shadow">Chúc mừng bạn!</h3>
-                        </div>
-                        <div className="p-6 text-center space-y-4">
-                            <div className="flex justify-center mb-2">
-                                <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm border border-indigo-200">
-                                    <Sparkles size={14} /> Đối tác LYHU
-                                </span>
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden transform scale-100 animate-in fade-in zoom-in duration-300 border border-slate-100">
+                        <div className="p-6 text-center space-y-5">
+                            <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <PartyPopper className="w-8 h-8 text-primary animate-bounce" />
                             </div>
-                            <p className="text-slate-600 text-sm leading-relaxed">
-                                Chức năng Affiliate (Tiếp thị liên kết) của bạn đã được kích hoạt thành công. Ngay bây giờ, bạn có thể tạo link giới thiệu sản phẩm và bắt đầu nhận <strong className="text-indigo-600">hoa hồng không giới hạn!</strong>
-                            </p>
+                            
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-800 mb-2">Chúc mừng bạn!</h3>
+                                <p className="text-slate-600 text-sm leading-relaxed">
+                                    Tính năng Tiếp thị liên kết (Affiliate) đã được kích hoạt thành công.
+                                </p>
+                            </div>
+                            
+                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-center">
+                                <p className="text-xs text-slate-500">
+                                    Ngay bây giờ, bạn có thể tạo link giới thiệu sản phẩm và nhận <strong className="text-primary-600 font-bold">hoa hồng không giới hạn!</strong>
+                                </p>
+                            </div>
+                            
                             <button 
                                 onClick={() => {
                                     localStorage.setItem(`affiliate_welcome_seen_${profile.id}`, 'true');
                                     setShowWelcomeModal(false);
                                 }}
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-95 mt-4"
+                                className="w-full bg-primary hover:bg-primary-600 text-white font-medium py-2.5 px-4 rounded-lg shadow-sm transition-colors active:scale-95"
                             >
                                 Bắt đầu kiếm tiền ngay
                             </button>
