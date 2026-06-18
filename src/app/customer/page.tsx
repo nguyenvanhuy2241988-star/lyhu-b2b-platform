@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { AffiliatePanel } from "@/components/customer/AffiliatePanel";
 
 export default function CustomerDashboard() {
     const { user: authUser } = useAuth();
@@ -91,9 +90,6 @@ export default function CustomerDashboard() {
                     </div>
                 </Link>
             </div>
-
-            {/* Khối Affiliate (Chỉ hiện nếu là Affiliate) */}
-            {authUser?.id && <AffiliatePanel userId={authUser.id} />}
 
             {/* Thông tin cá nhân */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">

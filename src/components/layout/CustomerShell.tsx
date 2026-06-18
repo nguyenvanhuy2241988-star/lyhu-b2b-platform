@@ -1,19 +1,38 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { LogOut, User, ShoppingBag, FileText, Settings } from "lucide-react";
+import { LogOut, User, ShoppingBag, FileText, Settings, TrendingUp } from "lucide-react";
 import { usePathname } from "next/navigation";
 import WholesaleFooter from "@/components/wholesale/WholesaleFooter";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function CustomerShell({ children, title }: { children: React.ReactNode, title: string }) {
     const { user, signOut } = useAuth();
     const pathname = usePathname();
+    const [isAffiliate, setIsAffiliate] = useState(false);
+
+    useEffect(() => {
+        if (user?.id) {
+            const checkAffiliate = async () => {
+                const { data } = await supabase
+                    .from('affiliate_profiles')
+                    .select('status')
+                    .eq('user_id', user.id)
+                    .single();
+                if (data && data.status === 'active') {
+                    setIsAffiliate(true);
+                }
+            };
+            checkAffiliate();
+        }
+    }, [user?.id]);
 
     const navItems: any[] = [
         { name: "Tổng quan", href: "/customer", icon: User },
+        ...(isAffiliate ? [{ name: "Tiếp thị liên kết", href: "/customer/affiliate", icon: TrendingUp }] : []),
         { name: "Đơn hàng của tôi", href: "/customer/orders", icon: FileText },
     ];
 
