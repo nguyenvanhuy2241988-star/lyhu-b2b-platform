@@ -54,7 +54,11 @@ function LoginPageContent() {
                 password,
             });
             if (error) {
-                setMsg(error.message);
+                let errorMsg = error.message;
+                if (errorMsg === 'Invalid login credentials') {
+                    errorMsg = 'Email hoặc mật khẩu không chính xác.';
+                }
+                setMsg(errorMsg);
                 return;
             }
 

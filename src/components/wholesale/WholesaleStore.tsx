@@ -627,7 +627,11 @@ export default function WholesaleStore({
             closeAuthModal();
             window.location.reload();
         } catch (err: any) {
-            setLoginError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+            let errorMsg = err.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+            if (errorMsg === 'Invalid login credentials') {
+                errorMsg = 'Email hoặc mật khẩu không chính xác.';
+            }
+            setLoginError(errorMsg);
         } finally {
             setIsLoggingIn(false);
         }

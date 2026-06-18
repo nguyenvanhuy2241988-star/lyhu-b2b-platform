@@ -12,6 +12,21 @@ const nextConfig = {
             },
         ],
     },
+    async redirects() {
+        return [
+            {
+                source: '/:path*',
+                has: [
+                    {
+                        type: 'host',
+                        value: 'www.lyhu.com.vn',
+                    },
+                ],
+                destination: 'https://lyhu.com.vn/:path*',
+                permanent: true,
+            },
+        ];
+    },
 };
 
 module.exports = nextConfig;
