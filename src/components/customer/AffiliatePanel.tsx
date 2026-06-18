@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Copy, Link as LinkIcon, TrendingUp, DollarSign, MousePointerClick, ShoppingCart, CreditCard, Clock, History, Loader2, CheckCircle, XCircle, PartyPopper, Sparkles } from "lucide-react";
+import { Copy, Link as LinkIcon, TrendingUp, DollarSign, MousePointerClick, ShoppingCart, CreditCard, Clock, History, Loader2, CheckCircle, XCircle, PartyPopper, Sparkles, BookOpen, Share2, Lightbulb } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { updatePaymentInfo, requestWithdrawal, getWithdrawalHistory, AffiliateWithdrawal } from "@/lib/affiliateStore";
 
@@ -17,7 +17,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
     const [orders, setOrders] = useState<any[]>([]);
     const [productsRates, setProductsRates] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'overview' | 'payment' | 'history'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'payment' | 'history' | 'guide'>('overview');
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
     // Payment Form
@@ -293,6 +293,12 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                     className={`py-3 px-4 font-semibold text-sm border-b-2 transition-colors ${activeTab === 'history' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                 >
                     Lịch sử rút tiền
+                </button>
+                <button
+                    onClick={() => setActiveTab('guide')}
+                    className={`py-3 px-4 font-semibold text-sm border-b-2 transition-colors ${activeTab === 'guide' ? 'border-primary-600 text-primary-600' : 'border-transparent text-slate-500 hover:text-slate-700'} flex items-center gap-1.5`}
+                >
+                    <BookOpen size={16} /> Hướng dẫn
                 </button>
             </div>
             
@@ -600,6 +606,64 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                                 </table>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {activeTab === 'guide' && (
+                    <div className="space-y-6">
+                        <div className="bg-primary-50 p-5 rounded-xl border border-primary-100 flex items-start gap-4">
+                            <div className="p-3 bg-white rounded-lg text-primary-600 shadow-sm shrink-0">
+                                <Lightbulb size={24} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-800 mb-1 text-lg">Bí quyết kiếm tiền hiệu quả</h3>
+                                <p className="text-slate-600 text-sm leading-relaxed">
+                                    Chào mừng bạn đến với chương trình Tiếp thị Liên kết của LYHU! Dưới đây là 4 bước cơ bản để bạn bắt đầu tạo ra thu nhập tự động ngay hôm nay. Hãy làm theo hướng dẫn bên dưới nhé.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div className="p-5 border border-slate-200 rounded-xl hover:border-primary-300 transition-colors bg-white shadow-sm">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm">1</div>
+                                    <h4 className="font-bold text-slate-800 flex items-center gap-2"><LinkIcon size={16} className="text-primary-600"/> Lấy link giới thiệu</h4>
+                                </div>
+                                <p className="text-sm text-slate-600">
+                                    Ở mục <strong>Tổng quan</strong>, bạn có thể copy link của bất kỳ sản phẩm nào có sẵn, hoặc dán link sản phẩm bạn muốn bán vào ô tạo link để hệ thống đính kèm mã giới thiệu của riêng bạn.
+                                </p>
+                            </div>
+
+                            <div className="p-5 border border-slate-200 rounded-xl hover:border-primary-300 transition-colors bg-white shadow-sm">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm">2</div>
+                                    <h4 className="font-bold text-slate-800 flex items-center gap-2"><Share2 size={16} className="text-blue-500"/> Chia sẻ & Bán hàng</h4>
+                                </div>
+                                <p className="text-sm text-slate-600">
+                                    Đăng link vừa tạo lên các kênh mạng xã hội (Facebook, Zalo, Tiktok, Group) kèm theo bài viết review, hình ảnh hoặc gửi trực tiếp cho bạn bè, khách hàng có nhu cầu.
+                                </p>
+                            </div>
+
+                            <div className="p-5 border border-slate-200 rounded-xl hover:border-primary-300 transition-colors bg-white shadow-sm">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm">3</div>
+                                    <h4 className="font-bold text-slate-800 flex items-center gap-2"><TrendingUp size={16} className="text-amber-500"/> Nhận hoa hồng</h4>
+                                </div>
+                                <p className="text-sm text-slate-600">
+                                    Khi có người click vào link của bạn và mua hàng thành công, hệ thống sẽ tự động ghi nhận hoa hồng. Bạn có thể theo dõi chi tiết từng đơn hàng ở mục Tổng quan.
+                                </p>
+                            </div>
+
+                            <div className="p-5 border border-slate-200 rounded-xl hover:border-primary-300 transition-colors bg-white shadow-sm">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm">4</div>
+                                    <h4 className="font-bold text-slate-800 flex items-center gap-2"><CreditCard size={16} className="text-emerald-600"/> Rút tiền</h4>
+                                </div>
+                                <p className="text-sm text-slate-600">
+                                    Khi số dư khả dụng đạt tối thiểu <strong>100.000đ</strong>, bạn vào mục <strong>Thông tin & Rút tiền</strong> để nhập tài khoản ngân hàng và yêu cầu rút tiền về nhé.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
