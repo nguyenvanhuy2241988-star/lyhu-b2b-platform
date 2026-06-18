@@ -623,45 +623,102 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                             </div>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div className="p-5 border border-slate-200 rounded-xl hover:border-primary-300 transition-colors bg-white shadow-sm">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm">1</div>
-                                    <h4 className="font-bold text-slate-800 flex items-center gap-2"><LinkIcon size={16} className="text-primary-600"/> Lấy link giới thiệu</h4>
+                        <div className="grid gap-5">
+                            {/* Step 1 */}
+                            <div className="flex flex-col sm:flex-row gap-5 p-5 border border-slate-200 rounded-xl hover:border-primary-300 transition-colors bg-white shadow-sm items-center sm:items-start">
+                                <div className="w-24 h-24 rounded-2xl bg-primary-50 flex items-center justify-center shrink-0 border border-primary-100 relative">
+                                    <LinkIcon size={36} className="text-primary-600" />
+                                    <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1.5 shadow-sm border border-slate-100">
+                                        <Copy size={16} className="text-slate-500"/>
+                                    </div>
                                 </div>
-                                <p className="text-sm text-slate-600">
-                                    Ở mục <strong>Tổng quan</strong>, bạn có thể copy link của bất kỳ sản phẩm nào có sẵn, hoặc dán link sản phẩm bạn muốn bán vào ô tạo link để hệ thống đính kèm mã giới thiệu của riêng bạn.
-                                </p>
+                                <div className="flex-1 text-center sm:text-left w-full">
+                                    <div className="flex items-center gap-2 mb-2 justify-center sm:justify-start">
+                                        <div className="bg-primary text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm">Bước 1</div>
+                                        <h4 className="font-bold text-slate-800 text-lg">Lấy link giới thiệu</h4>
+                                    </div>
+                                    <p className="text-sm text-slate-600 leading-relaxed mb-3">
+                                        Ở mục <strong>Tổng quan</strong>, bạn có thể copy link của bất kỳ sản phẩm nào có sẵn, hoặc dán link trang LYHU bất kỳ vào ô tạo link để lấy link.
+                                    </p>
+                                    <div className="bg-slate-50 rounded border border-slate-100 p-2.5 text-xs font-mono text-slate-500 break-all text-left">
+                                        Link của bạn sẽ có dạng: <br/>lyhu.com.vn/san-pham<strong className="text-primary-600 font-bold bg-primary-50 px-1 rounded">?ref={profile.affiliate_code}</strong>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="p-5 border border-slate-200 rounded-xl hover:border-primary-300 transition-colors bg-white shadow-sm">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm">2</div>
-                                    <h4 className="font-bold text-slate-800 flex items-center gap-2"><Share2 size={16} className="text-blue-500"/> Chia sẻ & Bán hàng</h4>
+                            {/* Step 2 */}
+                            <div className="flex flex-col sm:flex-row gap-5 p-5 border border-slate-200 rounded-xl hover:border-blue-300 transition-colors bg-white shadow-sm items-center sm:items-start">
+                                <div className="w-24 h-24 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100 relative">
+                                    <Share2 size={36} className="text-blue-500" />
+                                    <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1.5 shadow-sm border border-slate-100">
+                                        <MousePointerClick size={16} className="text-slate-500"/>
+                                    </div>
                                 </div>
-                                <p className="text-sm text-slate-600">
-                                    Đăng link vừa tạo lên các kênh mạng xã hội (Facebook, Zalo, Tiktok, Group) kèm theo bài viết review, hình ảnh hoặc gửi trực tiếp cho bạn bè, khách hàng có nhu cầu.
-                                </p>
+                                <div className="flex-1 text-center sm:text-left w-full">
+                                    <div className="flex items-center gap-2 mb-2 justify-center sm:justify-start">
+                                        <div className="bg-blue-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm">Bước 2</div>
+                                        <h4 className="font-bold text-slate-800 text-lg">Chia sẻ & Bán hàng</h4>
+                                    </div>
+                                    <p className="text-sm text-slate-600 leading-relaxed mb-3">
+                                        Đăng link vừa tạo lên các kênh mạng xã hội (Facebook, Zalo, Tiktok, Group cộng đồng) kèm theo bài viết review chân thực, hình ảnh bắt mắt hoặc gửi trực tiếp cho bạn bè.
+                                    </p>
+                                    <div className="flex items-start gap-2 bg-blue-50/50 rounded border border-blue-100 p-2.5 text-xs text-blue-700 text-left">
+                                        <Lightbulb size={16} className="shrink-0 mt-0.5" />
+                                        <span><strong>Mẹo:</strong> Bạn nên dùng các công cụ như bit.ly hoặc tinyurl để rút gọn link giới thiệu cho đẹp và uy tín hơn trước khi đăng bài nhé!</span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="p-5 border border-slate-200 rounded-xl hover:border-primary-300 transition-colors bg-white shadow-sm">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm">3</div>
-                                    <h4 className="font-bold text-slate-800 flex items-center gap-2"><TrendingUp size={16} className="text-amber-500"/> Nhận hoa hồng</h4>
+                            {/* Step 3 */}
+                            <div className="flex flex-col sm:flex-row gap-5 p-5 border border-slate-200 rounded-xl hover:border-amber-300 transition-colors bg-white shadow-sm items-center sm:items-start relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-bl-full -z-0 opacity-50 pointer-events-none"></div>
+                                <div className="w-24 h-24 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0 border border-amber-100 relative z-10">
+                                    <TrendingUp size={36} className="text-amber-500" />
+                                    <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1.5 shadow-sm border border-slate-100">
+                                        <Clock size={16} className="text-slate-500"/>
+                                    </div>
                                 </div>
-                                <p className="text-sm text-slate-600">
-                                    Khi có người click vào link của bạn và mua hàng thành công, hệ thống sẽ tự động ghi nhận hoa hồng. Bạn có thể theo dõi chi tiết từng đơn hàng ở mục Tổng quan.
-                                </p>
+                                <div className="flex-1 text-center sm:text-left w-full z-10">
+                                    <div className="flex items-center gap-2 mb-2 justify-center sm:justify-start">
+                                        <div className="bg-amber-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm">Bước 3</div>
+                                        <h4 className="font-bold text-slate-800 text-lg">Nhận hoa hồng tự động</h4>
+                                    </div>
+                                    <p className="text-sm text-slate-600 leading-relaxed mb-3">
+                                        Khi có người click vào link của bạn và mua hàng thành công, hệ thống sẽ tự động ghi nhận hoa hồng. Theo dõi chi tiết từng đơn ở mục Tổng quan.
+                                    </p>
+                                    <div className="flex items-start gap-2 bg-amber-50 rounded border border-amber-200 p-3 text-sm text-amber-800 text-left shadow-inner">
+                                        <Clock size={20} className="shrink-0 mt-0.5" />
+                                        <div>
+                                            <strong>Lưu Cookie lên đến 30 Ngày!</strong>
+                                            <p className="mt-1 text-xs opacity-90 leading-relaxed">
+                                                Nếu khách click vào link của bạn hôm nay, nhưng <strong className="underline">29 ngày sau họ mới quay lại mua hàng</strong>, hệ thống vẫn ghi nhận đơn hàng đó cho bạn!
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="p-5 border border-slate-200 rounded-xl hover:border-primary-300 transition-colors bg-white shadow-sm">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm">4</div>
-                                    <h4 className="font-bold text-slate-800 flex items-center gap-2"><CreditCard size={16} className="text-emerald-600"/> Rút tiền</h4>
+                            {/* Step 4 */}
+                            <div className="flex flex-col sm:flex-row gap-5 p-5 border border-slate-200 rounded-xl hover:border-emerald-300 transition-colors bg-white shadow-sm items-center sm:items-start">
+                                <div className="w-24 h-24 rounded-2xl bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100 relative">
+                                    <CreditCard size={36} className="text-emerald-600" />
+                                    <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1.5 shadow-sm border border-slate-100">
+                                        <DollarSign size={16} className="text-slate-500"/>
+                                    </div>
                                 </div>
-                                <p className="text-sm text-slate-600">
-                                    Khi số dư khả dụng đạt tối thiểu <strong>100.000đ</strong>, bạn vào mục <strong>Thông tin & Rút tiền</strong> để nhập tài khoản ngân hàng và yêu cầu rút tiền về nhé.
-                                </p>
+                                <div className="flex-1 text-center sm:text-left w-full">
+                                    <div className="flex items-center gap-2 mb-2 justify-center sm:justify-start">
+                                        <div className="bg-emerald-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm">Bước 4</div>
+                                        <h4 className="font-bold text-slate-800 text-lg">Rút tiền về tài khoản</h4>
+                                    </div>
+                                    <p className="text-sm text-slate-600 leading-relaxed mb-3">
+                                        Chuyển sang tab <strong>Thông tin & Rút tiền</strong> để nhập tài khoản ngân hàng và yêu cầu rút tiền về nhé.
+                                    </p>
+                                    <div className="flex items-center gap-3 bg-slate-50 rounded border border-slate-200 p-2 text-sm text-slate-700 text-left">
+                                        <div className="bg-emerald-100 text-emerald-700 p-1.5 rounded text-xs font-bold">Lưu ý</div>
+                                        <span>Số dư khả dụng cần đạt tối thiểu <strong>100.000đ</strong> để tạo lệnh rút.</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
