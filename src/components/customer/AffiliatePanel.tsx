@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Copy, Link as LinkIcon, TrendingUp, DollarSign, MousePointerClick, ShoppingCart, CreditCard, Clock, History, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Copy, Link as LinkIcon, TrendingUp, DollarSign, MousePointerClick, ShoppingCart, CreditCard, Clock, History, Loader2, CheckCircle, XCircle, PartyPopper, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { updatePaymentInfo, requestWithdrawal, getWithdrawalHistory, AffiliateWithdrawal } from "@/lib/affiliateStore";
 
@@ -18,6 +18,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
     const [productsRates, setProductsRates] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'payment' | 'history'>('overview');
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
     // Payment Form
     const [bankName, setBankName] = useState("");
@@ -37,6 +38,15 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
             fetchData();
         }
     }, [userId]);
+
+    useEffect(() => {
+        if (!loading && profile && profile.status === 'active') {
+            const hasSeen = localStorage.getItem(`affiliate_welcome_seen_${profile.id}`);
+            if (!hasSeen) {
+                setShowWelcomeModal(true);
+            }
+        }
+    }, [loading, profile]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -593,6 +603,36 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                     </div>
                 )}
             </div>
+            
+            {showWelcomeModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transform scale-100 animate-in fade-in zoom-in duration-300">
+                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-8 text-center relative overflow-hidden">
+                            <PartyPopper className="w-16 h-16 text-white mx-auto mb-4 animate-bounce drop-shadow-md" />
+                            <h3 className="text-2xl font-bold text-white relative z-10 drop-shadow">Chúc mừng bạn!</h3>
+                        </div>
+                        <div className="p-6 text-center space-y-4">
+                            <div className="flex justify-center mb-2">
+                                <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm border border-indigo-200">
+                                    <Sparkles size={14} /> Đối tác LYHU
+                                </span>
+                            </div>
+                            <p className="text-slate-600 text-sm leading-relaxed">
+                                Chức năng Affiliate (Tiếp thị liên kết) của bạn đã được kích hoạt thành công. Ngay bây giờ, bạn có thể tạo link giới thiệu sản phẩm và bắt đầu nhận <strong className="text-indigo-600">hoa hồng không giới hạn!</strong>
+                            </p>
+                            <button 
+                                onClick={() => {
+                                    localStorage.setItem(`affiliate_welcome_seen_${profile.id}`, 'true');
+                                    setShowWelcomeModal(false);
+                                }}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-95 mt-4"
+                            >
+                                Bắt đầu kiếm tiền ngay
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
