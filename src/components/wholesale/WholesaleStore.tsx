@@ -652,10 +652,13 @@ export default function WholesaleStore({
         }
 
         try {
+            const origin = window.location.origin;
+            const redirectUrl = origin.includes('localhost') ? `${origin}/auth/callback` : 'https://lyhu.com.vn/auth/callback';
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider,
                 options: {
-                    redirectTo: window.location.origin + '/auth/callback',
+                    redirectTo: redirectUrl,
                 }
             });
             if (error) throw error;

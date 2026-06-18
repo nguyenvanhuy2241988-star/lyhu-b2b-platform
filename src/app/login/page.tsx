@@ -104,8 +104,10 @@ function LoginPageContent() {
             const origin = window.location.origin;
             const next = searchParams.get("next");
             
+            const baseRedirectUrl = origin.includes('localhost') ? origin : 'https://lyhu.com.vn';
+            
             // Build exact redirect URL to match Supabase allowlist
-            let redirectUrl = `${origin}/auth/callback`;
+            let redirectUrl = `${baseRedirectUrl}/auth/callback`;
             if (next && next !== "/") {
                 redirectUrl += `?next=${encodeURIComponent(next)}`;
             }
