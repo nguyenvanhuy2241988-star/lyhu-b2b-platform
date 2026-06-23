@@ -934,10 +934,11 @@ function TelesalesCreateOrderContent() {
 
                         {/* RIGHT PANEL: Sticky Order Cart */}
                         <Panel defaultSize={40} minSize={25} className="min-w-0">
-                            <div className="lg:sticky lg:top-4">
-                                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                            <div className="lg:sticky lg:top-4 flex flex-col" style={{ maxHeight: 'calc(100vh - 120px)' }}>
+                                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col h-full">
                                     {/* Cart Header */}
-                                    <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-gradient-to-r from-teal-50 to-white">
+                                    <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-gradient-to-r from-teal-50 to-white shrink-0">
+
                                         <div className="flex items-center gap-2">
                                             <ShoppingCart className="w-5 h-5 text-teal-600" />
                                             <h3 className="font-semibold text-slate-900">Đơn hàng</h3>
@@ -955,7 +956,7 @@ function TelesalesCreateOrderContent() {
                                     </div>
 
                                     {/* Cart Items — Scrollable */}
-                                    <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 520px)' }}>
+                                    <div className="overflow-y-auto flex-1 min-h-[150px]">
                                         {orderItems.length === 0 ? (
                                             <div className="p-8 text-center">
                                                 <ShoppingCart className="w-10 h-10 text-slate-300 mx-auto mb-2" />
@@ -1073,7 +1074,7 @@ function TelesalesCreateOrderContent() {
 
                                     {/* Cart Footer: Note, Payment, Summary, Actions */}
                                     {orderItems.length > 0 && (
-                                        <div className="border-t border-slate-200 p-4 space-y-3">
+                                        <div className="border-t border-slate-200 p-4 space-y-3 shrink-0">
                                             {/* Note */}
                                             <div>
                                                 <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
