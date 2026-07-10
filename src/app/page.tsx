@@ -35,6 +35,17 @@ type Props = {
     searchParams: { [key: string]: string | string[] | undefined }
 }
 
+const getMockSocialProof = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+        hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const positiveHash = Math.abs(hash);
+    const rating = 4.5 + (positiveHash % 6) / 10;
+    const soldCount = 50 + (positiveHash % 3450);
+    return { rating, soldCount };
+};
+
 export async function generateMetadata(
     { searchParams }: Props,
     parent: ResolvingMetadata
@@ -51,8 +62,12 @@ export async function generateMetadata(
 
         if (product) {
             const formattedPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price || 0);
+            const { rating, soldCount } = getMockSocialProof(product.id || initialProductId);
+            const reviewCount = Math.floor(soldCount / 10) || 1;
+            const stars = '⭐'.repeat(Math.round(rating));
+            
             const title = product.name;
-            const description = `${formattedPrice} - ${product.description || 'Mua ngay trên LYHU App'}`;
+            const description = `${formattedPrice} ${stars} (${reviewCount} Đánh giá) - ${product.description || 'Mua ngay trên LYHU App'}`;
             const images = product.image_url ? [product.image_url] : [];
             
             return {
