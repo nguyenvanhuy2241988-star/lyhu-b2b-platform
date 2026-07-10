@@ -56,7 +56,7 @@ export async function generateMetadata(
         const supabase = getSupabase();
         const { data: product } = await supabase
             .from('products')
-            .select('name, description, image_url, price')
+            .select('id, name, description, image_url, price')
             .eq('id', initialProductId)
             .single();
 
