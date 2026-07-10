@@ -66,8 +66,8 @@ export async function generateMetadata(
             const reviewCount = Math.floor(soldCount / 10) || 1;
             const stars = '⭐'.repeat(Math.round(rating));
             
-            const title = product.name;
-            const description = `${formattedPrice} ${stars} (${reviewCount} Đánh giá) - ${product.description || 'Mua ngay trên LYHU App'}`;
+            const title = `${formattedPrice} ${stars} - ${product.name}`;
+            const description = `${reviewCount} Đánh giá | Mua ngay trên LYHU App để nhận ưu đãi!`;
             const images = product.image_url ? [product.image_url] : [];
             
             return {
