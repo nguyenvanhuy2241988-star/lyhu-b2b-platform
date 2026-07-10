@@ -30,8 +30,9 @@ function getSupabase() {
     });
 }
 
-export default async function WholesalePage() {
+export default async function WholesalePage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
     const supabase = getSupabase();
+    const initialProductId = typeof searchParams?.p === 'string' ? searchParams.p : undefined;
 
     // Start all non-dependent promises immediately to avoid waterfall
     const productsPromise = supabase
@@ -132,6 +133,7 @@ export default async function WholesalePage() {
                 vouchers={vouchersData || []}
                 isWholesaleCustomer={isWholesaleCustomer}
                 b2bCodeData={b2bCodeData}
+                initialProductId={initialProductId}
             />
             <WholesaleFooter />
         </div>

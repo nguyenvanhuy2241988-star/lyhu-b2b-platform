@@ -99,7 +99,8 @@ export default function WholesaleStore({
     banners = [],
     vouchers = [],
     isWholesaleCustomer: serverIsWholesaleCustomer,
-    b2bCodeData: serverB2bCodeData
+    b2bCodeData: serverB2bCodeData,
+    initialProductId
 }: { 
     initialProducts: Product[], 
     promotions: Promotion[], 
@@ -107,7 +108,8 @@ export default function WholesaleStore({
     banners?: WholesaleBanner[],
     vouchers?: any[],
     isWholesaleCustomer: boolean,
-    b2bCodeData?: any
+    b2bCodeData?: any,
+    initialProductId?: string
 }) {
     const supabase = getSupabase();
     // B2B Active Code State
@@ -133,6 +135,16 @@ export default function WholesaleStore({
             setActiveImageIdx(0);
         }
     }, [selectedProduct]);
+
+    // Handle affiliate initial product load
+    useEffect(() => {
+        if (initialProductId && initialProducts.length > 0) {
+            const product = initialProducts.find(p => p.id === initialProductId);
+            if (product) {
+                setSelectedProduct(product);
+            }
+        }
+    }, [initialProductId, initialProducts]);
 
     // V4 Features States
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
