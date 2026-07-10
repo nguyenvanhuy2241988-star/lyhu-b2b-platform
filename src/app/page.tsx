@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { createServerClient } from "@supabase/ssr";
 import WholesaleStore from '@/components/wholesale/WholesaleStore';
 import WholesaleFooter from '@/components/wholesale/WholesaleFooter';
+import type { Metadata, ResolvingMetadata } from 'next';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,50 @@ function getSupabase() {
     });
 }
 
-export default async function WholesalePage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+type Props = {
+    searchParams: { [key: string]: string | string[] | undefined }
+}
+
+export async function generateMetadata(
+    { searchParams }: Props,
+    parent: ResolvingMetadata
+): Promise<Metadata> {
+    const initialProductId = typeof searchParams?.p === 'string' ? searchParams.p : undefined;
+
+    if (initialProductId) {
+        const supabase = getSupabase();
+        const { data: product } = await supabase
+            .from('products')
+            .select('name, description, image_url, price')
+            .eq('id', initialProductId)
+            .single();
+
+        if (product) {
+            const formattedPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price || 0);
+            const title = product.name;
+            const description = `${formattedPrice} - ${product.description || 'Mua ngay trên LYHU App'}`;
+            const images = product.image_url ? [product.image_url] : [];
+            
+            return {
+                title,
+                description,
+                openGraph: {
+                    title,
+                    description,
+                    images,
+                    type: 'website',
+                },
+            };
+        }
+    }
+
+    return {
+        title: 'LYHU.COM.VN',
+        description: 'Kết nối chân thành - Hợp tác bền vững',
+    };
+}
+
+export default async function WholesalePage({ searchParams }: Props) {
     const supabase = getSupabase();
     const initialProductId = typeof searchParams?.p === 'string' ? searchParams.p : undefined;
 
