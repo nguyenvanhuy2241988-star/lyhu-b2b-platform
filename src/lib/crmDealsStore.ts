@@ -850,10 +850,12 @@ export async function fetchPaginatedDeals(
             // Workaround: 1. Find matching customers. 2. Filter deals by Title OR CustomerIDs.
 
             // 1. Find matching customers (lightweight)
-            const custRes = await fetch(
-                `${supabaseUrl}/rest/v1/customers?select=id&or=(name.ilike.*${searchTerm}*,phone.ilike.*${searchTerm}*)&limit=50`,
-                { headers }
-            );
+            let custUrl = `${supabaseUrl}/rest/v1/customers?select=id&or=(name.ilike.*${searchTerm}*,phone.ilike.*${searchTerm}*)&limit=50`;
+            if (ownerId) {
+                // Filter customers by owner or unassigned
+                custUrl += `&or=(owner_user_id.eq.${ownerId},owner_user_id.is.null)`;
+            }
+            const custRes = await fetch(custUrl, { headers });
             let custIds: string[] = [];
             if (custRes.ok) {
                 const custData = await custRes.json();

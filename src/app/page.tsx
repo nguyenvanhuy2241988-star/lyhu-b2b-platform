@@ -53,33 +53,41 @@ export async function generateMetadata(
     const initialProductId = typeof searchParams?.p === 'string' ? searchParams.p : undefined;
 
     if (initialProductId) {
-        const supabase = getSupabase();
-        const { data: product } = await supabase
-            .from('products')
-            .select('id, name, description, image_url, price')
-            .eq('id', initialProductId)
-            .single();
+        try {
+            const supabase = getSupabase();
+            const { data: product, error } = await supabase
+                .from('products')
+                .select('id, name, description, image_url, price')
+                .eq('id', initialProductId)
+                .single();
 
-        if (product) {
-            const formattedPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price || 0);
-            const { rating, soldCount } = getMockSocialProof(product.id || initialProductId);
-            const reviewCount = Math.floor(soldCount / 10) || 1;
-            const stars = '⭐'.repeat(Math.round(rating));
-            
-            const title = `${formattedPrice} ${stars} - ${product.name}`;
-            const description = `${reviewCount} Đánh giá | Mua ngay trên LYHU App để nhận ưu đãi!`;
-            const images = product.image_url ? [product.image_url] : [];
-            
-            return {
-                title,
-                description,
-                openGraph: {
+            if (error) {
+                console.error("Error fetching product for metadata:", error);
+            }
+
+            if (product) {
+                const formattedPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price || 0);
+                const { rating, soldCount } = getMockSocialProof(product.id || initialProductId);
+                const reviewCount = Math.floor(soldCount / 10) || 1;
+                const stars = '⭐'.repeat(Math.round(rating));
+                
+                const title = `${formattedPrice} ${stars} - ${product.name}`;
+                const description = `${reviewCount} Đánh giá | Mua ngay trên LYHU App để nhận ưu đãi!`;
+                const images = product.image_url ? [product.image_url] : [];
+                
+                return {
                     title,
                     description,
-                    images,
-                    type: 'website',
-                },
-            };
+                    openGraph: {
+                        title,
+                        description,
+                        images,
+                        type: 'website',
+                    },
+                };
+            }
+        } catch (err) {
+            console.error("Exception in generateMetadata:", err);
         }
     }
 

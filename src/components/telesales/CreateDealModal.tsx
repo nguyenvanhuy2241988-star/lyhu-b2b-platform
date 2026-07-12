@@ -251,7 +251,8 @@ export const CreateDealModal = ({
     useEffect(() => {
         const timer = setTimeout(async () => {
             if (searchQuery.trim().length >= 2) {
-                const results = await searchCustomers(searchQuery);
+                // Pass userId to ensure they only search their own customers (or unassigned ones)
+                const results = await searchCustomers(searchQuery, userId);
                 setSearchResults(results);
             } else {
                 setSearchResults([]);
