@@ -3,11 +3,13 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export default function WebTracker() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const isFirstRender = useRef(true);
+    const supabase = createClientComponentClient();
 
     useEffect(() => {
         // Initialize IDs
@@ -26,6 +28,22 @@ export default function WebTracker() {
         // Send tracking data
         const trackPageView = async () => {
             try {
+                // Check if user is an internal staff member
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    const role = session.user?.user_metadata?.role;
+                    const internalRoles = ['admin', 'sale', 'telesale', 'marketing', 'media_creator', 'warehouse', 'accounting'];
+                    if (role && internalRoles.includes(role)) {
+                        console.log("Analytics: Internal user detected, tracking skipped.");
+                        return;
+                    }
+                    // Thêm bảo mật phụ nếu họ dùng email nội bộ nhưng chưa gán role
+                    if (session.user?.email?.endsWith('@lyhu.com.vn')) {
+                        console.log("Analytics: Internal email detected, tracking skipped.");
+                        return;
+                    }
+                }
+
                 // Determine full URL (handling client-side routing)
                 const fullUrl = window.location.href;
                 
