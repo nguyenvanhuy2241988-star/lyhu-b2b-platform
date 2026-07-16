@@ -27,8 +27,8 @@ export async function GET(request: Request) {
             auth: auth,
         });
 
-        // Đổi sang URL prefix thay vì Domain property để vượt lỗi GSC
-        const siteUrl = "https://lyhu.com.vn/";
+        // Sử dụng Domain property vì người dùng cấu hình sc-domain
+        const siteUrl = "sc-domain:lyhu.com.vn";
 
         const endDate = dayjs().subtract(1, 'day').format('YYYY-MM-DD'); 
         const startDate = dayjs().subtract(31, 'days').format('YYYY-MM-DD');
