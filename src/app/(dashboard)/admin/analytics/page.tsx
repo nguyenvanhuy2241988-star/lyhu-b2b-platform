@@ -80,12 +80,50 @@ export default function AnalyticsDashboard() {
 
             if (error) throw error;
             
-            // Format dates for charts
-            if (result && result.trafficOverTime) {
-                result.trafficOverTime = result.trafficOverTime.map((item: any) => ({
-                    ...item,
-                    displayDate: dayjs(item.date).format('DD/MM')
-                }));
+            if (result) {
+                // Format dates for charts
+                if (result.trafficOverTime) {
+                    result.trafficOverTime = result.trafficOverTime.map((item: any) => ({
+                        ...item,
+                        displayDate: dayjs(item.date).format('DD/MM')
+                    }));
+                }
+
+                // Group referrers (e.g. m.facebook.com, l.facebook.com -> Facebook)
+                if (result.topReferrers) {
+                    const groupedReferrers: Record<string, number> = {};
+                    result.topReferrers.forEach((ref: any) => {
+                        let source = ref.source || "Direct";
+                        if (source.includes("facebook.com")) {
+                            source = "Facebook";
+                        } else if (source.includes("google.com")) {
+                            source = "Google";
+                        } else if (source.includes("yahoo.com")) {
+                            source = "Yahoo";
+                        } else if (source.includes("bing.com")) {
+                            source = "Bing";
+                        } else if (source.startsWith("http")) {
+                            try {
+                                const url = new URL(source);
+                                source = url.hostname.replace('www.', '');
+                            } catch(e) {}
+                        }
+                        
+                        groupedReferrers[source] = (groupedReferrers[source] || 0) + ref.views;
+                    });
+                    
+                    result.topReferrers = Object.entries(groupedReferrers)
+                        .map(([source, views]) => ({ source, views }))
+                        .sort((a, b) => (b.views as number) - (a.views as number));
+                }
+
+                // Fill missing device labels
+                if (result.deviceBreakdown) {
+                    result.deviceBreakdown = result.deviceBreakdown.map((item: any) => ({
+                        ...item,
+                        device: item.device || "Khác"
+                    }));
+                }
             }
 
             // Fetch Recent Visitors Details
