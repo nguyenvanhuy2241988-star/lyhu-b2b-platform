@@ -3,13 +3,12 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function WebTracker() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const isFirstRender = useRef(true);
-    const supabase = createClientComponentClient();
 
     useEffect(() => {
         // Initialize IDs
