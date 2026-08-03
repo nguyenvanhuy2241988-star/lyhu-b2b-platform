@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import VietnamMapSVG from "@/components/admin/VietnamMapSVG";
-import { getProvinceData, loadNppDataFromStorage, saveNppDataToStorage, ProvinceData, defaultBrands } from "@/lib/nppData";
-import { MapPin, Target, CheckCircle2, AlertCircle, Edit2, Save, X, TrendingUp } from "lucide-react";
+import { getProvinceData, fetchNppDataFromAPI, saveNppDataToAPI, ProvinceData, defaultBrands } from "@/lib/nppData";
+import { MapPin, Target, CheckCircle2, AlertCircle, Edit2, Save, X, TrendingUp, Loader2 } from "lucide-react";
 
 export default function NppMapPage() {
     const [nppData, setNppData] = useState<Record<string, ProvinceData>>({});
@@ -13,9 +13,17 @@ export default function NppMapPage() {
     
     // For holding edits before saving
     const [editData, setEditData] = useState<ProvinceData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        setNppData(loadNppDataFromStorage());
+        const loadData = async () => {
+            setIsLoading(true);
+            const data = await fetchNppDataFromAPI();
+            setNppData(data);
+            setIsLoading(false);
+        };
+        loadData();
     }, []);
 
     const totalProvinces = 63;
@@ -57,13 +65,20 @@ export default function NppMapPage() {
         setEditData(null);
     };
 
-    const saveEditing = () => {
+    const saveEditing = async () => {
         if (!activeProvince || !editData) return;
         
+        setIsSaving(true);
         const newData = { ...nppData, [activeProvince]: editData };
+        // Optimistic update
         setNppData(newData);
-        saveNppDataToStorage(newData);
+        
+        // Push to server
+        const payload = { [activeProvince]: editData };
+        await saveNppDataToAPI(payload);
+        
         setEditMode(false);
+        setIsSaving(false);
     };
 
     // Update edit data fields
@@ -89,6 +104,7 @@ export default function NppMapPage() {
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <MapPin className="h-6 w-6 text-blue-600" />
                         Bản đồ Phân Bổ Nhà Phân Phối
+                        {isLoading && <Loader2 className="h-5 w-5 text-blue-400 animate-spin ml-2" />}
                     </h1>
                     <p className="text-slate-500 mt-1">Theo dõi độ phủ và thiết lập chỉ tiêu doanh số theo khu vực địa lý</p>
                 </div>
@@ -168,8 +184,8 @@ export default function NppMapPage() {
                                                 <button onClick={cancelEditing} className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors" title="Hủy">
                                                     <X className="h-5 w-5" />
                                                 </button>
-                                                <button onClick={saveEditing} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Lưu">
-                                                    <Save className="h-5 w-5" />
+                                                <button onClick={saveEditing} disabled={isSaving} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex items-center" title="Lưu">
+                                                    {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
                                                 </button>
                                             </div>
                                         ) : (

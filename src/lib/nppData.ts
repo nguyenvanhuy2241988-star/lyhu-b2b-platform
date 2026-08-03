@@ -70,22 +70,34 @@ export function getProvinceData(dataStore: Record<string, ProvinceData>, provinc
     };
 }
 
-export function saveNppDataToStorage(data: Record<string, ProvinceData>) {
-    if (typeof window !== 'undefined') {
-        localStorage.setItem('lyhu_npp_data', JSON.stringify(data));
+export async function saveNppDataToAPI(data: Record<string, ProvinceData>) {
+    try {
+        const res = await fetch('/api/admin/npp-targets', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (!res.ok) {
+            console.error("Failed to save NPP data");
+        }
+        return await res.json();
+    } catch (e) {
+        console.error("Error saving NPP data to API:", e);
     }
 }
 
-export function loadNppDataFromStorage(): Record<string, ProvinceData> {
-    if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('lyhu_npp_data');
-        if (stored) {
-            try {
-                return JSON.parse(stored);
-            } catch (e) {
-                console.error("Failed to parse NPP data from storage", e);
-            }
+export async function fetchNppDataFromAPI(): Promise<Record<string, ProvinceData>> {
+    try {
+        const res = await fetch('/api/admin/npp-targets');
+        if (res.ok) {
+            const data = await res.json();
+            return data || {};
         }
+    } catch (e) {
+        console.error("Failed to fetch NPP data from API", e);
     }
-    return initialNppData;
+    return {};
 }
