@@ -30,6 +30,22 @@ export default function NppMapPage() {
     const coveredProvinces = Object.values(nppData).filter(p => Object.values(p.brands).some(b => b.hasNPP || (b.currentSales > 0))).length;
     const emptyProvinces = totalProvinces - coveredProvinces;
 
+    // Tính toán doanh số toàn quốc
+    const nationalStats = defaultBrands.map(brand => {
+        let totalTarget = 0;
+        let totalActual = 0;
+        Object.values(nppData).forEach(p => {
+            if (p.brands[brand]) {
+                totalTarget += (p.brands[brand].target || 0);
+                totalActual += (p.brands[brand].currentSales || 0);
+            }
+        });
+        return { brand, totalTarget, totalActual };
+    });
+
+    const grandTotalTarget = nationalStats.reduce((sum, s) => sum + s.totalTarget, 0);
+    const grandTotalActual = nationalStats.reduce((sum, s) => sum + s.totalActual, 0);
+
     // Determine active province: prioritized clicked one, otherwise hovered
     const activeProvince = selectedProvince || hoveredProvince;
     const currentData = activeProvince ? getProvinceData(nppData, activeProvince) : null;
@@ -165,6 +181,50 @@ export default function NppMapPage() {
                                         Thị trường trống
                                     </span>
                                     <span className="font-bold text-rose-600">{emptyProvinces}</span>
+                                </div>
+                            </div>
+                            
+                            {/* Báo cáo doanh số toàn quốc */}
+                            <div className="mt-6 pt-6 border-t border-slate-200">
+                                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <TrendingUp className="h-4 w-4" />
+                                    Doanh số toàn quốc
+                                </h3>
+                                
+                                <div className="space-y-4">
+                                    {nationalStats.map((stat, idx) => {
+                                        const percent = stat.totalTarget > 0 ? Math.min(100, Math.round((stat.totalActual / stat.totalTarget) * 100)) : 0;
+                                        return (
+                                            <div key={idx} className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                                <div className="font-semibold text-slate-800 text-sm mb-2">{stat.brand}</div>
+                                                <div className="flex justify-between items-center text-xs mb-1">
+                                                    <span className="text-slate-500">Dự kiến:</span>
+                                                    <span className="font-medium text-slate-700">{formatVND(stat.totalTarget)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-xs mb-2">
+                                                    <span className="text-slate-500">Thực tế:</span>
+                                                    <span className="font-bold text-primary-600">{formatVND(stat.totalActual)}</span>
+                                                </div>
+                                                <div className="w-full bg-slate-200 rounded-full h-1 overflow-hidden">
+                                                    <div 
+                                                        className={`h-1 rounded-full ${percent >= 100 ? 'bg-primary-500' : 'bg-blue-500'}`} 
+                                                        style={{ width: `${percent}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                
+                                <div className="mt-5 pt-4 border-t border-slate-200">
+                                    <div className="flex justify-between items-center mb-1 text-sm">
+                                        <span className="font-bold text-slate-900">Tổng doanh số dự kiến:</span>
+                                        <span className="font-bold text-slate-800">{formatVND(grandTotalTarget)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="font-bold text-primary-700">Tổng doanh số thực tế:</span>
+                                        <span className="font-black text-primary-600 text-base">{formatVND(grandTotalActual)}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
