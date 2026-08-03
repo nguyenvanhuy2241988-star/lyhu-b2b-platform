@@ -112,7 +112,7 @@ export default function NppMapPage() {
                 {/* Legend */}
                 <div className="flex items-center gap-6 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
                     <div className="flex items-center gap-2">
-                        <span className="w-4 h-4 rounded bg-emerald-500 shadow-inner"></span>
+                        <span className="w-4 h-4 rounded bg-primary-500 shadow-inner"></span>
                         <span className="text-sm font-medium text-slate-700">Đã có NPP (Ít nhất 1 nhãn)</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -154,10 +154,10 @@ export default function NppMapPage() {
                                 </div>
                                 <div className="flex justify-between items-center pb-3 border-b border-slate-100">
                                     <span className="text-slate-600 flex items-center gap-2">
-                                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                        <CheckCircle2 className="h-4 w-4 text-primary-500" />
                                         Đã phủ NPP
                                     </span>
-                                    <span className="font-bold text-emerald-600">{coveredProvinces}</span>
+                                    <span className="font-bold text-primary-600">{coveredProvinces}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-slate-600 flex items-center gap-2">
@@ -184,7 +184,7 @@ export default function NppMapPage() {
                                                 <button onClick={cancelEditing} className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors" title="Hủy">
                                                     <X className="h-5 w-5" />
                                                 </button>
-                                                <button onClick={saveEditing} disabled={isSaving} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex items-center" title="Lưu">
+                                                <button onClick={saveEditing} disabled={isSaving} className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors flex items-center" title="Lưu">
                                                     {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
                                                 </button>
                                             </div>
@@ -199,7 +199,7 @@ export default function NppMapPage() {
                                 {!editMode && (
                                     <div className="mb-6">
                                         {hasAnyNPP ? (
-                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-700 border border-primary-200">
                                                 <CheckCircle2 className="h-4 w-4" />
                                                 Khu vực đã có NPP
                                             </span>
@@ -239,13 +239,13 @@ export default function NppMapPage() {
                                                                     checked={bData.hasNPP} 
                                                                     onChange={(e) => updateBrand(brand, 'hasNPP', e.target.checked)}
                                                                 />
-                                                                <div className={`block w-10 h-6 rounded-full transition-colors ${bData.hasNPP ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
+                                                                <div className={`block w-10 h-6 rounded-full transition-colors ${bData.hasNPP ? 'bg-primary-500' : 'bg-slate-300'}`}></div>
                                                                 <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${bData.hasNPP ? 'transform translate-x-4' : ''}`}></div>
                                                             </div>
                                                             <span className="ml-2 text-xs font-medium text-slate-600">Đã có NPP</span>
                                                         </label>
                                                     ) : (
-                                                        <span className={`text-xs px-2 py-0.5 rounded font-medium ${bData.hasNPP ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                                                        <span className={`text-xs px-2 py-0.5 rounded font-medium ${bData.hasNPP ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600'}`}>
                                                             {bData.hasNPP ? 'Đã có NPP' : 'Chưa có'}
                                                         </span>
                                                     )}
@@ -286,7 +286,7 @@ export default function NppMapPage() {
                                                         {/* Progress bar */}
                                                         <div className="w-full bg-slate-200 rounded-full h-1.5 mt-2 overflow-hidden">
                                                             <div 
-                                                                className={`h-1.5 rounded-full ${percent >= 100 ? 'bg-emerald-500' : 'bg-blue-500'}`} 
+                                                                className={`h-1.5 rounded-full ${percent >= 100 ? 'bg-primary-500' : 'bg-blue-500'}`} 
                                                                 style={{ width: `${percent}%` }}
                                                             ></div>
                                                         </div>
