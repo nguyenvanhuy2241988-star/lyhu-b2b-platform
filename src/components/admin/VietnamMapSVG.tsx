@@ -21,7 +21,7 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
     const isCovered = (title: string) => {
         const province = data[title];
         if (!province) return false;
-        return Object.values(province.brands).some(b => b.hasNPP);
+        return Object.values(province.brands).some(b => b.hasNPP || (b.currentSales > 0));
     };
 
     return (

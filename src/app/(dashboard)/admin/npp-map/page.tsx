@@ -27,7 +27,7 @@ export default function NppMapPage() {
     }, []);
 
     const totalProvinces = 63;
-    const coveredProvinces = Object.values(nppData).filter(p => Object.values(p.brands).some(b => b.hasNPP)).length;
+    const coveredProvinces = Object.values(nppData).filter(p => Object.values(p.brands).some(b => b.hasNPP || (b.currentSales > 0))).length;
     const emptyProvinces = totalProvinces - coveredProvinces;
 
     // Determine active province: prioritized clicked one, otherwise hovered
@@ -35,7 +35,7 @@ export default function NppMapPage() {
     const currentData = activeProvince ? getProvinceData(nppData, activeProvince) : null;
     
     // Check if at least one brand has NPP in this province
-    const hasAnyNPP = currentData ? Object.values(currentData.brands).some(b => b.hasNPP) : false;
+    const hasAnyNPP = currentData ? Object.values(currentData.brands).some(b => b.hasNPP || (b.currentSales > 0)) : false;
 
     // Format currency
     const formatVND = (value: number) => {
