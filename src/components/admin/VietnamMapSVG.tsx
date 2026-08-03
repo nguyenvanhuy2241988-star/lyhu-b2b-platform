@@ -20,7 +20,7 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
     return (
         <svg 
             xmlns="http://www.w3.org/2000/svg" 
-            viewBox="10 0 280 180" 
+            viewBox="0 0 380 810" 
             className="w-full h-full drop-shadow-md"
         >
             <g>
