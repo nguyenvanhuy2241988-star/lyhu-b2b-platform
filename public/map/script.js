@@ -1,24 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Login elements
-    const loginOverlay = document.getElementById("login-overlay");
-    const dashboard = document.getElementById("dashboard");
-    const adminPassword = document.getElementById("admin-password");
-    const loginBtn = document.getElementById("login-btn");
-    const loginError = document.getElementById("login-error");
-
-    loginBtn.addEventListener("click", () => {
-        if (adminPassword.value === "admin123") {
-            loginOverlay.style.display = "none";
-            dashboard.style.display = "flex";
-            loadMap(); // Load map only after login
-        } else {
-            loginError.textContent = "Mật khẩu không đúng. Vui lòng thử lại!";
-        }
-    });
-
-    adminPassword.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") loginBtn.click();
-    });
+    loadMap();
 
     // Map logic function
     async function loadMap() {
