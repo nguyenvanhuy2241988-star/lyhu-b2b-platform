@@ -236,17 +236,17 @@ export default function NppMapPage() {
                                                                 <input 
                                                                     type="checkbox" 
                                                                     className="sr-only" 
-                                                                    checked={bData.hasNPP} 
+                                                                    checked={bData.hasNPP || (bData.currentSales > 0)} 
                                                                     onChange={(e) => updateBrand(brand, 'hasNPP', e.target.checked)}
                                                                 />
-                                                                <div className={`block w-10 h-6 rounded-full transition-colors ${bData.hasNPP ? 'bg-primary-500' : 'bg-slate-300'}`}></div>
-                                                                <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${bData.hasNPP ? 'transform translate-x-4' : ''}`}></div>
+                                                                <div className={`block w-10 h-6 rounded-full transition-colors ${(bData.hasNPP || bData.currentSales > 0) ? 'bg-primary-500' : 'bg-slate-300'}`}></div>
+                                                                <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${(bData.hasNPP || bData.currentSales > 0) ? 'transform translate-x-4' : ''}`}></div>
                                                             </div>
                                                             <span className="ml-2 text-xs font-medium text-slate-600">Đã có NPP</span>
                                                         </label>
                                                     ) : (
-                                                        <span className={`text-xs px-2 py-0.5 rounded font-medium ${bData.hasNPP ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600'}`}>
-                                                            {bData.hasNPP ? 'Đã có NPP' : 'Chưa có'}
+                                                        <span className={`text-xs px-2 py-0.5 rounded font-medium ${(bData.hasNPP || bData.currentSales > 0) ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600'}`}>
+                                                            {(bData.hasNPP || bData.currentSales > 0) ? 'Đã có NPP' : 'Chưa có'}
                                                         </span>
                                                     )}
                                                 </div>
