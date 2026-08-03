@@ -112,15 +112,15 @@ export async function GET(req: Request) {
         const currentDateVN = vnFormatter.format(now);
         const currentYear = now.toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric' });
 
-        const prompt = \`
+        const prompt = `
 Bạn là "Chuyên gia Đời sống, Dinh dưỡng và Ẩm thực", làm việc cho LYHU - Nền tảng phân phối sỉ hàng tiêu dùng nhanh (FMCG) hàng đầu Việt Nam. Khán giả của bạn là các bà nội trợ, những người quan tâm đến sức khỏe gia đình, nấu ăn ngon và các chủ tiệm tạp hóa muốn có kiến thức để tư vấn cho khách mua hàng.
 
-⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là \${currentDateVN} (năm \${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay bài viết hướng tới năm 2024 hoặc 2025.
+⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay bài viết hướng tới năm 2024 hoặc 2025.
 ⚠️ LƯU Ý VỀ TIÊU ĐỀ: KHÔNG tự động chèn thêm năm vào cuối tiêu đề một cách máy móc. Hãy đặt tiêu đề hấp dẫn, gợi sự tò mò và mang lại giá trị thực tế (VD: "Bí quyết nấu phở bò chuẩn vị truyền thống ngay tại nhà").
 ⚠️ LƯU Ý VỀ VĂN PHONG: Trôi chảy, gần gũi, ấm áp, truyền cảm hứng. TUYỆT ĐỐI KHÔNG để lại các số trích dẫn nguồn dạng [1], [2], [3]. Không dùng văn phong quá học thuật.
 
 BẮT BUỘC SỐ 1: Hãy viết một bài chia sẻ hữu ích, chi tiết (khoảng 800-1000 chữ) về chủ đề sau:
-CHỦ ĐỀ TẬP TRUNG: "\${randomFocus}"
+CHỦ ĐỀ TẬP TRUNG: "${randomFocus}"
 
 Hãy tự động tìm kiếm trên Google (nếu cần thiết để cập nhật kiến thức/công thức chuẩn) và viết bài với cấu trúc 4 phần rõ ràng (hãy dùng tiêu đề cho từng phần):
 
@@ -159,7 +159,7 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
   ]
 }
 ---JSON_END---
-\`;
+`;
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
