@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import VietnamMapSVG from "@/components/admin/VietnamMapSVG";
 import { getProvinceData, fetchNppDataFromAPI, saveNppDataToAPI, ProvinceData, defaultBrands } from "@/lib/nppData";
-import { MapPin, Target, CheckCircle2, AlertCircle, Edit2, Save, X, TrendingUp, Loader2 } from "lucide-react";
+import { provinceDemographics } from "@/lib/demographics";
+import { MapPin, Target, CheckCircle2, AlertCircle, Edit2, Save, X, TrendingUp, Loader2, Users, Maximize, Map, DollarSign, Briefcase } from "lucide-react";
 
 export default function NppMapPage() {
     const [nppData, setNppData] = useState<Record<string, ProvinceData>>({});
@@ -15,6 +16,7 @@ export default function NppMapPage() {
     const [editData, setEditData] = useState<ProvinceData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     useEffect(() => {
         const loadData = async () => {
@@ -112,6 +114,10 @@ export default function NppMapPage() {
         });
     };
 
+    const handleMouseMove = (e: React.MouseEvent) => {
+        setMousePos({ x: e.clientX, y: e.clientY });
+    };
+
     return (
         <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
             {/* Header */}
@@ -142,7 +148,10 @@ export default function NppMapPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Map Area */}
-                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[600px] flex items-center justify-center bg-slate-50/50">
+                <div 
+                    className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[600px] flex items-center justify-center bg-slate-50/50 relative"
+                    onMouseMove={handleMouseMove}
+                >
                     <div className="w-full max-w-[600px]">
                         <VietnamMapSVG 
                             data={nppData}
@@ -388,6 +397,88 @@ export default function NppMapPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Tooltip Overlay */}
+            {hoveredProvince && !selectedProvince && (
+                <div 
+                    className="fixed z-50 pointer-events-none bg-white rounded-xl shadow-2xl border border-slate-200 w-80 overflow-hidden animate-in fade-in duration-200"
+                    style={{
+                        left: (typeof window !== 'undefined' && mousePos.x > window.innerWidth / 2) ? mousePos.x - 340 : mousePos.x + 20,
+                        top: mousePos.y + 20,
+                    }}
+                >
+                    <div className="bg-slate-900 px-4 py-3 border-b border-slate-800 flex justify-between items-center">
+                        <h3 className="text-white font-bold text-lg">{hoveredProvince}</h3>
+                        <Map className="h-5 w-5 text-slate-400" />
+                    </div>
+                    
+                    <div className="p-4 space-y-4">
+                        {provinceDemographics[hoveredProvince] ? (
+                            <div className="grid grid-cols-2 gap-3 pb-3 border-b border-slate-100">
+                                <div>
+                                    <div className="text-[10px] text-slate-500 uppercase font-semibold flex items-center gap-1"><MapPin className="h-3 w-3"/> Diện tích</div>
+                                    <div className="text-sm font-medium text-slate-800 mt-0.5">{new Intl.NumberFormat('vi-VN').format(provinceDemographics[hoveredProvince].area)} km²</div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] text-slate-500 uppercase font-semibold flex items-center gap-1"><Users className="h-3 w-3"/> Dân số</div>
+                                    <div className="text-sm font-medium text-slate-800 mt-0.5">{new Intl.NumberFormat('vi-VN').format(provinceDemographics[hoveredProvince].population)}</div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] text-slate-500 uppercase font-semibold flex items-center gap-1"><Map className="h-3 w-3"/> Đơn vị H/C</div>
+                                    <div className="text-sm font-medium text-slate-800 mt-0.5">{provinceDemographics[hoveredProvince].districts} quận/huyện</div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] text-slate-500 uppercase font-semibold flex items-center gap-1"><DollarSign className="h-3 w-3"/> Thu nhập BQ</div>
+                                    <div className="text-sm font-medium text-slate-800 mt-0.5">{provinceDemographics[hoveredProvince].perCapitaIncome} triệu/năm</div>
+                                </div>
+                                <div className="col-span-2">
+                                    <div className="text-[10px] text-slate-500 uppercase font-semibold flex items-center gap-1"><TrendingUp className="h-3 w-3"/> GDP (GRDP)</div>
+                                    <div className="text-sm font-medium text-slate-800 mt-0.5">{new Intl.NumberFormat('vi-VN').format(provinceDemographics[hoveredProvince].gdp)} tỷ VNĐ</div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-xs text-slate-400 italic pb-3 border-b border-slate-100">Đang cập nhật dữ liệu nhân khẩu học...</div>
+                        )}
+                        
+                        <div>
+                            <div className="text-[10px] text-slate-500 uppercase font-semibold mb-2 flex items-center gap-1"><Briefcase className="h-3 w-3"/> Mục tiêu & Thực tế</div>
+                            <div className="space-y-2">
+                                {defaultBrands.map(brand => {
+                                    const provData = getProvinceData(nppData, hoveredProvince);
+                                    const b = provData.brands[brand];
+                                    if (!b) return null;
+                                    return (
+                                        <div key={brand} className="flex flex-col text-xs bg-slate-50 p-2 rounded border border-slate-100">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className={`font-medium ${b.hasNPP || b.currentSales > 0 ? 'text-primary-700' : 'text-slate-600'}`}>
+                                                    {brand} {b.hasNPP || b.currentSales > 0 ? <CheckCircle2 className="inline h-3 w-3 ml-1" /> : ''}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[10px] text-slate-400">Thực tế / Mục tiêu</span>
+                                                <span className="font-semibold text-slate-800">
+                                                    {formatVND(b.currentSales)} / {formatVND(b.target)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                <div className="pt-2 mt-2 flex flex-col text-xs">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-[10px] text-slate-500 uppercase font-bold">Tổng doanh số</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-[10px] text-slate-400">Thực tế / Mục tiêu</span>
+                                        <span className="font-bold text-primary-600 text-sm">
+                                            {formatVND(Object.values(getProvinceData(nppData, hoveredProvince).brands).reduce((sum, b) => sum + (b.currentSales || 0), 0))} / {formatVND(Object.values(getProvinceData(nppData, hoveredProvince).brands).reduce((sum, b) => sum + (b.target || 0), 0))}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
