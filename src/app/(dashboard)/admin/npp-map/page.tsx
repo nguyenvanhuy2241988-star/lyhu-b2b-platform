@@ -47,8 +47,8 @@ export default function NppMapPage() {
     const grandTotalTarget = nationalStats.reduce((sum, s) => sum + s.totalTarget, 0);
     const grandTotalActual = nationalStats.reduce((sum, s) => sum + s.totalActual, 0);
 
-    // Determine active province: prioritized clicked one, otherwise hovered
-    const activeProvince = selectedProvince || hoveredProvince;
+    // Sidebar detail only responds to CLICKED province (not hover) to prevent layout reflow flicker
+    const activeProvince = selectedProvince;
     const currentData = activeProvince ? getProvinceData(nppData, activeProvince) : null;
     
     // Check if at least one brand has NPP in this province
@@ -165,8 +165,9 @@ export default function NppMapPage() {
                 {/* Map Area */}
                 <div 
                     className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[600px] flex items-center justify-center bg-slate-50/50 relative"
+                    style={{ contain: 'layout style paint' }}
                 >
-                    <div className="w-full max-w-[600px]">
+                    <div className="w-full max-w-[600px]" style={{ willChange: 'transform' }}>
                         {MemoizedMap}
                     </div>
                 </div>
