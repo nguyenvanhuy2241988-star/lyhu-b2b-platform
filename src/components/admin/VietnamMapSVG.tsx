@@ -864,74 +864,93 @@ const VietnamMapSVG = React.memo(function VietnamMapSVG({ data, onHover, onClick
                     
                 />
                 
-            
-                {/* Province Labels */}
-            
-                {/* Province Labels */}
-                <text x="42.269999999999996" y="44.89" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Lai Châu</text>
-                <text x="100.63" y="57.93" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Lào Cai</text>
-                <text x="146.61" y="34.36" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Hà Giang</text>
-                <text x="203.36" y="36.785000000000004" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Cao Bằng</text>
-                <text x="32.785" y="37.565" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Sơn La</text>
-                <text x="122.09" y="88.69" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Yên Bái</text>
-                <text x="160.09" y="72.595" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Tuyên Quang</text>
-                <text x="238.445" y="83.95" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Lạng Sơn</text>
-                <text x="150.19" y="150.715" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Quảng Ninh</text>
-                <text x="166.51999999999998" y="149.765" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Hòa Bình</text>
-                <text x="92.515" y="77.175" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Hà Tây</text>
-                <text x="86.375" y="82.395" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Ninh Bình</text>
-                <text x="114.38499999999999" y="84.25" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Thái Bình</text>
-                <text x="69.97" y="96.395" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Thanh Hóa</text>
-                <text x="74.625" y="92.49" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Nghệ An</text>
-                <text x="97.03" y="130.95" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Hà Tĩnh</text>
-                <text x="112.525" y="169.79000000000002" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Quảng Bình</text>
-                <text x="172.38" y="170.47" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Quảng Trị</text>
-                <text x="140.88000000000002" y="186.76" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Thừa Thiên–Huế</text>
-                <text x="136.475" y="200.455" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Quảng Nam</text>
-                <text x="304.875" y="470.17" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Kon Tum</text>
-                <text x="172.01500000000001" y="217.4" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Quảng Ngãi</text>
-                <text x="309.89" y="524" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Gia Lai</text>
-                <text x="167.21" y="238.80499999999998" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Bình Định</text>
-                <text x="172.42" y="265.685" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Phú Yên</text>
-                <text x="317" y="577.7" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Đắk Lắk</text>
-                <text x="184.47" y="301.665" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Khánh Hòa</text>
-                <text x="304.475" y="631.8299999999999" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Lâm Đồng</text>
-                <text x="169.70000000000002" y="303.455" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Ninh Thuận</text>
-                <text x="100.39" y="314.075" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Tây Ninh</text>
-                <text x="122.745" y="344.91999999999996" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Đồng Nai</text>
-                <text x="164.33" y="319.145" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Bình Thuận</text>
-                <text x="206.91500000000002" y="687.255" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Long An</text>
-                <text x="128.30499999999998" y="393.735" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Bà Rịa–Vũng Tàu</text>
-                <text x="73.275" y="333.795" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>An Giang</text>
-                <text x="82.8" y="334.545" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Đồng Tháp</text>
-                <text x="216.185" y="704.1400000000001" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Tiền Giang</text>
-                <text x="59.39" y="345.445" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Kiên Giang</text>
-                <text x="199.78" y="719.175" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Vĩnh Long</text>
-                <text x="97.57000000000001" y="351.36" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Bến Tre</text>
-                <text x="97.14500000000001" y="362.73499999999996" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Trà Vinh</text>
-                <text x="196.315" y="746.2149999999999" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Sóc Trăng</text>
-                <text x="192.05" y="62.83" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Bắc Kạn</text>
-                <text x="224.26" y="112.93" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Bắc Giang</text>
-                <text x="176.87" y="759.98" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Bạc Liêu</text>
-                <text x="206.095" y="127.185" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Bắc Ninh</text>
-                <text x="234.11" y="662.605" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Bình Dương</text>
-                <text x="121.69000000000001" y="322.81" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Bình Phước</text>
-                <text x="66.545" y="392.625" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Cà Mau</text>
-                <text x="219.615" y="135.805" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Hải Dương</text>
-                <text x="199.225" y="159.435" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Hà Nam</text>
-                <text x="204.815" y="144.425" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Hưng Yên</text>
-                <text x="110.395" y="84.93" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Nam Định</text>
-                <text x="155.53" y="116.005" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Phú Thọ</text>
-                <text x="193.01" y="95.47999999999999" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Thái Nguyên</text>
-                <text x="177.485" y="114.33" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Vĩnh Phúc</text>
-                <text x="37.81" y="93.19" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Điện Biên</text>
-                <text x="286.85" y="604.61" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Đắk Nông</text>
-                <text x="180.35500000000002" y="735.885" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Hậu Giang</text>
-                <text x="176.32999999999998" y="718.35" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Cần Thơ</text>
-                <text x="146.015" y="200.54999999999998" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Đà Nẵng</text>
-                <text x="193.64" y="125.86" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Hà Nội</text>
-                <text x="123.55" y="69.67" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>Hải Phòng</text>
-                <text x="120.81500000000001" y="347.345" textAnchor="middle" dominantBaseline="central" className="pointer-events-none fill-slate-800 font-bold" style={{ fontSize: '6px', textShadow: '0px 0px 2px white, 0px 0px 2px white' }}>TP.HCM</text>
+                {/* Province Labels - Hand-tuned coordinates, white text */}
+                {[
+                    { x: 42, y: 55, name: "Lai Châu", size: 4 },
+                    { x: 37, y: 93, name: "Điện Biên", size: 4 },
+                    { x: 68, y: 105, name: "Sơn La", size: 4 },
+                    { x: 100, y: 58, name: "Lào Cai", size: 4 },
+                    { x: 122, y: 80, name: "Yên Bái", size: 3.5 },
+                    { x: 146, y: 42, name: "Hà Giang", size: 4 },
+                    { x: 160, y: 72, name: "Tuyên Quang", size: 3.5 },
+                    { x: 192, y: 63, name: "Bắc Kạn", size: 3.5 },
+                    { x: 203, y: 42, name: "Cao Bằng", size: 4 },
+                    { x: 193, y: 88, name: "Thái Nguyên", size: 3 },
+                    { x: 238, y: 82, name: "Lạng Sơn", size: 4 },
+                    { x: 224, y: 110, name: "Bắc Giang", size: 3 },
+                    { x: 258, y: 130, name: "Quảng Ninh", size: 4 },
+                    { x: 155, y: 112, name: "Phú Thọ", size: 3 },
+                    { x: 177, y: 116, name: "Vĩnh Phúc", size: 2.5 },
+                    { x: 193, y: 128, name: "Hà Nội", size: 3.5 },
+                    { x: 206, y: 126, name: "Bắc Ninh", size: 2.5 },
+                    { x: 219, y: 133, name: "Hải Dương", size: 2.5 },
+                    { x: 237, y: 142, name: "Hải Phòng", size: 3 },
+                    { x: 205, y: 141, name: "Hưng Yên", size: 2.5 },
+                    { x: 199, y: 153, name: "Hà Nam", size: 2.5 },
+                    { x: 215, y: 157, name: "Thái Bình", size: 2.5 },
+                    { x: 200, y: 165, name: "Nam Định", size: 2.5 },
+                    { x: 189, y: 174, name: "Ninh Bình", size: 2.5 },
+                    { x: 165, y: 148, name: "Hòa Bình", size: 3.5 },
+                    { x: 155, y: 210, name: "Thanh Hóa", size: 4 },
+                    { x: 150, y: 260, name: "Nghệ An", size: 4.5 },
+                    { x: 170, y: 310, name: "Hà Tĩnh", size: 3.5 },
+                    { x: 175, y: 345, name: "Quảng Bình", size: 3.5 },
+                    { x: 180, y: 375, name: "Quảng Trị", size: 3.5 },
+                    { x: 175, y: 395, name: "TT-Huế", size: 3.5 },
+                    { x: 185, y: 415, name: "Đà Nẵng", size: 3 },
+                    { x: 185, y: 440, name: "Quảng Nam", size: 4 },
+                    { x: 195, y: 470, name: "Quảng Ngãi", size: 3.5 },
+                    { x: 200, y: 505, name: "Bình Định", size: 3.5 },
+                    { x: 210, y: 540, name: "Phú Yên", size: 3.5 },
+                    { x: 225, y: 575, name: "Khánh Hòa", size: 3.5 },
+                    { x: 235, y: 615, name: "Ninh Thuận", size: 3 },
+                    { x: 260, y: 640, name: "Bình Thuận", size: 3.5 },
+                    { x: 155, y: 470, name: "Kon Tum", size: 4 },
+                    { x: 155, y: 520, name: "Gia Lai", size: 4 },
+                    { x: 160, y: 575, name: "Đắk Lắk", size: 4 },
+                    { x: 155, y: 620, name: "Đắk Nông", size: 3.5 },
+                    { x: 180, y: 645, name: "Lâm Đồng", size: 4 },
+                    { x: 175, y: 665, name: "Bình Phước", size: 3.5 },
+                    { x: 210, y: 665, name: "Bình Dương", size: 3 },
+                    { x: 150, y: 695, name: "Tây Ninh", size: 3.5 },
+                    { x: 230, y: 685, name: "Đồng Nai", size: 3.5 },
+                    { x: 205, y: 700, name: "TP.HCM", size: 3 },
+                    { x: 255, y: 715, name: "BR-VT", size: 3 },
+                    { x: 170, y: 720, name: "Long An", size: 3 },
+                    { x: 200, y: 730, name: "Tiền Giang", size: 2.5 },
+                    { x: 215, y: 740, name: "Bến Tre", size: 2.5 },
+                    { x: 145, y: 730, name: "Đồng Tháp", size: 3 },
+                    { x: 160, y: 745, name: "Vĩnh Long", size: 2.5 },
+                    { x: 185, y: 750, name: "Trà Vinh", size: 2.5 },
+                    { x: 125, y: 738, name: "An Giang", size: 3 },
+                    { x: 155, y: 760, name: "Cần Thơ", size: 2.5 },
+                    { x: 165, y: 770, name: "Hậu Giang", size: 2.5 },
+                    { x: 110, y: 760, name: "Kiên Giang", size: 3.5 },
+                    { x: 175, y: 785, name: "Sóc Trăng", size: 3 },
+                    { x: 150, y: 795, name: "Bạc Liêu", size: 3 },
+                    { x: 115, y: 810, name: "Cà Mau", size: 3.5 },
+                ].map((label, i) => (
+                    <text
+                        key={`label-${i}`}
+                        x={label.x}
+                        y={label.y}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        className="pointer-events-none select-none"
+                        style={{
+                            fontSize: `${label.size}px`,
+                            fill: 'white',
+                            fontWeight: 600,
+                            paintOrder: 'stroke',
+                            stroke: 'rgba(0,0,0,0.5)',
+                            strokeWidth: '0.5px',
+                            strokeLinejoin: 'round' as const,
+                            letterSpacing: '0.2px',
+                        }}
+                    >
+                        {label.name}
+                    </text>
+                ))}
             </g>
         </svg>
     );
