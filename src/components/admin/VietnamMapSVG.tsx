@@ -38,7 +38,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Lai Châu")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Lai Châu")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Lai Châu") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -51,7 +51,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Lào Cai")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Lào Cai")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Lào Cai") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -64,7 +64,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Hà Giang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hà Giang")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Hà Giang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -77,7 +77,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Cao Bằng")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Cao Bằng")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Cao Bằng") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -90,7 +90,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Sơn La")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Sơn La")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Sơn La") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -103,7 +103,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Yên Bái")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Yên Bái")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Yên Bái") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -116,7 +116,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Tuyên Quang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Tuyên Quang")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Tuyên Quang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -129,7 +129,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Lạng Sơn")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Lạng Sơn")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Lạng Sơn") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -142,7 +142,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Quảng Ninh")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Quảng Ninh")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Quảng Ninh") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -155,7 +155,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Hòa Bình")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hòa Bình")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Hòa Bình") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -168,7 +168,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Hà Tây")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hà Tây")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Hà Tây") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -181,7 +181,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Ninh Bình")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Ninh Bình")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Ninh Bình") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -194,7 +194,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Thái Bình")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Thái Bình")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Thái Bình") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -207,7 +207,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Thanh Hóa")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Thanh Hóa")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Thanh Hóa") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -220,7 +220,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Nghệ An")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Nghệ An")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Nghệ An") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -233,7 +233,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Hà Tĩnh")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hà Tĩnh")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Hà Tĩnh") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -246,7 +246,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Quảng Bình")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Quảng Bình")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Quảng Bình") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -259,7 +259,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Quảng Trị")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Quảng Trị")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Quảng Trị") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -272,7 +272,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Thừa Thiên–Huế")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Thừa Thiên–Huế")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Thừa Thiên–Huế") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -285,7 +285,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Quảng Nam")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Quảng Nam")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Quảng Nam") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -298,7 +298,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Kon Tum")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Kon Tum")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Kon Tum") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -311,7 +311,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Quảng Ngãi")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Quảng Ngãi")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Quảng Ngãi") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -324,7 +324,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Gia Lai")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Gia Lai")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Gia Lai") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -337,7 +337,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Bình Định")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bình Định")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Bình Định") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -350,7 +350,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Phú Yên")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Phú Yên")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Phú Yên") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -363,7 +363,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Đắk Lắk")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Đắk Lắk")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Đắk Lắk") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -376,7 +376,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Khánh Hòa")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Khánh Hòa")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Khánh Hòa") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -389,7 +389,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Lâm Đồng")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Lâm Đồng")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Lâm Đồng") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -402,7 +402,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Ninh Thuận")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Ninh Thuận")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Ninh Thuận") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -415,7 +415,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Tây Ninh")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Tây Ninh")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Tây Ninh") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -428,7 +428,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Đồng Nai")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Đồng Nai")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Đồng Nai") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -441,7 +441,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Bình Thuận")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bình Thuận")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Bình Thuận") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -454,7 +454,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Long An")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Long An")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Long An") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -467,7 +467,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Bà Rịa–Vũng Tàu")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bà Rịa–Vũng Tàu")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Bà Rịa–Vũng Tàu") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -480,7 +480,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("An Giang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("An Giang")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("An Giang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -493,7 +493,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Đồng Tháp")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Đồng Tháp")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Đồng Tháp") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -506,7 +506,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Tiền Giang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Tiền Giang")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Tiền Giang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -519,7 +519,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Kiên Giang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Kiên Giang")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Kiên Giang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -532,7 +532,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Vĩnh Long")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Vĩnh Long")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Vĩnh Long") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -545,7 +545,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Bến Tre")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bến Tre")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Bến Tre") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -558,7 +558,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Trà Vinh")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Trà Vinh")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Trà Vinh") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -571,7 +571,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Sóc Trăng")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Sóc Trăng")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Sóc Trăng") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -584,7 +584,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Bắc Kạn")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bắc Kạn")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Bắc Kạn") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -597,7 +597,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Bắc Giang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bắc Giang")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Bắc Giang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -610,7 +610,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Bạc Liêu")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bạc Liêu")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Bạc Liêu") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -623,7 +623,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Bắc Ninh")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bắc Ninh")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Bắc Ninh") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -636,7 +636,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Bình Dương")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bình Dương")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Bình Dương") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -649,7 +649,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Bình Phước")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bình Phước")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Bình Phước") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -662,7 +662,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Cà Mau")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Cà Mau")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Cà Mau") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -675,7 +675,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Hải Dương")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hải Dương")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Hải Dương") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -688,7 +688,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Hà Nam")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hà Nam")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Hà Nam") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -701,7 +701,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Hưng Yên")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hưng Yên")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Hưng Yên") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -714,7 +714,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Nam Định")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Nam Định")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Nam Định") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -727,7 +727,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Phú Thọ")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Phú Thọ")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Phú Thọ") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -740,7 +740,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Thái Nguyên")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Thái Nguyên")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Thái Nguyên") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -753,7 +753,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Vĩnh Phúc")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Vĩnh Phúc")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Vĩnh Phúc") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -766,7 +766,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Điện Biên")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Điện Biên")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Điện Biên") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -779,7 +779,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Đắk Nông")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Đắk Nông")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Đắk Nông") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -792,7 +792,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Hậu Giang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hậu Giang")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Hậu Giang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -805,7 +805,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Cần Thơ")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Cần Thơ")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Cần Thơ") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -818,7 +818,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Đà Nẵng")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Đà Nẵng")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Đà Nẵng") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -831,7 +831,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Hà Nội")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hà Nội")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Hà Nội") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -844,7 +844,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Hải Phòng")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hải Phòng")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Hải Phòng") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"
@@ -857,7 +857,7 @@ export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGP
                     onMouseEnter={() => handleMouseEnter("Hồ Chí Minh")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hồ Chí Minh")}
-                    className="cursor-pointer transition-all duration-300 hover:opacity-80 hover:stroke-[0.8px]"
+                    className="cursor-pointer transition-all duration-300 hover:opacity-80"
                     fill={isCovered("Hồ Chí Minh") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
                     strokeWidth="0.3"

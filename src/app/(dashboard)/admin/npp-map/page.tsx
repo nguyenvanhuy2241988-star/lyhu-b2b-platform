@@ -113,14 +113,6 @@ export default function NppMapPage() {
         });
     };
 
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (tooltipRef.current) {
-            const isLeft = typeof window !== 'undefined' ? e.clientX > window.innerWidth / 2 : false;
-            tooltipRef.current.style.left = `${isLeft ? e.clientX - 340 : e.clientX + 20}px`;
-            tooltipRef.current.style.top = `${e.clientY + 20}px`;
-        }
-    };
-
     const MemoizedMap = useMemo(() => (
         <VietnamMapSVG 
             data={nppData}
@@ -128,6 +120,18 @@ export default function NppMapPage() {
             onClick={handleMapClick}
         />
     ), [nppData, handleMapClick]);
+
+    useEffect(() => {
+        const handleGlobalMouseMove = (e: MouseEvent) => {
+            if (tooltipRef.current) {
+                const isLeft = e.clientX > window.innerWidth / 2;
+                tooltipRef.current.style.left = `${isLeft ? e.clientX - 340 : e.clientX + 20}px`;
+                tooltipRef.current.style.top = `${e.clientY + 20}px`;
+            }
+        };
+        window.addEventListener('mousemove', handleGlobalMouseMove);
+        return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+    }, []);
 
     return (
         <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -161,7 +165,6 @@ export default function NppMapPage() {
                 {/* Map Area */}
                 <div 
                     className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[600px] flex items-center justify-center bg-slate-50/50 relative"
-                    onMouseMove={handleMouseMove}
                 >
                     <div className="w-full max-w-[600px]">
                         {MemoizedMap}
@@ -436,7 +439,7 @@ export default function NppMapPage() {
                 className={`fixed z-50 pointer-events-none bg-white rounded-xl shadow-2xl border border-slate-200 w-80 overflow-hidden transition-opacity duration-200 ${
                     hoveredProvince && !selectedProvince ? 'opacity-100' : 'opacity-0'
                 }`}
-                style={{ left: -999, top: -999 }}
+                style={{ left: -999, top: -999, pointerEvents: 'none' }}
             >
                 {hoveredProvince && (
                     <>
