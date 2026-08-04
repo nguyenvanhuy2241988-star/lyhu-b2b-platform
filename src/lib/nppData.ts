@@ -9,10 +9,20 @@ export interface ProvinceData {
     telesales?: string;
 }
 
-export const defaultBrands = ["Khoai môn CVT", "Kẹo UHi", "Abi Snack"];
+export const telesalesStaff = [
+    "Chưa phân công",
+    "Nguyễn Văn A",
+    "Trần Thị B",
+    "Lê Văn C",
+    "Phạm Thị D",
+    "Hoàng Văn E"
+];
+
+export const defaultBrands = ["Khoai môn CVT (Karaoke)", "Khoai môn CVT (Siêu thị)", "Kẹo UHi", "Abi Snack"];
 
 export const defaultTargets: Record<string, number> = {
-    "Khoai môn CVT": 50000000,
+    "Khoai môn CVT (Karaoke)": 30000000,
+    "Khoai môn CVT (Siêu thị)": 30000000,
     "Kẹo UHi": 20000000,
     "Abi Snack": 30000000
 };
@@ -21,28 +31,32 @@ export const defaultTargets: Record<string, number> = {
 export const initialNppData: Record<string, ProvinceData> = {
     "Quảng Ninh": {
         brands: {
-            "Khoai môn CVT": { target: 70000000, currentSales: 15000000, hasNPP: true },
+            "Khoai môn CVT (Karaoke)": { target: 35000000, currentSales: 7500000, hasNPP: true },
+            "Khoai môn CVT (Siêu thị)": { target: 35000000, currentSales: 7500000, hasNPP: true },
             "Kẹo UHi": { target: 30000000, currentSales: 5000000, hasNPP: true },
             "Abi Snack": { target: 50000000, currentSales: 0, hasNPP: false }
         }
     },
     "Hà Nội": {
         brands: {
-            "Khoai môn CVT": { target: 150000000, currentSales: 100000000, hasNPP: true },
+            "Khoai môn CVT (Karaoke)": { target: 75000000, currentSales: 50000000, hasNPP: true },
+            "Khoai môn CVT (Siêu thị)": { target: 75000000, currentSales: 50000000, hasNPP: true },
             "Kẹo UHi": { target: 80000000, currentSales: 60000000, hasNPP: true },
             "Abi Snack": { target: 100000000, currentSales: 80000000, hasNPP: true }
         }
     },
     "TP Hồ Chí Minh": {
         brands: {
-            "Khoai môn CVT": { target: 200000000, currentSales: 150000000, hasNPP: true },
+            "Khoai môn CVT (Karaoke)": { target: 100000000, currentSales: 75000000, hasNPP: true },
+            "Khoai môn CVT (Siêu thị)": { target: 100000000, currentSales: 75000000, hasNPP: true },
             "Kẹo UHi": { target: 100000000, currentSales: 90000000, hasNPP: true },
             "Abi Snack": { target: 150000000, currentSales: 100000000, hasNPP: true }
         }
     },
     "Bắc Ninh": {
         brands: {
-            "Khoai môn CVT": { target: 60000000, currentSales: 30000000, hasNPP: true },
+            "Khoai môn CVT (Karaoke)": { target: 30000000, currentSales: 15000000, hasNPP: true },
+            "Khoai môn CVT (Siêu thị)": { target: 30000000, currentSales: 15000000, hasNPP: true },
             "Kẹo UHi": { target: 25000000, currentSales: 10000000, hasNPP: true },
             "Abi Snack": { target: 40000000, currentSales: 5000000, hasNPP: false }
         }

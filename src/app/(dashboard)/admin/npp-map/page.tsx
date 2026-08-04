@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import VietnamMapSVG from "@/components/admin/VietnamMapSVG";
-import { getProvinceData, fetchNppDataFromAPI, saveNppDataToAPI, ProvinceData, defaultBrands } from "@/lib/nppData";
+import { getProvinceData, fetchNppDataFromAPI, saveNppDataToAPI, ProvinceData, defaultBrands, telesalesStaff } from "@/lib/nppData";
 import { provinceDemographics } from "@/lib/demographics";
 import { MapPin, Target, CheckCircle2, AlertCircle, Edit2, Save, X, TrendingUp, Loader2, Users, Maximize, Map, DollarSign, Briefcase } from "lucide-react";
 
@@ -303,17 +303,20 @@ export default function NppMapPage() {
                                         <label className="block text-sm font-semibold text-slate-700 mb-1">
                                             Nhân viên Telesales phụ trách
                                         </label>
-                                        <input 
-                                            type="text" 
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                                            placeholder="Tên nhân viên (VD: Nguyễn Văn A)"
+                                        <select
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm bg-white"
                                             value={editData?.telesales || ''}
                                             onChange={(e) => {
                                                 if (editData) {
-                                                    setEditData({...editData, telesales: e.target.value});
+                                                    setEditData({...editData, telesales: e.target.value === 'Chưa phân công' ? '' : e.target.value});
                                                 }
                                             }}
-                                        />
+                                        >
+                                            <option value="" disabled>-- Chọn nhân viên --</option>
+                                            {telesalesStaff.map(staff => (
+                                                <option key={staff} value={staff}>{staff}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 )}
 
