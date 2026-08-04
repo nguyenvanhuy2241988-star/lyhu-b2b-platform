@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import VietnamMapSVG from "@/components/admin/VietnamMapSVG";
-import { getProvinceData, fetchNppDataFromAPI, saveNppDataToAPI, ProvinceData, defaultBrands, telesalesStaff } from "@/lib/nppData";
+import { getProvinceData, fetchNppDataFromAPI, saveNppDataToAPI, ProvinceData, defaultBrands } from "@/lib/nppData";
 import { provinceDemographics } from "@/lib/demographics";
+import { fetchUsers, User } from "@/lib/usersStore";
 import { MapPin, Target, CheckCircle2, AlertCircle, Edit2, Save, X, TrendingUp, Loader2, Users, Maximize, Map, DollarSign, Briefcase } from "lucide-react";
 
 export default function NppMapPage() {
@@ -17,12 +18,24 @@ export default function NppMapPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const tooltipRef = useRef<HTMLDivElement>(null);
+    const [telesalesUsers, setTelesalesUsers] = useState<User[]>([]);
+    
     useEffect(() => {
         const loadData = async () => {
             setIsLoading(true);
-            const data = await fetchNppDataFromAPI();
-            setNppData(data);
-            setIsLoading(false);
+            try {
+                const [data, users] = await Promise.all([
+                    fetchNppDataFromAPI(),
+                    fetchUsers()
+                ]);
+                setNppData(data);
+                // Filter telesales staff (include sale_admin as well since they often manage)
+                setTelesalesUsers(users.filter(u => u.role === 'telesales' || u.role === 'sale_admin'));
+            } catch (err) {
+                console.error("Failed to load map data", err);
+            } finally {
+                setIsLoading(false);
+            }
         };
         loadData();
     }, []);
@@ -313,8 +326,9 @@ export default function NppMapPage() {
                                             }}
                                         >
                                             <option value="" disabled>-- Chọn nhân viên --</option>
-                                            {telesalesStaff.map(staff => (
-                                                <option key={staff} value={staff}>{staff}</option>
+                                            <option value="Chưa phân công">Chưa phân công</option>
+                                            {telesalesUsers.map(staff => (
+                                                <option key={staff.id} value={staff.name}>{staff.name} - {staff.email}</option>
                                             ))}
                                         </select>
                                     </div>
