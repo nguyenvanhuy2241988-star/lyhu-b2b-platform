@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import VietnamMapSVG from "@/components/admin/VietnamMapSVG";
 import { getProvinceData, fetchNppDataFromAPI, saveNppDataToAPI, ProvinceData, defaultBrands } from "@/lib/nppData";
 import { provinceDemographics } from "@/lib/demographics";
@@ -16,8 +16,7 @@ export default function NppMapPage() {
     const [editData, setEditData] = useState<ProvinceData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-
+    const tooltipRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
         const loadData = async () => {
             setIsLoading(true);
@@ -61,7 +60,7 @@ export default function NppMapPage() {
     };
 
     // Handle map click
-    const handleMapClick = (province: string) => {
+    const handleMapClick = useCallback((province: string) => {
         if (selectedProvince === province) {
             // Deselect
             setSelectedProvince(null);
@@ -70,7 +69,7 @@ export default function NppMapPage() {
             setSelectedProvince(province);
             setEditMode(false);
         }
-    };
+    }, [selectedProvince]);
 
     const startEditing = () => {
         if (!activeProvince || !currentData) return;
@@ -115,8 +114,21 @@ export default function NppMapPage() {
     };
 
     const handleMouseMove = (e: React.MouseEvent) => {
-        setMousePos({ x: e.clientX, y: e.clientY });
+        if (tooltipRef.current) {
+            const isLeft = typeof window !== 'undefined' ? e.clientX > window.innerWidth / 2 : false;
+            tooltipRef.current.style.left = `${isLeft ? e.clientX - 340 : e.clientX + 20}px`;
+            tooltipRef.current.style.top = `${e.clientY + 20}px`;
+        }
     };
+
+    const MemoizedMap = useMemo(() => (
+        <VietnamMapSVG 
+            data={nppData}
+            hoveredProvince={hoveredProvince}
+            onHover={setHoveredProvince}
+            onClick={handleMapClick}
+        />
+    ), [nppData, hoveredProvince, handleMapClick]);
 
     return (
         <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -153,12 +165,7 @@ export default function NppMapPage() {
                     onMouseMove={handleMouseMove}
                 >
                     <div className="w-full max-w-[600px]">
-                        <VietnamMapSVG 
-                            data={nppData}
-                            hoveredProvince={hoveredProvince}
-                            onHover={setHoveredProvince}
-                            onClick={handleMapClick}
-                        />
+                        {MemoizedMap}
                     </div>
                 </div>
 
@@ -266,7 +273,7 @@ export default function NppMapPage() {
                                 </div>
                                 
                                 {!editMode && (
-                                    <div className="mb-6">
+                                    <div className="mb-6 flex items-center justify-between">
                                         {hasAnyNPP ? (
                                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-700 border border-primary-200">
                                                 <CheckCircle2 className="h-4 w-4" />
@@ -278,6 +285,32 @@ export default function NppMapPage() {
                                                 Khu vực trống (Cần mở)
                                             </span>
                                         )}
+                                        
+                                        {currentData.telesales && (
+                                            <span className="inline-flex items-center gap-1 text-sm font-medium text-slate-700">
+                                                <Users className="h-4 w-4 text-slate-400" />
+                                                Phụ trách: <span className="text-primary-700 font-bold">{currentData.telesales}</span>
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {editMode && (
+                                    <div className="mb-6">
+                                        <label className="block text-sm font-semibold text-slate-700 mb-1">
+                                            Nhân viên Telesales phụ trách
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                            placeholder="Tên nhân viên (VD: Nguyễn Văn A)"
+                                            value={editData?.telesales || ''}
+                                            onChange={(e) => {
+                                                if (editData) {
+                                                    setEditData({...editData, telesales: e.target.value});
+                                                }
+                                            }}
+                                        />
                                     </div>
                                 )}
 
@@ -401,11 +434,9 @@ export default function NppMapPage() {
             {/* Tooltip Overlay */}
             {hoveredProvince && !selectedProvince && (
                 <div 
+                    ref={tooltipRef}
                     className="fixed z-50 pointer-events-none bg-white rounded-xl shadow-2xl border border-slate-200 w-80 overflow-hidden animate-in fade-in duration-200"
-                    style={{
-                        left: (typeof window !== 'undefined' && mousePos.x > window.innerWidth / 2) ? mousePos.x - 340 : mousePos.x + 20,
-                        top: mousePos.y + 20,
-                    }}
+                    style={{ left: -999, top: -999 }}
                 >
                     <div className="bg-slate-900 px-4 py-3 border-b border-slate-800 flex justify-between items-center">
                         <h3 className="text-white font-bold text-lg">{hoveredProvince}</h3>
@@ -441,6 +472,20 @@ export default function NppMapPage() {
                         )}
                         
                         <div>
+                            {(() => {
+                                const provData = getProvinceData(nppData, hoveredProvince);
+                                if (provData.telesales) {
+                                    return (
+                                        <div className="mb-3 pb-3 border-b border-slate-100 flex items-center justify-between">
+                                            <div className="text-[10px] text-slate-500 uppercase font-semibold flex items-center gap-1">
+                                                <Users className="h-3 w-3"/> Telesales
+                                            </div>
+                                            <div className="text-sm font-bold text-primary-700">{provData.telesales}</div>
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            })()}
                             <div className="text-[10px] text-slate-500 uppercase font-semibold mb-2 flex items-center gap-1"><Briefcase className="h-3 w-3"/> Mục tiêu & Thực tế</div>
                             <div className="space-y-2">
                                 {defaultBrands.map(brand => {

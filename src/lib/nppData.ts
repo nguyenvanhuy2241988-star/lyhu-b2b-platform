@@ -6,6 +6,7 @@ export interface BrandTarget {
 
 export interface ProvinceData {
     brands: Record<string, BrandTarget>;
+    telesales?: string;
 }
 
 export const defaultBrands = ["Khoai môn CVT", "Kẹo UHi", "Abi Snack"];
