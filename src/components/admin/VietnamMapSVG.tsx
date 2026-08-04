@@ -864,6 +864,9 @@ const VietnamMapSVG = React.memo(function VietnamMapSVG({ data, onHover, onClick
                     
                 />
                 
+            
+                {/* Province Labels */}
+
             </g>
         </svg>
     );
