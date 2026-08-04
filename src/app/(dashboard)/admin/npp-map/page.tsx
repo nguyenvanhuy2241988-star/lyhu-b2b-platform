@@ -431,16 +431,19 @@ export default function NppMapPage() {
             </div>
 
             {/* Tooltip Overlay */}
-            {hoveredProvince && !selectedProvince && (
-                <div 
-                    ref={tooltipRef}
-                    className="fixed z-50 pointer-events-none bg-white rounded-xl shadow-2xl border border-slate-200 w-80 overflow-hidden animate-in fade-in duration-200"
-                    style={{ left: -999, top: -999 }}
-                >
-                    <div className="bg-slate-900 px-4 py-3 border-b border-slate-800 flex justify-between items-center">
-                        <h3 className="text-white font-bold text-lg">{hoveredProvince}</h3>
-                        <Map className="h-5 w-5 text-slate-400" />
-                    </div>
+            <div 
+                ref={tooltipRef}
+                className={`fixed z-50 pointer-events-none bg-white rounded-xl shadow-2xl border border-slate-200 w-80 overflow-hidden transition-opacity duration-200 ${
+                    hoveredProvince && !selectedProvince ? 'opacity-100' : 'opacity-0'
+                }`}
+                style={{ left: -999, top: -999 }}
+            >
+                {hoveredProvince && (
+                    <>
+                        <div className="bg-slate-900 px-4 py-3 border-b border-slate-800 flex justify-between items-center">
+                            <h3 className="text-white font-bold text-lg">{hoveredProvince}</h3>
+                            <Map className="h-5 w-5 text-slate-400" />
+                        </div>
                     
                     <div className="p-4 space-y-4">
                         {provinceDemographics[hoveredProvince] ? (
@@ -521,8 +524,9 @@ export default function NppMapPage() {
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                    </>
+                )}
+            </div>
         </div>
     );
 }
