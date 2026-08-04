@@ -66,22 +66,44 @@ export const initialNppData: Record<string, ProvinceData> = {
 export function getProvinceData(dataStore: Record<string, ProvinceData>, provinceName: string): ProvinceData {
     if (provinceName === "Hồ Chí Minh") provinceName = "TP Hồ Chí Minh";
     
-    if (dataStore[provinceName]) {
-        return dataStore[provinceName];
-    }
+    let provinceData = dataStore[provinceName] || { brands: {} };
     
-    // Nếu chưa có, trả về mặc định
-    const defaultBrandsData: Record<string, BrandTarget> = {};
+    const updatedBrands: Record<string, BrandTarget> = { ...provinceData.brands };
+
+    // Migrate old data if present
+    if (updatedBrands["Khoai môn CVT"]) {
+        const oldData = updatedBrands["Khoai môn CVT"];
+        if (!updatedBrands["Khoai môn CVT (Karaoke)"]) {
+            updatedBrands["Khoai môn CVT (Karaoke)"] = {
+                target: Math.round(oldData.target / 2),
+                currentSales: Math.round(oldData.currentSales / 2),
+                hasNPP: oldData.hasNPP
+            };
+        }
+        if (!updatedBrands["Khoai môn CVT (Siêu thị)"]) {
+            updatedBrands["Khoai môn CVT (Siêu thị)"] = {
+                target: Math.round(oldData.target / 2),
+                currentSales: Math.round(oldData.currentSales / 2),
+                hasNPP: oldData.hasNPP
+            };
+        }
+        delete updatedBrands["Khoai môn CVT"];
+    }
+
+    // Ensure all defaultBrands exist
     defaultBrands.forEach(brand => {
-        defaultBrandsData[brand] = {
-            target: defaultTargets[brand] || 0,
-            currentSales: 0,
-            hasNPP: false
-        };
+        if (!updatedBrands[brand]) {
+            updatedBrands[brand] = {
+                target: defaultTargets[brand] || 0,
+                currentSales: 0,
+                hasNPP: false
+            };
+        }
     });
 
     return {
-        brands: defaultBrandsData
+        ...provinceData,
+        brands: updatedBrands
     };
 }
 
