@@ -29,8 +29,7 @@ export default function NppMapPage() {
                     fetchUsers()
                 ]);
                 setNppData(data);
-                // Filter telesales staff (include sale_admin as well since they often manage)
-                setTelesalesUsers(users.filter(u => u.role === 'telesales' || u.role === 'sale_admin'));
+                setTelesalesUsers(users.filter(u => u.role === 'telesales' || u.role === 'sale_admin' || u.role === 'admin'));
             } catch (err) {
                 console.error("Failed to load map data", err);
             } finally {
