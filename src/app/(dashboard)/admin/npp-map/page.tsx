@@ -124,11 +124,10 @@ export default function NppMapPage() {
     const MemoizedMap = useMemo(() => (
         <VietnamMapSVG 
             data={nppData}
-            hoveredProvince={hoveredProvince}
             onHover={setHoveredProvince}
             onClick={handleMapClick}
         />
-    ), [nppData, hoveredProvince, handleMapClick]);
+    ), [nppData, handleMapClick]);
 
     return (
         <div className="p-6 space-y-6 max-w-[1600px] mx-auto">

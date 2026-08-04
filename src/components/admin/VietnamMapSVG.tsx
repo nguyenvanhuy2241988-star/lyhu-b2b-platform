@@ -3,12 +3,12 @@ import { ProvinceData } from '@/lib/nppData';
 
 interface VietnamMapSVGProps {
     data: Record<string, ProvinceData>;
-    hoveredProvince: string | null;
+    
     onHover: (province: string | null) => void;
     onClick?: (province: string) => void;
 }
 
-export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick }: VietnamMapSVGProps) {
+export default function VietnamMapSVG({ data, onHover, onClick }: VietnamMapSVGProps) {
     const handleMouseEnter = (title: string) => {
         onHover(title);
     };
@@ -38,13 +38,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Lai Châu")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Lai Châu")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Lai Châu") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Lai Châu" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Lai Châu" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -53,13 +51,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Lào Cai")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Lào Cai")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Lào Cai") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Lào Cai" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Lào Cai" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -68,13 +64,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Hà Giang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hà Giang")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Hà Giang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Hà Giang" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Hà Giang" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -83,13 +77,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Cao Bằng")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Cao Bằng")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Cao Bằng") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Cao Bằng" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Cao Bằng" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -98,13 +90,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Sơn La")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Sơn La")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Sơn La") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Sơn La" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Sơn La" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -113,13 +103,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Yên Bái")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Yên Bái")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Yên Bái") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Yên Bái" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Yên Bái" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -128,13 +116,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Tuyên Quang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Tuyên Quang")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Tuyên Quang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Tuyên Quang" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Tuyên Quang" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -143,13 +129,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Lạng Sơn")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Lạng Sơn")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Lạng Sơn") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Lạng Sơn" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Lạng Sơn" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -158,13 +142,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Quảng Ninh")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Quảng Ninh")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Quảng Ninh") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Quảng Ninh" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Quảng Ninh" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -173,13 +155,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Hòa Bình")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hòa Bình")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Hòa Bình") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Hòa Bình" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Hòa Bình" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -188,13 +168,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Hà Tây")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hà Tây")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Hà Tây") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Hà Tây" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Hà Tây" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -203,13 +181,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Ninh Bình")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Ninh Bình")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Ninh Bình") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Ninh Bình" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Ninh Bình" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -218,13 +194,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Thái Bình")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Thái Bình")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Thái Bình") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Thái Bình" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Thái Bình" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -233,13 +207,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Thanh Hóa")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Thanh Hóa")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Thanh Hóa") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Thanh Hóa" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Thanh Hóa" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -248,13 +220,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Nghệ An")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Nghệ An")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Nghệ An") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Nghệ An" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Nghệ An" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -263,13 +233,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Hà Tĩnh")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hà Tĩnh")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Hà Tĩnh") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Hà Tĩnh" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Hà Tĩnh" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -278,13 +246,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Quảng Bình")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Quảng Bình")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Quảng Bình") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Quảng Bình" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Quảng Bình" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -293,13 +259,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Quảng Trị")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Quảng Trị")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Quảng Trị") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Quảng Trị" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Quảng Trị" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -308,13 +272,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Thừa Thiên–Huế")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Thừa Thiên–Huế")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Thừa Thiên–Huế") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Thừa Thiên–Huế" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Thừa Thiên–Huế" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -323,13 +285,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Quảng Nam")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Quảng Nam")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Quảng Nam") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Quảng Nam" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Quảng Nam" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -338,13 +298,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Kon Tum")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Kon Tum")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Kon Tum") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Kon Tum" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Kon Tum" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -353,13 +311,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Quảng Ngãi")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Quảng Ngãi")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Quảng Ngãi") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Quảng Ngãi" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Quảng Ngãi" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -368,13 +324,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Gia Lai")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Gia Lai")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Gia Lai") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Gia Lai" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Gia Lai" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -383,13 +337,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Bình Định")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bình Định")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Bình Định") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Bình Định" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Bình Định" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -398,13 +350,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Phú Yên")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Phú Yên")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Phú Yên") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Phú Yên" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Phú Yên" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -413,13 +363,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Đắk Lắk")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Đắk Lắk")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Đắk Lắk") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Đắk Lắk" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Đắk Lắk" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -428,13 +376,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Khánh Hòa")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Khánh Hòa")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Khánh Hòa") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Khánh Hòa" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Khánh Hòa" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -443,13 +389,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Lâm Đồng")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Lâm Đồng")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Lâm Đồng") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Lâm Đồng" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Lâm Đồng" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -458,13 +402,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Ninh Thuận")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Ninh Thuận")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Ninh Thuận") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Ninh Thuận" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Ninh Thuận" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -473,13 +415,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Tây Ninh")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Tây Ninh")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Tây Ninh") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Tây Ninh" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Tây Ninh" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -488,13 +428,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Đồng Nai")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Đồng Nai")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Đồng Nai") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Đồng Nai" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Đồng Nai" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -503,13 +441,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Bình Thuận")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bình Thuận")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Bình Thuận") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Bình Thuận" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Bình Thuận" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -518,13 +454,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Long An")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Long An")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Long An") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Long An" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Long An" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -533,13 +467,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Bà Rịa–Vũng Tàu")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bà Rịa–Vũng Tàu")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Bà Rịa–Vũng Tàu") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Bà Rịa–Vũng Tàu" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Bà Rịa–Vũng Tàu" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -548,13 +480,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("An Giang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("An Giang")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("An Giang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "An Giang" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "An Giang" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -563,13 +493,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Đồng Tháp")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Đồng Tháp")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Đồng Tháp") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Đồng Tháp" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Đồng Tháp" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -578,13 +506,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Tiền Giang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Tiền Giang")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Tiền Giang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Tiền Giang" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Tiền Giang" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -593,13 +519,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Kiên Giang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Kiên Giang")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Kiên Giang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Kiên Giang" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Kiên Giang" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -608,13 +532,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Vĩnh Long")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Vĩnh Long")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Vĩnh Long") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Vĩnh Long" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Vĩnh Long" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -623,13 +545,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Bến Tre")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bến Tre")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Bến Tre") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Bến Tre" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Bến Tre" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -638,13 +558,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Trà Vinh")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Trà Vinh")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Trà Vinh") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Trà Vinh" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Trà Vinh" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -653,13 +571,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Sóc Trăng")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Sóc Trăng")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Sóc Trăng") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Sóc Trăng" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Sóc Trăng" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -668,13 +584,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Bắc Kạn")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bắc Kạn")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Bắc Kạn") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Bắc Kạn" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Bắc Kạn" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -683,13 +597,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Bắc Giang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bắc Giang")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Bắc Giang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Bắc Giang" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Bắc Giang" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -698,13 +610,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Bạc Liêu")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bạc Liêu")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Bạc Liêu") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Bạc Liêu" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Bạc Liêu" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -713,13 +623,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Bắc Ninh")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bắc Ninh")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Bắc Ninh") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Bắc Ninh" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Bắc Ninh" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -728,13 +636,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Bình Dương")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bình Dương")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Bình Dương") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Bình Dương" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Bình Dương" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -743,13 +649,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Bình Phước")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Bình Phước")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Bình Phước") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Bình Phước" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Bình Phước" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -758,13 +662,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Cà Mau")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Cà Mau")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Cà Mau") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Cà Mau" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Cà Mau" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -773,13 +675,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Hải Dương")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hải Dương")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Hải Dương") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Hải Dương" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Hải Dương" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -788,13 +688,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Hà Nam")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hà Nam")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Hà Nam") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Hà Nam" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Hà Nam" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -803,13 +701,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Hưng Yên")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hưng Yên")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Hưng Yên") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Hưng Yên" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Hưng Yên" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -818,13 +714,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Nam Định")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Nam Định")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Nam Định") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Nam Định" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Nam Định" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -833,13 +727,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Phú Thọ")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Phú Thọ")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Phú Thọ") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Phú Thọ" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Phú Thọ" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -848,13 +740,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Thái Nguyên")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Thái Nguyên")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Thái Nguyên") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Thái Nguyên" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Thái Nguyên" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -863,13 +753,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Vĩnh Phúc")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Vĩnh Phúc")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Vĩnh Phúc") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Vĩnh Phúc" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Vĩnh Phúc" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -878,13 +766,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Điện Biên")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Điện Biên")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Điện Biên") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Điện Biên" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Điện Biên" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -893,13 +779,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Đắk Nông")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Đắk Nông")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Đắk Nông") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Đắk Nông" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Đắk Nông" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -908,13 +792,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Hậu Giang")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hậu Giang")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Hậu Giang") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Hậu Giang" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Hậu Giang" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -923,13 +805,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Cần Thơ")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Cần Thơ")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Cần Thơ") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Cần Thơ" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Cần Thơ" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -938,13 +818,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Đà Nẵng")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Đà Nẵng")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Đà Nẵng") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Đà Nẵng" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Đà Nẵng" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -953,13 +831,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Hà Nội")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hà Nội")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Hà Nội") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Hà Nội" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Hà Nội" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -968,13 +844,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Hải Phòng")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hải Phòng")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Hải Phòng") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Hải Phòng" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Hải Phòng" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
                 <path
@@ -983,13 +857,11 @@ export default function VietnamMapSVG({ data, hoveredProvince, onHover, onClick 
                     onMouseEnter={() => handleMouseEnter("Hồ Chí Minh")}
                     onMouseLeave={handleMouseLeave}
                     onClick={() => onClick && onClick("Hồ Chí Minh")}
-                    className="cursor-pointer transition-colors duration-300"
+                    className="cursor-pointer transition-all duration-300 hover:brightness-110 hover:stroke-[0.8px]"
                     fill={isCovered("Hồ Chí Minh") ? "#00afa9" : "#ef4444"}
                     stroke="#ffffff"
-                    strokeWidth={hoveredProvince === "Hồ Chí Minh" ? "0.8" : "0.3"}
-                    style={{
-                        filter: hoveredProvince === "Hồ Chí Minh" ? "brightness(1.1)" : "none"
-                    }}
+                    strokeWidth="0.3"
+                    
                 />
                 
             </g>
