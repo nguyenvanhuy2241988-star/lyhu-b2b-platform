@@ -1,0 +1,1 @@
+const fs = require('fs'); const content = fs.readFileSync('src/components/admin/VietnamMapSVG.tsx', 'utf-8'); const pathRegex = /<path[\s\S]*?d="([^"]+)"[\s\S]*?handleMouseEnter\("([^"]+)"\)[\s\S]*?\/>/g; const matches = [...content.matchAll(pathRegex)]; console.log(matches.length);
