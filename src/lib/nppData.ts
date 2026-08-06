@@ -35,7 +35,7 @@ const northernProvinces = new Set([
     "Lai Châu", "Điện Biên", "Sơn La", "Hòa Bình", "Lào Cai", "Yên Bái", 
     "Hà Giang", "Tuyên Quang", "Phú Thọ", "Thái Nguyên", "Bắc Kạn", "Cao Bằng", 
     "Lạng Sơn", "Bắc Giang", "Quảng Ninh", "Hà Nội", "Hải Phòng", "Bắc Ninh", 
-    "Hà Nam", "Hải Dương", "Hưng Yên", "Nam Định", "Ninh Bình", "Thái Bình", "Vĩnh Phúc", "Hà Tây",
+    "Hà Nam", "Hải Dương", "Hưng Yên", "Nam Định", "Ninh Bình", "Thái Bình", "Vĩnh Phúc",
     // Bắc Trung Bộ tới Hà Tĩnh
     "Thanh Hóa", "Nghệ An", "Hà Tĩnh"
 ]);

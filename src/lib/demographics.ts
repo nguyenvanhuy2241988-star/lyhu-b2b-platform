@@ -17,7 +17,6 @@ export const provinceDemographics: Record<string, ProvinceDemographics> = {
     "Lạng Sơn": { area: 8310, population: 800000, districts: 11, gdp: 40000, perCapitaIncome: 48 },
     "Quảng Ninh": { area: 6178, population: 1350000, districts: 13, gdp: 250000, perCapitaIncome: 180 },
     "Hòa Bình": { area: 4590, population: 870000, districts: 10, gdp: 50000, perCapitaIncome: 55 },
-    "Hà Tây": { area: 2193, population: 2500000, districts: 14, gdp: 30000, perCapitaIncome: 20 },
     "Ninh Bình": { area: 1386, population: 1000000, districts: 8, gdp: 75000, perCapitaIncome: 75 },
     "Thái Bình": { area: 1586, population: 1870000, districts: 8, gdp: 110000, perCapitaIncome: 60 },
     "Thanh Hóa": { area: 11120, population: 3700000, districts: 27, gdp: 230000, perCapitaIncome: 65 },
