@@ -366,38 +366,11 @@ export default function NppMapPage() {
                                             </span>
                                         )}
                                         
-                                        {currentData.telesales && (
-                                            <span className="inline-flex items-center gap-1 text-sm font-medium text-slate-700">
-                                                <Users className="h-4 w-4 text-slate-400" />
-                                                Phụ trách: <span className="text-primary-700 font-bold">{currentData.telesales}</span>
-                                            </span>
-                                        )}
+                                        {/* Removed overall telesales view */}
                                     </div>
                                 )}
                                 
-                                {editMode && (
-                                    <div className="mb-6">
-                                        <label className="block text-sm font-semibold text-slate-700 mb-1">
-                                            Nhân viên Telesales phụ trách
-                                        </label>
-                                        <select
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm bg-white"
-                                            value={editData?.telesales || ''}
-                                            onChange={(e) => {
-                                                if (editData) {
-                                                    setEditData({...editData, telesales: e.target.value === 'Chưa phân công' ? '' : e.target.value});
-                                                }
-                                            }}
-                                        >
-                                            <option value="" disabled>-- Chọn nhân viên --</option>
-                                            <option value="Chưa phân công">Chưa phân công</option>
-                                            {telesalesUsers.map(staff => (
-                                                <option key={staff.id} value={staff.name}>{staff.name} - {staff.email}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-
+                                {/* Moved telesales to brand level */}
                                 <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">
                                     Chi tiết theo Nhãn hàng:
                                 </h3>
@@ -431,9 +404,17 @@ export default function NppMapPage() {
                                                             <span className="ml-2 text-xs font-medium text-slate-600">Đã có NPP</span>
                                                         </label>
                                                     ) : (
-                                                        <span className={`text-xs px-2 py-0.5 rounded font-medium ${(bData.hasNPP || bData.currentSales > 0) ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600'}`}>
-                                                            {(bData.hasNPP || bData.currentSales > 0) ? 'Đã có NPP' : 'Chưa có'}
-                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            {bData.telesales && (
+                                                                <span className="flex items-center gap-1 text-xs text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                                                    <Users className="h-3 w-3" />
+                                                                    {bData.telesales}
+                                                                </span>
+                                                            )}
+                                                            <span className={`text-xs px-2 py-0.5 rounded font-medium ${(bData.hasNPP || bData.currentSales > 0) ? 'bg-primary-100 text-primary-700' : 'bg-slate-200 text-slate-600'}`}>
+                                                                {(bData.hasNPP || bData.currentSales > 0) ? 'Đã có NPP' : 'Chưa có'}
+                                                            </span>
+                                                        </div>
                                                     )}
                                                 </div>
                                                 
@@ -456,6 +437,20 @@ export default function NppMapPage() {
                                                                 onChange={(e) => updateBrand(brand, 'currentSales', Number(e.target.value))}
                                                                 className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                             />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs text-slate-500 mb-1">Nhân sự phụ trách</label>
+                                                            <select
+                                                                className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                                                value={bData.telesales || ''}
+                                                                onChange={(e) => updateBrand(brand, 'telesales', e.target.value === 'Chưa phân công' ? '' : e.target.value)}
+                                                            >
+                                                                <option value="" disabled>-- Chọn nhân viên --</option>
+                                                                <option value="Chưa phân công">Chưa phân công</option>
+                                                                {telesalesUsers.map(staff => (
+                                                                    <option key={staff.id} value={staff.name}>{staff.name}</option>
+                                                                ))}
+                                                            </select>
                                                         </div>
                                                     </div>
                                                 ) : (

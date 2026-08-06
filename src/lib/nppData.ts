@@ -2,11 +2,12 @@ export interface BrandTarget {
     target: number;
     currentSales: number;
     hasNPP: boolean;
+    telesales?: string;
 }
 
 export interface ProvinceData {
     brands: Record<string, BrandTarget>;
-    telesales?: string;
+    telesales?: string; // Keep for backward compatibility if needed
 }
 
 export const telesalesStaff = [
