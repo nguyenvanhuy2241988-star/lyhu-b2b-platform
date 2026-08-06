@@ -280,9 +280,13 @@ export default function NppMapPage() {
                                 <div className="space-y-4">
                                     {nationalStats.map((stat, idx) => {
                                         const percent = stat.totalTarget > 0 ? Math.min(100, Math.round((stat.totalActual / stat.totalTarget) * 100)) : 0;
+                                        const percentText = stat.totalTarget > 0 ? ((stat.totalActual / stat.totalTarget) * 100).toFixed(1) : "0.0";
                                         return (
                                             <div key={idx} className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                                <div className="font-semibold text-slate-800 text-sm mb-2">{stat.brand}</div>
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <div className="font-semibold text-slate-800 text-sm">{stat.brand}</div>
+                                                    <div className="text-xs font-bold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">{percentText}%</div>
+                                                </div>
                                                 <div className="flex justify-between items-center text-xs mb-1">
                                                     <span className="text-slate-500">Dự kiến:</span>
                                                     <span className="font-medium text-slate-700">{formatVND(stat.totalTarget)}</span>
@@ -291,9 +295,9 @@ export default function NppMapPage() {
                                                     <span className="text-slate-500">Thực tế:</span>
                                                     <span className="font-bold text-primary-600">{formatVND(stat.totalActual)}</span>
                                                 </div>
-                                                <div className="w-full bg-slate-200 rounded-full h-1 overflow-hidden">
+                                                <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden mt-1">
                                                     <div 
-                                                        className={`h-1 rounded-full ${percent >= 100 ? 'bg-primary-500' : 'bg-blue-500'}`} 
+                                                        className={`h-1.5 rounded-full ${percent >= 100 ? 'bg-primary-500' : 'bg-blue-500'}`} 
                                                         style={{ width: `${percent}%` }}
                                                     ></div>
                                                 </div>
@@ -309,7 +313,12 @@ export default function NppMapPage() {
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="font-bold text-primary-700">Tổng doanh số thực tế:</span>
-                                        <span className="font-black text-primary-600 text-base">{formatVND(grandTotalActual)}</span>
+                                        <div className="flex flex-col items-end">
+                                            <span className="font-black text-primary-600 text-base">{formatVND(grandTotalActual)}</span>
+                                            <span className="text-xs font-semibold text-primary-500 mt-0.5">
+                                                Đạt {grandTotalTarget > 0 ? ((grandTotalActual / grandTotalTarget) * 100).toFixed(1) : "0.0"}%
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
