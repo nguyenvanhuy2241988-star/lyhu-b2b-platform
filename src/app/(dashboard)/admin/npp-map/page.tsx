@@ -324,22 +324,32 @@ export default function NppMapPage() {
                                     <h2 className="text-xl font-bold text-slate-900">{activeProvince}</h2>
                                     
                                     {/* Edit Controls */}
-                                    {selectedProvince && (
-                                        editMode ? (
-                                            <div className="flex gap-2">
-                                                <button onClick={cancelEditing} className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors" title="Hủy">
-                                                    <X className="h-5 w-5" />
+                                    <div className="flex gap-2 items-center">
+                                        {selectedProvince && (
+                                            editMode ? (
+                                                <>
+                                                    <button onClick={cancelEditing} className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors" title="Hủy chỉnh sửa">
+                                                        <X className="h-5 w-5" />
+                                                    </button>
+                                                    <button onClick={saveEditing} disabled={isSaving} className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors flex items-center" title="Lưu">
+                                                        {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button onClick={startEditing} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1 text-sm font-medium">
+                                                    <Edit2 className="h-4 w-4" /> Chỉnh sửa
                                                 </button>
-                                                <button onClick={saveEditing} disabled={isSaving} className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors flex items-center" title="Lưu">
-                                                    {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <button onClick={startEditing} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1 text-sm font-medium">
-                                                <Edit2 className="h-4 w-4" /> Chỉnh sửa
-                                            </button>
-                                        )
-                                    )}
+                                            )
+                                        )}
+                                        {/* Nút đóng - quay về tổng quan */}
+                                        <button 
+                                            onClick={() => { setSelectedProvince(null); setEditMode(false); setEditData(null); }} 
+                                            className="p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-lg transition-colors" 
+                                            title="Đóng - Quay về tổng quan"
+                                        >
+                                            <X className="h-5 w-5" />
+                                        </button>
+                                    </div>
                                 </div>
                                 
                                 {!editMode && (
