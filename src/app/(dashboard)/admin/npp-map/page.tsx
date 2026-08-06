@@ -554,20 +554,6 @@ export default function NppMapPage() {
                         )}
                         
                         <div>
-                            {(() => {
-                                const provData = getProvinceData(nppData, hoveredProvince);
-                                if (provData.telesales) {
-                                    return (
-                                        <div className="mb-3 pb-3 border-b border-slate-100 flex items-center justify-between">
-                                            <div className="text-[10px] text-slate-500 uppercase font-semibold flex items-center gap-1">
-                                                <Users className="h-3 w-3"/> Telesales
-                                            </div>
-                                            <div className="text-sm font-bold text-primary-700">{provData.telesales}</div>
-                                        </div>
-                                    );
-                                }
-                                return null;
-                            })()}
                             <div className="text-[10px] text-slate-500 uppercase font-semibold mb-2 flex items-center gap-1"><Briefcase className="h-3 w-3"/> Mục tiêu & Thực tế</div>
                             <div className="space-y-2">
                                 {defaultBrands.map(brand => {
@@ -576,10 +562,17 @@ export default function NppMapPage() {
                                     if (!b) return null;
                                     return (
                                         <div key={brand} className="flex flex-col text-xs bg-slate-50 p-2 rounded border border-slate-100">
-                                            <div className="flex justify-between items-center mb-1">
-                                                <span className={`font-medium ${b.hasNPP || b.currentSales > 0 ? 'text-primary-700' : 'text-slate-600'}`}>
-                                                    {brand} {b.hasNPP || b.currentSales > 0 ? <CheckCircle2 className="inline h-3 w-3 ml-1" /> : ''}
-                                                </span>
+                                            <div className="flex justify-between items-start mb-1">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className={`font-medium ${b.hasNPP || b.currentSales > 0 ? 'text-primary-700' : 'text-slate-600'}`}>
+                                                        {brand} {b.hasNPP || b.currentSales > 0 ? <CheckCircle2 className="inline h-3 w-3 ml-1" /> : ''}
+                                                    </span>
+                                                    {b.telesales && (
+                                                        <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                                                            <Users className="h-2.5 w-2.5" /> {b.telesales}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <span className="text-[10px] text-slate-400">Thực tế / Mục tiêu</span>
