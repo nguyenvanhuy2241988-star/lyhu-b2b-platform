@@ -22,10 +22,10 @@ export const defaultBrands = ["Khoai môn CVT (Karaoke)", "Khoai môn CVT (Siêu
 
 // Base targets for Quảng Ninh
 export const quangNinhTargets: Record<string, number> = {
-    "Khoai môn CVT (Karaoke)": 40000000,
-    "Khoai môn CVT (Siêu thị)": 80000000,
-    "Abi Snack": 50000000,
-    "Kẹo UHi": 30000000
+    "Khoai môn CVT (Karaoke)": 30000000,
+    "Khoai môn CVT (Siêu thị)": 60000000,
+    "Abi Snack": 30000000,
+    "Kẹo UHi": 20000000
 };
 
 import { provinceDemographics } from "./demographics";
@@ -57,13 +57,13 @@ export function calculateDynamicTarget(provinceName: string, brand: string): num
     }
 
     // Calculate scale factor using weighted average of demographics
-    // Population: 40%, GRDP: 40%, Income: 15%, Area: 5%
+    // Population: 25%, GRDP: 35%, Income: 35%, Area: 5%
     const popRatio = demo.population / baseDemo.population;
     const gdpRatio = demo.gdp / baseDemo.gdp;
     const incomeRatio = demo.perCapitaIncome / baseDemo.perCapitaIncome;
     const areaRatio = demo.area / baseDemo.area;
 
-    const scaleFactor = (popRatio * 0.40) + (gdpRatio * 0.40) + (incomeRatio * 0.15) + (areaRatio * 0.05);
+    const scaleFactor = (popRatio * 0.25) + (gdpRatio * 0.35) + (incomeRatio * 0.35) + (areaRatio * 0.05);
 
     // Calculate the final target, rounded to the nearest 100,000 VNĐ for cleanliness
     const rawTarget = baseTarget * scaleFactor;
