@@ -20,48 +20,40 @@ export const telesalesStaff = [
 
 export const defaultBrands = ["Khoai môn CVT (Karaoke)", "Khoai môn CVT (Siêu thị)", "Kẹo UHi", "Abi Snack"];
 
-export const defaultTargets: Record<string, number> = {
-    "Khoai môn CVT (Karaoke)": 30000000,
-    "Khoai môn CVT (Siêu thị)": 30000000,
-    "Kẹo UHi": 20000000,
-    "Abi Snack": 30000000
+// Base targets for Quảng Ninh
+export const quangNinhTargets: Record<string, number> = {
+    "Khoai môn CVT (Karaoke)": 40000000,
+    "Khoai môn CVT (Siêu thị)": 80000000,
+    "Abi Snack": 50000000,
+    "Kẹo UHi": 30000000
 };
 
-// Dữ liệu mẫu ban đầu
-export const initialNppData: Record<string, ProvinceData> = {
-    "Quảng Ninh": {
-        brands: {
-            "Khoai môn CVT (Karaoke)": { target: 35000000, currentSales: 7500000, hasNPP: true },
-            "Khoai môn CVT (Siêu thị)": { target: 35000000, currentSales: 7500000, hasNPP: true },
-            "Kẹo UHi": { target: 30000000, currentSales: 5000000, hasNPP: true },
-            "Abi Snack": { target: 50000000, currentSales: 0, hasNPP: false }
-        }
-    },
-    "Hà Nội": {
-        brands: {
-            "Khoai môn CVT (Karaoke)": { target: 75000000, currentSales: 50000000, hasNPP: true },
-            "Khoai môn CVT (Siêu thị)": { target: 75000000, currentSales: 50000000, hasNPP: true },
-            "Kẹo UHi": { target: 80000000, currentSales: 60000000, hasNPP: true },
-            "Abi Snack": { target: 100000000, currentSales: 80000000, hasNPP: true }
-        }
-    },
-    "TP Hồ Chí Minh": {
-        brands: {
-            "Khoai môn CVT (Karaoke)": { target: 100000000, currentSales: 75000000, hasNPP: true },
-            "Khoai môn CVT (Siêu thị)": { target: 100000000, currentSales: 75000000, hasNPP: true },
-            "Kẹo UHi": { target: 100000000, currentSales: 90000000, hasNPP: true },
-            "Abi Snack": { target: 150000000, currentSales: 100000000, hasNPP: true }
-        }
-    },
-    "Bắc Ninh": {
-        brands: {
-            "Khoai môn CVT (Karaoke)": { target: 30000000, currentSales: 15000000, hasNPP: true },
-            "Khoai môn CVT (Siêu thị)": { target: 30000000, currentSales: 15000000, hasNPP: true },
-            "Kẹo UHi": { target: 25000000, currentSales: 10000000, hasNPP: true },
-            "Abi Snack": { target: 40000000, currentSales: 5000000, hasNPP: false }
-        }
+import { provinceDemographics } from "./demographics";
+
+function calculateDynamicTarget(provinceName: string, brand: string): number {
+    const baseTarget = quangNinhTargets[brand] || 30000000;
+    
+    // Default to base target if demographics are missing (e.g. invalid name)
+    const demo = provinceDemographics[provinceName];
+    const baseDemo = provinceDemographics["Quảng Ninh"];
+    
+    if (!demo || !baseDemo) {
+        return baseTarget;
     }
-};
+
+    // Calculate scale factor using weighted average of demographics
+    // Population: 40%, GRDP: 40%, Income: 15%, Area: 5%
+    const popRatio = demo.population / baseDemo.population;
+    const gdpRatio = demo.gdp / baseDemo.gdp;
+    const incomeRatio = demo.perCapitaIncome / baseDemo.perCapitaIncome;
+    const areaRatio = demo.area / baseDemo.area;
+
+    const scaleFactor = (popRatio * 0.40) + (gdpRatio * 0.40) + (incomeRatio * 0.15) + (areaRatio * 0.05);
+
+    // Calculate the final target, rounded to the nearest 100,000 VNĐ for cleanliness
+    const rawTarget = baseTarget * scaleFactor;
+    return Math.round(rawTarget / 100000) * 100000;
+}
 
 export function getProvinceData(dataStore: Record<string, ProvinceData>, provinceName: string): ProvinceData {
     if (provinceName === "Hồ Chí Minh") provinceName = "TP Hồ Chí Minh";
@@ -94,10 +86,13 @@ export function getProvinceData(dataStore: Record<string, ProvinceData>, provinc
     defaultBrands.forEach(brand => {
         if (!updatedBrands[brand]) {
             updatedBrands[brand] = {
-                target: defaultTargets[brand] || 0,
+                target: calculateDynamicTarget(provinceName, brand),
                 currentSales: 0,
                 hasNPP: false
             };
+        } else if (!updatedBrands[brand].target || updatedBrands[brand].target === 0) {
+            // Also update targets for existing records if their target is 0 or missing
+            updatedBrands[brand].target = calculateDynamicTarget(provinceName, brand);
         }
     });
 
