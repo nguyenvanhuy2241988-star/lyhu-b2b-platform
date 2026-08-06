@@ -30,7 +30,22 @@ export const quangNinhTargets: Record<string, number> = {
 
 import { provinceDemographics } from "./demographics";
 
-function calculateDynamicTarget(provinceName: string, brand: string): number {
+// Danh sách các tỉnh từ Hà Tĩnh trở ra Bắc (Miền Bắc + Bắc Trung Bộ)
+const northernProvinces = new Set([
+    "Lai Châu", "Điện Biên", "Sơn La", "Hòa Bình", "Lào Cai", "Yên Bái", 
+    "Hà Giang", "Tuyên Quang", "Phú Thọ", "Thái Nguyên", "Bắc Kạn", "Cao Bằng", 
+    "Lạng Sơn", "Bắc Giang", "Quảng Ninh", "Hà Nội", "Hải Phòng", "Bắc Ninh", 
+    "Hà Nam", "Hải Dương", "Hưng Yên", "Nam Định", "Ninh Bình", "Thái Bình", "Vĩnh Phúc", "Hà Tây",
+    // Bắc Trung Bộ tới Hà Tĩnh
+    "Thanh Hóa", "Nghệ An", "Hà Tĩnh"
+]);
+
+export function calculateDynamicTarget(provinceName: string, brand: string): number {
+    // Abi Snack độc quyền từ Hà Tĩnh trở ra Bắc
+    if (brand === "Abi Snack" && !northernProvinces.has(provinceName)) {
+        return 0;
+    }
+
     const baseTarget = quangNinhTargets[brand] || 30000000;
     
     // Default to base target if demographics are missing (e.g. invalid name)

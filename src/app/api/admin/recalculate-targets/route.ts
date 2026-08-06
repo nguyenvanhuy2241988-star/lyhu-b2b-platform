@@ -1,29 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { defaultBrands, quangNinhTargets } from '@/lib/nppData';
+import { defaultBrands, calculateDynamicTarget } from '@/lib/nppData';
 import { provinceDemographics } from '@/lib/demographics';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-function calculateDynamicTarget(provinceName: string, brand: string): number {
-    const baseTarget = quangNinhTargets[brand] || 30000000;
-    const demo = provinceDemographics[provinceName];
-    const baseDemo = provinceDemographics["Quảng Ninh"];
-    
-    if (!demo || !baseDemo) return baseTarget;
-
-    const popRatio = demo.population / baseDemo.population;
-    const gdpRatio = demo.gdp / baseDemo.gdp;
-    const incomeRatio = demo.perCapitaIncome / baseDemo.perCapitaIncome;
-    const areaRatio = demo.area / baseDemo.area;
-
-    const scaleFactor = (popRatio * 0.40) + (gdpRatio * 0.40) + (incomeRatio * 0.15) + (areaRatio * 0.05);
-
-    return Math.round((baseTarget * scaleFactor) / 100000) * 100000;
-}
 
 export async function GET() {
     try {
