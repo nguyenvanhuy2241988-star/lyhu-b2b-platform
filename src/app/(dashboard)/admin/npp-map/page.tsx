@@ -5,6 +5,7 @@ import VietnamMapSVG from "@/components/admin/VietnamMapSVG";
 import { getProvinceData, fetchNppDataFromAPI, saveNppDataToAPI, ProvinceData, defaultBrands } from "@/lib/nppData";
 import { provinceDemographics } from "@/lib/demographics";
 import { fetchUsers, User } from "@/lib/usersStore";
+import { createClient } from "@/lib/supabaseClient";
 import { MapPin, Target, CheckCircle2, AlertCircle, Edit2, Save, X, TrendingUp, Loader2, Users, Maximize, Map, DollarSign, Briefcase } from "lucide-react";
 
 export default function NppMapPage() {
@@ -19,17 +20,26 @@ export default function NppMapPage() {
     const [isSaving, setIsSaving] = useState(false);
     const tooltipRef = useRef<HTMLDivElement>(null);
     const [telesalesUsers, setTelesalesUsers] = useState<User[]>([]);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
     
     useEffect(() => {
         const loadData = async () => {
             setIsLoading(true);
             try {
+                const supabase = createClient();
+                const { data: { session } } = await supabase.auth.getSession();
+                
                 const [data, users] = await Promise.all([
                     fetchNppDataFromAPI(),
                     fetchUsers()
                 ]);
                 setNppData(data);
                 setTelesalesUsers(users.filter(u => u.role === 'telesales' || u.role === 'sale_admin' || u.role === 'admin'));
+                
+                if (session?.user) {
+                    const loggedInUser = users.find(u => u.id === session.user.id);
+                    if (loggedInUser) setCurrentUser(loggedInUser);
+                }
             } catch (err) {
                 console.error("Failed to load map data", err);
             } finally {
@@ -38,6 +48,21 @@ export default function NppMapPage() {
         };
         loadData();
     }, []);
+
+    const assignedProvinces = useMemo(() => {
+        const assigned = new Set<string>();
+        if (!currentUser) return assigned;
+        
+        Object.entries(nppData).forEach(([prov, data]) => {
+            const hasAssigned = Object.values(data.brands).some(b => 
+                b.telesales === currentUser.name && (b.hasNPP || (b.currentSales || 0) > 0)
+            );
+            if (hasAssigned) {
+                assigned.add(prov);
+            }
+        });
+        return assigned;
+    }, [nppData, currentUser]);
 
     const totalProvinces = 63;
     const coveredProvinces = Object.values(nppData).filter(p => Object.values(p.brands).some(b => b.hasNPP || (b.currentSales > 0))).length;
@@ -142,8 +167,9 @@ export default function NppMapPage() {
             data={nppData}
             onHover={setHoveredProvince}
             onClick={handleMapClick}
+            assignedProvinces={assignedProvinces}
         />
-    ), [nppData, handleMapClick]);
+    ), [nppData, handleMapClick, assignedProvinces]);
 
     useEffect(() => {
         const handleGlobalMouseMove = (e: MouseEvent) => {
