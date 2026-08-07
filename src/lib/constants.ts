@@ -247,6 +247,7 @@ export const NAV_ITEMS = {
     [ROLES.TELESALES]: [
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
         { label: "Tổng quan", href: "/telesales", icon: LayoutDashboard },
+        { label: "Bản đồ NPP", href: "/telesales/npp-map", icon: MapPin },
         { label: "CRM", href: PATH_LEADS, icon: TrendingUp },
         { label: "Lịch làm việc", href: "/telesales/schedule", icon: Calendar },
         { label: "Việc cần làm", href: "/telesales/tasks", icon: ListTodo },

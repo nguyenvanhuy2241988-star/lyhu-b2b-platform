@@ -68,6 +68,8 @@ export default function NppMapPage() {
     const coveredProvinces = Object.values(nppData).filter(p => Object.values(p.brands).some(b => b.hasNPP || (b.currentSales > 0))).length;
     const emptyProvinces = totalProvinces - coveredProvinces;
 
+    const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'sale_admin';
+
     // Tính số NPP theo từng nhãn hàng
     const nppCountByBrand = defaultBrands.map(brand => {
         let count = 0;
@@ -360,7 +362,7 @@ export default function NppMapPage() {
                                     
                                     {/* Edit Controls */}
                                     <div className="flex gap-2 items-center">
-                                        {selectedProvince && (
+                                        {selectedProvince && canEdit && (
                                             editMode ? (
                                                 <>
                                                     <button onClick={cancelEditing} className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors" title="Hủy chỉnh sửa">
