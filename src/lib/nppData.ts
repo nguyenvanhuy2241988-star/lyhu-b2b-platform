@@ -72,9 +72,13 @@ export function calculateDynamicTarget(provinceName: string, brand: string): num
 }
 
 export function getProvinceData(dataStore: Record<string, ProvinceData>, provinceName: string): ProvinceData {
-    if (provinceName === "Hồ Chí Minh") provinceName = "TP Hồ Chí Minh";
-    
-    let provinceData = dataStore[provinceName] || { brands: {} };
+    let provinceData = dataStore[provinceName];
+    if (!provinceData && provinceName === "Hồ Chí Minh") {
+        provinceData = dataStore["TP Hồ Chí Minh"];
+    }
+    if (!provinceData) {
+        provinceData = { brands: {} };
+    }
     
     const updatedBrands: Record<string, BrandTarget> = { ...provinceData.brands };
 
