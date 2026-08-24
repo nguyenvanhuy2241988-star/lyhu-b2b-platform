@@ -1354,7 +1354,7 @@ export default function TelesalesTasksPage() {
                     {/* Lead button removed - use CRM for lead management */}
                     <button
                         onClick={(e) => { e.stopPropagation(); setIsSimpleModalOpen(true); }}
-                        className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
+                        className="hidden lg:flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Việc mới</span>
@@ -1492,7 +1492,7 @@ export default function TelesalesTasksPage() {
                         )}
                     </div>
 
-                    <div className="bg-white border p-1 rounded-lg flex">
+                    <div className="hidden lg:flex bg-white border p-1 rounded-lg">
                         <button
                             onClick={(e) => { e.stopPropagation(); setViewMode("kanban"); }}
                             className={`p-1.5 rounded ${viewMode === 'kanban' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
@@ -1573,9 +1573,9 @@ export default function TelesalesTasksPage() {
             </div>
 
             {/* Content */}
-            {viewMode === "kanban" ? (
-                <div className="flex-1 overflow-x-auto pb-4">
-                    <div className="flex gap-4 min-w-[100%] h-full items-start">
+            {/* Kanban View (Desktop Only) */}
+            <div className={`hidden lg:block flex-1 overflow-x-auto pb-4 ${viewMode !== 'kanban' ? 'lg:hidden' : ''}`}>
+                <div className="flex gap-4 min-w-[100%] h-full items-start">
                         {visibleColumns.length > 0 && visibleColumns.map(col => {
                             // FIX: Use columnTasks directly because unified columns rely on RPC 'due_date' logic, NOT the string 'status' field!
                             // We intersect with `filteredTasks` to apply search and priority filters correctly.
@@ -1726,12 +1726,11 @@ export default function TelesalesTasksPage() {
                         </div>
                     </div>
                 </div>
-            ) : (
-                <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                    {/* Simple List View implementation if needed, or just placeholder for now since Kanban is main */}
-                    <p className="text-slate-500">Chế độ xem danh sách chưa được cập nhật đầy đủ (Sử dụng Kanban để có trải nghiệm tốt nhất).</p>
-                    {/* Iterate tasks if we want list view */}
-                    <div className="mt-4 space-y-2">
+            </div>
+
+            {/* List View (Always on mobile, Toggleable on Desktop) */}
+            <div className={`flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 ${viewMode === 'kanban' ? 'block lg:hidden' : ''}`}>
+                <div className="mt-4 space-y-2">
                         {filteredTasks.map(task => (
                             <div key={task.id} className="flex justify-between p-3 border rounded hover:bg-slate-50 cursor-pointer" onClick={() => handleEditTask(task)}>
                                 <div>
@@ -1746,8 +1745,6 @@ export default function TelesalesTasksPage() {
                         ))}
                     </div>
                 </div>
-            )}
-
             {/* Create/Edit Task Modal */}
             <CreateTaskModal
                 isOpen={isCreateModalOpen}
@@ -1772,6 +1769,14 @@ export default function TelesalesTasksPage() {
                     <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full"></div>
                 </div>
             )}
+
+            {/* Mobile FAB */}
+            <button
+                onClick={() => { setEditingTask(null); setIsSimpleModalOpen(true); }}
+                className="lg:hidden fixed bottom-[150px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 hover:shadow-xl active:scale-95 transition-all duration-200"
+            >
+                <Plus className="w-6 h-6" />
+            </button>
 
             {/* NEW Modals */}
             <TaskSimpleModal
