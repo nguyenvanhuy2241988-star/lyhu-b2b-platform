@@ -7,6 +7,7 @@ import { provinceDemographics } from "@/lib/demographics";
 import { fetchUsers, User } from "@/lib/usersStore";
 import { createClient } from "@/lib/supabaseClient";
 import { MapPin, Target, CheckCircle2, AlertCircle, Edit2, Save, X, TrendingUp, Loader2, Users, Maximize, Map, DollarSign, Briefcase } from "lucide-react";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 export default function NppMapPage() {
     const [nppData, setNppData] = useState<Record<string, ProvinceData>>({});
@@ -229,20 +230,30 @@ export default function NppMapPage() {
             </div>
 
             {/* Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6">
                 
                 {/* Map Area */}
                 <div 
-                    className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6 min-h-[600px] flex items-center justify-center bg-slate-50/50 relative"
+                    className="order-2 lg:order-1 lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-2 md:p-6 h-[60vh] md:h-auto md:min-h-[600px] flex items-center justify-center bg-slate-50/50 relative overflow-hidden"
                     style={{ contain: 'layout style paint' }}
                 >
-                    <div className="w-full max-w-[600px]" style={{ willChange: 'transform' }}>
-                        {MemoizedMap}
-                    </div>
+                    <TransformWrapper
+                        initialScale={1}
+                        minScale={0.5}
+                        maxScale={4}
+                        centerOnInit={true}
+                        wheel={{ step: 0.1 }}
+                    >
+                        <TransformComponent wrapperStyle={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                            <div className="w-full max-w-[600px] flex items-center justify-center h-full" style={{ willChange: 'transform' }}>
+                                {MemoizedMap}
+                            </div>
+                        </TransformComponent>
+                    </TransformWrapper>
                 </div>
 
                 {/* Sidebar Info */}
-                <div className="space-y-6">
+                <div className="order-1 lg:order-2 space-y-6">
                     {/* Summary Card - Only show if no province is explicitly selected */}
                     {!selectedProvince && (
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
@@ -353,8 +364,24 @@ export default function NppMapPage() {
                         </div>
                     )}
 
+                    {/* Mobile Backdrop */}
+                    {selectedProvince && (
+                        <div 
+                            className="fixed inset-0 bg-slate-900/20 z-[50] lg:hidden"
+                            onClick={() => { setSelectedProvince(null); setEditMode(false); setEditData(null); }}
+                        />
+                    )}
+
                     {/* Details Card */}
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-all duration-300 min-h-[320px]">
+                    <div className={`
+                        bg-white shadow-2xl lg:shadow-sm border-t lg:border border-slate-200 transition-transform duration-300
+                        fixed lg:relative inset-x-0 bottom-0 z-[60] lg:z-auto rounded-t-3xl lg:rounded-xl p-5
+                        max-h-[85vh] lg:max-h-none overflow-y-auto lg:min-h-[320px]
+                        ${selectedProvince ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'}
+                    `}>
+                        {/* Drag Handle (Mobile only) */}
+                        <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 lg:hidden" />
+                        
                         {activeProvince && currentData ? (
                             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                                 <div className="flex justify-between items-center mb-4">
@@ -550,7 +577,7 @@ export default function NppMapPage() {
             {/* Tooltip Overlay */}
             <div 
                 ref={tooltipRef}
-                className={`fixed z-50 pointer-events-none bg-white rounded-xl shadow-2xl border border-slate-200 w-80 overflow-hidden transition-opacity duration-200 ${
+                className={`hidden lg:block fixed z-50 pointer-events-none bg-white rounded-xl shadow-2xl border border-slate-200 w-80 overflow-hidden transition-opacity duration-200 ${
                     hoveredProvince && !selectedProvince ? 'opacity-100' : 'opacity-0'
                 }`}
                 style={{ left: -999, top: -999, pointerEvents: 'none' }}
