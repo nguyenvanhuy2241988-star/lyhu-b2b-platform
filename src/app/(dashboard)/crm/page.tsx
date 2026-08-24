@@ -1376,7 +1376,7 @@ export default function CRMPage() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => openCreateModal()}
-                        className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
+                        className="hidden lg:flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Tạo cơ hội</span>
@@ -1433,7 +1433,7 @@ export default function CRMPage() {
                         </div>
                     )}
 
-                    <div className="bg-white border p-1 rounded-lg flex">
+                    <div className="hidden lg:flex bg-white border p-1 rounded-lg">
                         <button onClick={() => setViewMode("kanban")} className={`p-1.5 rounded ${viewMode === 'kanban' ? 'bg-slate-100' : ''}`}>
                             <LayoutDashboard className="w-4 h-4" />
                         </button>
@@ -1481,7 +1481,7 @@ export default function CRMPage() {
                     />
                 </div>
 
-                <div className="flex gap-3 flex-wrap">
+                <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value as any)} className="px-3 py-2 border rounded-lg text-sm bg-primary-50 text-primary-700 font-medium border-primary-100">
                         <option value="all">Tất cả giai đoạn</option>
                         {Object.entries(DEAL_STAGE_LABELS).map(([value, label]) => (
@@ -1538,7 +1538,7 @@ export default function CRMPage() {
             {/* Kanban View */}
             {
                 viewMode === "kanban" && (
-                    <div className="flex-1 overflow-x-auto pb-4">
+                    <div className="hidden lg:block flex-1 overflow-x-auto pb-4">
                         <div className="flex gap-4 min-w-[100%] h-full items-start">
                             {visibleColumns.map(col => {
                                 const columnDeals = filteredDeals.filter(d => d.stage === col.id);
@@ -1695,11 +1695,9 @@ export default function CRMPage() {
                 )
             }
 
-            {/* List View */}
-            {
-                viewMode === "list" && (
-                    <div className="flex-1 bg-white rounded-xl shadow-sm border p-4">
-                        <div className="space-y-2">
+            {/* List View (Always on mobile, toggleable on desktop) */}
+            <div className={`flex-1 bg-white rounded-xl shadow-sm border p-4 ${viewMode === 'kanban' ? 'block lg:hidden' : ''}`}>
+                <div className="space-y-2">
                             {filteredDeals.map(deal => (
                                 <div key={deal.id} className="flex justify-between items-center p-3 border rounded hover:bg-slate-50 cursor-pointer" onClick={() => handleEditDeal(deal)}>
                                     <div className="flex items-center gap-3">
@@ -1719,9 +1717,6 @@ export default function CRMPage() {
                             ))}
                         </div>
                     </div>
-                )
-            }
-
             {/* Pagination Controls */}
             {
                 !isDataLoading && totalCount > pageSize && (
@@ -1750,6 +1745,14 @@ export default function CRMPage() {
                     </div>
                 )
             }
+
+            {/* Mobile FAB */}
+            <button
+                onClick={() => openCreateModal()}
+                className="lg:hidden fixed bottom-[80px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 hover:shadow-xl active:scale-95 transition-all duration-200"
+            >
+                <Plus className="w-6 h-6" />
+            </button>
 
             {/* Create/Edit Modal */}
             <CreateDealModal
