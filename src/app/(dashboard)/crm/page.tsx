@@ -1749,7 +1749,7 @@ export default function CRMPage() {
             {/* Mobile FAB */}
             <button
                 onClick={() => openCreateModal()}
-                className="lg:hidden fixed bottom-[80px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 hover:shadow-xl active:scale-95 transition-all duration-200"
+                className="lg:hidden fixed bottom-[150px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 hover:shadow-xl active:scale-95 transition-all duration-200"
             >
                 <Plus className="w-6 h-6" />
             </button>
