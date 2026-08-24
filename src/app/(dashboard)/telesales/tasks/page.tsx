@@ -1726,7 +1726,7 @@ export default function TelesalesTasksPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+
 
             {/* List View (Always on mobile, Toggleable on Desktop) */}
             <div className={`flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 ${viewMode === 'kanban' ? 'block lg:hidden' : ''}`}>
