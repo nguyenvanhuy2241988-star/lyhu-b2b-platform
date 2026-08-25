@@ -7,10 +7,11 @@ import {
     Phone, Mail, MapPin, Loader2, Building2,
     Search, Filter, Pencil, Trash2, X, Save,
     UserCircle, AlertCircle, Users, UserPlus, PhoneCall, ShoppingCart, Snowflake, TrendingUp, Crown,
-    MapPinned, UserCog, Tag, Calendar, ChevronLeft, ChevronRight, Globe, Download
+    MapPinned, UserCog, Tag, Calendar, ChevronLeft, ChevronRight, Globe, Download, Plus
 } from "lucide-react";
 import MarketOverview from "@/components/shared/MarketOverview";
 import { useAuth } from "@/components/auth/AuthProvider";
+import AddCustomerModal from "@/components/telesales/AddCustomerModal";
 import {
     fetchCustomerDashboardStats, fetchPipelineStats, fetchTopCustomers,
     fetchProvinceDistribution, fetchOwnerDistribution, fetchTypeDistribution,
@@ -59,9 +60,19 @@ export default function AdminCustomersPage() {
     const [wards, setWards] = useState<LocationOption[]>([]);
     const [loadingWards, setLoadingWards] = useState(false);
 
-    // Edit state
+    // Edit & Add state
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [editForm, setEditForm] = useState<Partial<Customer>>({});
+    const [showAddForm, setShowAddForm] = useState(false);
+
+    const handleCloseModal = () => {
+        setShowAddForm(false);
+        setEditingCustomer(null);
+    };
+
+    const handleModalSuccess = () => {
+        loadData();
+    };
 
     // Dashboard state
     const [dashStats, setDashStats] = useState<CustomerDashboardStats | null>(null);
@@ -971,6 +982,22 @@ export default function AdminCustomersPage() {
                     </div>
                 </div>
             )}
+
+            {/* Mobile FAB */}
+            <button
+                onClick={() => { setEditingCustomer(null); setShowAddForm(true); }}
+                className="lg:hidden fixed bottom-[150px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 hover:shadow-xl active:scale-95 transition-all duration-200"
+            >
+                <Plus className="w-6 h-6" />
+            </button>
+
+            {/* Add Customer Modal */}
+            <AddCustomerModal
+                isOpen={showAddForm}
+                onClose={handleCloseModal}
+                onSuccess={handleModalSuccess}
+                initialData={editingCustomer}
+            />
         </div>
     );
 }
