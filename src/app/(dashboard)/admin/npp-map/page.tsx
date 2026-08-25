@@ -6,7 +6,7 @@ import { getProvinceData, fetchNppDataFromAPI, saveNppDataToAPI, ProvinceData, d
 import { provinceDemographics } from "@/lib/demographics";
 import { fetchUsers, User } from "@/lib/usersStore";
 import { createClient } from "@/lib/supabaseClient";
-import { MapPin, Target, CheckCircle2, AlertCircle, Edit2, Save, X, TrendingUp, Loader2, Users, Maximize, Map, DollarSign, Briefcase } from "lucide-react";
+import { MapPin, Target, CheckCircle2, AlertCircle, Edit2, Save, X, TrendingUp, Loader2, Users, Maximize, Map, DollarSign, Briefcase, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 export default function NppMapPage() {
@@ -243,13 +243,43 @@ export default function NppMapPage() {
                         maxScale={4}
                         centerOnInit={true}
                         wheel={{ step: 0.1 }}
-                        // Adding standard CSS to stretch the wrapper
+                        doubleClick={{ step: 0.5 }}
                     >
-                        <TransformComponent wrapperStyle={{ width: "100%", height: "100%", minHeight: "600px" }}>
-                            <div className="w-full max-w-[450px] mx-auto h-[600px] flex items-center justify-center" style={{ willChange: 'transform' }}>
-                                {MemoizedMap}
-                            </div>
-                        </TransformComponent>
+                        {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
+                            <>
+                                <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 bg-white/90 backdrop-blur-sm p-1.5 rounded-xl shadow-sm border border-slate-200">
+                                    <button 
+                                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-700 transition-colors"
+                                        onClick={() => zoomIn(0.2)}
+                                        title="Phóng to"
+                                    >
+                                        <ZoomIn className="w-5 h-5" />
+                                    </button>
+                                    <div className="w-full h-px bg-slate-200"></div>
+                                    <button 
+                                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-700 transition-colors"
+                                        onClick={() => zoomOut(0.2)}
+                                        title="Thu nhỏ"
+                                    >
+                                        <ZoomOut className="w-5 h-5" />
+                                    </button>
+                                    <div className="w-full h-px bg-slate-200"></div>
+                                    <button 
+                                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-700 transition-colors"
+                                        onClick={() => resetTransform()}
+                                        title="Đặt lại góc nhìn"
+                                    >
+                                        <RotateCcw className="w-5 h-5" />
+                                    </button>
+                                </div>
+                                
+                                <TransformComponent wrapperStyle={{ width: "100%", height: "100%", minHeight: "600px" }}>
+                                    <div className="w-full max-w-[450px] mx-auto h-[600px] flex items-center justify-center">
+                                        {MemoizedMap}
+                                    </div>
+                                </TransformComponent>
+                            </>
+                        )}
                     </TransformWrapper>
                 </div>
 
