@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Filter, Eye, FileText, MessageCircle, Pencil, Trash2, Clock, Package, CheckCircle, XCircle, Truck, RotateCcw, Scale, UserCheck, StickyNote } from "lucide-react";
+import { Search, Filter, Eye, FileText, MessageCircle, Pencil, Trash2, Clock, Package, CheckCircle, XCircle, Truck, RotateCcw, Scale, UserCheck, StickyNote, Plus } from "lucide-react";
 import { fetchOrders, SHIPPING_CARRIERS } from "@/lib/ordersStore";
 import { supabase } from "@/lib/supabaseClient"
 import type { Order } from "@/lib/ordersStore";
@@ -176,6 +176,13 @@ export default function TelesalesOrdersPage() {
                 <h1 className="text-2xl font-bold text-slate-900">Đơn hàng của tôi</h1>
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <button
+                        onClick={() => router.push('/telesales/create-order')}
+                        className="hidden lg:flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+                    >
+                        <Plus className="w-4 h-4" />
+                        <span>Tạo đơn hàng</span>
+                    </button>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
@@ -495,10 +502,10 @@ export default function TelesalesOrdersPage() {
             {/* Mobile Floating Action Button (FAB) for Create Order */}
             <button
                 onClick={() => router.push('/telesales/create-order')}
-                className="fixed lg:hidden bottom-24 right-4 md:right-8 w-14 h-14 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-lg shadow-primary-600/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-40"
+                className="fixed lg:hidden bottom-[150px] right-4 z-[45] w-14 h-14 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-lg shadow-primary-600/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
                 aria-label="Tạo đơn hàng mới"
             >
-                <Pencil className="w-6 h-6" />
+                <Plus className="w-6 h-6" />
             </button>
         </div>
     );
