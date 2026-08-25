@@ -239,10 +239,10 @@ export default function NppMapPage() {
                 >
                     <TransformWrapper
                         initialScale={1}
-                        minScale={0.5}
+                        minScale={1}
                         maxScale={4}
                         centerOnInit={true}
-                        wheel={{ step: 0.1 }}
+                        wheel={{ disabled: true }}
                         doubleClick={{ step: 0.5 }}
                     >
                         {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
