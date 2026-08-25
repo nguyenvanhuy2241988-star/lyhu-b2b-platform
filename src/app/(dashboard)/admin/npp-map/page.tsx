@@ -234,7 +234,7 @@ export default function NppMapPage() {
                 
                 {/* Map Area */}
                 <div 
-                    className="order-2 lg:order-1 lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-2 md:p-6 h-[60vh] md:h-auto md:min-h-[600px] flex items-center justify-center bg-slate-50/50 relative overflow-hidden"
+                    className="order-2 lg:order-1 lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-2 md:p-6 h-[60vh] md:h-auto md:min-h-[600px] w-full bg-slate-50/50 relative overflow-hidden"
                     style={{ contain: 'layout style paint' }}
                 >
                     <TransformWrapper
@@ -243,9 +243,10 @@ export default function NppMapPage() {
                         maxScale={4}
                         centerOnInit={true}
                         wheel={{ step: 0.1 }}
+                        // Adding standard CSS to stretch the wrapper
                     >
-                        <TransformComponent wrapperStyle={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                            <div className="w-full max-w-[600px] flex items-center justify-center h-full" style={{ willChange: 'transform' }}>
+                        <TransformComponent wrapperStyle={{ width: "100%", height: "100%", minHeight: "600px" }}>
+                            <div className="w-full max-w-[450px] mx-auto h-[600px] flex items-center justify-center" style={{ willChange: 'transform' }}>
                                 {MemoizedMap}
                             </div>
                         </TransformComponent>
