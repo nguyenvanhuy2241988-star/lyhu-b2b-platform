@@ -76,7 +76,7 @@ export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
 
 // Updated TaskStatus as per latest request (omitting 'later' if that was intent, but safely keeping it if legacy data exists? User prompt was specific: "inbox" | "today" | "tomorrow" | "this_week" | "done")
 export type TaskStatus = 'inbox' | 'today' | 'tomorrow' | 'this_week' | 'done';
-export type TaskType = 'task'; // Phase 3: Removed 'lead' - use Leads Queue instead
+export type TaskType = 'task' | 'deal';
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
     inbox: 'Hộp thư đến',
@@ -276,6 +276,25 @@ export async function fetchUnifiedTasks(input: {
             return [];
         }
 
+        // Enrich deals with notes directly from crm_deals (since get_unified_tasks RPC returns NULL for deal notes)
+        const dealIds = (data || []).filter((t: any) => t.source_type === 'deal').map((t: any) => t.id);
+        const dealNotesMap: Record<string, string> = {};
+        if (dealIds.length > 0) {
+            try {
+                const { data: dealsData } = await supabase
+                    .from('crm_deals')
+                    .select('id, note')
+                    .in('id', dealIds);
+                if (dealsData) {
+                    dealsData.forEach((d: any) => {
+                        if (d.note) dealNotesMap[d.id] = d.note;
+                    });
+                }
+            } catch (err) {
+                console.warn('[fetchUnifiedTasks] Could not enrich deal notes:', err);
+            }
+        }
+
         // Map RPC result to TelesalesTask interface
         return (data || []).map((t: any) => ({
             id: t.id,
@@ -283,7 +302,7 @@ export async function fetchUnifiedTasks(input: {
             title: t.title,
             customer_name: t.customer_name,
             phone: t.phone,
-            note: t.note, // FIXED: Add note field to mapping
+            note: t.source_type === 'deal' ? (dealNotesMap[t.id] ?? t.note) : t.note, // FIXED: Enrich deal note
             due_date: t.due_date,
             status: t.status === 'won' ? 'done' : (t.status === 'lost' ? 'done' : (t.status || 'inbox')), // Map deal status to task status roughly
             priority: t.priority || 'normal',
@@ -390,9 +409,53 @@ export async function createTaskSupabase(input: {
     }
 }
 
+export async function updateDealSupabase(dealId: string, patch: Partial<TelesalesTask>, token?: string): Promise<boolean> {
+    const headers = await getAuthHeaders(token);
+    const body: Record<string, any> = {
+        updated_at: new Date().toISOString()
+    };
+    if (patch.title !== undefined) body.title = patch.title;
+    if (patch.note !== undefined) body.note = patch.note;
+    if (patch.priority !== undefined) body.priority = patch.priority;
+    if (patch.due_date !== undefined) body.next_action_at = patch.due_date;
+    if (patch.status !== undefined) {
+        body.status = patch.status === 'done' ? 'won' : (patch.status === 'inbox' ? 'open' : patch.status);
+    }
+
+    console.log('[updateDealSupabase] Updating crm_deals Payload:', JSON.stringify(body));
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/crm_deals?id=eq.${dealId}`, {
+        method: 'PATCH',
+        headers: { ...headers, 'Prefer': 'return=representation' },
+        body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+        let errMsg = `HTTP ${res.status}`;
+        try {
+            const errBody = await res.text();
+            errMsg = errBody;
+            const parsed = JSON.parse(errBody);
+            errMsg = parsed?.message || parsed?.error || errBody;
+        } catch { /* response wasn't JSON */ }
+        console.error('[updateDealSupabase] error:', errMsg);
+        throw new Error(`Không thể cập nhật cơ hội CRM: ${errMsg}`);
+    }
+
+    const updatedRows = await res.json();
+    console.log('[updateDealSupabase] Result rows:', updatedRows?.length);
+    invalidateTasksCache();
+    return Array.isArray(updatedRows) && updatedRows.length > 0;
+}
+
 export async function updateTaskSupabase(taskId: string, patch: Partial<TelesalesTask>, token?: string) {
     const userId = await getUserIdSafe();
     if (!userId) return { ok: false, error: 'NOT_AUTHENTICATED' as const };
+
+    // If explicitly marked as a deal, update crm_deals directly
+    if (patch.type === ('deal' as any)) {
+        return updateDealSupabase(taskId, patch, token);
+    }
 
     const headers = await getAuthHeaders(token);
     const body = {
@@ -419,7 +482,6 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
 
     console.log('[Tasks Store] Update Payload:', JSON.stringify(body)); // DEBUG SIZE
 
-
     try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${taskId}`, {
             method: 'PATCH',
@@ -437,6 +499,20 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
             } catch { /* response wasn't JSON */ }
             console.error("updateTaskSupabase error:", errMsg);
             throw new Error(`Không thể cập nhật task: ${errMsg}`);
+        }
+
+        const updatedRows = await res.json();
+        console.log('[updateTaskSupabase] Updated rows in telesales_tasks:', updatedRows?.length);
+
+        // If 0 rows updated in telesales_tasks, check if this is a CRM deal!
+        if (!updatedRows || updatedRows.length === 0) {
+            console.log('[updateTaskSupabase] 0 rows in telesales_tasks, trying crm_deals for id:', taskId);
+            const dealSuccess = await updateDealSupabase(taskId, patch, token);
+            if (dealSuccess) {
+                invalidateTasksCache();
+                return true;
+            }
+            console.warn('[updateTaskSupabase] 0 rows updated in both telesales_tasks and crm_deals.');
         }
 
         invalidateTasksCache();
@@ -459,13 +535,22 @@ export async function deleteTaskSupabase(taskId: string, token?: string) {
         const headers = await getAuthHeaders(token);
         const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${taskId}`, {
             method: 'DELETE',
-            headers
+            headers: { ...headers, 'Prefer': 'return=representation' }
         });
 
         if (!res.ok) {
             const err = await res.json();
             logSupabaseError('deleteTaskSupabase', err);
             return { ok: false, error: err.message };
+        }
+
+        const deleted = await res.json();
+        if (!deleted || deleted.length === 0) {
+            // Might be a deal in crm_deals
+            await fetch(`${SUPABASE_URL}/rest/v1/crm_deals?id=eq.${taskId}`, {
+                method: 'DELETE',
+                headers
+            });
         }
 
         invalidateTasksCache();

@@ -506,11 +506,13 @@ export default function TelesalesTasksPage() {
 
         const success = await updateTaskSupabase(taskId, { status: newStatus as TaskStatus });
 
-        // Also move placement to done/inbox column
-        const targetColType = isDone ? 'system_inbox' : 'system_done';
-        const targetCol = dbColumns.find(c => c.column_type === targetColType);
-        if (targetCol) {
-            await moveTaskToColumn(taskId, targetCol.id, session?.access_token);
+        // Also move placement to done/inbox column for manual tasks
+        if (task.type !== 'deal') {
+            const targetColType = isDone ? 'system_inbox' : 'system_done';
+            const targetCol = dbColumns.find(c => c.column_type === targetColType);
+            if (targetCol) {
+                await moveTaskToColumn(taskId, targetCol.id, session?.access_token);
+            }
         }
 
         if (!success) {
@@ -1058,13 +1060,15 @@ export default function TelesalesTasksPage() {
         try {
             if (taskData.id) {
                 await updateTaskSupabase(taskData.id, taskData, session?.access_token);
-                // Also create/update placements for all assignees (handles newly tagged users)
-                const allUserIds = new Set<string>();
-                if (user?.id) allUserIds.add(user.id);
-                if (taskData.assignee_ids) taskData.assignee_ids.forEach((id: string) => allUserIds.add(id));
-                if (taskData.assigned_to) allUserIds.add(taskData.assigned_to);
-                if (taskData.leader_id) allUserIds.add(taskData.leader_id);
-                await createTaskPlacements(taskData.id, Array.from(allUserIds), session?.access_token);
+                // Placements only belong to manual tasks in telesales_tasks. Deals do not use task_column_placements.
+                if (taskData.type !== 'deal') {
+                    const allUserIds = new Set<string>();
+                    if (user?.id) allUserIds.add(user.id);
+                    if (taskData.assignee_ids) taskData.assignee_ids.forEach((id: string) => allUserIds.add(id));
+                    if (taskData.assigned_to) allUserIds.add(taskData.assigned_to);
+                    if (taskData.leader_id) allUserIds.add(taskData.leader_id);
+                    await createTaskPlacements(taskData.id, Array.from(allUserIds), session?.access_token);
+                }
             } else {
                 // Create mode - then create placements for all assignees
                 const created = await createTaskSupabase(taskData, session?.access_token);
@@ -1197,14 +1201,18 @@ export default function TelesalesTasksPage() {
                 else if (targetColType === 'date_overdue') newDueDate = draggedTask.due_date || null; // Keep existing
 
                 await updateTaskSupabase(draggedTaskIdData, { due_date: newDueDate } as any);
-                // Also move placement to inbox (inbox filters out tasks with due_date, so no duplication)
-                const inboxCol = dbColumns.find(c => c.column_type === 'system_inbox');
-                if (inboxCol) {
-                    await moveTaskToColumn(draggedTaskIdData, inboxCol.id, session?.access_token);
+                // Also move placement to inbox for manual tasks (inbox filters out tasks with due_date, so no duplication)
+                if (draggedTask?.type !== 'deal') {
+                    const inboxCol = dbColumns.find(c => c.column_type === 'system_inbox');
+                    if (inboxCol) {
+                        await moveTaskToColumn(draggedTaskIdData, inboxCol.id, session?.access_token);
+                    }
                 }
             } else if (isPlacementColumn(targetColType)) {
-                // Placement column: move task placement
-                await moveTaskToColumn(draggedTaskIdData, targetColId, session?.access_token);
+                // Placement column: move task placement for manual tasks
+                if (draggedTask?.type !== 'deal') {
+                    await moveTaskToColumn(draggedTaskIdData, targetColId, session?.access_token);
+                }
                 // If moving to 'done' column, also update task status
                 if (targetColType === 'system_done') {
                     await updateTaskSupabase(draggedTaskIdData, { status: 'done' as TaskStatus });

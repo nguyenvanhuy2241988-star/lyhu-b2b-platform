@@ -197,7 +197,7 @@ export const CreateTaskModal = ({
             note: formData.description,
             assignee_ids: formData.assigneeIds,
             leader_id: formData.leaderId || null,
-            type: taskType,
+            type: initialData?.type || taskType,
             attachments: attachments // Pass attachments
         });
         onClose();
@@ -507,6 +507,7 @@ export const CreateTaskModal = ({
                                             status: 'done' as TaskStatus,  // Set to done
                                             assignee_ids: formData.assigneeIds,
                                             leader_id: formData.leaderId || null,
+                                            type: initialData?.type || taskType,
                                             attachments: attachments
                                         });
                                         onClose();
