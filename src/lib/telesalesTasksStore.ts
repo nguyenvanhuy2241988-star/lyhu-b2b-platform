@@ -428,16 +428,22 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
         });
 
         if (!res.ok) {
-            const err = await res.json();
-            console.error("updateTaskSupabase error:", err);
-            return false;
+            let errMsg = `HTTP ${res.status}`;
+            try {
+                const errBody = await res.text();
+                errMsg = errBody;
+                const parsed = JSON.parse(errBody);
+                errMsg = parsed?.message || parsed?.error || errBody;
+            } catch { /* response wasn't JSON */ }
+            console.error("updateTaskSupabase error:", errMsg);
+            throw new Error(`Không thể cập nhật task: ${errMsg}`);
         }
 
         invalidateTasksCache();
         return true;
     } catch (e) {
         console.error("updateTaskSupabase Exception:", e);
-        return false;
+        throw e;
     }
 }
 
@@ -848,15 +854,29 @@ export async function moveTaskToColumn(taskId: string, columnId: string, token?:
 /** Create placements for all assignees (puts in their inbox) via RPC */
 export async function createTaskPlacements(taskId: string, userIds: string[], token?: string): Promise<boolean> {
     try {
-        if (!userIds || userIds.length === 0) return true;
+        // Filter out any invalid user IDs (empty strings, null, undefined)
+        const validUserIds = userIds.filter(id => id && typeof id === 'string' && id.trim().length > 0);
+        if (!validUserIds || validUserIds.length === 0) return true;
         const headers = (await getAuthHeaders(token)) as Record<string, string>;
         headers['Content-Type'] = 'application/json';
         const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_task_placements`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ p_task_id: taskId, p_user_ids: userIds })
+            body: JSON.stringify({ p_task_id: taskId, p_user_ids: validUserIds })
         });
-        return res.ok;
+        if (!res.ok) {
+            let errMsg = `HTTP ${res.status}`;
+            try {
+                const errBody = await res.text();
+                errMsg = errBody;
+                const parsed = JSON.parse(errBody);
+                errMsg = parsed?.message || parsed?.hint || parsed?.details || errBody;
+            } catch { /* response wasn't JSON */ }
+            console.error('[createTaskPlacements] Error:', errMsg);
+            // Don't throw here - placement failure shouldn't block task save
+            return false;
+        }
+        return true;
     } catch (e) {
         logSupabaseError('createTaskPlacements', e);
         return false;
