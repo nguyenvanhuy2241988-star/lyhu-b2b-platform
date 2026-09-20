@@ -480,7 +480,270 @@ ${addressBlock}
 `
     };
 
-    const postsToUpsert = [post1, post2, post3, post4];
+    // -------------------------------------------------------------------------
+    // BÀI 5: BÀI TRỤ CỘT (PILLAR PAGE - ĐƯA TỪ KHÓA BỘT PHÔ MAI LÊN TOP 1 GOOGLE)
+    // -------------------------------------------------------------------------
+    const post5 = {
+        title: 'Bột Phô Mai: Toàn Tập Tiêu Chuẩn Chọn Loại Ngon, Cách Dùng & Bảng Giá Sỉ Lẻ Mới Nhất 2026',
+        slug: 'bot-pho-mai-toan-tap-tieu-chuan-cach-dung-bang-gia',
+        thumbnail_url: '/boyo_master_poster_v3.jpg',
+        category_id: '10db3b9f-0fc3-430c-a435-9c76a5e00c36', // Ẩm Thực & Nấu Ăn
+        status: 'published',
+        ai_summary: 'Cẩm nang toàn tập về bột phô mai: nguồn gốc, 4 tiêu chí chọn bột phô mai ngon bám dính 360 độ, gợi ý 6 món ăn vặt hái ra tiền và bảng báo giá sỉ lẻ mới nhất 2026 từ LYHU & Shopee.',
+        meta_title: 'Bột Phô Mai: Tiêu Chuẩn Chọn Loại Ngon, Cách Dùng & Báo Giá 2026 | LYHU',
+        meta_description: 'Cẩm nang toàn tập về bột phô mai: nguồn gốc, 4 tiêu chí chọn bột ngon bám dính 360 độ, gợi ý 6 món ăn vặt hái ra tiền và bảng giá sỉ lẻ mới nhất từ LYHU & Shopee!',
+        keywords: 'bột phô mai, bot pho mai, bột phô mai truyền thống, bột phô mai lắc khoai, bột phô mai boyo, mua bột phô mai, bột phô mai giá sỉ, bột phô mai 1kg, bột phô mai gói nhỏ, lyhu, shopee boyo',
+        content: `
+<p class="lead text-lg font-medium text-gray-700 leading-relaxed mb-6">
+    Từ những xe khoai tây lắc giòn rụm trước cổng trường học, những xô bắp rang bơ thơm phức tại các rạp chiếu phim CGV, cho đến những bữa ăn vặt cuối tuần tại gian bếp gia đình – <strong>bột phô mai</strong> đã trở thành "linh hồn" tạo nên sức hút khó cưỡng cho vô vàn món ăn khoái khẩu. Thế nhưng, <em>bột phô mai là gì? Tiêu chí nào phân biệt bột phô mai cao cấp chuẩn vị với các loại bột pha tạp trôi nổi? Nên mua bột phô mai loại nào vừa ngon vừa tiết kiệm?</em> Bài viết này của <strong>LYHU</strong> sẽ cung cấp cho bạn cái nhìn toàn diện từ A - Z!
+</p>
+
+<div class="my-8 text-center">
+    <img src="/boyo_master_poster_v3.jpg" alt="Bột phô mai BOYO cao cấp bám dính 360 độ quy cách 65g và 1kg" class="rounded-2xl shadow-xl mx-auto w-full max-w-2xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Dòng sản phẩm Bột phô mai BOYO chính hãng do LYHU phân phối – Đầy đủ quy cách 65g cho gia đình và 1kg cho nhà hàng, quán ăn vặt.</p>
+</div>
+
+<h2>1. Bột Phô Mai Là Gì? Vì Sao Trở Thành "Cơn Sốt" Ẩm Thực Toàn Cầu?</h2>
+<p>
+    <strong>Bột phô mai (Cheese Seasoning Powder)</strong> là một chế phẩm gia vị thực phẩm cao cấp được sản xuất từ <strong>phô mai tự nhiên</strong> (thường là dòng Cheddar nguyên chất) kết hợp cùng sữa tươi, bơ và các gia vị điều vị tự nhiên thông qua <strong>công nghệ sấy phun ly tâm hiện đại (Spray Drying)</strong>.
+</p>
+<p>
+    Khác với phô mai khối hay phô mai sợi tươi (cần bảo quản lạnh nghiêm ngặt và phải nấu chảy ở nhiệt độ cao), bột phô mai sở hữu những ưu điểm vượt trội:
+</p>
+<ul>
+    <li><strong>Tiện dụng tuyệt đối:</strong> Dạng bột tơi mịn, rắc trực tiếp lên món ăn chín còn nóng mà không cần qua bất kỳ công đoạn chế biến phức tạp nào.</li>
+    <li><strong>Bảo quản dễ dàng:</strong> Có thể lưu trữ ở nhiệt độ phòng trong túi zip kín tới 12 tháng mà không sợ hỏng mốc.</li>
+    <li><strong>Vị giác bùng nổ:</strong> Hương thơm phô mai cô đặc kết hợp cùng vị ngọt mặn hài hòa kích thích vị giác mạnh mẽ, khiến người ăn "càng ăn càng cuốn".</li>
+</ul>
+
+<div class="p-5 bg-amber-50 rounded-2xl border border-amber-200 my-6">
+    <h3 class="text-lg font-bold text-amber-900 mb-2">💡 Bạn có biết?</h3>
+    <p class="text-gray-700 text-sm leading-relaxed">
+        Trào lưu <em>"Rắc phô mai lên cả thế giới"</em> bắt nguồn từ các kinh đô ẩm thực đường phố như Hàn Quốc, Đài Loan và nhanh chóng tạo nên cơn sốt bùng nổ tại Việt Nam từ năm 2018 đến nay. Bột phô mai hiện diện trong hơn 70% thực đơn của các chuỗi gà rán, khoai lắc và tiệm trà sữa trên toàn quốc.
+    </p>
+</div>
+
+<h2>2. 4 Tiêu Chí "Vàng" Nhận Biết Bột Phô Mai Ngon, Chất Lượng Cao</h2>
+<p>
+    Trên thị trường hiện nay có hàng chục nhãn hiệu bột phô mai với mức giá từ vài chục nghìn đến vài trăm nghìn đồng. Để chọn được loại bột phô mai thơm ngon chuẩn vị, không gây ngấy và an toàn cho sức khỏe, bạn cần dựa trên 4 tiêu chí cốt lõi sau:
+</p>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+    <div class="p-5 bg-white rounded-2xl border-2 border-amber-300 shadow-sm">
+        <div class="text-2xl mb-2">🧀</div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">1. Khả Năng Bám Dính 360°</h3>
+        <p class="text-sm text-gray-600 leading-relaxed">
+            Hạt bột phải tơi mịn, xốp nhẹ và có độ bám dính tự nhiên khi tiếp xúc với món ăn còn ấm nóng. Bột chất lượng kém thường bị bột độn quá nhiều, khi lắc sẽ rơi tuột hết xuống đáy hộp, gây lãng phí và món ăn nhạt nhẽo.
+        </p>
+    </div>
+    <div class="p-5 bg-white rounded-2xl border-2 border-emerald-300 shadow-sm">
+        <div class="text-2xl mb-2">👅</div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">2. Vị Béo Ngọt Mặn Cân Bằng</h3>
+        <p class="text-sm text-gray-600 leading-relaxed">
+            Bột phô mai chuẩn phải có hậu vị béo ngậy đặc trưng của sữa và phô mai, kèm vị ngọt dịu và mặn nhẹ thanh thoát. Tránh các loại bột giá rẻ bị pha nhiều muối (ăn rất chát, khé cổ) hoặc pha nhiều đường hóa học gây gắt họng.
+        </p>
+    </div>
+    <div class="p-5 bg-white rounded-2xl border-2 border-orange-300 shadow-sm">
+        <div class="text-2xl mb-2">✨</div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">3. Màu Sắc Vàng Cam Tự Nhiên</h3>
+        <p class="text-sm text-gray-600 leading-relaxed">
+            Màu vàng cam óng ả đặc trưng của phô mai Cheddar. Khi áo đều quanh cọng khoai hay miếng gà rán sẽ tạo nên bề mặt bóng bẩy, bắt mắt tự nhiên mà không để lại vệt phẩm màu đỏ gắt trên tay người ăn.
+        </p>
+    </div>
+    <div class="p-5 bg-white rounded-2xl border-2 border-teal-300 shadow-sm">
+        <div class="text-2xl mb-2">📦</div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">4. Đóng Gói Chống Ẩm Thông Minh</h3>
+        <p class="text-sm text-gray-600 leading-relaxed">
+            Bột phô mai rất háo nước. Do đó bao bì phải là màng nhôm tráng bạc chuyên dụng hoặc túi zip 3 lớp kín khí. Với gia đình, nên ưu tiên gói nhỏ (65g) để dùng 3-4 lần là hết, tránh mua gói quá lớn dùng dở bị vón cục.
+        </p>
+    </div>
+</div>
+
+<h2>3. Top 6 Món Ăn Vặt "Hái Ra Tiền" Và "Gây Nghiện" Nhất Cùng Bột Phô Mai</h2>
+<p>
+    Chỉ với một gói bột phô mai trong tay, bạn có thể biến tấu hàng chục món ăn từ bếp nhà đến quán kinh doanh:
+</p>
+
+<div class="space-y-4 my-6">
+    <div class="p-4 bg-orange-50/70 rounded-xl border-l-4 border-orange-500">
+        <h3 class="font-bold text-orange-950 text-base mb-1">🍟 1. Khoai Tây Chiên Lắc Phô Mai (Best Seller quốc dân)</h3>
+        <p class="text-gray-700 text-sm">
+            Từng cọng khoai chiên vàng giòn rụm bên ngoài, bở xốp bên trong, áo đều lớp bột phô mai vàng óng béo ngậy. Món ăn kinh điển số 1 của mọi tiệm đồ ăn nhanh.
+            <br />
+            👉 <em>Xem ngay:</em> <a href="/tin-tuc/cach-lam-khoai-tay-lac-pho-mai-noi-chien-khong-dau-boyo-65g" class="text-teal-700 font-bold underline hover:text-teal-900">Cách làm khoai tây lắc phô mai bằng nồi chiên không dầu chỉ 15 phút tại nhà</a>.
+        </p>
+    </div>
+
+    <div class="p-4 bg-amber-50/70 rounded-xl border-l-4 border-amber-500">
+        <h3 class="font-bold text-amber-950 text-base mb-1">🍿 2. Bắp Rang Bơ Phô Mai Chuẩn Vị Rạp Phim CGV</h3>
+        <p class="text-gray-700 text-sm">
+            Hạt bắp nổ bung cánh bướm trắng muốt, thơm lừng bơ sữa, áo trọn lớp phô mai béo mặn đậm đà. Món ăn vặt không thể thiếu trong các buổi xem phim cuối tuần.
+            <br />
+            👉 <em>Xem ngay:</em> <a href="/tin-tuc/cach-lam-bap-rang-bo-pho-mai-chuan-vi-rap-phim-boyo-65g" class="text-teal-700 font-bold underline hover:text-teal-900">Cách làm bắp rang bơ phô mai bằng nồi thường nổ bung 100%</a>.
+        </p>
+    </div>
+
+    <div class="p-4 bg-yellow-50/70 rounded-xl border-l-4 border-yellow-500">
+        <h3 class="font-bold text-yellow-950 text-base mb-1">🍗 3. Gà Viên Chiên Giòn (Popcorn Chicken) Lắc Phô Mai</h3>
+        <p class="text-gray-700 text-sm">
+            Thịt ức gà mềm mọng cắt hạt lựu, tẩm bột chiên xù giòn tan, lắc đều cùng bột phô mai thơm nức. Món ăn yêu thích nhất của các bạn nhỏ và học sinh sinh viên.
+        </p>
+    </div>
+
+    <div class="p-4 bg-emerald-50/70 rounded-xl border-l-4 border-emerald-500">
+        <h3 class="font-bold text-emerald-950 text-base mb-1">🍠 4. Khoai Lang Lắc & Khoai Lang Kén Phô Mai</h3>
+        <p class="text-gray-700 text-sm">
+            Vị ngọt bùi tự nhiên của khoai lang kết hợp hoàn hảo cùng vị béo mặn của phô mai, tạo nên sự cân bằng hương vị độc đáo, ăn hoài không ngấy.
+        </p>
+    </div>
+
+    <div class="p-4 bg-teal-50/70 rounded-xl border-l-4 border-teal-500">
+        <h3 class="font-bold text-teal-950 text-base mb-1">🥖 5. Bánh Tráng Chiên Giòn & Nui Chiên Lắc Phô Mai</h3>
+        <p class="text-gray-700 text-sm">
+            Món ăn vặt "cứu đói" thần tốc: Nui hoặc bánh tráng cắt nhỏ chiên ngập dầu phồng xốp giòn rụm trong 30 giây, trút ra ráo dầu rồi lắc cùng phô mai BOYO, giòn tan vui miệng.
+        </p>
+    </div>
+
+    <div class="p-4 bg-indigo-50/70 rounded-xl border-l-4 border-indigo-500">
+        <h3 class="font-bold text-indigo-950 text-base mb-1">🍢 6. Bánh Gạo Chiên Lắc Phô Mai (Tteokbokki Cheese Shake)</h3>
+        <p class="text-gray-700 text-sm">
+            Thỏi bánh gạo Hàn Quốc dẻo dai bên trong, lớp vỏ ngoài chiên giòn rụm, lắc đẫm bột phô mai truyền thống tạo nên món ăn vặt đường phố chuẩn vị Seoul.
+        </p>
+    </div>
+</div>
+
+<h2>4. Bảng Báo Giá Bột Phô Mai Sỉ & Lẻ Mới Nhất 2026 (Thương Hiệu BOYO)</h2>
+<p>
+    Nhằm đáp ứng linh hoạt mọi nhu cầu từ cá nhân tự nấu nướng đến các chuỗi quán ăn vặt và nhà phân phối toàn quốc, <strong>LYHU</strong> mang đến dòng sản phẩm <strong>Bột phô mai BOYO</strong> với 2 lựa chọn quy cách tối ưu:
+</p>
+
+<div class="overflow-x-auto my-6">
+    <table class="w-full text-left border-collapse border border-gray-200 rounded-xl shadow-sm text-sm">
+        <thead>
+            <tr class="bg-amber-100 text-amber-950 font-bold">
+                <th class="p-3.5 border border-gray-200">Đặc Điểm / Tiêu Chí</th>
+                <th class="p-3.5 border border-gray-200">BOYO Gói Nhỏ 65G (Bán Lẻ)</th>
+                <th class="p-3.5 border border-gray-200">BOYO Túi Lớn 1KG (Bếp Quán / Sỉ)</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 text-gray-700">
+            <tr>
+                <td class="p-3.5 font-semibold bg-gray-50">Đối tượng phục vụ</td>
+                <td class="p-3.5">Gia đình, bạn trẻ làm món tại nhà, siêu thị mini, tạp hóa</td>
+                <td class="p-3.5">Quán ăn vặt, tiệm gà rán, xe khoai lắc, bếp fast-food</td>
+            </tr>
+            <tr>
+                <td class="p-3.5 font-semibold bg-gray-50">Quy cách đóng gói</td>
+                <td class="p-3.5">Túi zip 65g (Hộp 10 gói / Thùng 60 gói)</td>
+                <td class="p-3.5">Túi zip bạc chuyên dụng 1kg (Thùng 10 túi / 10kg)</td>
+            </tr>
+            <tr>
+                <td class="p-3.5 font-semibold bg-gray-50">Số lần phục vụ (Serving)</td>
+                <td class="p-3.5">Khoảng 3 - 4 lần ăn vặt gia đình (8-10 phần nhỏ)</td>
+                <td class="p-3.5">Lắc được <strong>140 – 160 phần</strong> khoai tây / gà viên</td>
+            </tr>
+            <tr>
+                <td class="p-3.5 font-semibold bg-gray-50">Chi phí gia vị / phần</td>
+                <td class="p-3.5">~2.000đ / lần nấu tại nhà</td>
+                <td class="p-3.5"><strong>Chỉ ~1.200đ - 1.400đ / phần lắc tại quán</strong></td>
+            </tr>
+            <tr>
+                <td class="p-3.5 font-semibold bg-gray-50">Giá bán lẻ niêm yết</td>
+                <td class="p-3.5 text-amber-700 font-bold text-base">22.000đ / gói</td>
+                <td class="p-3.5 text-emerald-700 font-bold text-base">199.000đ / túi 1kg</td>
+            </tr>
+            <tr>
+                <td class="p-3.5 font-semibold bg-gray-50">Chính sách giá sỉ B2B</td>
+                <td class="p-3.5">Chiết khấu theo thùng, hỗ trợ khay trưng bày quầy kệ</td>
+                <td class="p-3.5">Giá sỉ tận xưởng theo số lượng thùng, giao hàng toàn quốc</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="my-8 text-center">
+    <img src="/boyo_65g_poster.jpg" alt="Poster Bột phô mai BOYO 65g nhỏ gọn dễ chọn" class="rounded-2xl shadow-lg mx-auto w-full max-w-xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">BOYO 65g thiết kế hộp 10 gói thông minh mở nắp thành khay quầy kệ, kích thích mua sắm bốc thêm tại quầy thu ngân.</p>
+</div>
+
+<h2>5. Giải Đáp Thắc Mắc Thường Gặp (FAQ Về Bột Phô Mai)</h2>
+
+<div class="space-y-4 my-6">
+    <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+        <h3 class="font-bold text-gray-900 text-base mb-2">❓ Bột phô mai có ăn sống (ăn trực tiếp) được không?</h3>
+        <p class="text-sm text-gray-700 leading-relaxed">
+            <strong>Hoàn toàn có thể!</strong> Bột phô mai BOYO được chế biến từ quy trình sấy nhiệt thanh trùng hiện đại, đạt tiêu chuẩn vệ sinh an toàn thực phẩm. Bạn có thể rắc ăn trực tiếp lên hoa quả, bánh quy, mì tôm, salad hoặc các món đã nấu chín mà không cần đun nấu lại.
+        </p>
+    </div>
+
+    <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+        <h3 class="font-bold text-gray-900 text-base mb-2">❓ Tại sao khi lắc khoai tây hay bị chảy nước hoặc vón cục?</h3>
+        <p class="text-sm text-gray-700 leading-relaxed">
+            Nguyên nhân là do <strong>khoai còn quá nhiều hơi nước bốc lên</strong> hoặc <strong>còn đọng nhiều dầu ăn</strong>. Bí quyết: Sau khi chiên khoai xong, bạn trút khoai ra rổ cho ráo dầu và đợi khoảng <strong>30 - 45 giây</strong> để hơi nóng bốc bớt đi. Khi khoai còn ấm nóng nhưng bề mặt khô ráo, mới cho vào túi/hộp rắc bột phô mai lắc. Bột sẽ áo đều 360 độ mà không hề bị ướt!
+        </p>
+    </div>
+
+    <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+        <h3 class="font-bold text-gray-900 text-base mb-2">❓ Cách bảo quản bột phô mai tốt nhất sau khi mở gói?</h3>
+        <p class="text-sm text-gray-700 leading-relaxed">
+            Sau khi mở gói, bạn chỉ cần miết chặt miệng khóa zip (với túi zip) hoặc đậy kín nắp hũ, để ở nơi khô ráo, thoáng mát, tránh ánh nắng trực tiếp và nhiệt độ cao gần bếp ga. Nếu ở khu vực độ ẩm không khí cao, bạn có thể bảo quản trong ngăn mát tủ lạnh để bột giữ độ tơi xốp suốt nhiều tháng.
+        </p>
+    </div>
+
+    <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+        <h3 class="font-bold text-gray-900 text-base mb-2">❓ Mua bột phô mai BOYO chính hãng ở đâu uy tín nhất?</h3>
+        <p class="text-sm text-gray-700 leading-relaxed">
+            Quý khách có thể đặt mua hàng trực tiếp trên hệ sinh thái chính hãng của <strong>LYHU</strong>:
+            <br />
+            • Đặt hàng trực tiếp tại website: <strong>lyhu.com.vn</strong> hoặc <strong>lyhu.vn</strong>.
+            <br />
+            • Mua lẻ giao hàng hỏa tốc toàn quốc qua gian hàng Shopee chính thức: <a href="https://shopee.vn/boyo.vn?shopCollection=16825877#product_list" target="_blank" rel="noopener noreferrer" class="text-orange-600 font-bold underline">shopee.vn/boyo.vn</a>.
+            <br />
+            • Đại lý & nhà phân phối liên hệ trực tiếp hotline / Zalo: <strong>0969 069 798</strong> để nhận mẫu thử và chính sách giá sỉ tốt nhất.
+        </p>
+    </div>
+</div>
+
+<!-- KHỐI MUA HÀNG TRỰC TIẾP TẠI WEB LYHU & SHOPEE CHÍNH HÃNG -->
+<div class="not-prose my-10 p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-300 shadow-sm">
+    <div class="flex flex-col sm:flex-row items-center gap-6">
+        <div class="w-36 h-36 flex-shrink-0 bg-white rounded-2xl p-2 border border-amber-200 shadow-sm flex items-center justify-center overflow-hidden">
+            <img src="/boyo_65g_pack.jpg" alt="Bột phô mai BOYO 65g chính hãng" class="max-h-full w-auto object-contain" />
+        </div>
+        <div class="flex-1 text-center sm:text-left">
+            <span class="inline-block bg-amber-500 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-2">⭐ Gia Vị Ăn Vặt Khuyên Dùng</span>
+            <h4 class="text-xl font-bold text-gray-900 mb-1">Bột Phô Mai BOYO 65g – Hương Vị Béo Ngậy Chuẩn Vị Quán</h4>
+            <p class="text-sm text-gray-600 mb-3">Túi zip nhỏ tiện dụng, hạt bột mịn bám dính 360 độ, lên màu vàng cam bắt mắt. Vừa vặn cho 3-4 bữa ăn vặt gia đình!</p>
+            <div class="flex items-baseline gap-2 justify-center sm:justify-start mb-4">
+                <span class="text-2xl font-black text-amber-600">22.000đ</span>
+                <span class="text-xs text-gray-500 font-medium">/ gói 65g</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 justify-center sm:justify-start">
+                <a href="/?p=b2f6a52f-ea58-470c-8014-b49600298e11" target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 font-bold text-sm px-5 py-2.5 rounded-xl shadow transition-all hover:scale-105" style="color: #ffffff !important; text-decoration: none !important;">
+                    <span style="color: #ffffff !important; font-weight: 700;">🛒 Đặt Mua Tại LYHU.com.vn</span>
+                </a>
+                <a href="https://shopee.vn/boyo.vn?shopCollection=16825877#product_list" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-[#EE4D2D] hover:bg-[#d43f20] font-bold text-sm px-5 py-2.5 rounded-xl shadow transition-all hover:scale-105" style="color: #ffffff !important; text-decoration: none !important;">
+                    <span style="color: #ffffff !important; font-weight: 700;">🧡 Mua Shopee: shopee.vn/boyo.vn</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="mt-4 pt-3 border-t border-amber-200 text-sm text-gray-700 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-2">
+        <span>💡 <em>Dành cho chủ quán ăn vặt, tiệm trà sữa, bếp fast-food:</em></span>
+        <a href="/?p=649577ef-2c77-429d-8216-f0771473243a" target="_blank" class="font-bold text-teal-700 hover:text-teal-900 underline flex items-center gap-1" style="color: #0f766e !important;">
+            📦 Xem Bột phô mai BOYO Túi Tiết Kiệm 1kg (199.000đ) &rarr;
+        </a>
+    </div>
+</div>
+
+<p class="mt-8 text-gray-700">
+    Hy vọng cẩm nang toàn diện trên đây đã giúp bạn hiểu rõ hơn về thế giới bột phô mai và chọn được sản phẩm ưng ý nhất cho gia đình hoặc mô hình kinh doanh của mình. Đừng quên theo dõi chuyên mục tin tức tại <strong>lyhu.com.vn</strong> để đón đọc thêm nhiều bí quyết ẩm thực và kinh doanh hữu ích!
+</p>
+${addressBlock}
+`
+    };
+
+    const postsToUpsert = [post1, post2, post3, post4, post5];
     const results = [];
 
     for (const p of postsToUpsert) {
@@ -509,7 +772,8 @@ ${addressBlock}
 
     return NextResponse.json({
         success: true,
-        message: 'Processed 4 BOYO news posts successfully!',
+        message: 'Processed 5 BOYO news posts successfully!',
         results
     });
 }
+
