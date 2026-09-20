@@ -379,6 +379,11 @@ ${addressBlock}
     <li>🍚 <strong>Đường cát trắng:</strong> 1 – 2 thìa cà phê (tùy khẩu vị thích ngọt mặn hài hòa).</li>
 </ul>
 
+<div class="my-6 text-center">
+    <img src="/boyo_popcorn_ingredients.jpg" alt="Bộ nguyên liệu làm bắp rang bơ phô mai tại nhà" class="rounded-2xl shadow-md mx-auto w-full max-w-xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Trọn bộ nguyên liệu đơn giản: bắp hạt khô, bơ thơm béo và Bột phô mai BOYO 65g.</p>
+</div>
+
 <h2>Công Thức 3 Bước Làm Bắp Nổ Bung Cánh 100%:</h2>
 
 <h3>Bước 1: Nổ Bắp Bung Đều Bằng Nồi Thường</h3>
@@ -392,14 +397,19 @@ ${addressBlock}
     Khi tiếng nổ "bốp, bốp" bắt đầu vang lên dồn dập, bạn giữ nhẹ tay lên quai nồi và lắc nhẹ qua lại trên mặt bếp mỗi 5 - 10 giây. Động tác lắc này giúp các hạt bắp chưa nổ rơi xuống đáy tiếp xúc nhiệt, còn các hạt bắp đã nở nổi lên trên, tránh bị cháy khét. Khi tiếng nổ thưa dần (cách nhau khoảng 2-3 giây) thì tắt bếp ngay, giữ nguyên nắp 30 giây để các hạt cuối cùng nổ hết.
 </p>
 
+<div class="my-6 text-center">
+    <img src="/boyo_popcorn_step1.jpg" alt="Bước 1: Nổ bắp bung cánh trắng muốt giòn xốp bằng nồi thường" class="rounded-2xl shadow-md mx-auto w-full max-w-xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Bước 1: Từng cánh bắp bung nở trắng muốt, giòn xốp 100% không lo cháy khét.</p>
+</div>
+
 <h3>Bước 2: Áo Lớp Bơ Thơm Lừng & Giòn Lâu</h3>
 <p>
     Mở nắp vung nồi, cho ngay 30g bơ lạt và 1-2 thìa đường cát vào lúc bắp còn đang nóng rực. Dùng đũa hoặc muôi gỗ đảo nhanh tay trong 30 giây. Hơi nóng của bắp sẽ làm bơ tan chảy ngay lập tức, phủ một lớp bóng bẩy và thơm phức quanh từng cánh bắp.
 </p>
 
 <div class="my-6 text-center">
-    <img src="/boyo_popcorn_dish.jpg" alt="Bắp rang bơ sau khi áo lớp bơ vàng ruộm giòn tan" class="rounded-2xl shadow-md mx-auto w-full max-w-xl" />
-    <p class="text-sm text-gray-500 mt-2 italic">Từng hạt bắp bung cánh tròn xoe, thấm đẫm hương bơ thơm ngát trước khi lắc phô mai.</p>
+    <img src="/boyo_popcorn_step2.jpg" alt="Bước 2: Áo lớp bơ vàng ruộm óng ả quanh từng hạt bắp" class="rounded-2xl shadow-md mx-auto w-full max-w-xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Bước 2: Bắp được áo lớp bơ vàng bóng bẩy, thơm lừng và giữ độ giòn tan bền bỉ.</p>
 </div>
 
 <h3>Bước 3: Rắc Phô Mai BOYO 65G & Lắc Đều Tay</h3>
@@ -412,6 +422,11 @@ ${addressBlock}
 <p>
     Hạt bột phô mai BOYO mịn tơi, có độ bám dính vượt trội sẽ bao bọc 360 độ quanh từng rãnh nhỏ của cánh bắp. Màu cam vàng bắt mắt cùng hương vị béo mặn ngọt hài hòa sẽ khiến bạn ăn mãi không ngừng được!
 </p>
+
+<div class="my-6 text-center">
+    <img src="/boyo_popcorn_step3.jpg" alt="Bước 3: Bắp rang bơ áo đều bột phô mai BOYO chuẩn vị rạp chiếu phim" class="rounded-2xl shadow-md mx-auto w-full max-w-xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Bước 3: Từng cánh bắp thấm đẫm bột phô mai BOYO vàng cam, thơm ngậy chuẩn vị rạp CGV!</p>
+</div>
 
 <!-- KHỐI MUA HÀNG TRỰC TIẾP TẠI WEB LYHU & SHOPEE CHÍNH HÃNG -->
 <div class="not-prose my-10 p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-300 shadow-sm">
