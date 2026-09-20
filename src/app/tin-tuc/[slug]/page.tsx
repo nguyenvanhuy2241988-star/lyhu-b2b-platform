@@ -56,13 +56,20 @@ async function getPost(slug: string) {
         .select('*')
         .eq('is_active', true);
 
-    // Fetch contextual products (AI matching via keywords)
+    // Fetch contextual products (AI matching via keywords or title)
     let productQuery = supabase
         .from('products')
         .select('id, name, price, image_url')
         .eq('is_active', true);
 
-    if (data.keywords) {
+    const titleLower = (data.title || '').toLowerCase();
+    const keywordsLower = (data.keywords || '').toLowerCase();
+
+    if (titleLower.includes('boyo') || keywordsLower.includes('boyo')) {
+        productQuery = productQuery.ilike('name', '%boyo%');
+    } else if (titleLower.includes('phô mai') || keywordsLower.includes('phô mai')) {
+        productQuery = productQuery.ilike('name', '%phô mai%');
+    } else if (data.keywords) {
         // To avoid overly broad matches (like "bánh" from "bánh kẹo" matching "Bánh tráng"),
         // we use the very first word of the first keyword (e.g., "kẹo" from "kẹo chua UHi")
         const firstKeyword = data.keywords.split(',')[0].trim();
@@ -195,6 +202,52 @@ export default async function BlogPostPage({ params }: Props) {
         };
     }
 
+    let recipeSchema = null;
+    if (post.slug.includes('cach-lam-') || post.category?.name?.toLowerCase().includes('nấu ăn') || post.category?.name?.toLowerCase().includes('ẩm thực')) {
+        recipeSchema = {
+            '@context': 'https://schema.org',
+            '@type': 'Recipe',
+            name: post.title,
+            image: post.thumbnail_url ? [post.thumbnail_url.startsWith('http') ? post.thumbnail_url : `${siteUrl}${post.thumbnail_url}`] : [],
+            description: post.meta_description || post.ai_summary,
+            author: {
+                '@type': 'Person',
+                name: post.author?.full_name || 'LYHU Kitchen'
+            },
+            datePublished: post.published_at || post.created_at,
+            prepTime: 'PT15M',
+            cookTime: 'PT15M',
+            totalTime: 'PT30M',
+            recipeYield: '3-4 phần ăn',
+            recipeCategory: 'Snack / Món ăn vặt',
+            recipeCuisine: 'Việt Nam',
+            keywords: post.keywords,
+            recipeIngredient: [
+                '3-4 củ khoai tây tươi (hoặc khoai cắt sẵn đông lạnh)',
+                '15g Bột phô mai BOYO 65g',
+                '1 thìa canh dầu ăn',
+                '1/2 thìa cà phê muối tinh, nước đá lạnh'
+            ],
+            recipeInstructions: [
+                {
+                    '@type': 'HowToStep',
+                    name: 'Sơ chế khoai giòn lâu',
+                    text: 'Khoai tây gọt vỏ, cắt con chì dày 1cm. Ngâm nước muối 15 phút, chần qua nước sôi 2 phút rồi ngâm nước đá lạnh 5 phút. Vớt ra thấm thật khô.'
+                },
+                {
+                    '@type': 'HowToStep',
+                    name: 'Nướng bằng nồi chiên không dầu',
+                    text: 'Trộn đều khoai với 1 thìa canh dầu ăn. Nướng lần 1 ở 180°C trong 12 phút. Xóc đều khay nướng lần 2 ở 200°C trong 5-7 phút cho vàng giòn.'
+                },
+                {
+                    '@type': 'HowToStep',
+                    name: 'Rắc phô mai BOYO và lắc đều',
+                    text: 'Đổ khoai ra tô hoặc túi giấy, đợi 30 giây ráo hơi rồi rắc 2-3 thìa bột phô mai BOYO 65g lên. Lắc đều tay 10 giây cho hạt bột bám đều 360 độ quanh khoai.'
+                }
+            ]
+        };
+    }
+
     return (
         <div className="bg-white min-h-screen pb-16">
             <ViewCounter postId={post.id} />
@@ -202,6 +255,7 @@ export default async function BlogPostPage({ params }: Props) {
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
+            {recipeSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(recipeSchema) }} />}
 
             {/* Breadcrumb Navigation */}
             <nav className="border-b border-gray-100 bg-gray-50/50 py-3 hidden md:block">
@@ -294,7 +348,7 @@ export default async function BlogPostPage({ params }: Props) {
                         products={products} 
                         promotions={promotions}
                         allProducts={allProducts}
-                        showProductCards={post.category?.slug === 'goc-nha-phan-phoi-diem-ban'}
+                        showProductCards={true}
                     />
 
                     {/* Tags */}
@@ -336,8 +390,8 @@ export default async function BlogPostPage({ params }: Props) {
                         </div>
                     )}
 
-                    {/* Products Grid (Only for Advisory posts) */}
-                    {post.category?.slug === 'goc-nha-phan-phoi-diem-ban' && (
+                    {/* Products Grid (Shown for all posts with relevant products) */}
+                    {products && products.length > 0 && (
                         <BlogProductGrid products={products} />
                     )}
 

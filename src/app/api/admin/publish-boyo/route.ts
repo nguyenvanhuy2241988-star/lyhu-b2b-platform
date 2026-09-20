@@ -120,6 +120,16 @@ export async function GET(req: NextRequest) {
 <p>
     Hãy trở thành một trong những điểm bán đầu tiên đưa hương vị phô mai BOYO đến với người tiêu dùng tại khu vực của bạn!
 </p>
+
+<div class="my-6 p-4 bg-orange-50 rounded-xl border border-orange-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div>
+        <p class="text-sm font-bold text-gray-800">🛍️ Quý khách muốn mua lẻ trải nghiệm sản phẩm?</p>
+        <p class="text-xs text-gray-600">Ghé ngay gian hàng Shopee chính hãng của BOYO để nhận ưu đãi giao hàng toàn quốc.</p>
+    </div>
+    <a href="https://shopee.vn/boyo.vn" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-[#EE4D2D] hover:bg-[#d43f20] text-white text-xs font-bold px-4 py-2 rounded-lg shadow whitespace-nowrap transition-colors">
+        🧡 Shopee: shopee.vn/boyo.vn
+    </a>
+</div>
 ${addressBlock}
 `
     };
@@ -198,6 +208,21 @@ ${addressBlock}
 <p class="font-semibold text-teal-800">
     👉 Hãy để lại thông tin hoặc nhắn tin qua Zalo Hotline <strong>0969 069 798</strong> để được gửi mẫu thử trải nghiệm và giữ mức giá ưu đãi tốt nhất ngay khi mẻ hàng đầu tiên xuất xưởng!
 </p>
+
+<div class="my-6 p-4 bg-orange-50 rounded-xl border border-orange-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div>
+        <p class="text-sm font-bold text-gray-800">🛍️ Mua lẻ trải nghiệm tại Shopee Chính Hãng</p>
+        <p class="text-xs text-gray-600">Đặt mua gói nhỏ BOYO 65g hoặc túi 1kg trực tiếp trên Shopee giao hàng hỏa tốc.</p>
+    </div>
+    <div class="flex items-center gap-2">
+        <a href="/?p=649577ef-2c77-429d-8216-f0771473243a" class="inline-flex items-center gap-1 bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold px-3 py-2 rounded-lg shadow whitespace-nowrap transition-colors" target="_blank">
+            🛒 Xem BOYO 1kg
+        </a>
+        <a href="https://shopee.vn/boyo.vn" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-[#EE4D2D] hover:bg-[#d43f20] text-white text-xs font-bold px-3 py-2 rounded-lg shadow whitespace-nowrap transition-colors">
+            🧡 Shopee: shopee.vn/boyo.vn
+        </a>
+    </div>
+</div>
 ${addressBlock}
 `
     };
@@ -214,7 +239,7 @@ ${addressBlock}
         ai_summary: 'Hướng dẫn làm khoai tây lắc phô mai giòn rụm bằng nồi chiên không dầu chỉ trong 15 phút. Bí quyết dùng gói nhỏ BOYO 65g rắc đều bám dính, thơm ngon béo ngậy không lo ẩm mốc.',
         meta_title: 'Cách Làm Khoai Tây Lắc Phô Mai Bằng Nồi Chiên Không Dầu | BOYO 65G',
         meta_description: 'Học ngay công thức làm khoai tây lắc phô mai bằng nồi chiên không dầu giòn rụm, vàng ươm, thơm lừng cùng bột phô mai BOYO 65g tiện lợi cho gia đình!',
-        keywords: 'cách làm khoai tây lắc phô mai, khoai tây lắc nồi chiên không dầu, bột phô mai boyo 65g, món ngon dễ làm, lyhu',
+        keywords: 'bột phô mai, bột phô mai boyo, cách làm khoai tây lắc phô mai, khoai tây lắc phô mai nồi chiên không dầu, bột phô mai lắc, mua bột phô mai, lyhu',
         content: `
 <p class="lead text-lg font-medium text-gray-700 leading-relaxed mb-6">
     Những buổi tối cuối tuần quây quần xem phim cùng gia đình hay tụ tập hội bạn thân mà có một đĩa <strong>khoai tây chiên lắc phô mai nóng hổi, giòn rụm</strong> thì còn gì tuyệt vời hơn! Thay vì phải ra quán hay đặt ship tốn kém, bạn hoàn toàn có thể tự tay làm món ăn vặt thần thánh này bằng nồi chiên không dầu chỉ trong 15 phút với <strong>gói nhỏ tiện lợi BOYO 65g</strong>!
@@ -232,6 +257,11 @@ ${addressBlock}
     <li>🫒 <strong>Dầu ăn:</strong> 1 thìa canh (hoặc bình xịt dầu).</li>
     <li>🧂 <strong>Gia vị:</strong> 1/2 thìa cà phê muối tinh, nước đá lạnh.</li>
 </ul>
+
+<div class="my-6 text-center">
+    <img src="/boyo_recipe_ingredients.jpg" alt="Toàn bộ nguyên liệu làm khoai tây lắc phô mai giòn rụm tại nhà" class="rounded-2xl shadow-md mx-auto w-full max-w-xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Nguyên liệu chuẩn bị cực kỳ tinh gọn: Khoai tây, dầu ăn, muối tinh và bí quyết vị ngon từ Bột phô mai BOYO 65g.</p>
+</div>
 
 <h2>Công Thức 3 Bước Làm Giòn Rụm, Vàng Ruộm:</h2>
 
@@ -278,9 +308,33 @@ ${addressBlock}
     <li><strong>Dễ dàng mua sắm:</strong> Sản phẩm sắp có mặt trên các quầy kệ siêu thị mini và tiệm tạp hóa gần nhà bạn với mức giá cực kỳ phải chăng.</li>
 </ul>
 
-<div class="my-6 text-center">
-    <img src="/boyo_65g_poster.jpg" alt="Bột phô mai BOYO gói 65g nhỏ gọn tiện lợi" class="rounded-2xl shadow-md mx-auto w-full max-w-lg" />
-    <p class="text-sm text-gray-500 mt-2 italic">BOYO 65g – Thiết kế túi nhỏ vừa vặn, thơm ngon chuẩn vị cho mọi món lắc gia đình.</p>
+<!-- KHỐI MUA HÀNG TRỰC TIẾP TẠI WEB LYHU & SHOPEE CHÍNH HÃNG -->
+<div class="my-8 p-6 bg-amber-50 rounded-2xl border-2 border-amber-300 shadow-sm">
+    <div class="flex flex-col md:flex-row items-center gap-6">
+        <div class="w-36 h-36 flex-shrink-0 bg-white rounded-xl p-2 border border-amber-200 shadow-sm flex items-center justify-center">
+            <img src="/boyo_65g_poster.jpg" alt="Bột phô mai BOYO 65g chính hãng" class="max-h-full object-contain rounded-lg" />
+        </div>
+        <div class="flex-1 text-center md:text-left">
+            <span class="inline-block bg-amber-500 text-white text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full mb-2">⭐ Gia Vị Ăn Vặt Khuyên Dùng</span>
+            <h4 class="text-xl font-bold text-gray-900 mb-1">Bột Phô Mai BOYO 65g – Hương Vị Béo Ngậy Chuẩn Vị Quán</h4>
+            <p class="text-sm text-gray-600 mb-3">Túi zip nhỏ tiện dụng, hạt bột mịn bám dính 360 độ, lên màu vàng cam bắt mắt. Vừa vặn cho 3-4 bữa ăn vặt gia đình!</p>
+            <div class="flex items-baseline gap-2 justify-center md:justify-start mb-4">
+                <span class="text-2xl font-black text-amber-600">22.000đ</span>
+                <span class="text-xs text-gray-500">/ gói 65g</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 justify-center md:justify-start">
+                <a href="/?p=b2f6a52f-ea58-470c-8014-b49600298e11" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl shadow transition-colors" target="_blank">
+                    🛒 Đặt Mua Tại LYHU.com.vn
+                </a>
+                <a href="https://shopee.vn/boyo.vn" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-[#EE4D2D] hover:bg-[#d43f20] text-white text-sm font-bold px-4 py-2.5 rounded-xl shadow transition-colors">
+                    🧡 Mua Shopee Chính Hãng (shopee.vn/boyo.vn)
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="mt-4 pt-3 border-t border-amber-200 text-xs text-gray-600 text-center md:text-left">
+        💡 <em>Dành cho chủ quán ăn vặt, tiệm gà rán, xe khoai lắc:</em> Xem ngay <a href="/?p=649577ef-2c77-429d-8216-f0771473243a" class="text-primary-700 font-bold underline hover:text-primary-900" target="_blank">Bột phô mai BOYO Túi Tiết Kiệm 1kg (199.000đ)</a> để tối ưu chi phí cost kinh doanh!
+    </div>
 </div>
 
 <p class="mt-8 text-gray-700">
