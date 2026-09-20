@@ -121,13 +121,13 @@ export async function GET(req: NextRequest) {
     Hãy trở thành một trong những điểm bán đầu tiên đưa hương vị phô mai BOYO đến với người tiêu dùng tại khu vực của bạn!
 </p>
 
-<div class="my-6 p-4 bg-orange-50 rounded-xl border border-orange-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="not-prose my-6 p-4 bg-orange-50 rounded-xl border border-orange-200 flex flex-col sm:flex-row items-center justify-between gap-4">
     <div>
         <p class="text-sm font-bold text-gray-800">🛍️ Quý khách muốn mua lẻ trải nghiệm sản phẩm?</p>
         <p class="text-xs text-gray-600">Ghé ngay gian hàng Shopee chính hãng của BOYO để nhận ưu đãi giao hàng toàn quốc.</p>
     </div>
-    <a href="https://shopee.vn/boyo.vn" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-[#EE4D2D] hover:bg-[#d43f20] text-white text-xs font-bold px-4 py-2 rounded-lg shadow whitespace-nowrap transition-colors">
-        🧡 Shopee: shopee.vn/boyo.vn
+    <a href="https://shopee.vn/boyo.vn" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-[#EE4D2D] hover:bg-[#d43f20] text-xs font-bold px-4 py-2 rounded-lg shadow whitespace-nowrap transition-colors" style="color: #ffffff !important; text-decoration: none !important;">
+        <span style="color: #ffffff !important; font-weight: 700;">🧡 Shopee: shopee.vn/boyo.vn</span>
     </a>
 </div>
 ${addressBlock}
@@ -209,17 +209,17 @@ ${addressBlock}
     👉 Hãy để lại thông tin hoặc nhắn tin qua Zalo Hotline <strong>0969 069 798</strong> để được gửi mẫu thử trải nghiệm và giữ mức giá ưu đãi tốt nhất ngay khi mẻ hàng đầu tiên xuất xưởng!
 </p>
 
-<div class="my-6 p-4 bg-orange-50 rounded-xl border border-orange-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="not-prose my-6 p-4 bg-orange-50 rounded-xl border border-orange-200 flex flex-col sm:flex-row items-center justify-between gap-4">
     <div>
         <p class="text-sm font-bold text-gray-800">🛍️ Mua lẻ trải nghiệm tại Shopee Chính Hãng</p>
         <p class="text-xs text-gray-600">Đặt mua gói nhỏ BOYO 65g hoặc túi 1kg trực tiếp trên Shopee giao hàng hỏa tốc.</p>
     </div>
     <div class="flex items-center gap-2">
-        <a href="/?p=649577ef-2c77-429d-8216-f0771473243a" class="inline-flex items-center gap-1 bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold px-3 py-2 rounded-lg shadow whitespace-nowrap transition-colors" target="_blank">
-            🛒 Xem BOYO 1kg
+        <a href="/?p=649577ef-2c77-429d-8216-f0771473243a" class="inline-flex items-center gap-1 bg-teal-700 hover:bg-teal-800 text-xs font-bold px-3 py-2 rounded-lg shadow whitespace-nowrap transition-colors" target="_blank" style="color: #ffffff !important; text-decoration: none !important;">
+            <span style="color: #ffffff !important; font-weight: 700;">🛒 Xem BOYO 1kg</span>
         </a>
-        <a href="https://shopee.vn/boyo.vn" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-[#EE4D2D] hover:bg-[#d43f20] text-white text-xs font-bold px-3 py-2 rounded-lg shadow whitespace-nowrap transition-colors">
-            🧡 Shopee: shopee.vn/boyo.vn
+        <a href="https://shopee.vn/boyo.vn" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-[#EE4D2D] hover:bg-[#d43f20] text-xs font-bold px-3 py-2 rounded-lg shadow whitespace-nowrap transition-colors" style="color: #ffffff !important; text-decoration: none !important;">
+            <span style="color: #ffffff !important; font-weight: 700;">🧡 Shopee: shopee.vn/boyo.vn</span>
         </a>
     </div>
 </div>
@@ -309,31 +309,34 @@ ${addressBlock}
 </ul>
 
 <!-- KHỐI MUA HÀNG TRỰC TIẾP TẠI WEB LYHU & SHOPEE CHÍNH HÃNG -->
-<div class="my-8 p-6 bg-amber-50 rounded-2xl border-2 border-amber-300 shadow-sm">
-    <div class="flex flex-col md:flex-row items-center gap-6">
-        <div class="w-36 h-36 flex-shrink-0 bg-white rounded-xl p-2 border border-amber-200 shadow-sm flex items-center justify-center">
-            <img src="/boyo_65g_poster.jpg" alt="Bột phô mai BOYO 65g chính hãng" class="max-h-full object-contain rounded-lg" />
+<div class="not-prose my-10 p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-300 shadow-sm">
+    <div class="flex flex-col sm:flex-row items-center gap-6">
+        <div class="w-36 h-36 flex-shrink-0 bg-white rounded-2xl p-2 border border-amber-200 shadow-sm flex items-center justify-center overflow-hidden">
+            <img src="/boyo_65g_pack.jpg" alt="Bột phô mai BOYO 65g chính hãng" class="max-h-full w-auto object-contain" />
         </div>
-        <div class="flex-1 text-center md:text-left">
-            <span class="inline-block bg-amber-500 text-white text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full mb-2">⭐ Gia Vị Ăn Vặt Khuyên Dùng</span>
+        <div class="flex-1 text-center sm:text-left">
+            <span class="inline-block bg-amber-500 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-2">⭐ Gia Vị Ăn Vặt Khuyên Dùng</span>
             <h4 class="text-xl font-bold text-gray-900 mb-1">Bột Phô Mai BOYO 65g – Hương Vị Béo Ngậy Chuẩn Vị Quán</h4>
             <p class="text-sm text-gray-600 mb-3">Túi zip nhỏ tiện dụng, hạt bột mịn bám dính 360 độ, lên màu vàng cam bắt mắt. Vừa vặn cho 3-4 bữa ăn vặt gia đình!</p>
-            <div class="flex items-baseline gap-2 justify-center md:justify-start mb-4">
+            <div class="flex items-baseline gap-2 justify-center sm:justify-start mb-4">
                 <span class="text-2xl font-black text-amber-600">22.000đ</span>
-                <span class="text-xs text-gray-500">/ gói 65g</span>
+                <span class="text-xs text-gray-500 font-medium">/ gói 65g</span>
             </div>
-            <div class="flex flex-wrap items-center gap-3 justify-center md:justify-start">
-                <a href="/?p=b2f6a52f-ea58-470c-8014-b49600298e11" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl shadow transition-colors" target="_blank">
-                    🛒 Đặt Mua Tại LYHU.com.vn
+            <div class="flex flex-wrap items-center gap-3 justify-center sm:justify-start">
+                <a href="/?p=b2f6a52f-ea58-470c-8014-b49600298e11" target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 font-bold text-sm px-5 py-2.5 rounded-xl shadow transition-all hover:scale-105" style="color: #ffffff !important; text-decoration: none !important;">
+                    <span style="color: #ffffff !important; font-weight: 700;">🛒 Đặt Mua Tại LYHU.com.vn</span>
                 </a>
-                <a href="https://shopee.vn/boyo.vn" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-[#EE4D2D] hover:bg-[#d43f20] text-white text-sm font-bold px-4 py-2.5 rounded-xl shadow transition-colors">
-                    🧡 Mua Shopee Chính Hãng (shopee.vn/boyo.vn)
+                <a href="https://shopee.vn/boyo.vn" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-[#EE4D2D] hover:bg-[#d43f20] font-bold text-sm px-5 py-2.5 rounded-xl shadow transition-all hover:scale-105" style="color: #ffffff !important; text-decoration: none !important;">
+                    <span style="color: #ffffff !important; font-weight: 700;">🧡 Mua Shopee: shopee.vn/boyo.vn</span>
                 </a>
             </div>
         </div>
     </div>
-    <div class="mt-4 pt-3 border-t border-amber-200 text-xs text-gray-600 text-center md:text-left">
-        💡 <em>Dành cho chủ quán ăn vặt, tiệm gà rán, xe khoai lắc:</em> Xem ngay <a href="/?p=649577ef-2c77-429d-8216-f0771473243a" class="text-primary-700 font-bold underline hover:text-primary-900" target="_blank">Bột phô mai BOYO Túi Tiết Kiệm 1kg (199.000đ)</a> để tối ưu chi phí cost kinh doanh!
+    <div class="mt-4 pt-3 border-t border-amber-200 text-sm text-gray-700 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-2">
+        <span>💡 <em>Dành cho chủ quán ăn vặt, xe khoai lắc:</em></span>
+        <a href="/?p=649577ef-2c77-429d-8216-f0771473243a" target="_blank" class="font-bold text-teal-700 hover:text-teal-900 underline flex items-center gap-1" style="color: #0f766e !important;">
+            📦 Xem Bột phô mai BOYO Túi Tiết Kiệm 1kg (199.000đ) &rarr;
+        </a>
     </div>
 </div>
 
