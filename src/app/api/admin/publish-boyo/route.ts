@@ -208,7 +208,7 @@ ${addressBlock}
     const post3 = {
         title: 'Cách Làm Khoai Tây Lắc Phô Mai Bằng Nồi Chiên Không Dầu Chuẩn Vị Quán Với BOYO 65G',
         slug: 'cach-lam-khoai-tay-lac-pho-mai-noi-chien-khong-dau-boyo-65g',
-        thumbnail_url: '/boyo_news_banner.jpg',
+        thumbnail_url: '/boyo_recipe_banner.jpg',
         category_id: '10db3b9f-0fc3-430c-a435-9c76a5e00c36', // Ẩm Thực & Nấu Ăn
         status: 'published',
         ai_summary: 'Hướng dẫn làm khoai tây lắc phô mai giòn rụm bằng nồi chiên không dầu chỉ trong 15 phút. Bí quyết dùng gói nhỏ BOYO 65g rắc đều bám dính, thơm ngon béo ngậy không lo ẩm mốc.',
@@ -221,8 +221,8 @@ ${addressBlock}
 </p>
 
 <div class="my-8 text-center">
-    <img src="/boyo_news_banner.jpg" alt="Làm khoai tây lắc phô mai tại nhà cùng BOYO 65g" class="rounded-2xl shadow-lg mx-auto w-full max-w-2xl" />
-    <p class="text-sm text-gray-500 mt-2 italic">Gói BOYO 65g nhỏ gọn – Vừa vặn cho 2-3 bữa ăn vặt gia đình, không lo ẩm mốc hay chảy nước.</p>
+    <img src="/boyo_recipe_banner.jpg" alt="Món khoai tây lắc phô mai giòn rụm thơm ngon tại nhà cùng BOYO 65g" class="rounded-2xl shadow-lg mx-auto w-full max-w-2xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Đĩa khoai tây lắc phô mai vàng ươm, thơm nức mũi hoàn thành chỉ sau 15 phút với nồi chiên không dầu.</p>
 </div>
 
 <h2>Nguyên Liệu Cực Đơn Giản:</h2>
@@ -235,10 +235,15 @@ ${addressBlock}
 
 <h2>Công Thức 3 Bước Làm Giòn Rụm, Vàng Ruộm:</h2>
 
-<h3>Bước 1: Sơ Chế Khoai Giòn Lâu</h3>
+<h3>Bước 1: Sơ Chế Khoai Giòn Lâu & Không Thâm</h3>
 <p>
     Khoai tây gọt vỏ, cắt thành từng thanh con chì dài dày khoảng 1cm. Ngâm khoai ngay vào âu nước muối pha loãng khoảng 15 phút để loại bỏ hết tinh bột thừa (giúp khoai không bị thâm và khi chiên sẽ giòn xốp hơn). Sau đó vớt ra, chần qua nước sôi 2 phút rồi ngâm ngay vào âu nước đá lạnh 5 phút. Vớt khoai ra thấm thật khô bằng khăn sạch hoặc giấy ăn.
 </p>
+
+<div class="my-6 text-center">
+    <img src="/boyo_recipe_step1.jpg" alt="Bước 1: Sơ chế và ngâm khoai tây thanh trong nước lạnh" class="rounded-2xl shadow-md mx-auto w-full max-w-xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Bước 1: Ngâm khoai tây cắt thanh trong âu nước lạnh để loại bỏ tinh bột, giúp từng cọng khoai giòn xốp.</p>
+</div>
 
 <h3>Bước 2: Nướng Bằng Nồi Chiên Không Dầu</h3>
 <ul>
@@ -248,6 +253,11 @@ ${addressBlock}
     <li>Mở nồi xóc đều khay khoai, nướng tiếp lần 2 ở <strong>200°C trong 5 – 7 phút</strong> cho đến khi cọng khoai chuyển sang màu vàng ruộm, vỏ ngoài giòn tan.</li>
 </ul>
 
+<div class="my-6 text-center">
+    <img src="/boyo_recipe_step2.jpg" alt="Bước 2: Nướng khoai tây bằng nồi chiên không dầu giòn rụm" class="rounded-2xl shadow-md mx-auto w-full max-w-xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Bước 2: Khoai nướng trong nồi chiên không dầu đạt màu vàng óng và độ giòn tan lý tưởng.</p>
+</div>
+
 <h3>Bước 3: Rắc Phô Mai BOYO & Lắc Đều Tay</h3>
 <p>
     Đổ khoai nóng ra một tô lớn hoặc túi giấy sạch. Đợi khoảng 30 giây cho khoai ráo bớt hơi nóng, sau đó rắc đều 2 - 3 thìa <strong>Bột phô mai BOYO 65g</strong> lên trên.
@@ -256,12 +266,22 @@ ${addressBlock}
     Đậy nắp tô hoặc gấp miệng túi giấy, lắc đều tay trong 10 giây. Hạt bột BOYO mịn màng sẽ bám phủ 360 độ quanh từng miếng khoai, tỏa hương thơm ngậy ngây ngất!
 </p>
 
+<div class="my-6 text-center">
+    <img src="/boyo_recipe_step3.jpg" alt="Bước 3: Lắc đều bột phô mai BOYO bám đều quanh khoai nóng" class="rounded-2xl shadow-md mx-auto w-full max-w-xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Bước 3: Lắc đều bột phô mai BOYO ngay khi khoai còn ấm nóng để hạt bột phủ đều 360 độ quanh từng cọng khoai.</p>
+</div>
+
 <h2>Vì Sao Gói BOYO 65G Là "Chân Ái" Của Các Căn Bếp?</h2>
 <ul>
     <li><strong>Không lo lãng phí:</strong> Các gói bột phô mai nửa ký hay một ký mua về làm 1-2 lần không hết rất dễ bị vón cục và chảy nước. Gói BOYO 65g vừa vặn cho 3-4 lần ăn vặt gia đình, dùng đến đâu thơm ngon đến đó!</li>
     <li><strong>Vị ngon chuẩn vị:</strong> Béo ngậy, ngọt mặn hài hòa, vị phô mai đậm đà rất tự nhiên, cả người lớn lẫn trẻ nhỏ đều mê tít.</li>
     <li><strong>Dễ dàng mua sắm:</strong> Sản phẩm sắp có mặt trên các quầy kệ siêu thị mini và tiệm tạp hóa gần nhà bạn với mức giá cực kỳ phải chăng.</li>
 </ul>
+
+<div class="my-6 text-center">
+    <img src="/boyo_65g_poster.jpg" alt="Bột phô mai BOYO gói 65g nhỏ gọn tiện lợi" class="rounded-2xl shadow-md mx-auto w-full max-w-lg" />
+    <p class="text-sm text-gray-500 mt-2 italic">BOYO 65g – Thiết kế túi nhỏ vừa vặn, thơm ngon chuẩn vị cho mọi món lắc gia đình.</p>
+</div>
 
 <p class="mt-8 text-gray-700">
     Chúc bạn và gia đình thực hiện thành công món khoai tây lắc phô mai thơm ngon tuyệt đỉnh này nhé! Hãy theo dõi website <strong>lyhu.com.vn</strong> để cập nhật thêm nhiều công thức món ăn vặt hấp dẫn khác!
