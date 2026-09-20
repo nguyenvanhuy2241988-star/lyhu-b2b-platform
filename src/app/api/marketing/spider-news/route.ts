@@ -328,11 +328,30 @@ export async function GET() {
                     categoryId = newCat?.id;
                 }
 
+                const cleanTitle = (articleData.new_title || '').trim();
                 const publishDate = new Date();
-                const slug = generateSlug(articleData.new_title);
+                const slug = generateSlug(cleanTitle);
+
+                // Check if title already exists in blog_posts
+                const { data: existingSpiderPost } = await supabase
+                    .from('blog_posts')
+                    .select('id')
+                    .ilike('title', cleanTitle)
+                    .maybeSingle();
+
+                if (existingSpiderPost) {
+                    console.log(`[Spider News] Bỏ qua bài đã tồn tại: "${cleanTitle}"`);
+                    await supabase.from('crawled_news_logs').insert({
+                        source_url: item.link,
+                        title: item.title || cleanTitle,
+                        status: 'duplicate_skipped'
+                    });
+                    results.push({ url: item.link, status: 'duplicate_skipped', title: cleanTitle });
+                    continue;
+                }
 
                 const { error: insertError } = await supabase.from('blog_posts').insert({
-                    title: articleData.new_title,
+                    title: cleanTitle,
                     slug: slug,
                     category_id: categoryId,
                     content: articleData.content,

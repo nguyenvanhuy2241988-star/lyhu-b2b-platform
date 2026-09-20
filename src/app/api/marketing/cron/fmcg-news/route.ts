@@ -98,14 +98,14 @@ export async function GET(req: Request) {
                 "Nhân sự, tuyển dụng & việc làm ngành FMCG - Bán lẻ"
             ];
         }
-        // Avoid picking same topic as recent posts: check last 3 posts
+        // Avoid picking same topic as recent posts: check last 50 posts
         const { data: recentPosts } = await supabase
             .from('blog_posts')
-            .select('meta_title')
+            .select('title, meta_title')
             .eq('status', 'published')
             .order('created_at', { ascending: false })
-            .limit(3);
-        const recentTitles = (recentPosts || []).map(p => (p.meta_title || '').toLowerCase());
+            .limit(50);
+        const recentTitles = (recentPosts || []).map(p => (p.title || p.meta_title || '').toLowerCase());
         
         // Filter out topics that match recent post titles (fuzzy match)
         const freshTopics = focusAreas.filter(topic => {
@@ -128,6 +128,7 @@ Bạn là "Chuyên gia phân tích thị trường B2B FMCG", làm việc cho LY
 
 ⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
 ⚠️ LƯU Ý VỀ TIÊU ĐỀ: KHÔNG tự động chèn thêm năm vào cuối tiêu đề một cách máy móc. CHỈ ĐƯỢC PHÉP đưa năm vào tiêu đề nếu bản thân tin tức đó là báo cáo tài chính định kỳ, tổng kết quý/năm, hoặc xu hướng đặc thù của năm đó (Ví dụ: Báo cáo thị trường Quý 1/${currentYear}).
+⚠️ CHỐNG TRÙNG LẶP NỘI DUNG: Tiêu đề và nội dung PHẢI HOÀN TOÀN MỚI, ĐỘC ĐÁO, đào sâu vào một sự kiện hoặc góc nhìn cụ thể mới nhất. TUYỆT ĐỐI KHÔNG đặt tiêu đề chung chung hoặc lặp lại các tiêu đề cũ.
 ⚠️ LƯU Ý VỀ VĂN PHONG: TUYỆT ĐỐI KHÔNG để lại các số trích dẫn nguồn dạng [1], [2], [3] trong bài viết. Bài viết phải trôi chảy tự nhiên như một bài báo thực thụ.
 
 BẮT BUỘC SỐ 1: Hãy tự động tìm kiếm trên Google các tin tức NÓNG NHẤT, MỚI NHẤT trong 24-48 giờ qua tại thị trường Việt Nam về chủ đề sau:
@@ -262,7 +263,25 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         // Remove AI citation brackets like [1], [2, 3] from the text
         content = content.replace(/\[\d+(,\s*\d+)*\]/g, '');
 
-        // 4. Save to Database
+        // 4. Check duplicate title before saving
+        const trimmedTopic = topic.trim();
+        const { data: existingPost } = await supabase
+            .from('blog_posts')
+            .select('id, title')
+            .ilike('title', trimmedTopic)
+            .maybeSingle();
+
+        if (existingPost) {
+            console.warn(`[FMCG News Cron] Bỏ qua vì bài viết "${trimmedTopic}" đã tồn tại.`);
+            return NextResponse.json({
+                success: true,
+                skipped: true,
+                message: `Bài viết đã tồn tại trên website, tự động bỏ qua để tránh trùng lặp: ${trimmedTopic}`,
+                existingId: existingPost.id
+            });
+        }
+
+        // 5. Save to Database
         const slug = generateSlug(topic) + '-' + Date.now().toString().slice(-4); // Ensure uniqueness
         
         let categoryId = null;
@@ -280,7 +299,7 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         }
 
         const { data: insertedPost, error } = await supabase.from('blog_posts').insert({
-            title: topic,
+            title: trimmedTopic,
             slug: slug,
             category_id: categoryId,
             content: content,

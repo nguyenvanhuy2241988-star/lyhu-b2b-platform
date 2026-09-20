@@ -70,33 +70,60 @@ export async function GET(req: Request) {
         const todayStr = new Date().toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
         // Lấy danh sách các chủ đề từ Database (bạn có thể tạo một bảng riêng hoặc hardcode)
-        // Trong trường hợp này, chúng ta hardcode các chủ đề Đời sống & Ẩm thực để Bot tự xoay vòng
+        // Danh sách 40 chủ đề Đời sống, Ẩm thực & Sức khỏe phong phú
         let focusAreas = [
-            "Công thức nấu món ăn ngon mỗi ngày cho gia đình",
-            "Mẹo vặt nhà bếp, bảo quản thực phẩm tươi lâu",
-            "Dinh dưỡng khoa học: Hiểu đúng về Calories, Vitamin, Chất xơ",
-            "Bí quyết chọn mua thực phẩm đóng gói, đồ hộp an toàn",
-            "Xu hướng ăn uống healthy, eat clean, giảm đường",
-            "Review và gợi ý các loại bánh kẹo, snack ngon cho bé và gia đình",
-            "Cách làm các món ăn vặt cực ngon từ nguyên liệu tạp hóa dễ tìm",
-            "Thực đơn tiết kiệm cho gia đình bận rộn",
-            "Mẹo dọn dẹp nhà cửa, sử dụng hóa phẩm an toàn",
-            "Chăm sóc sức khỏe gia đình vào thời điểm giao mùa"
+            "Công thức nấu món ngon mỗi ngày cho bữa cơm gia đình đầm ấm",
+            "Mẹo vặt nhà bếp thông minh giúp bảo quản rau củ quả tươi lâu",
+            "Bí quyết ướp thịt nướng, sườn ram mềm ngọt đậm đà chuẩn vị nhà hàng",
+            "Cách làm các món ăn vặt giòn rụm từ bánh tráng, rong biển và khô gà",
+            "Dinh dưỡng khoa học: Cách tính lượng đạm và calo phù hợp cho từng thể trạng",
+            "Bí quyết chọn mua thực phẩm đóng gói, đồ hộp an toàn cho gia đình",
+            "Thực đơn Eat Clean giảm cân an toàn, thanh lọc cơ thể trong 7 ngày",
+            "Cách làm các món tráng miệng, chè thanh nhiệt mùa hè từ nguyên liệu dễ tìm",
+            "Mẹo nhận biết hạn sử dụng và bảo quản gia vị nhà bếp không bị ẩm mốc",
+            "Gợi ý mâm cơm gia đình tiết kiệm dưới 100k mà vẫn đủ chất dinh dưỡng",
+            "Cách nấu các món canh giải nhiệt ngày hè thanh mát, dễ ăn",
+            "Bí quyết chiên rán thực phẩm giòn lâu mà không ngấy dầu mỡ",
+            "Top các loại trà thảo mộc thiên nhiên giúp ngủ ngon, giải độc gan",
+            "Review và gợi ý các loại bánh kẹo, snack ngon, đảm bảo vệ sinh cho trẻ nhỏ",
+            "Cách tự làm sữa hạt béo thơm, giàu dinh dưỡng tại nhà cho bữa sáng",
+            "Mẹo dọn dẹp vệ sinh bếp núc, khử mùi dầu mỡ nhanh chóng bằng nguyên liệu tự nhiên",
+            "Chế độ dinh dưỡng tăng cường sức đề kháng cho người lớn tuổi trong gia đình",
+            "Công thức pha chế các loại nước sốt chấm thần thánh cho mọi món ăn",
+            "Cách chọn hải sản, thịt tươi ngon tại chợ và siêu thị không lo bị tẩm ướp",
+            "Cách làm yaourt, sữa chua dẻo mịn úp ngược cực đơn giản tại nhà",
+            "Gợi ý các món ăn sáng nhanh gọn lẹ dưới 15 phút cho người bận rộn",
+            "Tìm hiểu về chất béo tốt và chất béo xấu trong các món ăn hàng ngày",
+            "Mẹo bảo quản thực phẩm đông lạnh đúng cách tránh nhiễm khuẩn",
+            "Cách tự làm khô bò, khô gà lá chanh thơm nức mũi tại nhà",
+            "Bí quyết làm các món ngâm chua ngọt giòn ngon, để được cả tháng",
+            "Thực đơn bồi bổ cho người vừa ốm dậy giúp phục hồi thể lực nhanh chóng",
+            "Mẹo sử dụng màng bọc thực phẩm và hộp nhựa an toàn cho sức khỏe",
+            "Cách làm các món salad sốt mè rang, sốt giấm táo thanh mát kích thích vị giác",
+            "Những sai lầm phổ biến khi sơ chế thịt cá làm mất hết chất dinh dưỡng",
+            "Cách lựa chọn các loại dầu ăn phù hợp cho từng phương pháp nấu nướng",
+            "Mẹo làm sạch cặn ấm đun nước, đáy nồi chảo cháy khét trong 5 phút",
+            "Thực đơn lành mạnh cho dân văn phòng giúp giảm mệt mỏi và tích mỡ bụng",
+            "Bí quyết hầm xương nước trong vắt, ngọt thanh không cần mì chính",
+            "Cách ngâm hoa quả lên men làm siro thanh mát giải khát cho cả nhà",
+            "Phân biệt bột mì, bột bắp, bột năng và cách sử dụng chuẩn trong nấu nướng",
+            "Bí quyết làm bánh mì sandwich kẹp trứng sốt mayonnaise cho bữa sáng tiện lợi",
+            "Cách bảo quản trứng gà tươi lâu đến cả tháng mà không lo bị ung hỏng",
+            "Mẹo khử mùi tanh của cá đồng và lòng heo cực sạch không còn mùi",
+            "Thực đơn thanh đạm giải ngấy sau những dịp lễ tết, tiệc tùng",
+            "Cách nấu cháo bồi bổ thơm ngon, nhuyễn mịn không bị vữa"
         ];
 
-        // Avoid picking same topic as recent posts: check last 3 posts
+        // Lấy 50 bài viết gần nhất để đảm bảo không trùng lặp chủ đề
         const { data: recentPosts } = await supabase
             .from('blog_posts')
-            .select('meta_title')
-            .in('category_id', [
-                 // am-thuc-nau-an and suc-khoe-doi-song IDs if known, or just filter later. We can just query by slug using a join, but simpler to just fetch all recent posts and fuzzy match.
-            ])
+            .select('title, meta_title')
             .eq('status', 'published')
             .order('created_at', { ascending: false })
-            .limit(5);
-        const recentTitles = (recentPosts || []).map(p => (p.meta_title || '').toLowerCase());
+            .limit(50);
+        const recentTitles = (recentPosts || []).map(p => (p.title || p.meta_title || '').toLowerCase());
         
-        // Filter out topics that match recent post titles (fuzzy match)
+        // Lọc các chủ đề chưa từng xuất hiện gần đây
         const freshTopics = focusAreas.filter(topic => {
             const topicLower = topic.toLowerCase();
             return !recentTitles.some(title => 
@@ -117,6 +144,7 @@ Bạn là "Chuyên gia Đời sống, Dinh dưỡng và Ẩm thực", làm việ
 
 ⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay bài viết hướng tới năm 2024 hoặc 2025.
 ⚠️ LƯU Ý VỀ TIÊU ĐỀ: KHÔNG tự động chèn thêm năm vào cuối tiêu đề một cách máy móc. Hãy đặt tiêu đề hấp dẫn, gợi sự tò mò và mang lại giá trị thực tế (VD: "Bí quyết nấu phở bò chuẩn vị truyền thống ngay tại nhà").
+⚠️ CHỐNG TRÙNG LẶP: Tiêu đề và nội dung PHẢI ĐẶC SẮC, ĐỘC ĐÁO, đi thẳng vào món ăn hoặc mẹo cụ thể. TUYỆT ĐỐI KHÔNG đặt tiêu đề chung chung đã cũ (như: "Dinh dưỡng khoa học: Hiểu đúng về Calories, Vitamin, Chất xơ" hay "Bí quyết chọn mua thực phẩm đóng gói...").
 ⚠️ LƯU Ý VỀ VĂN PHONG: Trôi chảy, gần gũi, ấm áp, truyền cảm hứng. TUYỆT ĐỐI KHÔNG để lại các số trích dẫn nguồn dạng [1], [2], [3]. Không dùng văn phong quá học thuật.
 
 BẮT BUỘC SỐ 1: Hãy viết một bài chia sẻ hữu ích, chi tiết (khoảng 800-1000 chữ) về chủ đề sau:
@@ -247,7 +275,25 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         // Remove AI citation brackets like [1], [2, 3] from the text
         content = content.replace(/\[\d+(,\s*\d+)*\]/g, '');
 
-        // 4. Save to Database
+        // 4. Check duplicate title before saving
+        const trimmedTopic = topic.trim();
+        const { data: existingPost } = await supabase
+            .from('blog_posts')
+            .select('id, title')
+            .ilike('title', trimmedTopic)
+            .maybeSingle();
+
+        if (existingPost) {
+            console.warn(`[Lifestyle News Cron] Bỏ qua vì bài viết "${trimmedTopic}" đã tồn tại.`);
+            return NextResponse.json({
+                success: true,
+                skipped: true,
+                message: `Bài viết đã tồn tại trên website, tự động bỏ qua để tránh trùng lặp: ${trimmedTopic}`,
+                existingId: existingPost.id
+            });
+        }
+
+        // 5. Save to Database
         const slug = generateSlug(topic) + '-' + Date.now().toString().slice(-4); // Ensure uniqueness
         
         let categoryId = null;
@@ -258,14 +304,14 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
             }
         }
         
-        // Fallback to "tin-nganh-fmcg" if category not found or AI failed to provide a valid slug
+        // Fallback to "am-thuc-nau-an" if category not found or AI failed to provide a valid slug
         if (!categoryId) {
-             const { data: defaultCategory } = await supabase.from('blog_categories').select('id').eq('slug', 'tin-nganh-fmcg').single();
+             const { data: defaultCategory } = await supabase.from('blog_categories').select('id').eq('slug', 'am-thuc-nau-an').single();
              if (defaultCategory) categoryId = defaultCategory.id;
         }
 
         const { data: insertedPost, error } = await supabase.from('blog_posts').insert({
-            title: topic,
+            title: trimmedTopic,
             slug: slug,
             category_id: categoryId,
             content: content,
@@ -283,7 +329,7 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
 
         return NextResponse.json({ 
             success: true, 
-            message: 'Bản tin FMCG đã xuất bản',
+            message: 'Bài viết Đời Sống đã xuất bản thành công',
             post: {
                 id: insertedPost.id,
                 title: insertedPost.title
