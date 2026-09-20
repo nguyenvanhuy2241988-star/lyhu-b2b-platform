@@ -91,7 +91,7 @@ export default function DynamicBlogContent({ content, videoUrl, isVideoVertical 
                     const pattern = new RegExp(`(?![^<]*>)(?<=^|\\s|>|&nbsp;)(${escapeRegExp(product.name)})(?=\\s|<|&nbsp;|[.,!?]|$)`, 'i');
                     
                     if (pattern.test(htmlChunk)) {
-                        htmlChunk = htmlChunk.replace(pattern, `<a href="/wholesale/product/${product.id}" title="Mua sỉ ${product.name}" class="text-primary-600 font-medium hover:underline border-b border-primary-200" target="_blank">$1</a>`);
+                        htmlChunk = htmlChunk.replace(pattern, `<a href="/?p=${product.id}" title="Mua sỉ ${product.name}" class="text-primary-600 font-medium hover:underline border-b border-primary-200" target="_blank">$1</a>`);
                         linkedProductIds.add(product.id);
                     }
                 });

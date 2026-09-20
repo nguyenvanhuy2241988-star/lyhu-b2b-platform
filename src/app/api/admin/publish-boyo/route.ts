@@ -18,12 +18,31 @@ export async function GET(req: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const slug = 'bot-pho-mai-boyo-65g-do-bo-ke-hang-sieu-thi-mini';
-    const title = 'Bột Phô Mai BOYO 65G: "Tân Binh" Ăn Vặt Siêu Hot Chuẩn Bị Đổ Bộ Kệ Hàng Siêu Thị & Tiệm Tiện Lợi!';
-    const thumbnailUrl = '/boyo_news_banner.jpg';
-    const categoryId = 'bbb06484-8d5c-4505-8ee5-6393dcdec950'; // Nhà phân phối & điểm bán
+    const addressBlock = `
+<div class="bg-gray-50 p-6 rounded-xl border border-gray-200 space-y-2 text-gray-800">
+    <p>🏢 <strong>CÔNG TY TNHH LYHU</strong> – <em>Kết nối chân thành • Hợp tác bền vững</em></p>
+    <p>📜 <strong>Mã số thuế:</strong> 0110560692</p>
+    <p>📍 <strong>Trụ sở chính:</strong> Tầng 6, V11-B09, KĐT mới An Hưng, Phường Dương Nội, Thành phố Hà Nội, Việt Nam</p>
+    <p>📞 <strong>Hotline / Zalo:</strong> <span class="text-primary-700 font-bold text-lg">0969 069 798</span></p>
+    <p>🌐 <strong>Website:</strong> <a href="https://lyhu.vn" class="text-teal-600 hover:underline">lyhu.vn</a> • <a href="https://lyhu.com.vn" class="text-teal-600 hover:underline">lyhu.com.vn</a></p>
+    <p>✉️ <strong>Email:</strong> sales@lyhu.vn | lyhu.vn@gmail.com</p>
+</div>
+`;
 
-    const contentHtml = `
+    // -------------------------------------------------------------------------
+    // BÀI 1: CẬP NHẬT ĐỊA CHỈ TRỤ SỞ MỚI
+    // -------------------------------------------------------------------------
+    const post1 = {
+        title: 'Bột Phô Mai BOYO 65G: "Tân Binh" Ăn Vặt Siêu Hot Chuẩn Bị Đổ Bộ Kệ Hàng Siêu Thị & Tiệm Tiện Lợi!',
+        slug: 'bot-pho-mai-boyo-65g-do-bo-ke-hang-sieu-thi-mini',
+        thumbnail_url: '/boyo_news_banner.jpg',
+        category_id: 'bbb06484-8d5c-4505-8ee5-6393dcdec950', // Nhà phân phối & điểm bán
+        status: 'published',
+        ai_summary: 'Bột phô mai BOYO 65g với bao bì rực rỡ, vị béo ngậy ngọt mặn cực cuốn, đóng gói hộp 10 gói mở nắp thành khay quầy kệ thông minh. LYHU mở cổng đăng ký sớm cho các đại lý, siêu thị mini và tạp hóa toàn quốc nhận mẫu thử miễn phí.',
+        meta_title: 'Bột Phô Mai BOYO 65G: Tân Binh Ăn Vặt Chuẩn Bị Đổ Bộ Siêu Thị | LYHU',
+        meta_description: 'Bột phô mai BOYO 65g thiết kế hộp 10 gói trưng bày quầy kệ thông minh, rắc khoai tây, gà rán, bắp rang siêu ngon. Đăng ký nhận hàng mẫu và báo giá phân phối sớm từ LYHU!',
+        keywords: 'bột phô mai boyo, boyo 65g, bột phô mai lắc khoai, gia vị rắc phô mai, tìm nhà phân phối bột phô mai, lyhu',
+        content: `
 <p class="lead text-lg font-medium text-gray-700 leading-relaxed mb-6">
     Nếu quầy kệ ăn vặt của siêu thị hay cửa hàng tiện lợi của bạn đang cần một <strong>"cú hích" doanh số mới</strong>, thì đây chính là tin vui đáng mong chờ nhất mùa này: Dòng sản phẩm <strong>Bột phô mai BOYO 65g</strong> do <strong>LYHU</strong> phát triển đang hoàn tất những khâu đóng gói cuối cùng để sẵn sàng đổ bộ thị trường bán lẻ toàn quốc!
 </p>
@@ -101,50 +120,186 @@ export async function GET(req: NextRequest) {
 <p>
     Hãy trở thành một trong những điểm bán đầu tiên đưa hương vị phô mai BOYO đến với người tiêu dùng tại khu vực của bạn!
 </p>
-<div class="bg-gray-50 p-6 rounded-xl border border-gray-200 space-y-2 text-gray-800">
-    <p>🏢 <strong>CÔNG TY TNHH LYHU</strong> – <em>Kết nối chân thành • Hợp tác bền vững</em></p>
-    <p>📞 <strong>Hotline / Zalo:</strong> <span class="text-primary-700 font-bold text-lg">0969 069 798</span></p>
-    <p>🌐 <strong>Website:</strong> <a href="https://lyhu.vn" class="text-teal-600 hover:underline">lyhu.vn</a> • <a href="https://lyhu.com.vn" class="text-teal-600 hover:underline">lyhu.com.vn</a></p>
-    <p>✉️ <strong>Email:</strong> sales@lyhu.vn | lyhu.vn@gmail.com</p>
-    <p>📍 <strong>Trụ sở:</strong> Số nhà 8A - Tỉnh Đội - KĐT Xa La - Phúc La - Hà Đông - Hà Nội</p>
-</div>
-`;
-
-    const postData = {
-        title: title,
-        slug: slug,
-        content: contentHtml,
-        thumbnail_url: thumbnailUrl,
-        category_id: categoryId,
-        status: 'published',
-        ai_summary: 'Bột phô mai BOYO 65g với bao bì rực rỡ, vị béo ngậy ngọt mặn cực cuốn, đóng gói hộp 10 gói mở nắp thành khay quầy kệ thông minh. LYHU mở cổng đăng ký sớm cho các đại lý, siêu thị mini và tạp hóa toàn quốc nhận mẫu thử miễn phí.',
-        meta_title: 'Bột Phô Mai BOYO 65G: Tân Binh Ăn Vặt Chuẩn Bị Đổ Bộ Siêu Thị | LYHU',
-        meta_description: 'Bột phô mai BOYO 65g thiết kế hộp 10 gói trưng bày quầy kệ thông minh, rắc khoai tây, gà rán, bắp rang siêu ngon. Đăng ký nhận hàng mẫu và báo giá phân phối sớm từ LYHU!',
-        keywords: 'bột phô mai boyo, boyo 65g, bột phô mai lắc khoai, gia vị rắc phô mai, tìm nhà phân phối bột phô mai, lyhu',
-        published_at: new Date().toISOString()
+${addressBlock}
+`
     };
 
-    try {
-        const { data: existing } = await supabase.from('blog_posts').select('id').eq('slug', slug).maybeSingle();
+    // -------------------------------------------------------------------------
+    // BÀI 2: GÓC KINH DOANH QUÁN & ĐIỂM BÁN (VỐN NHỎ, LỜI NHANH VỚI MÓN LẮC)
+    // -------------------------------------------------------------------------
+    const post2 = {
+        title: 'Bí Quyết Tăng Gấp Đôi Doanh Số Đồ Ăn Vặt Với Bột Phô Mai BOYO: Vốn Nhỏ, Lời Nhanh, Hút Khách Trẻ!',
+        slug: 'bi-quyet-tang-doanh-so-do-an-vat-voi-bot-pho-mai-boyo',
+        thumbnail_url: '/boyo_master_poster_v3.jpg',
+        category_id: 'bbb06484-8d5c-4505-8ee5-6393dcdec950', // Nhà phân phối & điểm bán
+        status: 'published',
+        ai_summary: 'Bí quyết bùng nổ doanh thu cho quán ăn vặt, tiệm gà rán, xe khoai lắc và tiệm tạp hóa nhờ bột phô mai BOYO. Công thức tỷ lệ vàng bám dính 360 độ, chi phí cost cực thấp chỉ vài trăm đồng một phần.',
+        meta_title: 'Bí Quyết Tăng Doanh Số Ăn Vặt Với Bột Phô Mai BOYO | LYHU',
+        meta_description: 'Mách các chủ quán ăn vặt, tiệm trà sữa và tạp hóa bí kíp tăng doanh thu nhờ bột phô mai BOYO: bám dính 360 độ, lên màu vàng đẹp mắt, cost thấp lời nhanh!',
+        keywords: 'kinh doanh đồ ăn vặt, khoai tây lắc phô mai, bột phô mai boyo, bí quyết bán đồ ăn vặt, lyhu',
+        content: `
+<p class="lead text-lg font-medium text-gray-700 leading-relaxed mb-6">
+    Bạn đang kinh doanh quán ăn vặt, tiệm gà rán, xe đẩy khoai lắc hay một tiệm tạp hóa gần trường học? Bạn muốn menu của mình có một món <strong>"gây nghiện"</strong>, làm cực nhanh mà tỷ suất lợi nhuận lại cao ngất ngưởng? Hãy cùng khám phá vì sao dòng <strong>Bột phô mai BOYO</strong> đang được xem là bí kíp tăng doanh thu không thể thiếu của các điểm bán ăn vặt năng động!
+</p>
 
-        let result;
+<div class="my-8 text-center">
+    <img src="/boyo_master_poster_v3.jpg" alt="Bột phô mai BOYO tăng doanh số quán ăn vặt" class="rounded-2xl shadow-lg mx-auto w-full max-w-xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">BOYO mang đến giải pháp gia vị toàn diện cho cả khách mua lẻ mang về lẫn bếp chế biến tại quán.</p>
+</div>
+
+<h2>1. Vì Sao Món "Lắc Phô Mai" Luôn Là Cỗ Máy Đẻ Tiền?</h2>
+<p>
+    Nếu quan sát các nhóm bạn trẻ đi ăn vặt, bạn sẽ thấy đĩa <strong>khoai tây lắc phô mai</strong> hay <strong>gà viên lắc</strong> luôn là món đầu tiên được gọi và hết sạch đầu tiên trên bàn.
+</p>
+<p>
+    Lý do rất đơn giản: Vị phô mai béo ngậy, ngọt mặn kích thích vị giác cực mạnh. Người ăn một miếng sẽ muốn ăn miếng thứ hai, ăn hết một đĩa lại gọi thêm đĩa nữa. Đặc biệt:
+</p>
+<ul>
+    <li><strong>Thời gian ra món siêu tốc:</strong> Chiên khoai/gà chín vàng, vớt ra ráo dầu 30 giây, cho vào hộp rắc 1 muỗng phô mai rồi lắc đều là giao khách. Cả quy trình chưa đầy 3 phút!</li>
+    <li><strong>Chi phí nguyên liệu (Cost) cực mềm:</strong> Một phần khoai lắc thông thường chỉ cần <strong>5g – 7g bột phô mai BOYO</strong>. Chi phí gia vị chỉ tốn vài trăm đồng, nhưng một đĩa khoai lắc phô mai bạn có thể bán với giá cao hơn khoai chiên thường từ 5.000đ – 10.000đ!</li>
+</ul>
+
+<h2>2. Menu 5 Món "Best-Seller" Dễ Làm, Hái Ra Tiền Cùng BOYO</h2>
+<div class="space-y-4 my-6">
+    <div class="p-4 bg-orange-50 rounded-xl border-l-4 border-orange-500">
+        <h3 class="font-bold text-orange-900 text-lg">🍟 1. Khoai Tây Lắc Phô Mai Kinh Điển</h3>
+        <p class="text-gray-700 text-sm">Khoai tây chiên giòn rụm bên ngoài, xốp mềm bên trong. Bột BOYO bám đều quanh từng cọng khoai, tỏa mùi thơm nức mũi cả góc phố.</p>
+    </div>
+    <div class="p-4 bg-amber-50 rounded-xl border-l-4 border-amber-500">
+        <h3 class="font-bold text-amber-900 text-lg">🍗 2. Gà Popcorn (Gà Viên) Lắc Phô Mai</h3>
+        <p class="text-gray-700 text-sm">Từng viên thịt gà chiên xù vàng óng, cắn ngập miệng thịt ngọt mềm quyện lớp phô mai béo mặn, học sinh sinh viên mê tít.</p>
+    </div>
+    <div class="p-4 bg-yellow-50 rounded-xl border-l-4 border-yellow-500">
+        <h3 class="font-bold text-yellow-900 text-lg">🍿 3. Bắp Rang Bơ Phô Mai Rạp Phim</h3>
+        <p class="text-gray-700 text-sm">Hạt bắp nổ bung cánh tròn xoe, thơm mùi bơ hòa cùng vị phô mai đậm đà. Món này đóng túi zip bán mang đi xem phim cực kỳ đắt hàng.</p>
+    </div>
+    <div class="p-4 bg-emerald-50 rounded-xl border-l-4 border-emerald-500">
+        <h3 class="font-bold text-emerald-900 text-lg">🍠 4. Khoai Lang Lắc & Bánh Tráng Phô Mai</h3>
+        <p class="text-gray-700 text-sm">Khoai lang kén giòn ngọt hoặc bánh tráng chiên giòn lắc phô mai, món ăn vặt quốc dân với mức vốn cực thấp.</p>
+    </div>
+</div>
+
+<h2>3. BOYO Có Gì Khiến Các Chủ Quán Tin Dùng?</h2>
+<ul>
+    <li><strong>Bám dính 360 độ:</strong> Hạt bột tơi mịn, bám chặt quanh món ăn nóng, không bị rơi rớt xuống đáy hộp gây lãng phí.</li>
+    <li><strong>Lên màu vàng ruộm hấp dẫn:</strong> Món ăn nhìn bóng bẩy, bắt mắt, khách hàng chụp ảnh check-in sống ảo cực đẹp.</li>
+    <li><strong>Hai lựa chọn quy cách linh hoạt:</strong>
+        <ul>
+            <li><strong>Túi zip 1kg chuyên dụng:</strong> Đóng mở tiện lợi, tiết kiệm tối đa chi phí cho bếp quán ăn vặt và chuỗi fast-food.</li>
+            <li><strong>Gói 65g nhỏ gọn:</strong> Bày ngay tại quầy thu ngân để bán kèm cho khách mang về tự làm món tại nhà.</li>
+        </ul>
+    </li>
+</ul>
+
+<h2>4. Đồng Hành Cùng LYHU – Đón Đầu Mẻ Hàng Mới Nhất</h2>
+<p>
+    Hiện tại dòng sản phẩm BOYO đang trong giai đoạn hoàn tất đóng gói để chuẩn bị phân phối rộng rãi. Nếu bạn là chủ quán hoặc đại lý đang muốn tìm một nguồn bột phô mai thơm ngon, bám dính tốt với mức giá sỉ tận xưởng:
+</p>
+<p class="font-semibold text-teal-800">
+    👉 Hãy để lại thông tin hoặc nhắn tin qua Zalo Hotline <strong>0969 069 798</strong> để được gửi mẫu thử trải nghiệm và giữ mức giá ưu đãi tốt nhất ngay khi mẻ hàng đầu tiên xuất xưởng!
+</p>
+${addressBlock}
+`
+    };
+
+    // -------------------------------------------------------------------------
+    // BÀI 3: GÓC BẾP GIA ĐÌNH & NGƯỜI TIÊU DÙNG (MẸ BỈM / GIỚI TRẺ LÀM TẠI NHÀ)
+    // -------------------------------------------------------------------------
+    const post3 = {
+        title: 'Cách Làm Khoai Tây Lắc Phô Mai Bằng Nồi Chiên Không Dầu Chuẩn Vị Quán Với BOYO 65G',
+        slug: 'cach-lam-khoai-tay-lac-pho-mai-noi-chien-khong-dau-boyo-65g',
+        thumbnail_url: '/boyo_news_banner.jpg',
+        category_id: '10db3b9f-0fc3-430c-a435-9c76a5e00c36', // Ẩm Thực & Nấu Ăn
+        status: 'published',
+        ai_summary: 'Hướng dẫn làm khoai tây lắc phô mai giòn rụm bằng nồi chiên không dầu chỉ trong 15 phút. Bí quyết dùng gói nhỏ BOYO 65g rắc đều bám dính, thơm ngon béo ngậy không lo ẩm mốc.',
+        meta_title: 'Cách Làm Khoai Tây Lắc Phô Mai Bằng Nồi Chiên Không Dầu | BOYO 65G',
+        meta_description: 'Học ngay công thức làm khoai tây lắc phô mai bằng nồi chiên không dầu giòn rụm, vàng ươm, thơm lừng cùng bột phô mai BOYO 65g tiện lợi cho gia đình!',
+        keywords: 'cách làm khoai tây lắc phô mai, khoai tây lắc nồi chiên không dầu, bột phô mai boyo 65g, món ngon dễ làm, lyhu',
+        content: `
+<p class="lead text-lg font-medium text-gray-700 leading-relaxed mb-6">
+    Những buổi tối cuối tuần quây quần xem phim cùng gia đình hay tụ tập hội bạn thân mà có một đĩa <strong>khoai tây chiên lắc phô mai nóng hổi, giòn rụm</strong> thì còn gì tuyệt vời hơn! Thay vì phải ra quán hay đặt ship tốn kém, bạn hoàn toàn có thể tự tay làm món ăn vặt thần thánh này bằng nồi chiên không dầu chỉ trong 15 phút với <strong>gói nhỏ tiện lợi BOYO 65g</strong>!
+</p>
+
+<div class="my-8 text-center">
+    <img src="/boyo_news_banner.jpg" alt="Làm khoai tây lắc phô mai tại nhà cùng BOYO 65g" class="rounded-2xl shadow-lg mx-auto w-full max-w-2xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Gói BOYO 65g nhỏ gọn – Vừa vặn cho 2-3 bữa ăn vặt gia đình, không lo ẩm mốc hay chảy nước.</p>
+</div>
+
+<h2>Nguyên Liệu Cực Đơn Giản:</h2>
+<ul>
+    <li>🥔 <strong>Khoai tây:</strong> 3 – 4 củ tươi (hoặc 1 túi khoai tây cắt sẵn đông lạnh chuyên dụng).</li>
+    <li>🧀 <strong>Bột phô mai BOYO:</strong> 2 – 3 thìa cà phê (khoảng 15g).</li>
+    <li>🫒 <strong>Dầu ăn:</strong> 1 thìa canh (hoặc bình xịt dầu).</li>
+    <li>🧂 <strong>Gia vị:</strong> 1/2 thìa cà phê muối tinh, nước đá lạnh.</li>
+</ul>
+
+<h2>Công Thức 3 Bước Làm Giòn Rụm, Vàng Ruộm:</h2>
+
+<h3>Bước 1: Sơ Chế Khoai Giòn Lâu</h3>
+<p>
+    Khoai tây gọt vỏ, cắt thành từng thanh con chì dài dày khoảng 1cm. Ngâm khoai ngay vào âu nước muối pha loãng khoảng 15 phút để loại bỏ hết tinh bột thừa (giúp khoai không bị thâm và khi chiên sẽ giòn xốp hơn). Sau đó vớt ra, chần qua nước sôi 2 phút rồi ngâm ngay vào âu nước đá lạnh 5 phút. Vớt khoai ra thấm thật khô bằng khăn sạch hoặc giấy ăn.
+</p>
+
+<h3>Bước 2: Nướng Bằng Nồi Chiên Không Dầu</h3>
+<ul>
+    <li>Trộn đều khoai với 1 thìa canh dầu ăn để khoai bóng bẩy và không bị khô mặt.</li>
+    <li>Làm nóng nồi chiên không dầu ở 180°C trong 5 phút.</li>
+    <li>Rải đều khoai vào khay nướng (không xếp chồng quá dày). Nướng lần 1 ở <strong>180°C trong 12 phút</strong>.</li>
+    <li>Mở nồi xóc đều khay khoai, nướng tiếp lần 2 ở <strong>200°C trong 5 – 7 phút</strong> cho đến khi cọng khoai chuyển sang màu vàng ruộm, vỏ ngoài giòn tan.</li>
+</ul>
+
+<h3>Bước 3: Rắc Phô Mai BOYO & Lắc Đều Tay</h3>
+<p>
+    Đổ khoai nóng ra một tô lớn hoặc túi giấy sạch. Đợi khoảng 30 giây cho khoai ráo bớt hơi nóng, sau đó rắc đều 2 - 3 thìa <strong>Bột phô mai BOYO 65g</strong> lên trên.
+</p>
+<p>
+    Đậy nắp tô hoặc gấp miệng túi giấy, lắc đều tay trong 10 giây. Hạt bột BOYO mịn màng sẽ bám phủ 360 độ quanh từng miếng khoai, tỏa hương thơm ngậy ngây ngất!
+</p>
+
+<h2>Vì Sao Gói BOYO 65G Là "Chân Ái" Của Các Căn Bếp?</h2>
+<ul>
+    <li><strong>Không lo lãng phí:</strong> Các gói bột phô mai nửa ký hay một ký mua về làm 1-2 lần không hết rất dễ bị vón cục và chảy nước. Gói BOYO 65g vừa vặn cho 3-4 lần ăn vặt gia đình, dùng đến đâu thơm ngon đến đó!</li>
+    <li><strong>Vị ngon chuẩn vị:</strong> Béo ngậy, ngọt mặn hài hòa, vị phô mai đậm đà rất tự nhiên, cả người lớn lẫn trẻ nhỏ đều mê tít.</li>
+    <li><strong>Dễ dàng mua sắm:</strong> Sản phẩm sắp có mặt trên các quầy kệ siêu thị mini và tiệm tạp hóa gần nhà bạn với mức giá cực kỳ phải chăng.</li>
+</ul>
+
+<p class="mt-8 text-gray-700">
+    Chúc bạn và gia đình thực hiện thành công món khoai tây lắc phô mai thơm ngon tuyệt đỉnh này nhé! Hãy theo dõi website <strong>lyhu.com.vn</strong> để cập nhật thêm nhiều công thức món ăn vặt hấp dẫn khác!
+</p>
+${addressBlock}
+`
+    };
+
+    const postsToUpsert = [post1, post2, post3];
+    const results = [];
+
+    for (const p of postsToUpsert) {
+        const { data: existing } = await supabase.from('blog_posts').select('id').eq('slug', p.slug).maybeSingle();
+
+        const postPayload = {
+            ...p,
+            published_at: new Date().toISOString()
+        };
+
+        let res;
         if (existing) {
-            result = await supabase.from('blog_posts').update(postData).eq('slug', slug).select();
+            res = await supabase.from('blog_posts').update(postPayload).eq('slug', p.slug).select();
         } else {
-            result = await supabase.from('blog_posts').insert([postData]).select();
+            res = await supabase.from('blog_posts').insert([postPayload]).select();
         }
 
-        if (result.error) {
-            return NextResponse.json({ error: result.error.message }, { status: 500 });
-        }
-
-        return NextResponse.json({
-            success: true,
-            message: 'BOYO 65g post published successfully!',
-            post: result.data ? result.data[0] : null,
-            viewUrl: `https://lyhu.com.vn/tin-tuc/${slug}`
+        results.push({
+            slug: p.slug,
+            success: !res.error,
+            id: res.data ? res.data[0]?.id : null,
+            error: res.error ? res.error.message : null,
+            url: `https://lyhu.com.vn/tin-tuc/${p.slug}`
         });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
     }
+
+    return NextResponse.json({
+        success: true,
+        message: 'Processed 3 BOYO news posts successfully!',
+        results
+    });
 }
