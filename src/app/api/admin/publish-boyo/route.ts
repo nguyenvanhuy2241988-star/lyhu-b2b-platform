@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
         <p class="text-sm font-bold text-gray-800">🛍️ Quý khách muốn mua lẻ trải nghiệm sản phẩm?</p>
         <p class="text-xs text-gray-600">Ghé ngay gian hàng Shopee chính hãng của BOYO để nhận ưu đãi giao hàng toàn quốc.</p>
     </div>
-    <a href="https://shopee.vn/boyo.vn" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-[#EE4D2D] hover:bg-[#d43f20] text-xs font-bold px-4 py-2 rounded-lg shadow whitespace-nowrap transition-colors" style="color: #ffffff !important; text-decoration: none !important;">
+    <a href="https://shopee.vn/boyo.vn?shopCollection=16825877#product_list" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-[#EE4D2D] hover:bg-[#d43f20] text-xs font-bold px-4 py-2 rounded-lg shadow whitespace-nowrap transition-colors" style="color: #ffffff !important; text-decoration: none !important;">
         <span style="color: #ffffff !important; font-weight: 700;">🧡 Shopee: shopee.vn/boyo.vn</span>
     </a>
 </div>
@@ -218,7 +218,7 @@ ${addressBlock}
         <a href="/?p=649577ef-2c77-429d-8216-f0771473243a" class="inline-flex items-center gap-1 bg-teal-700 hover:bg-teal-800 text-xs font-bold px-3 py-2 rounded-lg shadow whitespace-nowrap transition-colors" target="_blank" style="color: #ffffff !important; text-decoration: none !important;">
             <span style="color: #ffffff !important; font-weight: 700;">🛒 Xem BOYO 1kg</span>
         </a>
-        <a href="https://shopee.vn/boyo.vn" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-[#EE4D2D] hover:bg-[#d43f20] text-xs font-bold px-3 py-2 rounded-lg shadow whitespace-nowrap transition-colors" style="color: #ffffff !important; text-decoration: none !important;">
+        <a href="https://shopee.vn/boyo.vn?shopCollection=16825877#product_list" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-[#EE4D2D] hover:bg-[#d43f20] text-xs font-bold px-4 py-2 rounded-lg shadow whitespace-nowrap transition-colors" style="color: #ffffff !important; text-decoration: none !important;">
             <span style="color: #ffffff !important; font-weight: 700;">🧡 Shopee: shopee.vn/boyo.vn</span>
         </a>
     </div>
@@ -326,7 +326,7 @@ ${addressBlock}
                 <a href="/?p=b2f6a52f-ea58-470c-8014-b49600298e11" target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 font-bold text-sm px-5 py-2.5 rounded-xl shadow transition-all hover:scale-105" style="color: #ffffff !important; text-decoration: none !important;">
                     <span style="color: #ffffff !important; font-weight: 700;">🛒 Đặt Mua Tại LYHU.com.vn</span>
                 </a>
-                <a href="https://shopee.vn/boyo.vn" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-[#EE4D2D] hover:bg-[#d43f20] font-bold text-sm px-5 py-2.5 rounded-xl shadow transition-all hover:scale-105" style="color: #ffffff !important; text-decoration: none !important;">
+                <a href="https://shopee.vn/boyo.vn?shopCollection=16825877#product_list" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-[#EE4D2D] hover:bg-[#d43f20] font-bold text-sm px-5 py-2.5 rounded-xl shadow transition-all hover:scale-105" style="color: #ffffff !important; text-decoration: none !important;">
                     <span style="color: #ffffff !important; font-weight: 700;">🧡 Mua Shopee: shopee.vn/boyo.vn</span>
                 </a>
             </div>
@@ -347,7 +347,125 @@ ${addressBlock}
 `
     };
 
-    const postsToUpsert = [post1, post2, post3];
+    // -------------------------------------------------------------------------
+    // BÀI 4: GÓC BẾP GIA ĐÌNH & GIỚI TRẺ (BẮP RANG BƠ PHÔ MAI RẠP PHIM)
+    // -------------------------------------------------------------------------
+    const post4 = {
+        title: 'Cách Làm Bắp Rang Bơ Phô Mai Chuẩn Vị Rạp Phim Bằng Nồi Thường Với BOYO 65G',
+        slug: 'cach-lam-bap-rang-bo-pho-mai-chuan-vi-rap-phim-boyo-65g',
+        thumbnail_url: '/boyo_popcorn_banner.jpg',
+        category_id: '10db3b9f-0fc3-430c-a435-9c76a5e00c36', // Ẩm Thực & Nấu Ăn
+        status: 'published',
+        ai_summary: 'Bí quyết làm bắp rang bơ phô mai thơm nức mũi chuẩn vị rạp chiếu phim CGV bằng nồi thường hoặc chảo chống dính chỉ trong 10 phút. Hạt nổ bung 100%, bọc lớp bơ vàng béo ngậy và áo đều bột phô mai BOYO 65g đậm đà.',
+        meta_title: 'Cách Làm Bắp Rang Bơ Phô Mai Chuẩn Vị Rạp Phim CGV | BOYO 65G',
+        meta_description: 'Học ngay bí quyết làm bắp rang bơ phô mai giòn tan, thơm nức mũi chuẩn vị rạp chiếu phim CGV bằng nồi thường tại nhà chỉ 10 phút với bột phô mai BOYO 65g tiện lợi!',
+        keywords: 'bắp rang bơ phô mai, cách làm bắp rang bơ phô mai, bắp rang bơ lắc phô mai, bột phô mai làm bắp rang bơ, bột phô mai boyo, lyhu, shopee boyo',
+        content: `
+<p class="lead text-lg font-medium text-gray-700 leading-relaxed mb-6">
+    Những buổi tối xem phim Netflix hay tụ tập bạn bè cuối tuần, một tô <strong>bắp rang bơ phô mai nóng hổi, vàng ươm và thơm nức mũi</strong> chắc chắn là món ăn vặt "quốc dân" khiến cả người lớn lẫn trẻ nhỏ đều mê mẩn. Không cần máy nổ bắp chuyên dụng đắt tiền, bạn hoàn toàn có thể tự tay làm món bắp rang bơ phô mai giòn rụm, thơm ngậy chuẩn vị rạp chiếu phim CGV ngay tại nhà chỉ với một chiếc nồi thường và <strong>gói Bột phô mai BOYO 65g</strong>!
+</p>
+
+<div class="my-8 text-center">
+    <img src="/boyo_popcorn_banner.jpg" alt="Món bắp rang bơ phô mai chuẩn vị rạp phim làm tại nhà cùng BOYO 65g" class="rounded-2xl shadow-lg mx-auto w-full max-w-2xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Tô bắp rang bơ phô mai vàng óng, bung cánh đều tăm tắp hoàn thành chỉ sau 10 phút với nồi thường tại nhà.</p>
+</div>
+
+<h2>Nguyên Liệu Chuẩn Bị (Cho 3 - 4 Người Ăn):</h2>
+<ul>
+    <li>🌽 <strong>Hạt bắp khô chuyên dụng làm bắp rang (Corn Kernels):</strong> 100g (dễ dàng mua tại siêu thị, tiệm tạp hóa hoặc tiệm đồ làm bánh).</li>
+    <li>🧈 <strong>Bơ lạt hoặc bơ thực vật (Tường An, Meizan):</strong> 30g – 40g (tạo mùi thơm béo đặc trưng).</li>
+    <li>🫒 <strong>Dầu ăn:</strong> 2 thìa canh (dùng dầu ăn giúp bắp nở đều mà không bị cháy bơ).</li>
+    <li>🧀 <strong>Bột phô mai BOYO 65g:</strong> 2 – 3 thìa cà phê (khoảng 15g – 20g).</li>
+    <li>🍚 <strong>Đường cát trắng:</strong> 1 – 2 thìa cà phê (tùy khẩu vị thích ngọt mặn hài hòa).</li>
+</ul>
+
+<h2>Công Thức 3 Bước Làm Bắp Nổ Bung Cánh 100%:</h2>
+
+<h3>Bước 1: Nổ Bắp Bung Đều Bằng Nồi Thường</h3>
+<p>
+    Đặt một chiếc nồi sâu lòng hoặc chảo chống dính có nắp vung (ưu tiên nắp kính trong suốt) lên bếp. Cho 2 thìa canh dầu ăn vào đun nóng ở lửa vừa.
+</p>
+<p>
+    <strong>Bí quyết thử nhiệt độ:</strong> Thả trước 2 - 3 hạt bắp vào nồi, đậy nắp lại. Khi thấy 2 hạt bắp này nổ bung cánh thì dầu đã đạt độ nóng lý tưởng. Lúc này trút toàn bộ 100g bắp còn lại vào, đảo nhanh tay để dầu bao đều các hạt bắp rồi đậy vung lại.
+</p>
+<p>
+    Khi tiếng nổ "bốp, bốp" bắt đầu vang lên dồn dập, bạn giữ nhẹ tay lên quai nồi và lắc nhẹ qua lại trên mặt bếp mỗi 5 - 10 giây. Động tác lắc này giúp các hạt bắp chưa nổ rơi xuống đáy tiếp xúc nhiệt, còn các hạt bắp đã nở nổi lên trên, tránh bị cháy khét. Khi tiếng nổ thưa dần (cách nhau khoảng 2-3 giây) thì tắt bếp ngay, giữ nguyên nắp 30 giây để các hạt cuối cùng nổ hết.
+</p>
+
+<h3>Bước 2: Áo Lớp Bơ Thơm Lừng & Giòn Lâu</h3>
+<p>
+    Mở nắp vung nồi, cho ngay 30g bơ lạt và 1-2 thìa đường cát vào lúc bắp còn đang nóng rực. Dùng đũa hoặc muôi gỗ đảo nhanh tay trong 30 giây. Hơi nóng của bắp sẽ làm bơ tan chảy ngay lập tức, phủ một lớp bóng bẩy và thơm phức quanh từng cánh bắp.
+</p>
+
+<div class="my-6 text-center">
+    <img src="/boyo_popcorn_dish.jpg" alt="Bắp rang bơ sau khi áo lớp bơ vàng ruộm giòn tan" class="rounded-2xl shadow-md mx-auto w-full max-w-xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Từng hạt bắp bung cánh tròn xoe, thấm đẫm hương bơ thơm ngát trước khi lắc phô mai.</p>
+</div>
+
+<h3>Bước 3: Rắc Phô Mai BOYO 65G & Lắc Đều Tay</h3>
+<p>
+    Đổ toàn bộ bắp ra một chiếc âu lớn, tô inox hoặc một túi giấy sạch. Đợi khoảng 30 giây cho hơi nước thoát bớt (giúp bắp giữ độ giòn tan lâu hơn).
+</p>
+<p>
+    Rắc đều 2 - 3 thìa <strong>Bột phô mai BOYO 65g</strong> lên khắp mặt bắp. Dùng nắp đậy âu lại hoặc gấp miệng túi giấy, lắc đều tay theo hình tròn trong 10-15 giây.
+</p>
+<p>
+    Hạt bột phô mai BOYO mịn tơi, có độ bám dính vượt trội sẽ bao bọc 360 độ quanh từng rãnh nhỏ của cánh bắp. Màu cam vàng bắt mắt cùng hương vị béo mặn ngọt hài hòa sẽ khiến bạn ăn mãi không ngừng được!
+</p>
+
+<!-- KHỐI MUA HÀNG TRỰC TIẾP TẠI WEB LYHU & SHOPEE CHÍNH HÃNG -->
+<div class="not-prose my-10 p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-300 shadow-sm">
+    <div class="flex flex-col sm:flex-row items-center gap-6">
+        <div class="w-36 h-36 flex-shrink-0 bg-white rounded-2xl p-2 border border-amber-200 shadow-sm flex items-center justify-center overflow-hidden">
+            <img src="/boyo_65g_pack.jpg" alt="Bột phô mai BOYO 65g chính hãng" class="max-h-full w-auto object-contain" />
+        </div>
+        <div class="flex-1 text-center sm:text-left">
+            <span class="inline-block bg-amber-500 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-2">⭐ Gia Vị Ăn Vặt Khuyên Dùng</span>
+            <h4 class="text-xl font-bold text-gray-900 mb-1">Bột Phô Mai BOYO 65g – Hương Vị Béo Ngậy Chuẩn Vị Quán</h4>
+            <p class="text-sm text-gray-600 mb-3">Túi zip nhỏ tiện dụng, hạt bột mịn bám dính 360 độ, lên màu vàng cam bắt mắt. Vừa vặn cho 3-4 bữa ăn vặt gia đình!</p>
+            <div class="flex items-baseline gap-2 justify-center sm:justify-start mb-4">
+                <span class="text-2xl font-black text-amber-600">22.000đ</span>
+                <span class="text-xs text-gray-500 font-medium">/ gói 65g</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 justify-center sm:justify-start">
+                <a href="/?p=b2f6a52f-ea58-470c-8014-b49600298e11" target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 font-bold text-sm px-5 py-2.5 rounded-xl shadow transition-all hover:scale-105" style="color: #ffffff !important; text-decoration: none !important;">
+                    <span style="color: #ffffff !important; font-weight: 700;">🛒 Đặt Mua Tại LYHU.com.vn</span>
+                </a>
+                <a href="https://shopee.vn/boyo.vn?shopCollection=16825877#product_list" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-[#EE4D2D] hover:bg-[#d43f20] font-bold text-sm px-5 py-2.5 rounded-xl shadow transition-all hover:scale-105" style="color: #ffffff !important; text-decoration: none !important;">
+                    <span style="color: #ffffff !important; font-weight: 700;">🧡 Mua Shopee: shopee.vn/boyo.vn</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="mt-4 pt-3 border-t border-amber-200 text-sm text-gray-700 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-2">
+        <span>💡 <em>Dành cho tiệm trà sữa, rạp chiếu phim mini, quán ăn vặt:</em></span>
+        <a href="/?p=649577ef-2c77-429d-8216-f0771473243a" target="_blank" class="font-bold text-teal-700 hover:text-teal-900 underline flex items-center gap-1" style="color: #0f766e !important;">
+            📦 Xem Bột phô mai BOYO Túi Tiết Kiệm 1kg (199.000đ) &rarr;
+        </a>
+    </div>
+</div>
+
+<h2>Mẹo Nhỏ Để Bắp Rang Bơ Phô Mai Giòn Tan 2-3 Ngày:</h2>
+<ul>
+    <li><strong>Để bắp thật nguội trước khi đóng hộp:</strong> Nếu bạn làm nhiều ăn không hết, hãy để bắp nguội hoàn toàn ở nhiệt độ phòng rồi mới cho vào túi zip hoặc hũ thủy tinh đậy kín nắp.</li>
+    <li><strong>Không để bột phô mai vào nồi lúc đang đun:</strong> Bột phô mai chứa đường và sữa, nếu cho trực tiếp vào nồi đang đun lửa lớn sẽ bị caramel hóa và cháy đen. Luôn luôn nổ bắp xong, áo bơ rồi mới trút ra âu rắc bột phô mai BOYO.</li>
+</ul>
+
+<div class="p-5 bg-teal-50 rounded-xl border-l-4 border-teal-600 my-6">
+    <p class="text-teal-900 font-medium mb-1">🍟 <strong>Khám phá thêm công thức hot:</strong></p>
+    <p class="text-sm text-teal-800">
+        Bạn thích các món lắc phô mai? Đừng bỏ lỡ bài viết: <a href="/tin-tuc/cach-lam-khoai-tay-lac-pho-mai-noi-chien-khong-dau-boyo-65g" class="font-bold underline text-teal-900 hover:text-teal-950">Cách làm khoai tây lắc phô mai bằng nồi chiên không dầu giòn rụm chỉ 15 phút</a>!
+    </p>
+</div>
+
+<p class="mt-8 text-gray-700">
+    Chúc bạn thực hiện thành công mẻ bắp rang bơ phô mai thơm ngon tuyệt đỉnh này cho cả gia đình! Hãy theo dõi chuyên mục <strong>Ẩm Thực & Nấu Ăn</strong> tại website <strong>lyhu.com.vn</strong> để cập nhật thêm nhiều công thức món ngon độc đáo nhé!
+</p>
+${addressBlock}
+`
+    };
+
+    const postsToUpsert = [post1, post2, post3, post4];
     const results = [];
 
     for (const p of postsToUpsert) {
@@ -376,7 +494,7 @@ ${addressBlock}
 
     return NextResponse.json({
         success: true,
-        message: 'Processed 3 BOYO news posts successfully!',
+        message: 'Processed 4 BOYO news posts successfully!',
         results
     });
 }

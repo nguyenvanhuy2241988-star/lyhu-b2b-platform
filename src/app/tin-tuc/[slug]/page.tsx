@@ -217,6 +217,8 @@ export default async function BlogPostPage({ params }: Props) {
 
     let recipeSchema = null;
     if (post.slug.includes('cach-lam-') || post.category?.name?.toLowerCase().includes('nấu ăn') || post.category?.name?.toLowerCase().includes('ẩm thực')) {
+        const isPopcorn = post.slug.includes('bap-rang-bo');
+
         recipeSchema = {
             '@context': 'https://schema.org',
             '@type': 'Recipe',
@@ -228,20 +230,41 @@ export default async function BlogPostPage({ params }: Props) {
                 name: post.author?.full_name || 'LYHU Kitchen'
             },
             datePublished: post.published_at || post.created_at,
-            prepTime: 'PT15M',
-            cookTime: 'PT15M',
-            totalTime: 'PT30M',
+            prepTime: isPopcorn ? 'PT5M' : 'PT15M',
+            cookTime: isPopcorn ? 'PT5M' : 'PT15M',
+            totalTime: isPopcorn ? 'PT10M' : 'PT30M',
             recipeYield: '3-4 phần ăn',
             recipeCategory: 'Snack / Món ăn vặt',
             recipeCuisine: 'Việt Nam',
             keywords: post.keywords,
-            recipeIngredient: [
+            recipeIngredient: isPopcorn ? [
+                '100g Hạt bắp khô chuyên dụng làm bắp rang',
+                '30g Bơ lạt thực vật',
+                '15g Bột phô mai BOYO 65g',
+                '2 thìa canh dầu ăn, 2 thìa cà phê đường cát'
+            ] : [
                 '3-4 củ khoai tây tươi (hoặc khoai cắt sẵn đông lạnh)',
                 '15g Bột phô mai BOYO 65g',
                 '1 thìa canh dầu ăn',
                 '1/2 thìa cà phê muối tinh, nước đá lạnh'
             ],
-            recipeInstructions: [
+            recipeInstructions: isPopcorn ? [
+                {
+                    '@type': 'HowToStep',
+                    name: 'Nổ bắp bằng nồi thường',
+                    text: 'Đun nóng 2 thìa canh dầu ăn trong nồi sâu lòng, cho hạt bắp vào đảo đều rồi đậy vung lại. Giữ lửa vừa, khi bắp nổ lách tách liên tục thì cầm quai nồi lắc nhẹ qua lại để hạt bắp nổ đều không bị cháy.'
+                },
+                {
+                    '@type': 'HowToStep',
+                    name: 'Áo lớp bơ béo ngậy',
+                    text: 'Khi tiếng nổ ngưng hẳn, mở vung cho 30g bơ lạt và 2 thìa đường vào đảo nhanh tay khoảng 30 giây để bơ tan chảy bám đều quanh từng cánh bắp bung.'
+                },
+                {
+                    '@type': 'HowToStep',
+                    name: 'Rắc phô mai BOYO và lắc đều',
+                    text: 'Đổ bắp ra tô lớn, rắc đều 2 - 3 thìa bột phô mai BOYO 65g lên trên. Lắc đều tay 10 giây cho hạt bột phô mai bám dính vàng óng quanh từng hạt bắp giòn rụm.'
+                }
+            ] : [
                 {
                     '@type': 'HowToStep',
                     name: 'Sơ chế khoai giòn lâu',
