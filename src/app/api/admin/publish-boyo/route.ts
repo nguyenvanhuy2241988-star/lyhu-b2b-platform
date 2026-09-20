@@ -564,50 +564,72 @@ ${addressBlock}
     Chỉ với một gói bột phô mai trong tay, bạn có thể biến tấu hàng chục món ăn từ bếp nhà đến quán kinh doanh:
 </p>
 
-<div class="space-y-4 my-6">
-    <div class="p-4 bg-orange-50/70 rounded-xl border-l-4 border-orange-500">
-        <h3 class="font-bold text-orange-950 text-base mb-1">🍟 1. Khoai Tây Chiên Lắc Phô Mai (Best Seller quốc dân)</h3>
-        <p class="text-gray-700 text-sm">
-            Từng cọng khoai chiên vàng giòn rụm bên ngoài, bở xốp bên trong, áo đều lớp bột phô mai vàng óng béo ngậy. Món ăn kinh điển số 1 của mọi tiệm đồ ăn nhanh.
-            <br />
-            👉 <em>Xem ngay:</em> <a href="/tin-tuc/cach-lam-khoai-tay-lac-pho-mai-noi-chien-khong-dau-boyo-65g" class="text-teal-700 font-bold underline hover:text-teal-900">Cách làm khoai tây lắc phô mai bằng nồi chiên không dầu chỉ 15 phút tại nhà</a>.
+<div class="space-y-8 my-8">
+    <div class="p-6 bg-white rounded-2xl border-2 border-orange-200 shadow-sm">
+        <h3 class="font-bold text-orange-950 text-xl mb-2">🍟 1. Khoai Tây Chiên Lắc Phô Mai (Best Seller Quốc Dân)</h3>
+        <p class="text-gray-700 text-sm leading-relaxed mb-4">
+            Từng cọng khoai chiên vàng giòn rụm bên ngoài, bở xốp bên trong, áo đều lớp bột phô mai vàng óng béo ngậy. Món ăn kinh điển số 1 của mọi tiệm trà sữa, xe ăn vặt và chuỗi fast-food.
+        </p>
+        <div class="text-center my-4">
+            <img src="/boyo_dish_fries.jpg" alt="Khoai tây chiên lắc bột phô mai BOYO vàng óng giòn rụm" class="rounded-xl shadow-md mx-auto w-full max-w-xl object-cover max-h-96" />
+            <p class="text-xs text-gray-500 mt-2 italic">Từng cọng khoai tây chiên giòn tan được lắc đều tay cùng bột phô mai BOYO bám phủ 360 độ.</p>
+        </div>
+        <p class="text-sm text-teal-800 font-medium">
+            👉 <em>Xem ngay công thức chi tiết:</em> <a href="/tin-tuc/cach-lam-khoai-tay-lac-pho-mai-noi-chien-khong-dau-boyo-65g" class="text-teal-700 font-bold underline hover:text-teal-900">Cách làm khoai tây lắc phô mai bằng nồi chiên không dầu chỉ 15 phút tại nhà</a>.
         </p>
     </div>
 
-    <div class="p-4 bg-amber-50/70 rounded-xl border-l-4 border-amber-500">
-        <h3 class="font-bold text-amber-950 text-base mb-1">🍿 2. Bắp Rang Bơ Phô Mai Chuẩn Vị Rạp Phim CGV</h3>
-        <p class="text-gray-700 text-sm">
-            Hạt bắp nổ bung cánh bướm trắng muốt, thơm lừng bơ sữa, áo trọn lớp phô mai béo mặn đậm đà. Món ăn vặt không thể thiếu trong các buổi xem phim cuối tuần.
-            <br />
-            👉 <em>Xem ngay:</em> <a href="/tin-tuc/cach-lam-bap-rang-bo-pho-mai-chuan-vi-rap-phim-boyo-65g" class="text-teal-700 font-bold underline hover:text-teal-900">Cách làm bắp rang bơ phô mai bằng nồi thường nổ bung 100%</a>.
+    <div class="p-6 bg-white rounded-2xl border-2 border-amber-200 shadow-sm">
+        <h3 class="font-bold text-amber-950 text-xl mb-2">🍿 2. Bắp Rang Bơ Phô Mai Chuẩn Vị Rạp Phim CGV</h3>
+        <p class="text-gray-700 text-sm leading-relaxed mb-4">
+            Hạt bắp nổ bung cánh bướm trắng muốt, thơm lừng bơ sữa, áo trọn lớp phô mai béo mặn đậm đà. Món ăn vặt không thể thiếu trong các buổi xem phim cuối tuần cùng gia đình và bạn bè.
+        </p>
+        <div class="text-center my-4">
+            <img src="/boyo_dish_popcorn.jpg" alt="Bắp rang bơ áo đều bột phô mai Cheddar béo ngậy chuẩn vị rạp phim" class="rounded-xl shadow-md mx-auto w-full max-w-xl object-cover max-h-96" />
+            <p class="text-xs text-gray-500 mt-2 italic">Cận cảnh từng cánh bắp nổ bung áo đẫm bột phô mai cheddar vàng cam óng ả, giòn rụm khó cưỡng.</p>
+        </div>
+        <p class="text-sm text-teal-800 font-medium">
+            👉 <em>Xem ngay công thức chi tiết:</em> <a href="/tin-tuc/cach-lam-bap-rang-bo-pho-mai-chuan-vi-rap-phim-boyo-65g" class="text-teal-700 font-bold underline hover:text-teal-900">Cách làm bắp rang bơ phô mai bằng nồi thường nổ bung 100%</a>.
         </p>
     </div>
 
-    <div class="p-4 bg-yellow-50/70 rounded-xl border-l-4 border-yellow-500">
-        <h3 class="font-bold text-yellow-950 text-base mb-1">🍗 3. Gà Viên Chiên Giòn (Popcorn Chicken) Lắc Phô Mai</h3>
-        <p class="text-gray-700 text-sm">
-            Thịt ức gà mềm mọng cắt hạt lựu, tẩm bột chiên xù giòn tan, lắc đều cùng bột phô mai thơm nức. Món ăn yêu thích nhất của các bạn nhỏ và học sinh sinh viên.
+    <div class="p-6 bg-white rounded-2xl border-2 border-yellow-200 shadow-sm">
+        <h3 class="font-bold text-yellow-950 text-xl mb-2">🍗 3. Gà Viên Chiên Giòn (Popcorn Chicken) Lắc Phô Mai</h3>
+        <p class="text-gray-700 text-sm leading-relaxed mb-4">
+            Thịt ức gà mềm mọng cắt hạt lựu, tẩm bột chiên xù giòn tan ráo dầu, lắc đều cùng bột phô mai thơm nức mũi. Món ăn yêu thích nhất của các bạn nhỏ và học sinh sinh viên với hương vị thơm ngậy kích thích vị giác.
         </p>
+        <div class="text-center my-4">
+            <img src="/boyo_dish_chicken.jpg" alt="Gà viên chiên giòn rụm lắc bột phô mai chuẩn vị ăn vặt" class="rounded-xl shadow-md mx-auto w-full max-w-xl object-cover max-h-96" />
+            <p class="text-xs text-gray-500 mt-2 italic">Đĩa gà viên giòn rụm vừa ra lò, lớp vỏ vàng ươm chuẩn bị được phủ đẫm bột phô mai thơm ngậy.</p>
+        </div>
     </div>
 
-    <div class="p-4 bg-emerald-50/70 rounded-xl border-l-4 border-emerald-500">
-        <h3 class="font-bold text-emerald-950 text-base mb-1">🍠 4. Khoai Lang Lắc & Khoai Lang Kén Phô Mai</h3>
-        <p class="text-gray-700 text-sm">
-            Vị ngọt bùi tự nhiên của khoai lang kết hợp hoàn hảo cùng vị béo mặn của phô mai, tạo nên sự cân bằng hương vị độc đáo, ăn hoài không ngấy.
+    <div class="p-6 bg-white rounded-2xl border-2 border-emerald-200 shadow-sm">
+        <h3 class="font-bold text-emerald-950 text-xl mb-2">🍠 4. Khoai Lang Lắc & Khoai Lang Kén Phô Mai</h3>
+        <p class="text-gray-700 text-sm leading-relaxed mb-4">
+            Vị ngọt bùi tự nhiên của khoai lang kết hợp hoàn hảo cùng vị béo mặn của phô mai BOYO, tạo nên sự cân bằng hương vị độc đáo, ăn hoài không ngấy và là món ăn vặt đường phố rất được chuộng vào mùa thu đông.
         </p>
+        <div class="text-center my-4">
+            <img src="/boyo_dish_sweet_potato.jpg" alt="Khoai lang lắc bột phô mai béo ngậy ngọt bùi" class="rounded-xl shadow-md mx-auto w-full max-w-xl object-cover max-h-96" />
+            <p class="text-xs text-gray-500 mt-2 italic">Xửng khoai lang chiên vàng ruộm, kết hợp tuyệt hảo với vị mặn ngọt hài hòa của phô mai.</p>
+        </div>
     </div>
 
-    <div class="p-4 bg-teal-50/70 rounded-xl border-l-4 border-teal-500">
-        <h3 class="font-bold text-teal-950 text-base mb-1">🥖 5. Bánh Tráng Chiên Giòn & Nui Chiên Lắc Phô Mai</h3>
-        <p class="text-gray-700 text-sm">
-            Món ăn vặt "cứu đói" thần tốc: Nui hoặc bánh tráng cắt nhỏ chiên ngập dầu phồng xốp giòn rụm trong 30 giây, trút ra ráo dầu rồi lắc cùng phô mai BOYO, giòn tan vui miệng.
+    <div class="p-6 bg-white rounded-2xl border-2 border-indigo-200 shadow-sm">
+        <h3 class="font-bold text-indigo-950 text-xl mb-2">🍢 5. Bánh Gạo Chiên Lắc Phô Mai (Tteokbokki Cheese Shake)</h3>
+        <p class="text-gray-700 text-sm leading-relaxed mb-4">
+            Thỏi bánh gạo Hàn Quốc dẻo dai bên trong, lớp vỏ ngoài chiên giòn rụm, lắc đẫm bột phô mai truyền thống tạo nên món ăn vặt đường phố chuẩn vị Seoul cực kỳ cuốn hút giới trẻ.
         </p>
+        <div class="text-center my-4">
+            <img src="/boyo_dish_tteokbokki.jpg" alt="Bánh gạo chiên lắc phô mai chuẩn vị Hàn Quốc" class="rounded-xl shadow-md mx-auto w-full max-w-xl object-cover max-h-96" />
+            <p class="text-xs text-gray-500 mt-2 italic">Xiên bánh gạo chiên giòn vỏ, dẻo dai bên trong lắc đẫm phô mai béo mặn ngọt.</p>
+        </div>
     </div>
 
-    <div class="p-4 bg-indigo-50/70 rounded-xl border-l-4 border-indigo-500">
-        <h3 class="font-bold text-indigo-950 text-base mb-1">🍢 6. Bánh Gạo Chiên Lắc Phô Mai (Tteokbokki Cheese Shake)</h3>
-        <p class="text-gray-700 text-sm">
-            Thỏi bánh gạo Hàn Quốc dẻo dai bên trong, lớp vỏ ngoài chiên giòn rụm, lắc đẫm bột phô mai truyền thống tạo nên món ăn vặt đường phố chuẩn vị Seoul.
+    <div class="p-6 bg-white rounded-2xl border-2 border-teal-200 shadow-sm">
+        <h3 class="font-bold text-teal-950 text-xl mb-2">🥖 6. Bánh Tráng Chiên Giòn & Nui Chiên Lắc Phô Mai</h3>
+        <p class="text-gray-700 text-sm leading-relaxed">
+            Món ăn vặt "cứu đói" thần tốc: Nui hoặc bánh tráng cắt nhỏ chiên ngập dầu phồng xốp giòn rụm trong 30 giây, trút ra ráo dầu rồi lắc cùng phô mai BOYO, giòn tan vui miệng và chi phí nguyên liệu cực kỳ tiết kiệm cho học sinh sinh viên.
         </p>
     </div>
 </div>
