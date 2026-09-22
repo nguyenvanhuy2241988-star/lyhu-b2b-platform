@@ -905,19 +905,17 @@ ${addressBlock}
     <li>📖 <a href="/tin-tuc/bot-pho-mai-toan-tap-tieu-chuan-cach-dung-bang-gia" class="text-teal-600 font-semibold hover:underline">Bột Phô Mai Toàn Tập: Tiêu Chuẩn Chất Lượng, Cách Dùng & Bảng Giá Mới Nhất</a></li>
 </ul>
 
-<!-- KHỐI MUA HÀNG SẢN PHẨM BOYO -->
-<div class="my-10 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-amber-500/10 border-2 border-amber-300 rounded-3xl p-6 sm:p-8 shadow-sm">
+<!-- KHỐI MUA HÀNG TRỰC TIẾP TẠI WEB LYHU & SHOPEE CHÍNH HÃNG -->
+<div class="not-prose my-10 p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-300 shadow-sm">
     <div class="flex flex-col sm:flex-row items-center gap-6">
-        <div class="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 bg-white rounded-2xl p-2 shadow-md border border-amber-200">
-            <img src="/boyo_65g_pack.jpg" alt="Bột phô mai BOYO 65g chính hãng LYHU" class="w-full h-full object-contain" />
+        <div class="w-36 h-36 flex-shrink-0 bg-white rounded-2xl p-2 border border-amber-200 shadow-sm flex items-center justify-center overflow-hidden">
+            <img src="/boyo_65g_pack.jpg" alt="Bột phô mai BOYO 65g chính hãng" class="max-h-full w-auto object-contain" />
         </div>
-        <div class="flex-1 text-center sm:text-left space-y-3">
-            <span class="inline-block bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Gia Vị Ăn Vặt Quốc Dân</span>
-            <h3 class="text-xl sm:text-2xl font-black text-gray-900 leading-tight">Bột Phô Mai BOYO 65G – Vị Ngon Bùng Nổ Cho Mọi Món Lắc</h3>
-            <p class="text-sm text-gray-600 leading-relaxed">
-                Túi zipper 65g tiện lợi, dùng được 3 - 5 lần cho các món gà popcorn, khoai tây chiên, bắp rang bơ. Vị béo ngọt mặn chuẩn gu giới trẻ, bảo quản dễ dàng không lo vón cục!
-            </p>
-            <div class="flex flex-wrap items-baseline gap-2 justify-center sm:justify-start">
+        <div class="flex-1 text-center sm:text-left">
+            <span class="inline-block bg-amber-500 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-2">⭐ Gia Vị Ăn Vặt Khuyên Dùng</span>
+            <h4 class="text-xl font-bold text-gray-900 mb-1">Bột Phô Mai BOYO 65g – Hương Vị Béo Ngậy Chuẩn Vị Quán</h4>
+            <p class="text-sm text-gray-600 mb-3">Túi zip nhỏ tiện dụng, hạt bột mịn bám dính 360 độ, lên màu vàng cam bắt mắt. Vừa vặn cho 3-4 bữa ăn vặt gia đình!</p>
+            <div class="flex items-baseline gap-2 justify-center sm:justify-start mb-4">
                 <span class="text-2xl font-black text-amber-600">22.000đ</span>
                 <span class="text-xs text-gray-500 font-medium">/ gói 65g</span>
             </div>
