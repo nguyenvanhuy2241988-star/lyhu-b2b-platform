@@ -765,7 +765,188 @@ ${addressBlock}
 `
     };
 
-    const postsToUpsert = [post1, post2, post3, post4, post5];
+    // -------------------------------------------------------------------------
+    // BÀI 6: CÔNG THỨC GÀ VIÊN POPCORN LẮC PHÔ MAI NỒI CHIÊN KHÔNG DẦU
+    // -------------------------------------------------------------------------
+    const post6 = {
+        title: 'Cách Làm Gà Viên Lắc Phô Mai (Popcorn Chicken) Giòn Rụm Bằng Nồi Chiên Không Dầu Tại Nhà Với BOYO 65G',
+        slug: 'cach-lam-ga-vien-lac-pho-mai-noi-chien-khong-dau-boyo-65g',
+        thumbnail_url: '/boyo_chicken_banner.jpg',
+        category_id: '10db3b9f-0fc3-430c-a435-9c76a5e00c36', // Ẩm Thực & Nấu Ăn
+        status: 'published',
+        ai_summary: 'Bí quyết làm gà viên chiên giòn (Popcorn Chicken) chuẩn vị KFC bằng nồi chiên không dầu tại nhà, không ngấy mỡ. Thịt gà bên trong mềm mọng, lớp vỏ panko vàng rụm hòa quyện cùng bột phô mai BOYO 65g béo ngậy ngọt mặn cực cuốn hút.',
+        meta_title: 'Cách Làm Gà Viên Lắc Phô Mai Giòn Rụm Bằng Nồi Chiên Không Dầu | BOYO',
+        meta_description: 'Hướng dẫn tự làm gà viên lắc phô mai (Popcorn Chicken) tại nhà bằng nồi chiên không dầu giòn rụm không khô thịt, phủ đẫm bột phô mai BOYO 65g béo mặn chuẩn vị gà rán KFC!',
+        keywords: 'cách làm gà viên lắc phô mai, gà popcorn lắc phô mai nồi chiên không dầu, gà lắc phô mai kfc, bột phô mai boyo 65g, bột phô mai lyhu, popcorn chicken',
+        content: `
+<p class="lead text-lg font-medium text-gray-700 leading-relaxed mb-6">
+    Từng miếng <strong>gà viên giòn tan (Popcorn Chicken)</strong> vàng ươm, bên trong thịt ức gà mềm ngọt mọng nước, bên ngoài phủ một lớp <strong>bột phô mai BOYO 65g</strong> cam óng ả thơm ngào ngạt, béo bùi ngọt mặn đê mê... Đó là món ăn vặt "gây nghiện" hàng đầu của cả trẻ nhỏ lẫn người lớn tại các chuỗi gà rán nổi tiếng như KFC, Lotteria hay Jollibee.
+</p>
+
+<div class="my-8 text-center">
+    <img src="/boyo_chicken_banner.jpg" alt="Tô gà viên popcorn lắc phô mai BOYO thơm lừng giòn rụm" class="rounded-2xl shadow-lg mx-auto w-full max-w-3xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Gà viên Popcorn Chicken lắc phô mai BOYO 65g – Giòn rụm tan trong miệng, đậm đà béo ngậy chuẩn vị nhà hàng.</p>
+</div>
+
+<p>
+    Nhiều bạn e ngại làm gà rán tại nhà vì sợ <strong>ngấm dầu ngấy, bắn dầu mỡ bẩn bếp</strong> hoặc <strong>thịt ức gà bị khô xác</strong>. Đừng lo! Hôm nay LYHU sẽ hướng dẫn bạn bí quyết làm gà viên lắc phô mai <strong>bằng nồi chiên không dầu</strong> cực kỳ nhanh gọn, tiết kiệm 85% lượng dầu mỡ mà lớp vỏ vẫn giòn rụm như vừa vớt từ chảo dầu chuyên dụng!
+</p>
+
+<!-- HỘP THÔNG SỐ CÔNG THỨC -->
+<div class="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 p-5 rounded-r-xl my-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div>
+            <span class="block text-xs uppercase text-gray-500 font-semibold tracking-wider">Thời gian chuẩn bị</span>
+            <span class="text-lg font-bold text-gray-800">15 Phút</span>
+        </div>
+        <div>
+            <span class="block text-xs uppercase text-gray-500 font-semibold tracking-wider">Thời gian nướng</span>
+            <span class="text-lg font-bold text-gray-800">18 - 20 Phút</span>
+        </div>
+        <div>
+            <span class="block text-xs uppercase text-gray-500 font-semibold tracking-wider">Khẩu phần</span>
+            <span class="text-lg font-bold text-gray-800">3 - 4 Người</span>
+        </div>
+        <div>
+            <span class="block text-xs uppercase text-gray-500 font-semibold tracking-wider">Độ khó</span>
+            <span class="text-lg font-bold text-amber-600">Dễ (Ai cũng làm được)</span>
+        </div>
+    </div>
+</div>
+
+<h2>1. Chuẩn Bị Nguyên Liệu Tươi Ngon</h2>
+<p>
+    Để có được mẻ gà viên ngon đúng điệu, nguyên liệu tươi sạch và gia vị chuẩn là chìa khóa then chốt:
+</p>
+
+<div class="my-8 text-center">
+    <img src="/boyo_chicken_ingredients.jpg" alt="Nguyên liệu làm gà viên chiên giòn lắc phô mai" class="rounded-2xl shadow-lg mx-auto w-full max-w-3xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Bộ nguyên liệu đơn giản: Ức gà tươi, trứng, bột chiên giòn, bột xù panko và Bột phô mai BOYO 65g.</p>
+</div>
+
+<ul class="list-disc pl-6 space-y-2 text-gray-700">
+    <li><strong>Thịt ức gà tươi:</strong> 500g (chọn phần ức gà mềm, thớ thịt hồng hào, không mùi lạ).</li>
+    <li><strong>Sữa tươi không đường:</strong> 100ml (bí quyết giúp thịt gà ngậm nước, mềm tan và khử sạch mùi tanh).</li>
+    <li><strong>Gia vị ướp gà:</strong> 1 thìa cà phê tỏi băm nhuyễn (hoặc bột tỏi), 1 thìa cà phê tiêu trắng xay, 1/2 thìa cà phê hạt nêm, 1 thìa cà phê dầu hào, 1 thìa dầu ăn.</li>
+    <li><strong>Bột áo ngoài:</strong> 100g bột mì đa dụng (hoặc bột chiên giòn Meizan).</li>
+    <li><strong>Trứng gà:</strong> 2 quả đánh tan.</li>
+    <li><strong>Bột chiên xù Panko:</strong> 150g (chọn loại vụn xù hạt vừa để tạo độ xốp ròn đỉnh chóp).</li>
+    <li><strong>Gia vị linh hồn:</strong> 25g - 30g <strong>Bột phô mai BOYO 65g</strong> (khoảng 3 - 4 thìa canh gạt).</li>
+</ul>
+
+<h2>2. Các Bước Làm Gà Viên Lắc Phô Mai Nồi Chiên Không Dầu Chuẩn KFC</h2>
+
+<h3>Bước 1: Sơ chế và ướp thịt gà "ngậm sữa" mọng nước</h3>
+<div class="my-6 text-center">
+    <img src="/boyo_chicken_step1.jpg" alt="Thái ức gà hạt lựu và ướp sữa tươi đậm đà" class="rounded-2xl shadow-lg mx-auto w-full max-w-3xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Bước 1: Thái ức gà thành viên vuông vừa miệng (2x2cm), ngâm ướp cùng sữa tươi và gia vị 20 phút.</p>
+</div>
+<ol class="list-decimal pl-6 space-y-2 text-gray-700">
+    <li>Ức gà rửa sạch với chút nước muối pha loãng và gừng đập dập, dùng khăn giấy thấm thật khô ráo.</li>
+    <li>Dùng dao sắc cắt thịt gà thành các khối vuông quân cờ vừa ăn (kích thước khoảng 2x2 cm). Không nên cắt quá bé gà sẽ teo tóp khi nướng, cũng không cắt quá to gà khó chín đều.</li>
+    <li>Cho thịt gà vào âu, đổ 100ml sữa tươi không đường vào ngâm trong 15 phút. Sữa tươi chứa axit lactic nhẹ giúp phá vỡ các sợi cơ dai của ức gà, giữ nước tuyệt đối khi nướng nhiệt cao.</li>
+    <li>Chắt bớt sữa (chừa lại khoảng 1 thìa canh), cho tiếp bột tỏi, tiêu xay, hạt nêm, dầu hào và 1 thìa dầu ăn vào trộn đều. Ướp tiếp 15 phút cho thịt ngấm đều vị.</li>
+</ol>
+
+<h3>Bước 2: Tẩm 3 lớp bột áo và nướng giòn rụm bằng nồi chiên không dầu</h3>
+<div class="my-6 text-center">
+    <img src="/boyo_chicken_step2.jpg" alt="Nướng gà viên chiên xù trong khay nồi chiên không dầu" class="rounded-2xl shadow-lg mx-auto w-full max-w-3xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Bước 2: Lăn qua bột giòn - trứng - bột xù, xịt dầu nhẹ và nướng nồi chiên không dầu vàng ruộm.</p>
+</div>
+<ol class="list-decimal pl-6 space-y-2 text-gray-700">
+    <li>Chuẩn bị 3 tô nông cạnh nhau: Tô 1 (bột mì/chiên giòn), Tô 2 (trứng gà đánh tan), Tô 3 (bột chiên xù Panko).</li>
+    <li>Gắp từng viên gà lăn qua tô 1 để phủ một lớp bột mỏng (lắc nhẹ rũ bột thừa) &rarr; nhúng ngập qua tô 2 (trứng gà) &rarr; lăn đều vào tô 3 (ấn nhẹ tay để bột xù bám chắc quanh viên gà).</li>
+    <li>Làm nóng nồi chiên không dầu ở nhiệt độ <strong>180°C trong 5 phút</strong> trước khi xếp gà.</li>
+    <li>Xếp từng viên gà vào giỏ nướng, giữ khoảng cách nhỏ giữa các viên để luồng khí nóng đối lưu hoàn hảo. Dùng bình xịt phun một lớp mỏng dầu ăn lên bề mặt viên gà (giúp bột xù chín giòn xốp và vàng đều không bị bạc trắng).</li>
+    <li><strong>Thời gian nướng chuẩn:</strong>
+        <ul class="list-disc pl-5 mt-1 space-y-1">
+            <li>Lần 1: Nướng ở <strong>180°C trong 10 phút</strong>.</li>
+            <li>Lần 2: Mở nồi, lật mặt viên gà, xịt thêm một tia dầu mỏng và nướng tiếp ở <strong>200°C trong 5 - 7 phút</strong> cho lớp vỏ ngoài chuyển màu vàng ruộm, giòn rôm rốp.</li>
+        </ul>
+    </li>
+</ol>
+
+<h3>Bước 3: Lắc đẫm bột phô mai BOYO béo ngậy ngọt mặn cực đã</h3>
+<div class="my-6 text-center">
+    <img src="/boyo_chicken_step3.jpg" alt="Lắc gà viên chiên giòn cùng bột phô mai BOYO trong âu thủy tinh" class="rounded-2xl shadow-lg mx-auto w-full max-w-3xl" />
+    <p class="text-sm text-gray-500 mt-2 italic">Bước 3: Cho gà nóng hổi vào âu, rắc 3 thìa bột phô mai BOYO 65g và xóc đều tay để phô mai bám mịn quanh từng viên thịt.</p>
+</div>
+<ol class="list-decimal pl-6 space-y-2 text-gray-700">
+    <li>Lấy gà viên ra khỏi nồi chiên, để nghỉ trên giấy thấm dầu khoảng <strong>1 phút</strong> để hơi ẩm bay bớt và lớp vỏ cứng cáp hơn (tránh lắc ngay lúc đang ướt hơi nước sẽ làm phô mai bị bết cục).</li>
+    <li>Cho gà vào âu lớn (hoặc hộp nhựa đậy nắp). Rắc đều <strong>3 - 4 thìa canh bột phô mai BOYO 65g</strong> lên trên.</li>
+    <li>Đậy nắp hoặc dùng tay lắc đều liên tục trong 15 - 20 giây. Bột phô mai BOYO với độ mịn lý chuẩn sẽ phủ đều một lớp áo nhung cam tươi mịn màng quanh từng gờ nhọn của vụn xù panko, tỏa mùi thơm béo ngậy nức mũi!</li>
+</ol>
+
+<h2>3. Thành Phẩm Và Trải Nghiệm Thưởng Thức</h2>
+<p>
+    Gắp một viên gà Popcorn vàng ươm cho vào miệng, bạn sẽ nghe thấy tiếng <strong>rôm rốp</strong> giòn tan của lớp vỏ xù panko. Ngay sau đó là vị béo ngậy, ngọt dịu xen lẫn vị mặn thanh tinh tế của bột phô mai BOYO tan chảy trên đầu lưỡi, hòa quyện với phần thịt gà bên trong mềm ẩm, thơm phức không hề bị khô xác.
+</p>
+<p>
+    Món này chấm kèm tương ớt, tương cà hoặc sốt mayonnaise cay, uống kèm một ly nước ngọt có gas mát lạnh thì ngon không thua kém bất kỳ nhà hàng thức ăn nhanh nào mà chi phí lại chỉ bằng 1/3!
+</p>
+
+<!-- BẢNG BÍ QUYẾT -->
+<div class="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl my-6">
+    <h3 class="text-blue-900 font-bold text-lg mb-2">💡 3 Mẹo Vàng Để Gà Viên Giòn Lâu & Thấm Vị</h3>
+    <ul class="list-disc pl-5 space-y-2 text-blue-950 text-sm">
+        <li><strong>Không bỏ qua bước ngâm sữa:</strong> Sữa tươi không đường là vũ khí bí mật giúp ức gà mềm mọng nước, không bị xơ cứng như cách chiên truyền thống.</li>
+        <li><strong>Độ ẩm khi lắc:</strong> Để gà ráo bớt hơi nước nóng 1 phút trước khi rắc bột phô mai. Nếu lắc khi gà còn ướt sũng, phô mai sẽ hút ẩm tan chảy; nếu để gà nguội ngắt, phô mai lại khó bám dính.</li>
+        <li><strong>Chọn đúng bột phô mai chuyên dụng BOYO:</strong> Khác với các dòng phô mai bột nấu xốt dễ vón, <strong>Bột phô mai BOYO 65g</strong> được tinh chế với độ bám dính hoàn hảo trên bề mặt chiên nướng, tạo màu vàng cam hấp dẫn và vị béo mặn ngọt hài hòa không gắt cổ.</li>
+    </ul>
+</div>
+
+<h2>4. Khám Phá Thêm Các Món Lắc Bột Phô Mai BOYO Tuyệt Đỉnh</h2>
+<p>
+    Gói bột phô mai BOYO 65g nhỏ gọn còn có thể biến tấu muôn vàn món ăn vặt hấp dẫn khác cho gia đình bạn:
+</p>
+<ul class="list-disc pl-6 space-y-2 text-gray-700">
+    <li>🍟 <a href="/tin-tuc/cach-lam-khoai-tay-lac-pho-mai-noi-chien-khong-dau-boyo-65g" class="text-teal-600 font-semibold hover:underline">Cách Làm Khoai Tây Lắc Phô Mai Nồi Chiên Không Dầu Chuẩn Vị Giòn Tan</a></li>
+    <li>🍿 <a href="/tin-tuc/cach-lam-bap-rang-bo-pho-mai-chuan-vi-rap-phim-boyo-65g" class="text-teal-600 font-semibold hover:underline">Cách Làm Bắp Rang Bơ Phô Mai Chuẩn Vị Rạp Phim Bằng Chảo Tại Nhà</a></li>
+    <li>📖 <a href="/tin-tuc/bot-pho-mai-toan-tap-tieu-chuan-cach-dung-bang-gia" class="text-teal-600 font-semibold hover:underline">Bột Phô Mai Toàn Tập: Tiêu Chuẩn Chất Lượng, Cách Dùng & Bảng Giá Mới Nhất</a></li>
+</ul>
+
+<!-- KHỐI MUA HÀNG SẢN PHẨM BOYO -->
+<div class="my-10 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-amber-500/10 border-2 border-amber-300 rounded-3xl p-6 sm:p-8 shadow-sm">
+    <div class="flex flex-col sm:flex-row items-center gap-6">
+        <div class="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 bg-white rounded-2xl p-2 shadow-md border border-amber-200">
+            <img src="/boyo_65g.jpg" alt="Bột phô mai BOYO 65g chính hãng LYHU" class="w-full h-full object-contain" />
+        </div>
+        <div class="flex-1 text-center sm:text-left space-y-3">
+            <span class="inline-block bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Gia Vị Ăn Vặt Quốc Dân</span>
+            <h3 class="text-xl sm:text-2xl font-black text-gray-900 leading-tight">Bột Phô Mai BOYO 65G – Vị Ngon Bùng Nổ Cho Mọi Món Lắc</h3>
+            <p class="text-sm text-gray-600 leading-relaxed">
+                Túi zipper 65g tiện lợi, dùng được 3 - 5 lần cho các món gà popcorn, khoai tây chiên, bắp rang bơ. Vị béo ngọt mặn chuẩn gu giới trẻ, bảo quản dễ dàng không lo vón cục!
+            </p>
+            <div class="flex flex-wrap items-baseline gap-2 justify-center sm:justify-start">
+                <span class="text-2xl font-black text-amber-600">22.000đ</span>
+                <span class="text-xs text-gray-500 font-medium">/ gói 65g</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 justify-center sm:justify-start">
+                <a href="/?p=b2f6a52f-ea58-470c-8014-b49600298e11" target="_blank" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 font-bold text-sm px-5 py-2.5 rounded-xl shadow transition-all hover:scale-105" style="color: #ffffff !important; text-decoration: none !important;">
+                    <span style="color: #ffffff !important; font-weight: 700;">🛒 Đặt Mua Tại LYHU.com.vn</span>
+                </a>
+                <a href="https://shopee.vn/boyo.vn?shopCollection=16825877#product_list" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-[#EE4D2D] hover:bg-[#d43f20] font-bold text-sm px-5 py-2.5 rounded-xl shadow transition-all hover:scale-105" style="color: #ffffff !important; text-decoration: none !important;">
+                    <span style="color: #ffffff !important; font-weight: 700;">🧡 Mua Shopee: shopee.vn/boyo.vn</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="mt-4 pt-3 border-t border-amber-200 text-sm text-gray-700 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-2">
+        <span>💡 <em>Dành cho chủ quán gà rán, quán ăn vặt, tiệm trà sữa:</em></span>
+        <a href="/?p=649577ef-2c77-429d-8216-f0771473243a" target="_blank" class="font-bold text-teal-700 hover:text-teal-900 underline flex items-center gap-1" style="color: #0f766e !important;">
+            📦 Xem Bột phô mai BOYO Túi Tiết Kiệm 1kg (199.000đ) &rarr;
+        </a>
+    </div>
+</div>
+
+<p class="mt-8 text-gray-700">
+    Hãy vào bếp thử ngay công thức gà viên lắc phô mai giòn rụm này để chiêu đãi cả nhà vào dịp cuối tuần hoặc làm món ăn xế cho các bé. Chúc bạn thực hiện thành công và có những phút giây sum vầy thật ngon miệng!
+</p>
+${addressBlock}
+`
+    };
+
+    const postsToUpsert = [post1, post2, post3, post4, post5, post6];
     const results = [];
 
     for (const p of postsToUpsert) {
@@ -794,7 +975,7 @@ ${addressBlock}
 
     return NextResponse.json({
         success: true,
-        message: 'Processed 5 BOYO news posts successfully!',
+        message: 'Processed 6 BOYO news posts successfully!',
         results
     });
 }
