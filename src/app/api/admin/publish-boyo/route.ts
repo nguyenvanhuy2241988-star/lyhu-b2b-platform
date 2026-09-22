@@ -909,7 +909,7 @@ ${addressBlock}
 <div class="my-10 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-amber-500/10 border-2 border-amber-300 rounded-3xl p-6 sm:p-8 shadow-sm">
     <div class="flex flex-col sm:flex-row items-center gap-6">
         <div class="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 bg-white rounded-2xl p-2 shadow-md border border-amber-200">
-            <img src="/boyo_65g.jpg" alt="Bột phô mai BOYO 65g chính hãng LYHU" class="w-full h-full object-contain" />
+            <img src="/boyo_65g_pack.jpg" alt="Bột phô mai BOYO 65g chính hãng LYHU" class="w-full h-full object-contain" />
         </div>
         <div class="flex-1 text-center sm:text-left space-y-3">
             <span class="inline-block bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Gia Vị Ăn Vặt Quốc Dân</span>
