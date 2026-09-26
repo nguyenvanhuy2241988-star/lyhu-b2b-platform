@@ -235,12 +235,11 @@ export default function CulturePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [uploadingId, setUploadingId] = useState<string | null>(null);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const supabase = createClient();
     const { showToast } = useToast();
 
-    // MÀU THƯƠNG HIỆU
-    const BRAND = { teal: '#00afa9', green: '#98c93c' };
+    // MÀU THƯƠNG HIỆU CHUẨN LYHU
+    const BRAND = { teal: '#00AFA9', green: '#8EC63F' };
 
     const TABS = [
         { id: 'intro', label: "Thông điệp mở đầu", icon: Info },
@@ -391,8 +390,8 @@ export default function CulturePage() {
                                                     : "text-slate-500 hover:bg-white/60 hover:text-slate-800"
                                                 }`}
                                             >
-                                                {isActive && <div className="absolute -left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-slate-800 rounded-r-full" />}
-                                                <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-slate-800' : 'text-slate-400'}`} />
+                                                {isActive && <div className="absolute -left-0 top-1/2 -translate-y-1/2 w-1.5 h-5 bg-[#00AFA9] rounded-r-full" />}
+                                                <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-[#00AFA9]' : 'text-slate-400'}`} />
                                                 <span className="text-[14px] leading-tight">{tab.label}</span>
                                             </div>
                                         );
@@ -403,43 +402,33 @@ export default function CulturePage() {
 
                         {/* RIGHT CONTENT AREA */}
                         <div id="culture-scroll-container" className="flex-1 flex flex-col h-[calc(100vh-73px)] overflow-y-auto w-full relative bg-white">
-                            {/* Mobile Nav Top Bar */}
-                            <div className="lg:hidden border-b border-slate-100 bg-white/90 backdrop-blur-md sticky top-0 z-40">
-                                <button 
-                                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-                                    className="w-full p-4 flex items-center justify-between text-slate-800 font-medium"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center">
-                                            <Menu className="w-4 h-4 text-slate-600" />
-                                        </div>
-                                        <span>{TABS.find(t => t.id === activeTab)?.label}</span>
-                                    </div>
-                                    <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isMobileMenuOpen ? 'rotate-180' : ''}`} />
-                                </button>
-                                {isMobileMenuOpen && (
-                                    <div className="absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-sm overflow-y-auto max-h-[60vh] z-50">
-                                        <div className="p-2 space-y-1">
-                                            {TABS.map((tab) => {
-                                                const isActive = tab.id === activeTab;
-                                                const Icon = tab.icon;
-                                                return (
-                                                    <div 
-                                                        key={tab.id}
-                                                        onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
-                                                        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer ${isActive ? 'bg-slate-50 text-slate-900 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}
-                                                    >
-                                                        <Icon className="w-4 h-4" />
-                                                        {tab.label}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
+                            {/* Mobile Nav Top Strip - Sleek Horizontal Pills */}
+                            <div className="lg:hidden border-b border-slate-100 bg-white sticky top-0 z-40 overflow-x-auto no-scrollbar py-2.5 px-3 flex items-center gap-2">
+                                {TABS.map((tab) => {
+                                    const isActive = tab.id === activeTab;
+                                    const Icon = tab.icon;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => {
+                                                setActiveTab(tab.id);
+                                                const container = document.getElementById('culture-scroll-container');
+                                                if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }}
+                                            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap shrink-0 transition-colors ${
+                                                isActive
+                                                    ? "bg-[#00AFA9] text-white"
+                                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                            }`}
+                                        >
+                                            <Icon className="w-3.5 h-3.5 shrink-0" />
+                                            <span>{tab.label}</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
 
-                            <div className="w-full max-w-4xl mx-auto p-6 md:p-12 lg:p-16 xl:p-24 pb-32">
+                            <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 md:p-10 lg:p-14 pb-28">
                                 {activeTab === 'intro' && <IntroductionView brand={BRAND} />}
                                 {activeTab === 'brand' && <BrandIdentityView brand={BRAND} />}
                                 {activeTab === 'logo' && <LogoView brand={BRAND} />}
@@ -590,20 +579,20 @@ function BrandIdentityView({ brand }: { brand: any }) {
                         { l: "H", color: brand.green, textDefault: "HARMONIZE", sub: "Hòa hợp trong tập thể", desc: "Sức mạnh của tập thể luôn lớn hơn cá nhân. Sự gắn kết đồng thuận tạo nên động lực bức phá." },
                         { l: "U", color: brand.teal, textDefault: "UNIFY", sub: "Thống nhất cùng mục tiêu", desc: "Cùng chung một tầm nhìn, đồng lòng hướng tới một tương lai thịnh vượng, mang tên LYHU." },
                     ].map((item, i) => (
-                        <div key={i} className="group">
-                            <div className="flex items-center gap-6 mb-4">
-                                <div className="text-6xl font-bold" style={{ color: item.color }}>{item.l}</div>
+                        <div key={i} className="group bg-white p-4 sm:p-6 rounded-2xl border border-slate-200">
+                            <div className="flex items-center gap-4 sm:gap-6 mb-3 sm:mb-4">
+                                <div className="text-4xl sm:text-6xl font-black shrink-0 w-12" style={{ color: item.color }}>{item.l}</div>
                                 <div>
-                                    <h4 className="font-bold text-slate-800 text-3xl tracking-widest uppercase">
+                                    <h4 className="font-extrabold text-slate-800 text-xl sm:text-2xl tracking-wider uppercase">
                                         <EditableText id={`adn_title_${i}`} defaultText={item.textDefault} />
                                     </h4>
-                                    <p className="text-slate-500 font-medium tracking-wide text-sm mt-1">
+                                    <p className="text-slate-500 font-medium tracking-wide text-xs sm:text-sm mt-0.5">
                                         <EditableText id={`adn_sub_${i}`} defaultText={item.sub} />
                                     </p>
                                 </div>
                             </div>
-                            <EditableImage id={`img_adn_${i}`} className="aspect-[3/2] w-full mb-4" label={`Poster ${item.textDefault}`} />
-                            <p className="text-slate-600 text-lg leading-relaxed">
+                            <EditableImage id={`img_adn_${i}`} className="aspect-[3/2] w-full mb-3 rounded-xl overflow-hidden" label={`Poster ${item.textDefault}`} />
+                            <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
                                 <EditableText id={`adn_desc_${i}`} multiline defaultText={item.desc} />
                             </p>
                         </div>
@@ -736,14 +725,14 @@ function LogoView({ brand }: { brand: any }) {
                 <h2 className="text-2xl font-bold text-slate-800 mb-6 uppercase tracking-wide text-center"><EditableText id="logo_color_title" defaultText="Ý Nghĩa Gam Màu Thương Hiệu" /></h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="flex bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 p-2">
-                        <div className="w-24 shrink-0 rounded-xl flex items-center justify-center text-white text-xs font-mono font-bold shadow-sm" style={{ backgroundColor: brand.teal }}>#04ACA9</div>
+                        <div className="w-24 shrink-0 rounded-xl flex items-center justify-center text-white text-xs font-mono font-bold shadow-sm" style={{ backgroundColor: brand.teal }}>#00AFA9</div>
                         <div className="pl-6 py-4 flex-1">
                             <h3 className="font-bold text-slate-800 text-xl tracking-tight mb-2"><EditableText id="color1_t" defaultText="Thanh Lịch & Uy Tín" /></h3>
                             <p className="text-slate-600 text-sm leading-relaxed"><EditableText id="color1_d" multiline defaultText="Xanh ngọc - Biểu trưng cho sự hiện đại, chân thành, sâu sắc và độ tin cậy tuyệt đối." /></p>
                         </div>
                     </div>
                     <div className="flex bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 p-2">
-                        <div className="w-24 shrink-0 rounded-xl flex items-center justify-center text-white text-xs font-mono font-bold shadow-sm" style={{ backgroundColor: brand.green }}>#8FC842</div>
+                        <div className="w-24 shrink-0 rounded-xl flex items-center justify-center text-white text-xs font-mono font-bold shadow-sm" style={{ backgroundColor: brand.green }}>#8EC63F</div>
                         <div className="pl-6 py-4 flex-1">
                             <h3 className="font-bold text-slate-800 text-xl tracking-tight mb-2"><EditableText id="color2_t" defaultText="Tươi Mới & Vững Bền" /></h3>
                             <p className="text-slate-600 text-sm leading-relaxed"><EditableText id="color2_d" multiline defaultText="Xanh lá - Mang năng lượng của sự sinh trưởng, bền vững, thân thiện và không ngừng phát triển." /></p>
@@ -755,11 +744,11 @@ function LogoView({ brand }: { brand: any }) {
         num4: (
             <div key="num4" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'num4')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'num4')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
-                <h2 className="text-3xl font-bold text-slate-800 mb-6 tracking-tight uppercase text-center"><EditableText id="logo_num4_title" defaultText="ADN LYHU – Sức mạnh của số 4" /></h2>
-                <p className="text-xl text-slate-500 font-medium text-center mb-10 max-w-3xl mx-auto">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-4 tracking-tight uppercase text-center"><EditableText id="logo_num4_title" defaultText="ADN LYHU – Sức mạnh của số 4" /></h2>
+                <p className="text-base sm:text-lg text-slate-500 font-medium text-center mb-8 max-w-3xl mx-auto">
                     <EditableText id="logo_num4_intro" multiline defaultText="Với LYHU, số 4 không chỉ là một con số. Nó chính là linh hồn của văn hóa doanh nghiệp." />
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     {[
                         { n: 1, title: '4 Cánh nối tiếp nhau', desc: 'Logo của LYHU có 4 cánh, biểu tượng cho sức mạnh của tinh thần đoàn kết, gắn bó bền chặt.', icon: HeartHandshake },
                         { n: 2, title: '4 Ký tự tên công ty', desc: 'Mỗi chữ cái là một giá trị cốt lõi: Love (Yêu thương), Yearn (Khao khát), Harmonize (Hòa hợp), Unify (Thống nhất).', icon: Shapes },
@@ -768,15 +757,15 @@ function LogoView({ brand }: { brand: any }) {
                     ].map((item, idx) => {
                         const Icon = item.icon;
                         return (
-                        <div key={idx} className="bg-slate-50/50 p-6 rounded-2xl flex gap-6 hover:shadow-sm transition-shadow group">
-                            <div className="w-16 h-16 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center transition-transform group-hover:scale-105" style={{ color: brand.teal }}>
-                                <Icon className="w-8 h-8 stroke-[1.5]" />
+                        <div key={idx} className="bg-slate-50/70 p-4 sm:p-6 rounded-2xl flex gap-4 border border-slate-100 hover:border-teal-200 transition-colors group">
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 bg-white rounded-xl border border-slate-200 flex items-center justify-center" style={{ color: brand.teal }}>
+                                <Icon className="w-6 h-6 stroke-[1.75]" />
                             </div>
                             <div className="flex-1">
-                                <h4 className="text-xl font-bold text-slate-800 mb-2">
+                                <h4 className="text-base sm:text-lg font-bold text-slate-800 mb-1">
                                     <EditableText id={`logo_num4_t_${idx}`} defaultText={item.title} />
                                 </h4>
-                                <p className="text-slate-600 leading-relaxed text-sm">
+                                <p className="text-slate-600 leading-relaxed text-xs sm:text-sm">
                                     <EditableText id={`logo_num4_d_${idx}`} multiline defaultText={item.desc} />
                                 </p>
                             </div>
@@ -784,12 +773,9 @@ function LogoView({ brand }: { brand: any }) {
                     )})}
                 </div>
 
-                <div className="mt-12 text-white p-8 md:p-12 rounded-2xl relative overflow-hidden shadow-sm" style={{ backgroundColor: brand.teal }}>
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
-
-                    <div className="relative z-10 space-y-6 text-lg tracking-wide font-light">
-                        <p className="italic text-white font-medium pb-2 border-b border-white/10">
+                <div className="mt-8 text-white p-6 sm:p-10 rounded-2xl relative overflow-hidden" style={{ backgroundColor: brand.teal }}>
+                    <div className="relative z-10 space-y-4 sm:space-y-5 text-base sm:text-lg tracking-wide font-light">
+                        <p className="italic text-white font-medium pb-2 border-b border-white/20">
                             <EditableText id="logo_quote_0" multiline defaultText="Trong thế giới quanh ta, số 4 xuất hiện ở khắp nơi. Bốn mùa luân chuyển – Xuân, Hạ, Thu, Đông. Bốn phương định hướng – Đông, Tây, Nam, Bắc. Bốn yếu tố tự nhiên – Đất, Nước, Lửa, Khí. Tất cả tạo nên một vòng tròn cân bằng, đầy đủ và vững chãi." />
                         </p>
                         <p>
@@ -832,35 +818,43 @@ function CoreValuesView({ brand }: { brand: any }) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {[
                     { title: "KỶ LUẬT", sub: "KỶ LUẬT LÀ HÀNH VI", desc: "Là nền móng để mọi người làm đúng nguyên tắc, quy chuẩn, và giữ sự ổn định trong hành động.", color: brand.teal },
                     { title: "KIÊN TRÌ", sub: "KIÊN TRÌ LÀ THÓI QUEN", desc: "Sau khi có kỷ luật, chúng ta mới duy trì được hành động đều đặn và không bỏ cuộc khi gặp khó khăn.", color: brand.green },
                     { title: "KIÊN NHẪN", sub: "KIÊN NHẪN LÀ THÁI ĐỘ", desc: "Là thái độ chấp nhận nhịp độ và thời gian cần thiết để thấy kết quả. Giúp chúng ta tránh nóng vội.", color: brand.teal },
                     { title: "CHẤP NHẬN", sub: "CHẤP NHẬN QUÁ TRÌNH LÀ TƯ DUY", desc: "Tư duy cao nhất: hiểu rằng kết quả đến từ hành trình. Giúp chúng ta gắn bó lâu dài đối mặt với thăng trầm.", color: brand.green }
                 ].map((item, idx) => (
-                    <div key={idx} className="p-8 rounded-2xl bg-white border border-slate-100 shadow-sm relative overflow-hidden group">
-                        <div className="absolute -top-6 -right-6 text-9xl font-bold opacity-5 transition-transform group-hover:scale-110" style={{ color: item.color }}>{idx + 1}</div>
-                        <div className="relative z-10">
-                            <h3 className="text-4xl font-bold uppercase tracking-tight mb-2" style={{ color: item.color }}><EditableText id={`core_t_${idx}`} defaultText={item.title} /></h3>
-                            <h4 className="text-sm font-bold tracking-widest text-slate-400 uppercase mb-6"><EditableText id={`core_s_${idx}`} defaultText={item.sub} className="!w-full" /></h4>
-                            <div className="text-slate-600 leading-relaxed text-lg"><EditableText id={`core_d_${idx}`} multiline defaultText={item.desc} /></div>
+                    <div key={idx} className="p-5 sm:p-7 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 transition-colors relative overflow-hidden group">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="px-2.5 py-1 rounded-md text-xs font-bold font-mono uppercase tracking-wider" style={{ backgroundColor: `${item.color}18`, color: item.color }}>
+                                0{idx + 1}
+                            </span>
+                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Giá trị cốt lõi</span>
+                        </div>
+                        <h3 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight mb-1" style={{ color: item.color }}>
+                            <EditableText id={`core_t_${idx}`} defaultText={item.title} />
+                        </h3>
+                        <h4 className="text-xs font-bold tracking-widest text-slate-500 uppercase mb-3">
+                            <EditableText id={`core_s_${idx}`} defaultText={item.sub} className="!w-full" />
+                        </h4>
+                        <div className="text-slate-600 leading-relaxed text-sm sm:text-base">
+                            <EditableText id={`core_d_${idx}`} multiline defaultText={item.desc} />
                         </div>
                     </div>
                 ))}
             </div>
 
-            <div className="mt-8 relative bg-white p-10 rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 opacity-10"><Quote className="w-24 h-24" style={{ color: brand.teal }} /></div>
-                <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center">
-                    <div className="w-full md:w-[300px] shrink-0">
-                        <EditableImage id="img_core_quote" className="aspect-square !bg-slate-50" label="Đồ họa trích dẫn" />
+            <div className="mt-6 sm:mt-8 relative bg-white p-6 sm:p-10 rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="relative z-10 flex flex-col md:flex-row gap-6 sm:gap-8 items-center">
+                    <div className="w-full md:w-[260px] shrink-0">
+                        <EditableImage id="img_core_quote" className="aspect-square !bg-slate-50 rounded-xl" label="Đồ họa trích dẫn" />
                     </div>
                     <div className="flex-1 w-full">
-                        <div className="italic font-light tracking-wide text-slate-700 text-2xl leading-relaxed mb-6">
+                        <div className="italic font-light tracking-wide text-slate-700 text-lg sm:text-xl md:text-2xl leading-relaxed mb-4 sm:mb-6">
                             <EditableText id="quote1_txt" multiline defaultText="Chọn đúng thời gian, sự bền bỉ và mười năm nỗ lực rồi cuối cùng sẽ khiến bạn có vẻ như thành công chỉ trong một đêm." />
                         </div>
-                        <p className="font-bold text-slate-900 tracking-wide uppercase">— <EditableText id="quote1_author" defaultText="BIZ STONE (Đồng sáng lập Twitter)" /></p>
+                        <p className="font-bold text-slate-900 tracking-wide text-sm sm:text-base uppercase">— <EditableText id="quote1_author" defaultText="BIZ STONE (Đồng sáng lập Twitter)" /></p>
                     </div>
                 </div>
             </div>

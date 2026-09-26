@@ -212,7 +212,9 @@ export const NAV_ITEMS = {
     ],
     [ROLES.CUSTOMER]: [
         { label: 'Trang chủ', href: '/customer', icon: LayoutDashboard },
-        { label: 'Đơn hàng', href: '/customer/orders', icon: ShoppingCart },
+        { label: 'Mua sỉ', href: '/customer/catalogue', icon: ShoppingBag },
+        { label: 'Giỏ hàng', href: '/customer/cart', icon: ShoppingCart },
+        { label: 'Đơn hàng', href: '/customer/orders', icon: FileText },
         { label: 'Tin nhắn', href: '/chat', icon: MessageCircle },
     ],
     [ROLES.SALES]: [
