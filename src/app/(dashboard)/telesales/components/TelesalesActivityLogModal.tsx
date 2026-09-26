@@ -83,19 +83,19 @@ export default function TelesalesActivityLogModal({ date, userId, onClose, onSuc
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
 
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-blue-50 to-white">
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                        <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-[#00AFA9]">
                             <CheckSquare className="w-5 h-5" />
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-slate-800 tracking-tight">Cập nhật Tiến độ công việc</h2>
                             <div className="flex items-center gap-1.5 text-sm text-slate-500 font-medium">
                                 <Calendar className="w-3.5 h-3.5" />
-                                <span>Ngày báo cáo: <span className="text-blue-600 font-semibold">{date}</span></span>
+                                <span>Ngày báo cáo: <span className="text-[#00AFA9] font-semibold">{date}</span></span>
                             </div>
                         </div>
                     </div>
@@ -246,7 +246,7 @@ export default function TelesalesActivityLogModal({ date, userId, onClose, onSuc
                         <button
                             onClick={handleSave}
                             disabled={saving}
-                            className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                            className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-[#00AFA9] hover:bg-[#009b95] text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
                         >
                             {saving ? (
                                 <>

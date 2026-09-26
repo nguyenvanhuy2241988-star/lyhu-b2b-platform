@@ -296,12 +296,12 @@ export default function TelesalesDashboard() {
     return (
         <div className="space-y-6">
             {/* Daily Inspiration */}
-            <div className="bg-gradient-to-r from-primary-50 to-secondary-50 p-4 rounded-xl border border-primary-100 flex items-center gap-4">
-                <div className="bg-white p-2 rounded-lg shadow-sm">
-                    <Medal className="w-5 h-5 text-primary-600" />
+            <div className="bg-teal-50/60 p-4 rounded-xl border border-teal-100 flex items-center gap-4">
+                <div className="bg-white p-2 rounded-lg border border-teal-200/50">
+                    <Medal className="w-5 h-5 text-[#00AFA9]" />
                 </div>
                 <div>
-                    <p className="text-xs font-bold text-primary-700 uppercase tracking-widest mb-0.5">Lời khuyên hôm nay</p>
+                    <p className="text-xs font-bold text-[#00AFA9] uppercase tracking-widest mb-0.5">Lời khuyên hôm nay</p>
                     <p className="text-sm italic text-slate-700 font-medium">"{dailyQuote}"</p>
                 </div>
             </div>
@@ -312,7 +312,7 @@ export default function TelesalesDashboard() {
                     return (
                         <div
                             key={index}
-                            className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
+                            className="bg-white p-6 rounded-xl border border-slate-200"
                         >
                             <div className="flex items-center justify-between mb-4">
                                 <div className={`p-3 rounded-lg ${stat.bg}`}>
@@ -395,12 +395,12 @@ export default function TelesalesDashboard() {
                 <div className="space-y-6">
 
                     {/* 2. Bonding Fund (Quỹ Bonding) */}
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
-                        <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform text-primary-500">
+                    <div className="bg-white p-6 rounded-xl border border-slate-200 relative overflow-hidden group">
+                        <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform text-[#00AFA9]">
                             <PartyPopper className="w-24 h-24" />
                         </div>
                         <div className="flex items-center justify-between mb-4">
-                            <div className="p-2.5 bg-primary-50 rounded-lg text-primary-600">
+                            <div className="p-2.5 bg-teal-50 rounded-lg text-[#00AFA9]">
                                 <PartyPopper className="w-5 h-5" />
                             </div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tiền ăn chơi tập thể</span>
@@ -415,7 +415,7 @@ export default function TelesalesDashboard() {
                     </div>
 
                     {/* 3. Career Roadmap (Lộ trình Thăng tiến) */}
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="bg-white p-6 rounded-xl border border-slate-200">
                         <div className="flex items-center justify-between mb-4">
                             <div className="p-2.5 bg-purple-50 rounded-lg text-purple-600">
                                 <Crown className="w-5 h-5" />
@@ -455,10 +455,10 @@ export default function TelesalesDashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Priority Leads Table - Now from Supabase */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
                     <div className="p-6 border-b border-slate-200 flex justify-between items-center">
                         <h3 className="text-lg font-semibold text-slate-900">Lead ưu tiên</h3>
-                        <Link href="/telesales/leads-queue" className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
+                        <Link href="/telesales/leads-queue" className="text-sm text-[#00AFA9] hover:text-[#009b95] font-semibold flex items-center gap-1 transition-colors">
                             Xem tất cả <ArrowRight className="w-4 h-4" />
                         </Link>
                     </div>
@@ -473,16 +473,16 @@ export default function TelesalesDashboard() {
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {safeLeads.slice(0, 5).map((lead) => (
-                                    <tr key={lead.id} className="hover:bg-slate-50">
+                                    <tr key={lead.id} className="hover:bg-slate-50/60 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="font-medium text-slate-900">{lead.storeName || lead.contactName || 'N/A'}</div>
                                             <div className="text-xs text-slate-500">{lead.phone || 'Chưa có SĐT'}</div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lead.status === 'NEW' ? 'bg-blue-100 text-blue-800' :
-                                                lead.status === 'CONTACTED' ? 'bg-yellow-100 text-yellow-800' :
-                                                    lead.status === 'WON' ? 'bg-green-100 text-green-800' :
-                                                        'bg-slate-100 text-slate-800'
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold border ${lead.status === 'NEW' ? 'border-blue-200 bg-blue-50 text-blue-700' :
+                                                lead.status === 'CONTACTED' ? 'border-amber-200 bg-amber-50 text-amber-700' :
+                                                    lead.status === 'WON' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' :
+                                                        'border-slate-200 bg-slate-50 text-slate-700'
                                                 }`}>
                                                 {lead.status === 'NEW' ? 'Mới' :
                                                     lead.status === 'CONTACTED' ? 'Đã liên hệ' :
@@ -507,10 +507,10 @@ export default function TelesalesDashboard() {
                 </div>
 
                 {/* Recent Orders Table - Now from Supabase */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
                     <div className="p-6 border-b border-slate-200 flex justify-between items-center">
                         <h3 className="text-lg font-semibold text-slate-900">Đơn mới nhất</h3>
-                        <Link href="/telesales/orders" className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
+                        <Link href="/telesales/orders" className="text-sm text-[#00AFA9] hover:text-[#009b95] font-semibold flex items-center gap-1 transition-colors">
                             Xem tất cả <ArrowRight className="w-4 h-4" />
                         </Link>
                     </div>

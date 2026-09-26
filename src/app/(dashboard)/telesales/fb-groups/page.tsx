@@ -220,23 +220,23 @@ export default function FbGroupsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent">
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
                         Quản lý Nhóm FB Đăng Bài
                     </h1>
-                    <p className="text-gray-500 mt-1 text-sm">
+                    <p className="text-slate-500 mt-1 text-xs sm:text-sm">
                         Quản lý nhóm Facebook để đăng bài marketing · Tự động thu thập từ báo cáo
                     </p>
                 </div>
                 <div className="flex gap-2">
                     <button
                         onClick={handleExport}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all text-sm font-medium"
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-xs sm:text-sm font-semibold"
                     >
                         <Download className="w-4 h-4" /> Export CSV
                     </button>
                     <button
                         onClick={() => { resetForm(); setShowModal(true); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800 transition-all active:scale-95 shadow-lg shadow-gray-200 text-sm font-medium"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] hover:bg-[#009b95] text-white rounded-xl transition-colors text-xs sm:text-sm font-bold"
                     >
                         <Plus className="w-4 h-4" /> Thêm nhóm
                     </button>
