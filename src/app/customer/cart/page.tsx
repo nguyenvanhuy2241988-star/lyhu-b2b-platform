@@ -96,9 +96,9 @@ export default function CartPage() {
                     <p className="text-slate-600 mb-6">Bạn chưa có sản phẩm nào trong giỏ hàng</p>
                     <Link
                         href="/customer/catalogue"
-                        className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                        className="inline-flex items-center gap-2 bg-[#00AFA9] hover:bg-[#009b95] text-white px-6 py-3 rounded-xl font-bold transition-colors text-sm"
                     >
-                        Tiếp tục mua sắm
+                        Tiếp tục xem catalogue
                         <ArrowRight className="w-4 h-4" />
                     </Link>
                 </div>
