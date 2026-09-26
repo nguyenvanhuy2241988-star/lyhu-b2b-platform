@@ -20,12 +20,12 @@ const formatDate = (dateString: string) => {
 };
 
 const STATUS_CONFIG: Record<string, any> = {
-    pending: { label: "Chờ xác nhận", icon: Filter, color: "bg-yellow-100 text-yellow-700" },
-    processing: { label: "Đang xử lý", icon: FileText, color: "bg-blue-100 text-blue-700" },
-    delivering: { label: "Đang giao hàng", icon: Truck, color: "bg-indigo-100 text-indigo-700" },
-    delivered: { label: "Đã giao", icon: Eye, color: "bg-green-100 text-green-700" },
-    returned: { label: "Hoàn hàng", icon: RotateCcw, color: "bg-orange-100 text-orange-700" },
-    cancelled: { label: "Đã hủy", icon: Trash2, color: "bg-red-100 text-red-700" },
+    pending: { label: "Chờ xác nhận", icon: Filter, color: "bg-amber-50 text-amber-700 border border-amber-200" },
+    processing: { label: "Đang xử lý", icon: FileText, color: "bg-blue-50 text-blue-700 border border-blue-200" },
+    delivering: { label: "Đang giao", icon: Truck, color: "bg-purple-50 text-purple-700 border border-purple-200" },
+    delivered: { label: "Đã giao", icon: Eye, color: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+    returned: { label: "Hoàn hàng", icon: RotateCcw, color: "bg-orange-50 text-orange-700 border border-orange-200" },
+    cancelled: { label: "Đã hủy", icon: Trash2, color: "bg-rose-50 text-rose-700 border border-rose-200" },
 };
 
 export default function GTOrdersPage() {
@@ -88,6 +88,14 @@ export default function GTOrdersPage() {
         return () => { mounted = false; supabase.removeChannel(channel); supabase.removeChannel(chatChannel); };
     }, [user, session?.access_token, authIsLoading, loadOrders]);
 
+    const statusCounts = React.useMemo(() => {
+        const counts: Record<string, number> = { all: orders.length };
+        orders.forEach(o => {
+            counts[o.status] = (counts[o.status] || 0) + 1;
+        });
+        return counts;
+    }, [orders]);
+
     const filteredOrders = orders.filter(order => {
         const matchesSearch =
             (order.readableId?.toString() || "").includes(searchTerm) ||
@@ -102,41 +110,70 @@ export default function GTOrdersPage() {
         setUnreadOrders(prev => { const next = new Set(prev); next.delete(chatOrder.id); return next; });
     }, [chatOrder?.id]);
 
-    if (isLoading) return <div className="p-6">Đang tải đơn hàng...</div>;
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[40vh]">
+                <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
+                    <span className="w-2 h-2 rounded-full bg-[#00AFA9] animate-ping" />
+                    Đang tải danh sách đơn hàng...
+                </div>
+            </div>
+        );
+    }
+
+    const filterTabs = [
+        { id: "all", label: "Tất cả", count: statusCounts["all"] || 0 },
+        { id: "pending", label: "Chờ xác nhận", count: statusCounts["pending"] || 0 },
+        { id: "processing", label: "Đang xử lý", count: statusCounts["processing"] || 0 },
+        { id: "delivering", label: "Đang giao", count: statusCounts["delivering"] || 0 },
+        { id: "delivered", label: "Đã giao", count: statusCounts["delivered"] || 0 },
+        { id: "cancelled", label: "Đã hủy", count: statusCounts["cancelled"] || 0 },
+    ];
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h1 className="text-2xl font-bold text-slate-900">Đơn hàng GT</h1>
-
-                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Mã đơn, tên điểm bán..."
-                            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <div className="relative">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <select
-                            className="pl-9 pr-8 py-2 border border-slate-200 rounded-lg text-sm appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="all">Tất cả trạng thái</option>
-                            <option value="pending">Chờ xác nhận</option>
-                            <option value="confirmed">Đã xác nhận</option>
-                            <option value="delivering">Đang giao hàng</option>
-                            <option value="delivered">Đã giao</option>
-                            <option value="returned">Hoàn hàng</option>
-                            <option value="cancelled">Đã hủy</option>
-                        </select>
-                    </div>
+        <div className="space-y-4">
+            {/* Header + Search */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Đơn hàng GT</h1>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Quản lý và theo dõi tiến độ đơn hàng thực địa</p>
                 </div>
+
+                <div className="relative w-full sm:w-72">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                        type="text"
+                        placeholder="Mã đơn, tên điểm bán..."
+                        className="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm w-full bg-white focus:outline-none focus:border-[#00AFA9] transition-colors"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+            </div>
+
+            {/* Mobile-first Horizontal Swipeable Status Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                {filterTabs.map(tab => {
+                    const isActive = statusFilter === tab.id;
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setStatusFilter(tab.id)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 border shrink-0 ${
+                                isActive
+                                    ? "bg-[#00AFA9] text-white border-[#00AFA9]"
+                                    : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                            }`}
+                        >
+                            <span>{tab.label}</span>
+                            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                                isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                            }`}>
+                                {tab.count}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -178,17 +215,17 @@ export default function GTOrdersPage() {
                                                 <div className="flex items-center justify-end gap-2">
                                                     <button
                                                         onClick={() => setChatOrder({ id: order.id, readableId: String(order.readableId || order.id.slice(0, 8)) })}
-                                                        className="relative text-slate-400 hover:text-teal-600 transition-colors bg-slate-50 hover:bg-teal-50 p-2 rounded-lg"
+                                                        className="relative text-slate-400 hover:text-[#00AFA9] transition-colors bg-white border border-slate-200 hover:border-[#00AFA9] p-2 rounded-lg"
                                                         title="Chat"
                                                     >
                                                         <MessageCircle className="w-4 h-4" />
                                                         {unreadOrders.has(order.id) && (
-                                                            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
+                                                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white" />
                                                         )}
                                                     </button>
                                                     <button
                                                         onClick={() => setSelectedOrder(order)}
-                                                        className="text-slate-400 hover:text-indigo-600 transition-colors bg-slate-50 hover:bg-slate-100 p-2 rounded-lg"
+                                                        className="text-slate-400 hover:text-[#00AFA9] transition-colors bg-white border border-slate-200 hover:border-[#00AFA9] p-2 rounded-lg"
                                                         title="Xem chi tiết"
                                                     >
                                                         <Eye className="w-4 h-4" />
@@ -196,7 +233,7 @@ export default function GTOrdersPage() {
                                                     {order.status === 'pending' && (
                                                         <button
                                                             onClick={() => router.push(`/sales-gt/create-order?edit=${order.id}`)}
-                                                            className="text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 p-2 rounded-lg"
+                                                            className="text-slate-400 hover:text-blue-600 transition-colors bg-white border border-slate-200 hover:border-blue-400 p-2 rounded-lg"
                                                             title="Sửa đơn hàng"
                                                         >
                                                             <Pencil className="w-4 h-4" />
@@ -209,7 +246,7 @@ export default function GTOrdersPage() {
                                                                 await deleteOrder(order.id);
                                                             }
                                                         }}
-                                                        className="text-slate-400 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 p-2 rounded-lg"
+                                                        className="text-slate-400 hover:text-rose-600 transition-colors bg-white border border-slate-200 hover:border-rose-400 p-2 rounded-lg"
                                                         title="Xóa đơn hàng"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
@@ -218,7 +255,7 @@ export default function GTOrdersPage() {
                                             </td>
                                         </tr>
                                         {hasShippingData && (
-                                            <tr className="bg-blue-50/40 border-b border-slate-100">
+                                            <tr className="bg-slate-50/70 border-b border-slate-100">
                                                 <td colSpan={6} className="px-6 py-2">
                                                     <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs">
                                                         {order.shippingCarrier && (
@@ -270,7 +307,7 @@ export default function GTOrdersPage() {
                                     <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                                         <div className="flex flex-col items-center gap-2">
                                             <FileText className="w-8 h-8 text-slate-300" />
-                                            <p>Chưa có đơn hàng nào</p>
+                                            <p className="text-sm">Chưa có đơn hàng nào</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -287,25 +324,36 @@ export default function GTOrdersPage() {
                         const hasShippingData = order.shippingCarrier || order.trackingCode || order.packedByName || (order.totalBoxes && order.totalBoxes > 0) || order.shippingFee || order.shippingNote;
 
                         return (
-                            <div key={order.id} className="p-4 hover:bg-slate-50 transition-colors">
+                            <div key={order.id} className="p-3.5 hover:bg-slate-50/50 transition-colors">
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
-                                        <h4 className="font-medium text-slate-900 text-sm">ORD-{order.readableId}</h4>
-                                        <p className="text-xs text-slate-500 mt-0.5">{formatDate(order.createdAt)}</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <h4 className="font-bold text-slate-900 text-sm">ORD-{order.readableId}</h4>
+                                            {unreadOrders.has(order.id) && (
+                                                <span className="w-2 h-2 rounded-full bg-rose-500" />
+                                            )}
+                                        </div>
+                                        <p className="text-[11px] text-slate-500 mt-0.5">{formatDate(order.createdAt)}</p>
                                     </div>
-                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium ${statusConfig.color}`}>
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-medium ${statusConfig.color}`}>
                                         {StatusIcon && <StatusIcon className="w-3 h-3" />}
                                         {statusConfig.label}
                                     </span>
                                 </div>
                                 
-                                <div className="mt-3 mb-4">
-                                    <div className="font-medium text-slate-800 text-sm">{order.customerName}</div>
-                                    <div className="text-teal-600 font-bold mt-1">{formatPrice(order.totalAmount)}</div>
+                                <div className="my-2.5 flex justify-between items-end">
+                                    <div>
+                                        <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Điểm bán</span>
+                                        <div className="font-semibold text-slate-800 text-sm">{order.customerName}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Tổng tiền</span>
+                                        <div className="text-[#00AFA9] font-bold text-sm">{formatPrice(order.totalAmount)}</div>
+                                    </div>
                                 </div>
 
                                 {hasShippingData && (
-                                    <div className="bg-blue-50/40 p-2.5 rounded-lg mb-4 space-y-1.5 text-[11px]">
+                                    <div className="bg-slate-50 border border-slate-100 p-2 rounded-lg mb-3 space-y-1 text-[11px]">
                                         {order.shippingCarrier && (
                                             <div className="flex items-center gap-1.5 text-slate-600">
                                                 <Truck className="w-3.5 h-3.5 text-blue-500 shrink-0" />
@@ -322,7 +370,7 @@ export default function GTOrdersPage() {
                                             </div>
                                         ) : null}
                                         {order.shippingNote && (
-                                            <div className="flex items-start gap-1.5 text-slate-500 italic mt-1">
+                                            <div className="flex items-start gap-1.5 text-slate-500 italic mt-0.5">
                                                 <StickyNote className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" /> 
                                                 <span className="line-clamp-2">{order.shippingNote}</span>
                                             </div>
@@ -330,29 +378,30 @@ export default function GTOrdersPage() {
                                     </div>
                                 )}
 
-                                <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                                <div className="flex items-center gap-1.5 pt-2.5 border-t border-slate-100">
                                     <button
                                         onClick={() => setChatOrder({ id: order.id, readableId: String(order.readableId || order.id.slice(0, 8)) })}
-                                        className="relative flex-1 py-1.5 flex items-center justify-center gap-1.5 text-slate-600 hover:text-teal-600 transition-colors bg-slate-50 hover:bg-teal-50 rounded-lg text-xs font-medium"
+                                        className="relative flex-1 py-1.5 flex items-center justify-center gap-1 text-slate-700 hover:text-[#00AFA9] bg-white border border-slate-200 rounded-lg text-xs font-medium transition-colors"
                                     >
-                                        <MessageCircle className="w-4 h-4" />
+                                        <MessageCircle className="w-3.5 h-3.5 text-[#00AFA9]" />
                                         Chat
                                         {unreadOrders.has(order.id) && (
-                                            <span className="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full" />
+                                            <span className="w-1.5 h-1.5 bg-rose-500 rounded-full" />
                                         )}
                                     </button>
                                     <button
                                         onClick={() => setSelectedOrder(order)}
-                                        className="flex-1 py-1.5 flex items-center justify-center gap-1.5 text-slate-600 hover:text-indigo-600 transition-colors bg-slate-50 hover:bg-indigo-50 rounded-lg text-xs font-medium"
+                                        className="flex-1 py-1.5 flex items-center justify-center gap-1 text-slate-700 hover:text-[#00AFA9] bg-white border border-slate-200 rounded-lg text-xs font-medium transition-colors"
                                     >
-                                        <Eye className="w-4 h-4" /> Chi tiết
+                                        <Eye className="w-3.5 h-3.5" /> Chi tiết
                                     </button>
                                     {order.status === 'pending' && (
                                         <button
                                             onClick={() => router.push(`/sales-gt/create-order?edit=${order.id}`)}
-                                            className="py-1.5 px-3 flex items-center justify-center text-slate-600 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 rounded-lg"
+                                            className="py-1.5 px-2.5 flex items-center justify-center text-slate-600 hover:text-blue-600 bg-white border border-slate-200 rounded-lg text-xs transition-colors"
+                                            title="Sửa đơn"
                                         >
-                                            <Pencil className="w-4 h-4" />
+                                            <Pencil className="w-3.5 h-3.5" />
                                         </button>
                                     )}
                                     <button
@@ -362,9 +411,10 @@ export default function GTOrdersPage() {
                                                 await deleteOrder(order.id);
                                             }
                                         }}
-                                        className="py-1.5 px-3 flex items-center justify-center text-slate-600 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 rounded-lg"
+                                        className="py-1.5 px-2.5 flex items-center justify-center text-slate-600 hover:text-rose-600 bg-white border border-slate-200 rounded-lg text-xs transition-colors"
+                                        title="Xóa đơn"
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             </div>
@@ -372,8 +422,8 @@ export default function GTOrdersPage() {
                     })}
                     {filteredOrders.length === 0 && (
                         <div className="p-8 text-center text-slate-500">
-                            <FileText className="w-10 h-10 mx-auto text-slate-300 mb-3" />
-                            <p className="font-medium text-sm">Chưa có đơn hàng nào</p>
+                            <FileText className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                            <p className="font-medium text-xs">Chưa có đơn hàng nào</p>
                         </div>
                     )}
                 </div>
