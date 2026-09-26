@@ -144,7 +144,7 @@ export default function PlatformsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                    <h1 className="text-2xl font-bold text-slate-900">
                         Nền tảng & Tài nguyên
                     </h1>
                     <p className="text-gray-500 mt-1">Quản lý các kênh tuyển dụng và tài nguyên</p>
@@ -152,7 +152,7 @@ export default function PlatformsPage() {
                 {activeTab === 'platforms' && (
                     <button
                         onClick={() => { resetForm(); setShowModal(true); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all active:scale-95 shadow-sm"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white rounded-xl hover:bg-[#009690] transition-colors text-sm font-medium"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Thêm nền tảng</span>
@@ -164,26 +164,26 @@ export default function PlatformsPage() {
             <div className="flex gap-4 border-b border-gray-100 mb-6">
                 <button
                     onClick={() => setActiveTab('platforms')}
-                    className={`pb-3 px-1 text-sm font-medium transition-colors relative ${activeTab === 'platforms' ? 'text-teal-600' : 'text-gray-500 hover:text-gray-700'
+                    className={`pb-3 px-1 text-sm font-medium transition-colors relative ${activeTab === 'platforms' ? 'text-[#00AFA9]' : 'text-gray-500 hover:text-gray-700'
                         }`}
                 >
                     Nền tảng tuyển dụng
-                    {activeTab === 'platforms' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-teal-600 rounded-t-full" />}
+                    {activeTab === 'platforms' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#00AFA9] rounded-t-full" />}
                 </button>
                 <button
                     onClick={() => setActiveTab('groups')}
-                    className={`pb-3 px-1 text-sm font-medium transition-colors relative ${activeTab === 'groups' ? 'text-teal-600' : 'text-gray-500 hover:text-gray-700'
+                    className={`pb-3 px-1 text-sm font-medium transition-colors relative ${activeTab === 'groups' ? 'text-[#00AFA9]' : 'text-gray-500 hover:text-gray-700'
                         }`}
                 >
                     Danh sách nhóm (Facebook/Zalo)
-                    {activeTab === 'groups' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-teal-600 rounded-t-full" />}
+                    {activeTab === 'groups' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#00AFA9] rounded-t-full" />}
                 </button>
             </div>
 
             {activeTab === 'platforms' ? (
                 <>
                     {/* Controls */}
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-col sm:flex-row gap-4">
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200 mb-6 flex flex-col sm:flex-row gap-4">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <input
@@ -204,7 +204,7 @@ export default function PlatformsPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredPlatforms.map((platform) => (
-                                <div key={platform.id} className="group bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all hover:border-gray-200">
+                                <div key={platform.id} className="group bg-white rounded-2xl p-6 border border-slate-200 hover:border-[#00AFA9] transition-colors">
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
@@ -272,7 +272,7 @@ export default function PlatformsPage() {
                     )}
                 </>
             ) : (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-in fade-in duration-200">
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden animate-in fade-in duration-200">
                     <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
                         <div>
                             <h3 className="font-semibold text-gray-800">Kho dữ liệu nhóm đã lưu ({groups.length})</h3>
@@ -370,7 +370,7 @@ export default function PlatformsPage() {
                                                 {group.notes}
                                             </div>
                                         )}
-                                        <a href={group.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-teal-100 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors text-xs font-medium shadow-sm">
+                                        <a href={group.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-[#00AFA9] hover:bg-teal-50 rounded-lg transition-colors text-xs font-medium">
                                             <ExternalLink className="w-3.5 h-3.5" />
                                             Truy cập nhóm
                                         </a>
@@ -390,7 +390,7 @@ export default function PlatformsPage() {
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white run-in zoom-in-95 duration-200 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+                    <div className="bg-white run-in zoom-in-95 duration-200 rounded-2xl border border-slate-200 w-full max-w-lg overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                             <h2 className="text-lg font-semibold text-gray-900">
                                 {selectedId ? "Cập nhật Nền tảng" : "Thêm Nền tảng Mới"}
@@ -477,7 +477,7 @@ export default function PlatformsPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all active:scale-95 shadow-sm font-medium disabled:opacity-50"
+                                    className="px-4 py-2 bg-[#00AFA9] text-white rounded-xl hover:bg-[#009690] transition-colors font-medium disabled:opacity-50"
                                     disabled={loading}
                                 >
                                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (selectedId ? "Cập nhật" : "Thêm mới")}

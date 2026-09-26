@@ -274,7 +274,7 @@ export default function FbJobGroupsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-700 to-teal-600 bg-clip-text text-transparent">
+                    <h1 className="text-2xl font-bold text-slate-900">
                         Nhóm FB Việc Làm & Tuyển Dụng
                     </h1>
                     <p className="text-gray-500 mt-1 text-sm">
@@ -284,13 +284,13 @@ export default function FbJobGroupsPage() {
                 <div className="flex gap-2">
                     <button
                         onClick={handleExport}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all text-sm font-medium"
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-sm font-medium"
                     >
                         <Download className="w-4 h-4" /> Export CSV
                     </button>
                     <button
                         onClick={() => { resetForm(); setShowModal(true); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-200 text-sm font-medium"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white rounded-xl hover:bg-[#009690] transition-colors text-sm font-medium"
                     >
                         <Plus className="w-4 h-4" /> Thêm nhóm
                     </button>
@@ -299,28 +299,28 @@ export default function FbJobGroupsPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                    <div className="text-2xl font-bold text-gray-900">{groups.length}</div>
-                    <div className="text-xs text-gray-500 mt-1">Tổng nhóm</div>
+                <div className="bg-white rounded-xl p-4 border border-slate-200">
+                    <div className="text-2xl font-bold text-slate-900">{groups.length}</div>
+                    <div className="text-xs text-slate-500 mt-1">Tổng nhóm</div>
                 </div>
-                <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                <div className="bg-white rounded-xl p-4 border border-slate-200">
                     <div className="text-2xl font-bold text-emerald-600">{groups.filter(g => g.status === 'active').length}</div>
-                    <div className="text-xs text-gray-500 mt-1">Đang hoạt động</div>
+                    <div className="text-xs text-slate-500 mt-1">Đang hoạt động</div>
                 </div>
-                <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                    <div className="text-2xl font-bold text-red-600">{groups.filter(g => g.status === 'banned').length}</div>
-                    <div className="text-xs text-gray-500 mt-1">Bị cấm đăng</div>
+                <div className="bg-white rounded-xl p-4 border border-slate-200">
+                    <div className="text-2xl font-bold text-rose-600">{groups.filter(g => g.status === 'banned').length}</div>
+                    <div className="text-xs text-slate-500 mt-1">Bị cấm đăng</div>
                 </div>
-                <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                    <div className="text-2xl font-bold text-teal-600">
+                <div className="bg-white rounded-xl p-4 border border-slate-200">
+                    <div className="text-2xl font-bold text-[#00AFA9]">
                         {groups.reduce((a, b) => a + (b.member_count || 0), 0).toLocaleString()}
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">Tổng thành viên (ước tính)</div>
+                    <div className="text-xs text-slate-500 mt-1">Tổng thành viên (ước tính)</div>
                 </div>
             </div>
 
             {/* Filter Bar */}
-            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-col sm:flex-row gap-3">
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 mb-6 flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
@@ -389,7 +389,7 @@ export default function FbJobGroupsPage() {
             )}
 
             {/* Table */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 {loading ? (
                     <div className="flex justify-center py-16">
                         <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
@@ -553,8 +553,8 @@ export default function FbJobGroupsPage() {
             {/* Add/Edit Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white animate-in zoom-in-95 duration-200 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto">
-                        <div className="px-6 py-4 border-b border-gray-100 flex flex-col gap-3 bg-emerald-50/50 sticky top-0 z-10">
+                    <div className="bg-white animate-in zoom-in-95 duration-200 rounded-2xl border border-slate-200 w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto">
+                        <div className="px-6 py-4 border-b border-gray-100 flex flex-col gap-3 bg-teal-50/50 sticky top-0 z-10">
                             <div className="flex justify-between items-center">
                                 <h2 className="text-lg font-semibold text-gray-900">
                                     {selectedId ? "Cập nhật Nhóm Việc Làm" : "Thêm Nhóm Việc Làm Mới"}
@@ -565,18 +565,18 @@ export default function FbJobGroupsPage() {
                             </div>
                             
                             {!selectedId && (
-                                <div className="flex bg-white rounded-lg p-1 w-fit border border-emerald-200">
+                                <div className="flex bg-white rounded-lg p-1 w-fit border border-teal-200">
                                     <button 
                                         type="button"
                                         onClick={() => setImportMode('single')}
-                                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${importMode === 'single' ? 'bg-emerald-100 text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-emerald-600'}`}
+                                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${importMode === 'single' ? 'bg-[#00AFA9] text-white' : 'text-gray-500 hover:text-[#00AFA9]'}`}
                                     >
                                         Thêm thủ công
                                     </button>
                                     <button 
                                         type="button"
                                         onClick={() => setImportMode('bulk')}
-                                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${importMode === 'bulk' ? 'bg-emerald-100 text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-emerald-600'}`}
+                                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${importMode === 'bulk' ? 'bg-[#00AFA9] text-white' : 'text-gray-500 hover:text-[#00AFA9]'}`}
                                     >
                                         Thêm hàng loạt (Link)
                                     </button>
@@ -742,7 +742,7 @@ export default function FbJobGroupsPage() {
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-200 font-medium disabled:opacity-50"
+                                    className="px-4 py-2 bg-[#00AFA9] text-white rounded-xl hover:bg-[#009690] transition-colors font-medium disabled:opacity-50"
                                 >
                                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : (selectedId ? "Cập nhật" : "Thêm mới")}
                                 </button>

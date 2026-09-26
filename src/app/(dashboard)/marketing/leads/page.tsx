@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
-import { Trash2, ExternalLink, RefreshCcw, User, Loader2, UserPlus, Radar } from "lucide-react";
+import { Trash2, ExternalLink, RefreshCcw, User, Loader2, UserPlus, Radar, Check } from "lucide-react";
 import dayjs from "dayjs";
 import 'dayjs/locale/vi';
 import { toast } from "sonner";
@@ -133,7 +133,7 @@ export default function LeadsPage() {
         <div className="p-6 max-w-[1600px] mx-auto">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-700 to-teal-600 bg-clip-text text-transparent">
+                    <h1 className="text-2xl font-bold text-slate-900">
                         Danh Sách Đã Mời (Leads)
                     </h1>
                     <p className="text-slate-500 mt-1 text-sm">Quản lý kho dữ liệu Khách hàng mà hệ thống Bot Săn Khách đã gửi lời mời chặn đkết bạn</p>
@@ -144,7 +144,7 @@ export default function LeadsPage() {
                             <button
                                 onClick={handleExecuteSniper}
                                 disabled={isSniperActive || isRadarActive}
-                                className="flex items-center gap-2 p-2 px-4 bg-orange-500 text-white hover:bg-orange-600 rounded-xl transition-colors font-medium shadow-sm shadow-orange-500/20 disabled:opacity-75"
+                                className="flex items-center gap-2 p-2 px-4 bg-amber-500 text-white hover:bg-amber-600 rounded-xl transition-colors font-medium disabled:opacity-75"
                             >
                                 {isSniperActive ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />} 
                                 Duyệt & Bắn Tỉa ({selectedLeads.length})
@@ -152,7 +152,7 @@ export default function LeadsPage() {
                             <button
                                 onClick={handleExecuteRadar}
                                 disabled={isRadarActive || isSniperActive}
-                                className="flex items-center gap-2 p-2 px-4 bg-blue-500 text-white hover:bg-blue-600 rounded-xl transition-colors font-medium shadow-sm shadow-blue-500/20 disabled:opacity-75"
+                                className="flex items-center gap-2 p-2 px-4 bg-[#00AFA9] text-white hover:bg-[#009690] transition-colors font-medium disabled:opacity-75"
                             >
                                 {isRadarActive ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radar className="w-4 h-4" />} 
                                 Tự Dò Radar ({selectedLeads.length})
@@ -161,14 +161,14 @@ export default function LeadsPage() {
                     )}
                     <button
                         onClick={fetchLeads}
-                        className="flex items-center gap-2 p-2 px-4 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl transition-colors font-medium border border-emerald-200"
+                        className="flex items-center gap-2 p-2 px-4 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded-xl transition-colors font-medium border border-teal-200"
                     >
                         <RefreshCcw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} /> Làm mới
                     </button>
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-sm text-left">
                     <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b">
@@ -237,8 +237,8 @@ export default function LeadsPage() {
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         {lead.status === 'friend' ? (
-                                            <span className="px-2.5 py-1 bg-green-500 text-white rounded-full text-xs font-semibold shadow-sm shadow-green-500/30 inline-flex items-center gap-1">
-                                                ✅ Khách Đã Đồng Ý
+                                            <span className="px-2.5 py-1 bg-emerald-500 text-white rounded-full text-xs font-medium inline-flex items-center gap-1">
+                                                <Check className="w-3.5 h-3.5" /> Khách Đã Đồng Ý
                                             </span>
                                         ) : lead.status === 'rejected' ? (
                                             <span className="px-2.5 py-1 bg-red-50 text-red-700 rounded-full text-xs border border-red-200 font-medium inline-flex items-center gap-1">

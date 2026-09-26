@@ -248,10 +248,10 @@ export default function QuickChatWidget() {
             {!isOpen && newMessageAlert && (
                 <div className="fixed bottom-[150px] lg:bottom-24 right-4 lg:right-6 z-[9999] animate-in slide-in-from-right-5 fade-in duration-300">
                     <div
-                        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-80 overflow-hidden cursor-pointer hover:shadow-3xl transition-shadow"
+                        className="bg-white rounded-2xl border border-slate-200 w-80 overflow-hidden cursor-pointer"
                         onClick={openFromAlert}
                     >
-                        <div className="bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-2.5 flex items-center justify-between">
+                        <div className="bg-[#00AFA9] px-4 py-2.5 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <MessageCircle className="w-4 h-4 text-white" />
                                 <span className="text-white text-xs font-semibold">Tin nhắn mới</span>
@@ -285,9 +285,9 @@ export default function QuickChatWidget() {
 
             {/* Mini Chat Panel */}
             {isOpen && (
-                <div className={`fixed bottom-[150px] lg:bottom-24 right-4 lg:right-6 z-[9998] ${panelWidth} ${panelHeight} bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-3 zoom-in-95 fade-in duration-200`}>
+                <div className={`fixed bottom-[150px] lg:bottom-24 right-4 lg:right-6 z-[9998] ${panelWidth} ${panelHeight} bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-3 zoom-in-95 fade-in duration-200`}>
                     {/* Panel Header */}
-                    <div className="bg-gradient-to-r from-teal-500 to-emerald-500 px-3 py-2.5 flex items-center justify-between flex-shrink-0">
+                    <div className="bg-[#00AFA9] px-3 py-2.5 flex items-center justify-between flex-shrink-0">
                         <div className="flex items-center gap-2">
                             {/* Back button when in chat view (compact mode) */}
                             {!isExpanded && !showSidebar && (
@@ -439,7 +439,7 @@ export default function QuickChatWidget() {
             {/* Create Group Modal */}
             {showCreateGroup && (
                 <div className="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center">
-                    <div className="bg-white rounded-xl shadow-2xl w-[360px] max-h-[70vh] flex flex-col animate-in zoom-in-95 fade-in duration-200">
+                    <div className="bg-white rounded-xl border border-slate-200 w-[360px] max-h-[70vh] flex flex-col animate-in zoom-in-95 fade-in duration-200">
                         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                             <h3 className="font-bold text-slate-800">Tạo nhóm chat mới</h3>
                             <button onClick={() => { setShowCreateGroup(false); setGroupName(""); setSelectedUsers([]); }}>
@@ -488,7 +488,7 @@ export default function QuickChatWidget() {
                             <button
                                 onClick={handleCreateGroup}
                                 disabled={!groupName.trim() || selectedUsers.length === 0}
-                                className="px-4 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="px-4 py-1.5 text-sm bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 Tạo nhóm
                             </button>
@@ -504,9 +504,9 @@ export default function QuickChatWidget() {
                         setIsOpen(!isOpen);
                         dismissAlert();
                     }}
-                    className={`relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all ${isOpen
-                        ? 'bg-slate-600 shadow-slate-600/30'
-                        : 'bg-gradient-to-br from-teal-500 to-emerald-500 shadow-teal-500/30'
+                    className={`relative w-14 h-14 rounded-full border flex items-center justify-center transition-transform active:scale-95 ${isOpen
+                        ? 'bg-slate-700 border-slate-800'
+                        : 'bg-[#00AFA9] hover:bg-[#009690] border-teal-600'
                         }`}
                     title={user?.role === 'customer' ? 'Tin nhắn' : 'Tin nhắn nội bộ'}
                 >
