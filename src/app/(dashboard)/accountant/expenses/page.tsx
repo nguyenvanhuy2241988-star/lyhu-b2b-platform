@@ -161,7 +161,7 @@ export default function AccountantExpensesPage() {
                     {selectedIds.length > 0 && (
                         <button
                             onClick={handleBulkSync}
-                            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition-all shadow-md active:scale-95"
+                            className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors border border-slate-800 active:scale-95"
                         >
                             <CheckCircle className="w-4 h-4" />
                             Đánh dấu Sync ({selectedIds.length})
@@ -169,14 +169,14 @@ export default function AccountantExpensesPage() {
                     )}
                     <button
                         onClick={() => exportExpensesToMISA(expenses)}
-                        className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+                        className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors border border-emerald-600"
                     >
                         <FileText className="w-4 h-4" />
                         Xuất MISA Excel
                     </button>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+                        className="flex items-center gap-2 bg-[#00AFA9] hover:bg-[#009b95] text-white px-4 py-2 rounded-xl text-sm font-bold border border-teal-600 transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         Thêm phiếu chi
@@ -186,9 +186,9 @@ export default function AccountantExpensesPage() {
 
             {/* Stats Summary */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="bg-white p-5 rounded-xl border border-slate-200">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-red-50 text-red-600 rounded-lg">
+                        <div className="p-2 bg-red-50 text-red-600 rounded-lg border border-red-100">
                             <TrendingDown className="w-5 h-5" />
                         </div>
                         <span className="text-sm font-medium text-slate-500">Tổng chi tháng này</span>
@@ -203,10 +203,10 @@ export default function AccountantExpensesPage() {
             </div>
 
             {/* Expense List */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20">
-                        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+                        <Loader2 className="w-8 h-8 text-[#00AFA9] animate-spin" />
                     </div>
                 ) : expenses.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -220,7 +220,7 @@ export default function AccountantExpensesPage() {
                                 <tr>
                                     <th className="px-6 py-4 w-10">
                                         <button onClick={toggleSelectAll} className="p-1 hover:bg-slate-200 rounded">
-                                            {selectedIds.length === expenses.length ? <CheckSquare className="w-4 h-4 text-primary-600" /> : <Square className="w-4 h-4" />}
+                                            {selectedIds.length === expenses.length ? <CheckSquare className="w-4 h-4 text-[#00AFA9]" /> : <Square className="w-4 h-4" />}
                                         </button>
                                     </th>
                                     <th className="px-6 py-4">Ngày</th>
@@ -232,10 +232,10 @@ export default function AccountantExpensesPage() {
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {expenses.map((expense) => (
-                                    <tr key={expense.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(expense.id) ? 'bg-primary-50/30' : ''}`}>
+                                    <tr key={expense.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(expense.id) ? 'bg-teal-50/30' : ''}`}>
                                         <td className="px-6 py-4">
                                             <button onClick={() => toggleSelect(expense.id)} className="p-1 hover:bg-slate-200 rounded transition-colors">
-                                                {selectedIds.includes(expense.id) ? <CheckSquare className="w-4 h-4 text-primary-600" /> : <Square className="w-4 h-4 text-slate-300" />}
+                                                {selectedIds.includes(expense.id) ? <CheckSquare className="w-4 h-4 text-[#00AFA9]" /> : <Square className="w-4 h-4 text-slate-300" />}
                                             </button>
                                         </td>
                                         <td className="px-6 py-4">
@@ -251,7 +251,7 @@ export default function AccountantExpensesPage() {
                                                     {EXPENSE_CATEGORY_LABELS[expense.category]}
                                                 </span>
                                                 {expense.accounting_account && (
-                                                    <span className="text-[10px] text-primary-600 font-mono">TK {expense.accounting_account}</span>
+                                                    <span className="text-[10px] text-[#00AFA9] font-mono">TK {expense.accounting_account}</span>
                                                 )}
                                                 {expense.accounting_object && (
                                                     <span className="text-[10px] text-indigo-500 font-mono">/ DT: {expense.accounting_object}</span>
@@ -280,7 +280,7 @@ export default function AccountantExpensesPage() {
                                             <div className="flex justify-end gap-2">
                                                 <button
                                                     onClick={() => openEditModal(expense)}
-                                                    className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
+                                                    className="p-1.5 text-slate-400 hover:text-[#00AFA9] hover:bg-teal-50 rounded-lg transition-all"
                                                 >
                                                     <Pencil className="w-4 h-4" />
                                                 </button>
@@ -303,11 +303,11 @@ export default function AccountantExpensesPage() {
                 {!isLoading && expenses.length > 0 && (
                     <div className="lg:hidden divide-y divide-slate-100">
                         {expenses.map((expense) => (
-                            <div key={expense.id} className={`p-4 bg-white hover:bg-slate-50 transition-colors ${selectedIds.includes(expense.id) ? 'bg-primary-50/30' : ''}`}>
+                            <div key={expense.id} className={`p-4 bg-white hover:bg-slate-50 transition-colors ${selectedIds.includes(expense.id) ? 'bg-teal-50/30' : ''}`}>
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="flex gap-3">
                                         <button onClick={() => toggleSelect(expense.id)} className="p-1 hover:bg-slate-200 rounded transition-colors mt-0.5">
-                                            {selectedIds.includes(expense.id) ? <CheckSquare className="w-4 h-4 text-primary-600" /> : <Square className="w-4 h-4 text-slate-300" />}
+                                            {selectedIds.includes(expense.id) ? <CheckSquare className="w-4 h-4 text-[#00AFA9]" /> : <Square className="w-4 h-4 text-slate-300" />}
                                         </button>
                                         <div>
                                             <div className="font-bold text-slate-900 line-clamp-2">{expense.description}</div>
@@ -330,7 +330,7 @@ export default function AccountantExpensesPage() {
                                             {EXPENSE_CATEGORY_LABELS[expense.category]}
                                         </span>
                                         {expense.accounting_account && (
-                                            <span className="text-[10px] text-primary-600 font-mono">TK {expense.accounting_account}</span>
+                                            <span className="text-[10px] text-[#00AFA9] font-mono">TK {expense.accounting_account}</span>
                                         )}
                                         {expense.accounting_object && (
                                             <span className="text-[10px] text-indigo-500 font-mono line-clamp-1">DT: {expense.accounting_object}</span>
@@ -377,7 +377,7 @@ export default function AccountantExpensesPage() {
             {/* Post Expense Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
+                    <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden border border-slate-200">
                         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                             <h3 className="font-bold text-slate-900">
                                 {editingExpense ? "Cập nhật phiếu chi" : "Tạo phiếu chi mới"}
@@ -393,7 +393,7 @@ export default function AccountantExpensesPage() {
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="Ví dụ: Thanh toán tiền điện tháng 12"
-                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none transition-all"
                                     required
                                 />
                             </div>
@@ -404,7 +404,7 @@ export default function AccountantExpensesPage() {
                                         type="number"
                                         value={amount}
                                         onChange={(e) => setAmount(Number(e.target.value))}
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none transition-all"
                                         required
                                     />
                                 </div>
@@ -414,7 +414,7 @@ export default function AccountantExpensesPage() {
                                         type="date"
                                         value={spentAt}
                                         onChange={(e) => setSpentAt(e.target.value)}
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none transition-all"
                                     />
                                 </div>
                             </div>
@@ -424,7 +424,7 @@ export default function AccountantExpensesPage() {
                                     <select
                                         value={category}
                                         onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none transition-all"
                                     >
                                         {Object.entries(EXPENSE_CATEGORY_LABELS).map(([val, label]) => (
                                             <option key={val} value={val}>{label}</option>
@@ -438,7 +438,7 @@ export default function AccountantExpensesPage() {
                                             value={account}
                                             onChange={(e) => setAccount(e.target.value)}
                                             placeholder="641, 642, 111..."
-                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none transition-all"
                                         />
                                     </div>
                                     <div>
@@ -447,7 +447,7 @@ export default function AccountantExpensesPage() {
                                             value={accountingObject}
                                             onChange={(e) => setAccountingObject(e.target.value)}
                                             placeholder="Mã NCC hoặc NV"
-                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none transition-all"
                                         />
                                     </div>
                                 </div>
@@ -456,14 +456,14 @@ export default function AccountantExpensesPage() {
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="flex-1 px-4 py-2 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors"
+                                    className="flex-1 px-4 py-2 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors border border-slate-200"
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="flex-1 px-4 py-2 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="flex-1 px-4 py-2 bg-[#00AFA9] hover:bg-[#009b95] text-white font-bold rounded-xl border border-teal-600 disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     {editingExpense ? "Cập nhật" : "Lưu phiếu chi"}

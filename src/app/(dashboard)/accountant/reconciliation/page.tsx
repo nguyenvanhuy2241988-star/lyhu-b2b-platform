@@ -47,11 +47,11 @@ export default function AccountantReconciliationPage() {
                     <p className="text-sm text-slate-600 mt-1">Tự động khớp lệnh chuyển khoản với đơn hàng trên hệ thống</p>
                 </div>
                 <div className="flex gap-2">
-                    <button className="flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+                    <button className="flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
                         <Download className="w-4 h-4" />
                         Tải file mẫu
                     </button>
-                    <label className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 cursor-pointer shadow-sm active:scale-95 transition-all">
+                    <label className="flex items-center gap-2 bg-[#00AFA9] hover:bg-[#009b95] text-white px-4 py-2 rounded-xl text-sm font-bold cursor-pointer border border-teal-600 transition-colors">
                         <Upload className="w-4 h-4" />
                         Tải lên Sao kê
                         <input type="file" className="hidden" onChange={handleFileUpload} />
@@ -60,10 +60,10 @@ export default function AccountantReconciliationPage() {
             </div>
 
             {/* Reconciliation Workspace */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm min-h-[500px] overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 min-h-[500px] overflow-hidden">
                 {!transactions.length && !isProcessing ? (
                     <div className="flex flex-col items-center justify-center py-32 text-center px-4">
-                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 border border-slate-200">
                             <ArrowRightLeft className="w-10 h-10 text-slate-300" />
                         </div>
                         <h3 className="text-lg font-bold text-slate-900 mb-2">Chưa có dữ liệu đối soát</h3>
@@ -73,7 +73,7 @@ export default function AccountantReconciliationPage() {
                     </div>
                 ) : isProcessing ? (
                     <div className="flex flex-col items-center justify-center py-32">
-                        <Loader2 className="w-10 h-10 text-primary-500 animate-spin mb-4" />
+                        <Loader2 className="w-10 h-10 text-[#00AFA9] animate-spin mb-4" />
                         <p className="text-slate-500 font-medium">Đang phân tích và so khớp dữ liệu...</p>
                     </div>
                 ) : (
@@ -138,7 +138,7 @@ export default function AccountantReconciliationPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${t.matchedOrderId ? 'bg-primary-600 text-white hover:bg-primary-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                                <button className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${t.matchedOrderId ? 'bg-[#00AFA9] text-white hover:bg-[#009b95] border border-teal-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
                                                     }`}>
                                                     {t.matchedOrderId ? "Xác nhận khớp" : "Gán thủ công"}
                                                 </button>
@@ -195,7 +195,7 @@ export default function AccountantReconciliationPage() {
                                         </div>
                                     </div>
                                     
-                                    <button className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2 ${t.matchedOrderId ? 'bg-primary-50 text-primary-700 hover:bg-primary-100' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                    <button className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2 ${t.matchedOrderId ? 'bg-teal-50 text-[#00AFA9] border border-teal-200 hover:bg-teal-100' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                         }`}>
                                         {t.matchedOrderId ? (
                                             <>

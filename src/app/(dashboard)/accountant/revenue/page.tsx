@@ -104,7 +104,7 @@ export default function AccountantRevenuePage() {
                         placeholder="Tìm đơn hàng, khách hàng..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                     />
                 </div>
                 <div className="flex gap-2">
@@ -131,10 +131,10 @@ export default function AccountantRevenuePage() {
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px]">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden min-h-[400px]">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20">
-                        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+                        <Loader2 className="w-8 h-8 text-[#00AFA9] animate-spin" />
                         <p className="text-sm text-slate-500 mt-2">Đang lấy dữ liệu hóa đơn...</p>
                     </div>
                 ) : filteredOrders.length === 0 ? (
@@ -195,7 +195,7 @@ export default function AccountantRevenuePage() {
                                             <td className="px-6 py-4 text-right">
                                                 <button
                                                     onClick={() => handleEditCustomer(order)}
-                                                    className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
+                                                    className="p-1.5 text-slate-400 hover:text-[#00AFA9] hover:bg-teal-50 rounded-lg transition-all"
                                                     title="Cập nhật thông tin xuất hóa đơn"
                                                 >
                                                     <Pencil className="w-4 h-4" />
@@ -272,7 +272,7 @@ export default function AccountantRevenuePage() {
             {/* Edit Customer Info Modal */}
             {editingCustomer && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
+                    <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden border border-slate-200">
                         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                             <h3 className="font-bold text-slate-900">Thông tin xuất hóa đơn</h3>
                             <button onClick={() => setEditingCustomer(null)} className="p-1 hover:bg-slate-200 rounded-lg">
@@ -293,7 +293,7 @@ export default function AccountantRevenuePage() {
                                         value={editingCustomer.tax_code || ""}
                                         onChange={(e) => setEditingCustomer({ ...editingCustomer, tax_code: e.target.value })}
                                         placeholder="010xxxxxxx"
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none transition-all"
                                     />
                                 </div>
                                 <div>
@@ -302,7 +302,7 @@ export default function AccountantRevenuePage() {
                                         value={editingCustomer.misa_code || ""}
                                         onChange={(e) => setEditingCustomer({ ...editingCustomer, misa_code: e.target.value })}
                                         placeholder="KH001"
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none transition-all"
                                     />
                                 </div>
                             </div>
@@ -312,21 +312,21 @@ export default function AccountantRevenuePage() {
                                     rows={2}
                                     value={editingCustomer.address || ""}
                                     onChange={(e) => setEditingCustomer({ ...editingCustomer, address: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all resize-none"
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none transition-all resize-none"
                                 />
                             </div>
                             <div className="pt-4 flex gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setEditingCustomer(null)}
-                                    className="flex-1 px-4 py-2 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors"
+                                    className="flex-1 px-4 py-2 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors border border-slate-200"
                                 >
                                     Đóng
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="flex-1 px-4 py-2 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="flex-1 px-4 py-2 bg-[#00AFA9] hover:bg-[#009b95] text-white font-bold rounded-xl border border-teal-600 disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     Lưu lại

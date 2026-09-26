@@ -71,7 +71,7 @@ export default function AccountantPurchasesPage() {
                 </div>
                 <button
                     onClick={() => setShowAddModal(true)}
-                    className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 shadow-sm"
+                    className="flex items-center gap-2 bg-[#00AFA9] hover:bg-[#009b95] text-white px-4 py-2 rounded-xl text-sm font-bold border border-teal-600 transition-colors"
                 >
                     <Plus className="w-4 h-4" />
                     Tạo đơn mua hàng
@@ -80,7 +80,7 @@ export default function AccountantPurchasesPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="bg-white p-5 rounded-xl border border-slate-200">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
                             <ShoppingCart className="w-5 h-5" />
@@ -91,7 +91,7 @@ export default function AccountantPurchasesPage() {
                         {purchases.filter(p => p.status === 'ordered').length} Đơn
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="bg-white p-5 rounded-xl border border-slate-200">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
                             <ArrowDownCircle className="w-5 h-5" />
@@ -102,7 +102,7 @@ export default function AccountantPurchasesPage() {
                         {formatCurrency(purchases.filter(p => p.status === 'received').reduce((sum, p) => sum + p.totalAmount, 0))}
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-orange-500">
+                <div className="bg-white p-5 rounded-xl border border-slate-200 border-l-4 border-l-orange-500">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-orange-50 text-orange-600 rounded-lg">
                             <Wallet className="w-5 h-5" />
@@ -116,7 +116,7 @@ export default function AccountantPurchasesPage() {
             </div>
 
             {/* List */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-100">
                     <div className="relative max-w-sm">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -125,7 +125,7 @@ export default function AccountantPurchasesPage() {
                             placeholder="Tìm nhà cung cấp, mã PO..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                         />
                     </div>
                 </div>
@@ -133,7 +133,7 @@ export default function AccountantPurchasesPage() {
                 <div className="hidden lg:block overflow-x-auto">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-20">
-                            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+                            <Loader2 className="w-8 h-8 text-[#00AFA9] animate-spin" />
                         </div>
                     ) : filteredPurchases.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -176,7 +176,7 @@ export default function AccountantPurchasesPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="text-primary-600 hover:text-primary-700 font-bold text-xs flex items-center gap-1 ml-auto">
+                                            <button className="text-[#00AFA9] hover:text-[#009b95] font-bold text-xs flex items-center gap-1 ml-auto">
                                                 Chi tiết <ChevronRight className="w-3.5 h-3.5" />
                                             </button>
                                         </td>
@@ -213,7 +213,7 @@ export default function AccountantPurchasesPage() {
                                     </div>
                                 </div>
                                 
-                                <button className="w-full py-2.5 bg-white border border-slate-200 text-primary-600 hover:bg-primary-50 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2">
+                                <button className="w-full py-2.5 bg-white border border-slate-200 text-[#00AFA9] hover:bg-teal-50 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2">
                                     Chi tiết <ChevronRight className="w-4 h-4" />
                                 </button>
                             </div>

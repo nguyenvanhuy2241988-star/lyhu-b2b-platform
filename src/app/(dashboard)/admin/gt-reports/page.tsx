@@ -458,22 +458,28 @@ export default function AdminGTReportsPage() {
             {selectedUser && (
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     {/* Detail Header */}
-                    <div className="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-teal-50 to-white flex items-center justify-between">
+                    <div className="px-5 py-4 border-b border-slate-200 bg-teal-50/50 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 text-sm font-bold">
+                            <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-[#00AFA9] text-sm font-bold border border-teal-200">
                                 {selectedUser.fullName.charAt(0)}
                             </div>
                             <div>
                                 <h3 className="font-bold text-slate-900">{selectedUser.fullName}</h3>
-                                <div className="flex items-center gap-3 mt-0.5">
-                                    <span className="text-[11px] text-slate-500">📍 {selectedUser.outletCount} điểm bán</span>
-                                    <span className="text-[11px] text-slate-500">✅ {selectedUser.checkinCount} check-in</span>
-                                    <span className="text-[11px] text-slate-500">🛒 {selectedUser.orderCount} đơn</span>
-                                    <span className="text-[11px] text-green-600 font-medium">{formatPrice(selectedUser.orderAmount)}</span>
+                                <div className="flex items-center gap-3 mt-1 flex-wrap">
+                                    <span className="text-[11px] text-slate-600 flex items-center gap-1 font-medium">
+                                        <MapPin className="w-3 h-3 text-[#00AFA9]" /> {selectedUser.outletCount} điểm bán
+                                    </span>
+                                    <span className="text-[11px] text-slate-600 flex items-center gap-1 font-medium">
+                                        <CheckCircle className="w-3 h-3 text-[#8EC63F]" /> {selectedUser.checkinCount} check-in
+                                    </span>
+                                    <span className="text-[11px] text-slate-600 flex items-center gap-1 font-medium">
+                                        <ShoppingCart className="w-3 h-3 text-[#00AFA9]" /> {selectedUser.orderCount} đơn
+                                    </span>
+                                    <span className="text-[11px] text-[#00AFA9] font-bold">{formatPrice(selectedUser.orderAmount)}</span>
                                 </div>
                             </div>
                         </div>
-                        <button onClick={() => setSelectedUser(null)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+                        <button onClick={() => setSelectedUser(null)} className="p-1.5 hover:bg-slate-200 rounded-lg transition-colors">
                             <X className="w-5 h-5 text-slate-400" />
                         </button>
                     </div>
@@ -522,8 +528,9 @@ export default function AdminGTReportsPage() {
                                                                             {VISIT_RESULTS[c.visit_result]?.label || c.visit_result}
                                                                         </span>
                                                                         {c.distance_meters !== null && (
-                                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${c.distance_meters <= 200 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                                                                                📍 {c.distance_meters}m
+                                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1 ${c.distance_meters <= 200 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                                                <MapPin className="w-2.5 h-2.5" />
+                                                                                {c.distance_meters}m
                                                                             </span>
                                                                         )}
                                                                     </div>

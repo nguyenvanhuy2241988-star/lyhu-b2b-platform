@@ -468,10 +468,10 @@ export default function AdminPayrollPage() {
                     <>
                         {/* Selected User Header & Stats */}
                         {/* Selected User Header — LYHU Minimalist */}
-                        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                             <div className="px-5 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                                    <div className="w-10 h-10 bg-[#00AFA9] rounded-xl flex items-center justify-center text-white text-sm font-bold border border-teal-600">
                                         {(staff.find(s => s.id === selectedUserId)?.name || "?").charAt(0)}
                                     </div>
                                     <div>
@@ -499,7 +499,7 @@ export default function AdminPayrollPage() {
                                     {!isMonthLocked(12) && (
                                         <button
                                             onClick={() => handleLockMonth(12)}
-                                            className="flex items-center gap-1.5 bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-700 transition-colors shadow-sm"
+                                            className="flex items-center gap-1.5 bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-700 transition-colors"
                                         >
                                             <Lock className="w-3 h-3" />
                                             Chốt lương
@@ -530,43 +530,43 @@ export default function AdminPayrollPage() {
                             </div>
                         </div>
 
-                        {/* Summary Cards — Clean & Compact */}
+                        {/* Summary Cards — Clean & Flat */}
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                            <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="bg-white rounded-xl border border-slate-200 p-4">
                                 <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-7 h-7 bg-emerald-50 rounded-lg flex items-center justify-center">
+                                    <div className="w-7 h-7 bg-emerald-50 rounded-lg flex items-center justify-center border border-emerald-100">
                                         <Award className="w-3.5 h-3.5 text-emerald-500" />
                                     </div>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Thưởng</span>
                                 </div>
                                 <div className="text-lg font-bold text-slate-900">{formatPrice(stats.bonus)}</div>
                             </div>
-                            <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="bg-white rounded-xl border border-slate-200 p-4">
                                 <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-7 h-7 bg-rose-50 rounded-lg flex items-center justify-center">
+                                    <div className="w-7 h-7 bg-rose-50 rounded-lg flex items-center justify-center border border-rose-100">
                                         <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
                                     </div>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Phạt</span>
                                 </div>
                                 <div className="text-lg font-bold text-slate-900">{formatPrice(stats.penalty)}</div>
                             </div>
-                            <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="bg-white rounded-xl border border-slate-200 p-4">
                                 <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
+                                    <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
                                         <Clock className="w-3.5 h-3.5 text-blue-500" />
                                     </div>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ước tính</span>
                                 </div>
                                 <div className="text-lg font-bold text-slate-900">{formatPrice(stats.estimated)}</div>
                             </div>
-                            <div className="bg-gradient-to-br from-primary-50 to-primary-100/50 rounded-xl border border-primary-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="bg-teal-50 rounded-xl border border-teal-200 p-4">
                                 <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-7 h-7 bg-primary-500 rounded-lg flex items-center justify-center shadow-sm">
+                                    <div className="w-7 h-7 bg-[#00AFA9] rounded-lg flex items-center justify-center">
                                         <DollarSign className="w-3.5 h-3.5 text-white" />
                                     </div>
-                                    <span className="text-[10px] font-bold text-primary-600 uppercase tracking-wider">Thực lĩnh</span>
+                                    <span className="text-[10px] font-bold text-[#00AFA9] uppercase tracking-wider">Thực lĩnh</span>
                                 </div>
-                                <div className="text-lg font-bold text-primary-800">{formatPrice(stats.total)}</div>
+                                <div className="text-lg font-bold text-slate-900">{formatPrice(stats.total)}</div>
                             </div>
                         </div>
 
@@ -1250,11 +1250,11 @@ export default function AdminPayrollPage() {
             {
                 isModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-                        <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="bg-white rounded-2xl w-full max-w-md border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                             {/* Header */}
                             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                                 <div className="flex items-center gap-2.5">
-                                    <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center shadow-sm">
+                                    <div className="w-8 h-8 bg-[#00AFA9] rounded-xl flex items-center justify-center text-white">
                                         <DollarSign className="w-4 h-4 text-white" />
                                     </div>
                                     <h2 className="text-sm font-bold text-slate-800">Ghi nhận Thưởng/Phạt</h2>
@@ -1362,7 +1362,7 @@ export default function AdminPayrollPage() {
                             <div className="px-6 pb-6">
                                 <button
                                     onClick={handleAddTransaction}
-                                    className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:from-primary-600 hover:to-primary-700 transition-all shadow-sm hover:shadow-md"
+                                    className="w-full bg-[#00AFA9] hover:bg-[#009b95] text-white py-2.5 rounded-xl font-bold text-sm transition-colors border border-teal-600"
                                 >
                                     Xác nhận ghi nhận
                                 </button>

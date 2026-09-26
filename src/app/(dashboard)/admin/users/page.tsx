@@ -489,10 +489,10 @@ export default function UsersPage() {
                         {/* Mobile View (Cards) */}
                         <div className="grid grid-cols-1 gap-4 p-4 lg:hidden bg-slate-50">
                             {paginatedUsers.map((user: any) => (
-                                <div key={user.user_id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm active:scale-[0.98] transition-transform" onClick={() => handleViewDetail(user)}>
+                                <div key={user.user_id} className="bg-white border border-slate-200 rounded-xl p-4 active:scale-[0.98] transition-transform" onClick={() => handleViewDetail(user)}>
                                     <div className="flex justify-between items-start mb-3">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center font-bold shadow-sm">
+                                            <div className="w-10 h-10 rounded-full bg-[#00AFA9] text-white flex items-center justify-center font-bold border border-teal-600">
                                                 {(user.full_name || user.email).charAt(0).toUpperCase()}
                                             </div>
                                             <div>

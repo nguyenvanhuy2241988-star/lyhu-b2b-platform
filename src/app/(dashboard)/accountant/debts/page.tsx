@@ -53,11 +53,11 @@ export default function AccountantDebtsPage() {
                     <p className="text-sm text-slate-600 mt-1">Đối soát khoản phải thu và hạn mức tín dụng khách hàng</p>
                 </div>
                 <div className="flex gap-2">
-                    <button className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50">
+                    <button className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
                         <Calendar className="w-4 h-4" />
                         Đối soát MISA
                     </button>
-                    <button className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700">
+                    <button className="flex items-center gap-2 bg-[#00AFA9] hover:bg-[#009b95] text-white px-4 py-2 rounded-xl text-sm font-bold border border-teal-600 transition-colors">
                         Gửi nhắc nợ
                     </button>
                 </div>
@@ -65,30 +65,30 @@ export default function AccountantDebtsPage() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="bg-white p-5 rounded-xl border border-slate-200">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-slate-500">Tổng phải thu (AR)</span>
-                        <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                        <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
                             <TrendingUp className="w-4 h-4" />
                         </div>
                     </div>
                     <div className="text-2xl font-bold text-slate-900">{formatCurrency(totalReceivable)}</div>
                     <div className="mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">TÀI KHOẢN 131</div>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-red-500">
+                <div className="bg-white p-5 rounded-xl border border-slate-200 border-l-4 border-l-red-500">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-slate-500">Nợ quá hạn</span>
-                        <div className="p-1.5 bg-red-50 text-red-600 rounded-lg">
+                        <div className="p-1.5 bg-red-50 text-red-600 rounded-lg border border-red-100">
                             <AlertCircle className="w-4 h-4" />
                         </div>
                     </div>
                     <div className="text-2xl font-bold text-red-600">{formatCurrency(totalOverdue)}</div>
                     <div className="mt-1 text-xs text-red-400 font-medium">Chiếm {(totalOverdue / (totalReceivable || 1) * 100).toFixed(1)}% tổng nợ</div>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+                <div className="bg-white p-5 rounded-xl border border-slate-200 border-l-4 border-l-emerald-500">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-slate-500">Khách hàng quá hạn mức</span>
-                        <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg">
+                        <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">
                             <ArrowUpRight className="w-4 h-4" />
                         </div>
                     </div>
@@ -100,7 +100,7 @@ export default function AccountantDebtsPage() {
             </div>
 
             {/* Debt List */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-100 flex items-center gap-4">
                     <div className="relative flex-1 max-w-sm">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -109,7 +109,7 @@ export default function AccountantDebtsPage() {
                             placeholder="Tìm khách hàng..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                         />
                     </div>
                 </div>
@@ -117,7 +117,7 @@ export default function AccountantDebtsPage() {
                 <div className="hidden lg:block overflow-x-auto">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-20">
-                            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+                            <Loader2 className="w-8 h-8 text-[#00AFA9] animate-spin" />
                         </div>
                     ) : filteredDebts.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -173,7 +173,7 @@ export default function AccountantDebtsPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="text-primary-600 hover:text-primary-700 font-bold text-xs flex items-center gap-1 ml-auto">
+                                            <button className="text-[#00AFA9] hover:text-[#009b95] font-bold text-xs flex items-center gap-1 ml-auto">
                                                 Chi tiết <ChevronRight className="w-3.5 h-3.5" />
                                             </button>
                                         </td>
@@ -203,7 +203,7 @@ export default function AccountantDebtsPage() {
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs text-slate-500">Trạng thái quá hạn:</span>
                                         {d.overdueDebt > 0 ? (
-                                            <div className="font-bold text-red-600 flex items-center gap-1 text-sm bg-red-50 px-2 py-0.5 rounded">
+                                             <div className="font-bold text-red-600 flex items-center gap-1 text-sm bg-red-50 px-2 py-0.5 rounded">
                                                 <Clock className="w-3.5 h-3.5" />
                                                 {formatCurrency(d.overdueDebt)}
                                             </div>
@@ -228,7 +228,7 @@ export default function AccountantDebtsPage() {
                                     </div>
                                 </div>
                                 
-                                <button className="w-full py-2.5 bg-white border border-slate-200 text-primary-600 hover:bg-primary-50 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2">
+                                <button className="w-full py-2.5 bg-white border border-slate-200 text-[#00AFA9] hover:bg-teal-50 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2">
                                     Chi tiết công nợ <ChevronRight className="w-4 h-4" />
                                 </button>
                             </div>

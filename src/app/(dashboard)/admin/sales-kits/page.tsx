@@ -61,25 +61,26 @@ export default function SalesKitsAdminPage() {
             Tài liệu chào hàng dành cho chuỗi siêu thị (MT) và đại lý (GT)
           </p>
         </div>
-        <button className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+        <button className="bg-[#00AFA9] hover:bg-[#009b95] text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-colors border border-teal-600 font-medium">
           <Plus className="w-5 h-5" />
           <span>Tải Lên Tài Liệu Mới</span>
         </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-slate-200 dark:border-gray-700 overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center text-gray-500">Đang tải dữ liệu...</div>
         ) : kits.length === 0 ? (
           <div className="p-12 text-center flex flex-col items-center">
             <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Chưa có Sales Kit nào</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Chưa có Sales Kit nào</h3>
             <p className="text-gray-500 mt-2 mb-6">Hãy tải lên file PDF Catalog đầu tiên để đội Sale bắt đầu chốt deal.</p>
             <a 
               href="/admin/sales-kits/uhi-catalog" 
-              className="bg-gradient-to-r from-green-400 to-blue-500 text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+              className="bg-[#00AFA9] text-white px-6 py-2.5 rounded-xl font-bold border border-teal-600 hover:bg-[#009b95] transition-colors inline-flex items-center gap-2"
             >
-              ✨ Thiết kế tự động: Catalog Kẹo Chua UHi
+              <FileText className="w-4 h-4" />
+              <span>Thiết kế tự động: Catalog Kẹo Chua UHi</span>
             </a>
           </div>
         ) : (

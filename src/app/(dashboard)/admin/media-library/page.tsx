@@ -183,21 +183,21 @@ export default function AdminMediaLibraryPage() {
                     <button onClick={() => { setSelectMode(!selectMode); setSelectedIds(new Set()); }} className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg ${selectMode ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}><CheckSquare className="w-4 h-4" /> Chọn</button>
                     <button onClick={() => setShowNewFolder(true)} className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200"><FolderPlus className="w-4 h-4" /> Tạo thư mục</button>
                     <input ref={fileRef} type="file" multiple accept="image/*,video/*,.psd,.ai,.eps,.raw,.cr2,.nef,.arw,.mp4,.mov,.avi" className="hidden" onChange={handleUpload} />
-                    <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 disabled:opacity-50"><Upload className="w-4 h-4" /> {uploading ? "Đang upload..." : "Upload"}</button>
+                    <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] hover:bg-[#009b95] text-white text-sm font-medium rounded-xl border border-teal-600 disabled:opacity-50"><Upload className="w-4 h-4" /> {uploading ? "Đang upload..." : "Upload"}</button>
                 </div>
             </div>
 
-            {quota && quota.limit > 0 && (<div className="bg-white border border-slate-200 rounded-lg p-3">
-                <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5"><span className="flex items-center gap-1"><HardDrive className="w-3.5 h-3.5" /> Dung lượng Drive</span><span>{formatSize(quota.usage)} / {formatSizeTB(quota.limit)}</span></div>
-                <div className="w-full bg-slate-100 rounded-full h-2"><div className="bg-gradient-to-r from-green-400 to-emerald-500 h-2 rounded-full transition-all" style={{ width: `${Math.min((quota.usage / quota.limit) * 100, 100)}%` }} /></div>
+            {quota && quota.limit > 0 && (<div className="bg-white border border-slate-200 rounded-xl p-3">
+                <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5"><span className="flex items-center gap-1"><HardDrive className="w-3.5 h-3.5 text-[#00AFA9]" /> Dung lượng Drive</span><span>{formatSize(quota.usage)} / {formatSizeTB(quota.limit)}</span></div>
+                <div className="w-full bg-slate-100 rounded-full h-2"><div className="bg-[#00AFA9] h-2 rounded-full transition-all" style={{ width: `${Math.min((quota.usage / quota.limit) * 100, 100)}%` }} /></div>
                 <p className="text-[10px] text-slate-400 mt-1">Còn trống: {formatSizeTB(quota.limit - quota.usage)} · Thùng rác: {formatSize(quota.usageInDriveTrash)}</p>
             </div>)}
 
-            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm overflow-x-auto">
+            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm overflow-x-auto">
                 {breadcrumb.length > 1 && (<button onClick={goBack} className="p-1 text-slate-400 hover:text-slate-600 mr-1"><ArrowLeft className="w-4 h-4" /></button>)}
                 {breadcrumb.map((item, i) => (<div key={item.id} className="flex items-center shrink-0">
                     {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-slate-300 mx-1" />}
-                    <button onClick={() => navigateTo(i)} className={`flex items-center gap-1 px-2 py-0.5 rounded ${i === breadcrumb.length - 1 ? "text-pink-600 font-medium bg-pink-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}>
+                    <button onClick={() => navigateTo(i)} className={`flex items-center gap-1 px-2 py-0.5 rounded ${i === breadcrumb.length - 1 ? "text-[#00AFA9] font-medium bg-teal-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}>
                         {i === 0 ? <Home className="w-3.5 h-3.5" /> : <Folder className="w-3.5 h-3.5" />} {item.name}
                     </button></div>))}
             </div>

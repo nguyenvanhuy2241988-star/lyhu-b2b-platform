@@ -172,9 +172,9 @@ export default function AccountantPayrollPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="bg-white p-5 rounded-xl border border-slate-200">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-primary-50 text-primary-600 rounded-lg">
+                        <div className="p-2 bg-teal-50 text-[#00AFA9] rounded-lg border border-teal-100">
                             <Calculator className="w-5 h-5" />
                         </div>
                         <span className="text-sm font-medium text-slate-500">Tổng quỹ lương & hoa hồng</span>
@@ -183,16 +183,16 @@ export default function AccountantPayrollPage() {
                         {formatCurrency(earnings.reduce((sum, e) => sum + e.total, 0))}
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
+                <div className="bg-white p-5 rounded-xl border border-slate-200 relative overflow-hidden group">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-orange-50 text-orange-600 rounded-lg">
+                        <div className="p-2 bg-orange-50 text-orange-600 rounded-lg border border-orange-100">
                             <Users className="w-5 h-5" />
                         </div>
                         <span className="text-sm font-medium text-slate-500">Số nhân sự & CTV</span>
                     </div>
                     <div className="text-2xl font-bold text-slate-900">{earnings.length}</div>
                     {isCurrentMonthLocked && (
-                        <div className="absolute top-2 right-2 flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">
+                        <div className="absolute top-2 right-2 flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200">
                             <Lock className="w-3 h-3" /> CHỐT SỔ
                         </div>
                     )}
@@ -201,7 +201,7 @@ export default function AccountantPayrollPage() {
                     {!isCurrentMonthLocked ? (
                         <button
                             onClick={handleLockPayroll}
-                            className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+                            className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-colors border border-slate-800 active:scale-95"
                         >
                             <Lock className="w-5 h-5" />
                             Chốt sổ lương Tháng {month}
@@ -216,7 +216,7 @@ export default function AccountantPayrollPage() {
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden min-h-[400px]">
                 <div className="p-4 border-b border-slate-100 flex items-center gap-4">
                     <div className="relative flex-1 max-w-sm">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -225,7 +225,7 @@ export default function AccountantPayrollPage() {
                             placeholder="Tìm nhân viên, CTV..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                         />
                     </div>
                     <div className="flex-1" />
@@ -233,7 +233,7 @@ export default function AccountantPayrollPage() {
 
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20">
-                        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+                        <Loader2 className="w-8 h-8 text-[#00AFA9] animate-spin" />
                         <p className="text-sm text-slate-500 mt-2">Đang tính toán lương...</p>
                     </div>
                 ) : filteredEarnings.length === 0 ? (
@@ -292,7 +292,7 @@ export default function AccountantPayrollPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="text-primary-600 hover:underline font-medium text-xs">
+                                            <button className="text-[#00AFA9] hover:text-[#009b95] font-medium text-xs">
                                                 Xem bảng kê
                                             </button>
                                         </td>
@@ -344,7 +344,7 @@ export default function AccountantPayrollPage() {
                                     </div>
                                 </div>
                                 
-                                <button className="w-full py-2.5 bg-white border border-slate-200 text-primary-600 hover:bg-primary-50 rounded-xl text-sm font-bold transition-all">
+                                <button className="w-full py-2.5 bg-white border border-slate-200 text-[#00AFA9] hover:bg-teal-50 rounded-xl text-sm font-bold transition-all">
                                     Xem bảng kê
                                 </button>
                             </div>

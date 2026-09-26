@@ -306,19 +306,15 @@ export default function AnalyticsDashboard() {
             </div>
 
             {/* SEO & Website Ranking Section */}
-            <div className="bg-gradient-to-br from-indigo-900 to-slate-900 p-6 md:p-8 rounded-3xl border border-indigo-800/50 shadow-xl relative overflow-hidden">
-                {/* Decorative background elements */}
-                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl"></div>
-                
+            <div className="bg-slate-900 p-6 md:p-8 rounded-2xl border border-slate-800 relative overflow-hidden">
                 <div className="relative z-10">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                         <div>
                             <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                <Search className="w-6 h-6 text-emerald-400" />
+                                <Search className="w-6 h-6 text-[#8EC63F]" />
                                 Google Search Console (30 ngày qua)
                             </h3>
-                            <p className="text-indigo-200 text-sm mt-1">
+                            <p className="text-slate-300 text-sm mt-1">
                                 Dữ liệu thực tế được đồng bộ trực tiếp từ Google.
                             </p>
                         </div>
@@ -654,7 +650,7 @@ export default function AnalyticsDashboard() {
                         {data?.topCities?.map((item: any, idx: number) => (
                             <div key={idx} className="flex items-center justify-between group hover:bg-slate-50 rounded-lg px-3 py-2 -mx-3 transition-colors">
                                 <div className="flex items-center gap-3 truncate">
-                                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-100 to-purple-100 text-violet-600 flex items-center justify-center text-xs font-bold">
+                                    <div className="w-7 h-7 rounded-lg bg-teal-50 border border-teal-100 text-[#00AFA9] flex items-center justify-center text-xs font-bold">
                                         {idx + 1}
                                     </div>
                                     <div className="truncate">
