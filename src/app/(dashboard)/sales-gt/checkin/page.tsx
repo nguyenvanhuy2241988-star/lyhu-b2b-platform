@@ -345,7 +345,9 @@ export default function CheckinPage() {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-xl font-bold text-slate-900">📍 Check-in điểm bán</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-[#00AFA9]" /> Check-in điểm bán
+            </h1>
 
             {/* Check-in Flow */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
@@ -425,7 +427,7 @@ export default function CheckinPage() {
                             className="flex items-center gap-2 mx-auto bg-[#00AFA9] text-white px-6 py-3 rounded-xl hover:bg-[#009893] transition-colors disabled:opacity-50 font-bold text-sm"
                         >
                             <Navigation className={`w-5 h-5 ${gpsLoading ? 'animate-spin' : ''}`} />
-                            {gpsLoading ? "Đang lấy GPS..." : "📍 Xác nhận vị trí GPS"}
+                            {gpsLoading ? "Đang lấy GPS..." : "Xác nhận vị trí GPS"}
                         </button>
 
                         <div>
@@ -441,11 +443,11 @@ export default function CheckinPage() {
                     <div className="space-y-4">
                         {/* Distance badge */}
                         {distance !== null && (
-                            <div className={`flex items-center gap-2 p-3 rounded-lg border ${distance <= 200 ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
-                                <MapPin className={`w-5 h-5 ${distance <= 200 ? 'text-green-600' : 'text-amber-600'}`} />
+                            <div className={`flex items-center gap-2 p-3 rounded-lg border ${distance <= 200 ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
+                                <MapPin className={`w-5 h-5 ${distance <= 200 ? 'text-emerald-600' : 'text-amber-600'}`} />
                                 <span className="text-sm font-medium">
                                     Khoảng cách: <strong>{distance}m</strong>
-                                    {distance <= 200 ? " ✅ Hợp lệ" : " ⚠️ Xa hơn 200m"}
+                                    {distance <= 200 ? " (Hợp lệ)" : " (Xa hơn 200m)"}
                                 </span>
                             </div>
                         )}
@@ -471,7 +473,7 @@ export default function CheckinPage() {
                                 value={inventoryNotes}
                                 onChange={e => setInventoryNotes(e.target.value)}
                                 placeholder="VD: Hảo Hảo còn ít, Mì Ý hết hàng..."
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 resize-none"
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#00AFA9] transition-colors resize-none"
                                 rows={2}
                             />
                         </div>
@@ -482,14 +484,16 @@ export default function CheckinPage() {
                                 value={marketNotes}
                                 onChange={e => setMarketNotes(e.target.value)}
                                 placeholder="VD: Đối thủ X đang khuyến mãi mạnh..."
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 resize-none"
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#00AFA9] transition-colors resize-none"
                                 rows={2}
                             />
                         </div>
 
                         {/* Photo Capture Section */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">📸 Ảnh cửa hàng (có watermark)</label>
+                            <label className="block text-xs font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
+                                <Camera className="w-4 h-4 text-[#00AFA9]" /> Ảnh cửa hàng (có watermark)
+                            </label>
                             <input
                                 ref={cameraInputRef}
                                 type="file"
@@ -568,8 +572,10 @@ export default function CheckinPage() {
 
             {/* Today's Checkins */}
             {todayCheckins.length > 0 && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                    <h3 className="font-semibold text-slate-900 mb-3">✅ Đã check-in hôm nay ({todayCheckins.length})</h3>
+                <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
+                    <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2 text-sm">
+                        <CheckCircle className="w-4 h-4 text-[#8EC63F]" /> Đã check-in hôm nay ({todayCheckins.length})
+                    </h3>
                     <div className="space-y-2">
                         {todayCheckins.map(c => (
                             <div key={c.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">

@@ -249,55 +249,57 @@ export default function RoutesPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">🗺️ Tuyến bán hàng</h1>
-                    <p className="text-sm text-slate-500 mt-1">{routes.length} tuyến • {totalOutlets} điểm bán</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <MapPin className="w-5 h-5 text-[#00AFA9]" /> Tuyến bán hàng
+                    </h1>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">{routes.length} tuyến • {totalOutlets} điểm bán</p>
                 </div>
-                <button onClick={openNewForm} className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 text-sm font-medium transition-colors">
+                <button onClick={openNewForm} className="flex items-center gap-1.5 bg-[#00AFA9] text-white px-3.5 py-2 rounded-xl hover:bg-[#009893] text-xs sm:text-sm font-semibold transition-colors">
                     <Plus className="w-4 h-4" /> Tạo tuyến
                 </button>
             </div>
 
             {/* ========== STATS CARDS ========== */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white p-4 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-medium text-slate-500">Hôm nay</span>
-                        <span className="text-xs font-bold text-teal-600">{todayPct}%</span>
+                        <span className="text-xs font-bold text-[#00AFA9]">{todayPct}%</span>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2 mb-2">
-                        <div className="bg-teal-500 h-2 rounded-full transition-all" style={{ width: `${todayPct}%` }} />
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2 overflow-hidden">
+                        <div className="bg-[#00AFA9] h-1.5 rounded-full transition-all" style={{ width: `${todayPct}%` }} />
                     </div>
-                    <p className="text-lg font-bold text-slate-900">{todayCheckedCount}<span className="text-sm text-slate-400 font-normal">/{todayTotal}</span></p>
-                    <p className="text-xs text-slate-500">điểm đã ghé</p>
+                    <p className="text-lg font-bold text-slate-900">{todayCheckedCount}<span className="text-xs text-slate-400 font-normal">/{todayTotal}</span></p>
+                    <p className="text-[11px] text-slate-500">điểm đã ghé</p>
                 </div>
 
-                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-medium text-slate-500">Tuần này</span>
                         <span className="text-xs font-bold text-blue-600">{weekPct}%</span>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2 mb-2">
-                        <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${weekPct}%` }} />
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2 overflow-hidden">
+                        <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${weekPct}%` }} />
                     </div>
-                    <p className="text-lg font-bold text-slate-900">{weekCheckedCount}<span className="text-sm text-slate-400 font-normal">/{weekTotal}</span></p>
-                    <p className="text-xs text-slate-500">điểm đã ghé</p>
+                    <p className="text-lg font-bold text-slate-900">{weekCheckedCount}<span className="text-xs text-slate-400 font-normal">/{weekTotal}</span></p>
+                    <p className="text-[11px] text-slate-500">điểm đã ghé</p>
                 </div>
 
-                <div className="bg-white p-4 rounded-xl border border-slate-200">
-                    <p className="text-2xl font-bold text-slate-900">{todayRoutes.length}</p>
-                    <p className="text-xs text-slate-500 mt-1">Tuyến hôm nay</p>
+                <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200">
+                    <p className="text-lg sm:text-2xl font-bold text-slate-900">{todayRoutes.length}</p>
+                    <p className="text-[11px] sm:text-xs text-slate-500 mt-1">Tuyến hôm nay</p>
                 </div>
 
-                <div className="bg-white p-4 rounded-xl border border-slate-200">
-                    <p className="text-2xl font-bold text-slate-900">{routes.length}</p>
-                    <p className="text-xs text-slate-500 mt-1">Tổng tuyến</p>
+                <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200">
+                    <p className="text-lg sm:text-2xl font-bold text-slate-900">{routes.length}</p>
+                    <p className="text-[11px] sm:text-xs text-slate-500 mt-1">Tổng tuyến</p>
                 </div>
             </div>
 
             {/* Today highlight */}
-            <div className="flex gap-1">
+            <div className="flex gap-1 overflow-x-auto no-scrollbar pb-1">
                 {DAY_LABELS.map((label, i) => (
-                    <div key={i} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${i === todayDow ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                    <div key={i} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${i === todayDow ? 'bg-[#00AFA9] text-white font-bold' : 'bg-slate-100 text-slate-500'}`}>
                         {label}
                     </div>
                 ))}
@@ -320,21 +322,21 @@ export default function RoutesPage() {
                         const isActive = activeRouteId === route.id;
 
                         return (
-                            <div key={route.id} className={`bg-white rounded-xl border transition-all ${isActive ? 'border-teal-400 ring-2 ring-teal-100 shadow-md' : isToday ? 'border-teal-200 shadow-sm' : 'border-slate-200'}`}>
+                            <div key={route.id} className={`bg-white rounded-xl border transition-all ${isActive ? 'border-[#00AFA9]' : isToday ? 'border-teal-300' : 'border-slate-200'}`}>
                                 {/* Route Header */}
-                                <div className="flex items-center justify-between p-4">
+                                <div className="flex items-center justify-between p-3.5 sm:p-4">
                                     <button
                                         onClick={() => setExpandedRoute(isExpanded ? null : route.id)}
                                         className="flex items-center gap-3 flex-1 text-left"
                                     >
-                                        <div className={`p-2 rounded-lg ${isActive ? 'bg-teal-100' : isToday ? 'bg-teal-50' : 'bg-slate-50'}`}>
-                                            {isActive ? <Navigation className="w-4 h-4 text-teal-600 animate-pulse" /> : <MapPin className={`w-4 h-4 ${isToday ? 'text-teal-600' : 'text-slate-400'}`} />}
+                                        <div className={`p-2 rounded-lg ${isActive ? 'bg-[#00AFA9]/10 text-[#00AFA9]' : isToday ? 'bg-teal-50 text-[#00AFA9]' : 'bg-slate-50 text-slate-400'}`}>
+                                            {isActive ? <Navigation className="w-4 h-4 text-[#00AFA9] animate-pulse" /> : <MapPin className="w-4 h-4" />}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <p className="font-semibold text-sm text-slate-800 truncate">{route.name}</p>
-                                                {isToday && <span className="text-[10px] bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full font-medium shrink-0">Hôm nay</span>}
-                                                {isActive && <span className="text-[10px] bg-teal-600 text-white px-1.5 py-0.5 rounded-full font-bold animate-pulse shrink-0">Đang đi tuyến</span>}
+                                                {isToday && <span className="text-[10px] bg-[#00AFA9]/10 text-[#00AFA9] px-1.5 py-0.5 rounded font-semibold shrink-0">Hôm nay</span>}
+                                                {isActive && <span className="text-[10px] bg-[#00AFA9] text-white px-1.5 py-0.5 rounded font-bold animate-pulse shrink-0">Đang đi tuyến</span>}
                                             </div>
                                             <p className="text-xs text-slate-500 mt-0.5">
                                                 {route.district} • {route.day_of_week.map(d => DAY_LABELS[d]).join(", ")} • {route.outlet_ids.length} điểm bán
@@ -342,8 +344,8 @@ export default function RoutesPage() {
                                             {/* Mini progress bar */}
                                             {isToday && route.outlet_ids.length > 0 && (
                                                 <div className="flex items-center gap-2 mt-1.5">
-                                                    <div className="flex-1 max-w-[120px] bg-slate-100 rounded-full h-1.5">
-                                                        <div className={`h-1.5 rounded-full transition-all ${routePct === 100 ? 'bg-green-500' : 'bg-teal-500'}`} style={{ width: `${routePct}%` }} />
+                                                    <div className="flex-1 max-w-[120px] bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                                        <div className={`h-1.5 rounded-full transition-all ${routePct === 100 ? 'bg-emerald-500' : 'bg-[#00AFA9]'}`} style={{ width: `${routePct}%` }} />
                                                     </div>
                                                     <span className="text-[10px] font-medium text-slate-500">{checkedCount}/{route.outlet_ids.length}</span>
                                                 </div>
@@ -356,7 +358,7 @@ export default function RoutesPage() {
                                         {isToday && !isActive && (
                                             <button
                                                 onClick={() => { setActiveRouteId(route.id); setExpandedRoute(route.id); }}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white rounded-lg text-xs font-medium hover:bg-teal-700 transition-colors"
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00AFA9] text-white rounded-lg text-xs font-semibold hover:bg-[#009893] transition-colors"
                                             >
                                                 <Play className="w-3.5 h-3.5" /> Bắt đầu
                                             </button>
@@ -364,7 +366,7 @@ export default function RoutesPage() {
                                         {isActive && (
                                             <button
                                                 onClick={() => setActiveRouteId(null)}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors"
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg text-xs font-semibold hover:bg-rose-100 transition-colors"
                                             >
                                                 <X className="w-3.5 h-3.5" /> Kết thúc
                                             </button>
@@ -433,7 +435,7 @@ export default function RoutesPage() {
                                                                 {isNextToVisit && (
                                                                     <button
                                                                         onClick={() => router.push(`/sales-gt/checkin?outletId=${outletId}`)}
-                                                                        className="flex items-center gap-1 px-2.5 py-1 bg-teal-600 text-white rounded text-xs font-medium hover:bg-teal-700 transition-colors"
+                                                                        className="flex items-center gap-1 px-2.5 py-1 bg-[#00AFA9] text-white rounded-lg text-xs font-semibold hover:bg-[#009893] transition-colors"
                                                                     >
                                                                         <MapPin className="w-3 h-3" /> Check-in
                                                                     </button>
@@ -454,51 +456,51 @@ export default function RoutesPage() {
 
             {/* ========== ADD/EDIT ROUTE MODAL ========== */}
             {showForm && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between p-5 border-b border-slate-200">
-                            <h3 className="text-lg font-bold text-slate-900">
-                                {editingRoute ? '✏️ Sửa tuyến' : '🗺️ Tạo tuyến mới'}
+                <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-200">
+                            <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                                {editingRoute ? 'Sửa thông tin tuyến' : 'Tạo tuyến bán hàng mới'}
                             </h3>
-                            <button onClick={() => { setShowForm(false); setEditingRoute(null); }} className="p-1 hover:bg-slate-100 rounded-lg">
+                            <button onClick={() => { setShowForm(false); setEditingRoute(null); }} className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <form onSubmit={handleSaveRoute} className="p-5 space-y-4">
+                        <form onSubmit={handleSaveRoute} className="p-4 sm:p-5 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Tên tuyến *</label>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Tên tuyến *</label>
                                 <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-[#00AFA9] outline-none transition-colors"
                                     placeholder="VD: Tuyến Hoàn Kiếm T2-T4"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Quận/Huyện *</label>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Quận / Huyện *</label>
                                 <select required value={form.district} onChange={e => setForm(f => ({ ...f, district: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none">
-                                    <option value="">Chọn...</option>
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-[#00AFA9] outline-none transition-colors bg-white">
+                                    <option value="">Chọn quận / huyện...</option>
                                     {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Ngày trong tuần *</label>
-                                <div className="flex gap-1.5">
+                                <label className="block text-xs font-semibold text-slate-700 mb-2">Ngày trong tuần *</label>
+                                <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
                                     {DAY_LABELS.map((label, i) => (
                                         <button key={i} type="button" onClick={() => toggleDay(i)}
-                                            className={`w-10 h-10 rounded-lg text-xs font-medium transition-all ${form.day_of_week.includes(i) ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                                            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg text-xs font-bold transition-all shrink-0 ${form.day_of_week.includes(i) ? 'bg-[#00AFA9] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                                             {label}
                                         </button>
                                     ))}
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Điểm bán trong tuyến ({form.outlet_ids.length} đã chọn)</label>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Điểm bán trong tuyến ({form.outlet_ids.length} đã chọn)</label>
                                 <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
                                     {outlets.filter(o => !form.district || o.district === form.district).map(outlet => (
                                         <label key={outlet.id} className="flex items-center gap-3 p-2.5 hover:bg-slate-50 cursor-pointer">
                                             <input type="checkbox" checked={form.outlet_ids.includes(outlet.id)}
                                                 onChange={() => toggleOutlet(outlet.id)}
-                                                className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                                                className="rounded border-slate-300 text-[#00AFA9] focus:ring-[#00AFA9]"
                                             />
                                             <div>
                                                 <span className="text-sm font-medium text-slate-700">{outlet.name}</span>
@@ -507,15 +509,15 @@ export default function RoutesPage() {
                                         </label>
                                     ))}
                                     {outlets.filter(o => !form.district || o.district === form.district).length === 0 && (
-                                        <p className="text-sm text-slate-400 p-3 text-center">Chưa có điểm bán ở quận này</p>
+                                        <p className="text-xs text-slate-400 p-4 text-center">Chưa có điểm bán ở quận này</p>
                                     )}
                                 </div>
                             </div>
-                            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
                                 <button type="button" onClick={() => { setShowForm(false); setEditingRoute(null); }}
-                                    className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Hủy</button>
+                                    className="px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Hủy</button>
                                 <button type="submit" disabled={saving || form.day_of_week.length === 0}
-                                    className="px-5 py-2 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 font-medium transition-colors">
+                                    className="px-5 py-2 text-xs sm:text-sm bg-[#00AFA9] text-white rounded-xl hover:bg-[#009893] disabled:opacity-40 font-bold transition-colors">
                                     {saving ? "Đang lưu..." : editingRoute ? "Lưu thay đổi" : "Tạo tuyến"}
                                 </button>
                             </div>
