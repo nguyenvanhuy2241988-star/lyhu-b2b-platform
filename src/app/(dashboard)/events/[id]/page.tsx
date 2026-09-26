@@ -189,7 +189,7 @@ export default function EventDetailPage() {
                         style={{ maxHeight: '85vh', objectFit: 'cover' }}
                     />
                 ) : (
-                    <div className="w-full h-[300px] bg-gradient-to-r from-slate-800 to-slate-900 flex items-center justify-center opacity-80">
+                    <div className="w-full h-[300px] bg-slate-900 flex items-center justify-center">
                         <span className="text-4xl text-white/20 font-bold tracking-widest uppercase">{event.event_type}</span>
                     </div>
                 )}

@@ -588,21 +588,21 @@ export default function AutomationPage() {
                         </div>
 
                         {/* AI Gemini Auto-Reply */}
-                        <div className={`p-4 rounded-lg border ${aiEnabled ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-200'}`}>
+                        <div className={`p-4 rounded-lg border ${aiEnabled ? 'bg-teal-50/60 border-teal-200' : 'bg-gray-50 border-gray-200'}`}>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <input
                                         type="checkbox"
                                         id="aiEnabled"
-                                        className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                        className="w-5 h-5 text-[#00AFA9] rounded focus:ring-teal-400"
                                         checked={aiEnabled}
                                         onChange={e => setAiEnabled(e.target.checked)}
                                     />
                                     <div>
                                         <label htmlFor="aiEnabled" className="font-medium text-slate-800 cursor-pointer select-none">
-                                            🤖 AI Gemini tự động trả lời tin nhắn
+                                            AI Gemini tự động trả lời tin nhắn
                                         </label>
-                                        <p className="text-xs text-indigo-600">
+                                        <p className="text-xs text-[#00AFA9]">
                                             AI nhận diện giới tính từ tên → chào Anh/Chị → xin SĐT → xác nhận. Gửi tin nhắn lần lượt như người thật.
                                         </p>
                                     </div>
@@ -1112,7 +1112,7 @@ export default function AutomationPage() {
 
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 animate-in fade-in zoom-in duration-200">
+                    <div className="bg-white rounded-xl border border-slate-200 max-w-lg w-full p-6 animate-in fade-in zoom-in duration-200">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold text-slate-800">{editingRule ? 'Chỉnh sửa quy tắc' : 'Thêm quy tắc mới'}</h2>
                             <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">

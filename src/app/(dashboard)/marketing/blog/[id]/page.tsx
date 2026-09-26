@@ -184,7 +184,7 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
                     <button
                         onClick={() => handleSave('published')}
                         disabled={saving}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium disabled:opacity-50 shadow-sm"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] font-medium disabled:opacity-50 transition-colors"
                     >
                         <Save className="w-4 h-4" />
                         Xuất bản
@@ -196,7 +196,7 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
                 {/* Main Content Area */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Basic Info */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
+                    <div className="bg-white p-6 rounded-xl border border-slate-200 space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Tiêu đề bài viết <span className="text-red-500">*</span></label>
                             <input
@@ -223,7 +223,7 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
                     </div>
 
                     {/* Rich Text Editor */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div className="bg-white p-6 rounded-xl border border-slate-200">
                         <label className="block text-sm font-medium text-gray-700 mb-3">Nội dung bài viết <span className="text-red-500">*</span></label>
                         <div className="border border-gray-200 rounded-lg overflow-hidden min-h-[400px]">
                             <RichTextEditor
@@ -235,7 +235,7 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
                     </div>
 
                     {/* FAQ Schema builder */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
+                    <div className="bg-white p-6 rounded-xl border border-slate-200 space-y-4">
                         <div className="flex items-start gap-2 text-indigo-600 mb-2">
                             <Sparkles className="w-5 h-5 shrink-0 mt-0.5" />
                             <div>
@@ -301,7 +301,7 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
                     </div>
 
                     {/* Thumbnail */}
-                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                    <div className="bg-white p-5 rounded-xl border border-slate-200">
                         <h3 className="font-semibold text-gray-900 mb-3">Ảnh đại diện (Thumbnail URL)</h3>
                         
                         <div className="flex gap-2 mb-3">
@@ -338,7 +338,7 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
                     </div>
 
                     {/* Video URL */}
-                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                    <div className="bg-white p-5 rounded-xl border border-slate-200">
                         <h3 className="font-semibold text-gray-900 mb-3">Video hướng dẫn (Tùy chọn)</h3>
                         <p className="text-xs text-gray-500 mb-2">Nhập link Youtube hoặc link Google Drive có đuôi preview.</p>
                         <input
@@ -353,37 +353,37 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
                                 type="checkbox" 
                                 checked={post.is_video_vertical || false}
                                 onChange={(e) => setPost(prev => ({ ...prev, is_video_vertical: e.target.checked }))}
-                                className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                                className="w-4 h-4 text-[#00AFA9] rounded border-gray-300 focus:ring-teal-400"
                             />
                             <span className="text-sm text-gray-700 font-medium">Giao diện Video Dọc (Tiktok/Shorts)</span>
                         </label>
                     </div>
 
                     {/* AEO settings */}
-                    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 p-5 rounded-xl shadow-sm border border-purple-100">
+                    <div className="bg-teal-50/40 p-5 rounded-xl border border-teal-200">
                         <div className="flex items-center gap-2 mb-3">
-                            <Sparkles className="w-4 h-4 text-purple-600" />
-                            <h3 className="font-semibold text-purple-900">AEO (AI Optimization)</h3>
+                            <Sparkles className="w-4 h-4 text-[#00AFA9]" />
+                            <h3 className="font-semibold text-slate-900">AEO (AI Optimization)</h3>
                         </div>
                         <div className="space-y-3">
                             <div>
-                                <label className="block text-xs font-medium text-purple-800 mb-1">Tóm tắt cho AI (TL;DR)</label>
+                                <label className="block text-xs font-medium text-slate-700 mb-1">Tóm tắt cho AI (TL;DR)</label>
                                 <textarea
                                     value={post.ai_summary || ''}
                                     onChange={(e) => setPost(prev => ({ ...prev, ai_summary: e.target.value }))}
-                                    className="w-full px-3 py-2 rounded-lg border border-purple-200 text-sm min-h-[100px] focus:ring-purple-500 focus:border-purple-500 bg-white"
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm min-h-[100px] focus:outline-none focus:border-[#00AFA9] bg-white"
                                     placeholder="Viết 1-2 câu tóm tắt ý chính nhất để ChatGPT/Gemini dùng làm câu trả lời..."
                                 />
                             </div>
-                            <div className="flex items-start gap-2 bg-white/60 p-2 rounded text-xs text-purple-800">
-                                <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                            <div className="flex items-start gap-2 bg-white p-2.5 rounded-lg border border-slate-200 text-xs text-slate-600">
+                                <Info className="w-4 h-4 shrink-0 mt-0.5 text-[#00AFA9]" />
                                 <p>Đoạn tóm tắt này sẽ được nhúng ngầm qua Schema, không hiện trên giao diện người dùng nhưng AI Bot sẽ ưu tiên đọc.</p>
                             </div>
                         </div>
                     </div>
 
                     {/* SEO Settings */}
-                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-4">
+                    <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-4">
                         <h3 className="font-semibold text-gray-900">SEO Truyền thống</h3>
                         <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">Meta Title</label>

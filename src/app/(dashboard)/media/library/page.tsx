@@ -327,7 +327,7 @@ export default function MediaLibraryPage() {
         >
             {isDragging && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-blue-500/10 border-4 border-dashed border-blue-400 rounded-xl pointer-events-none">
-                    <div className="bg-white px-8 py-6 rounded-2xl shadow-xl flex flex-col items-center">
+                    <div className="bg-white px-8 py-6 rounded-2xl border border-blue-200 flex flex-col items-center">
                         <Upload className="w-16 h-16 text-blue-500 mb-3" />
                         <h3 className="text-xl font-bold text-blue-700">Thả file để tải lên</h3>
                         <p className="text-sm text-blue-500 font-medium">Bỏ tay ra để bắt đầu upload</p>
@@ -337,7 +337,7 @@ export default function MediaLibraryPage() {
             
             {/* Toast */}
             {toast && (
-                <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm flex items-center gap-2 animate-[slideIn_0.3s_ease]">
+                <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 animate-[slideIn_0.3s_ease]">
                     <Check className="w-4 h-4" /> {toast}
                 </div>
             )}
@@ -361,7 +361,7 @@ export default function MediaLibraryPage() {
                     </button>
                     <input ref={fileRef} type="file" multiple accept="image/*,video/*,.psd,.ai,.eps,.raw,.cr2,.nef,.arw,.mp4,.mov,.avi" className="hidden" onChange={handleUpload} />
                     <button onClick={() => fileRef.current?.click()} disabled={uploading}
-                        className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 disabled:opacity-50">
+                        className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white text-sm font-medium rounded-lg hover:bg-[#009690] disabled:opacity-50 transition-colors">
                         <Upload className="w-4 h-4" /> {uploading ? "Đang upload..." : "Upload"}
                     </button>
                 </div>
@@ -375,7 +375,7 @@ export default function MediaLibraryPage() {
                         <span>{formatSize(quota.usage)} / {formatSizeTB(quota.limit)}</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-2">
-                        <div className="bg-gradient-to-r from-green-400 to-emerald-500 h-2 rounded-full transition-all duration-500"
+                        <div className="bg-[#00AFA9] h-2 rounded-full transition-all duration-500"
                             style={{ width: `${Math.min((quota.usage / quota.limit) * 100, 100)}%` }} />
                     </div>
                     <p className="text-[10px] text-slate-400 mt-1">
@@ -391,7 +391,7 @@ export default function MediaLibraryPage() {
                     <div key={item.id} className="flex items-center shrink-0">
                         {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-slate-300 mx-1" />}
                         <button onClick={() => navigateTo(i)}
-                            className={`flex items-center gap-1 px-2 py-0.5 rounded ${i === breadcrumb.length - 1 ? "text-pink-600 font-medium bg-pink-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}>
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded ${i === breadcrumb.length - 1 ? "text-[#00AFA9] font-medium bg-teal-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}>
                             {i === 0 ? <Home className="w-3.5 h-3.5" /> : <Folder className="w-3.5 h-3.5" />} {item.name}
                         </button>
                     </div>
@@ -419,10 +419,10 @@ export default function MediaLibraryPage() {
             {showNewFolder && (
                 <div className="bg-white border border-slate-200 rounded-lg p-3 flex items-center gap-3">
                     <FolderPlus className="w-5 h-5 text-amber-500" />
-                    <input autoFocus className="flex-1 text-sm outline-none border-b border-slate-200 pb-1 focus:border-pink-400" placeholder="Tên thư mục..."
+                    <input autoFocus className="flex-1 text-sm outline-none border-b border-slate-200 pb-1 focus:border-[#00AFA9]" placeholder="Tên thư mục..."
                         value={newFolderName} onChange={e => setNewFolderName(e.target.value)}
                         onKeyDown={e => { if (e.key === "Enter") createFolder(); if (e.key === "Escape") setShowNewFolder(false); }} />
-                    <button onClick={createFolder} disabled={creatingFolder || !newFolderName.trim()} className="px-3 py-1 bg-pink-600 text-white text-xs font-medium rounded-lg disabled:opacity-50">
+                    <button onClick={createFolder} disabled={creatingFolder || !newFolderName.trim()} className="px-3 py-1 bg-[#00AFA9] text-white text-xs font-medium rounded-lg hover:bg-[#009690] disabled:opacity-50 transition-colors">
                         {creatingFolder ? "Đang tạo..." : "Tạo"}
                     </button>
                     <button onClick={() => { setShowNewFolder(false); setNewFolderName(""); }} className="px-3 py-1 bg-slate-100 text-slate-600 text-xs rounded-lg hover:bg-slate-200">Hủy</button>
@@ -445,7 +445,7 @@ export default function MediaLibraryPage() {
             <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex-1 min-w-[200px] relative">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-pink-200" placeholder="Tìm kiếm..." value={search} onChange={e => setSearch(e.target.value)} />
+                    <input className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-teal-400 focus:border-[#00AFA9]" placeholder="Tìm kiếm..." value={search} onChange={e => setSearch(e.target.value)} />
                 </div>
                 {selectMode && (
                     <button onClick={selectAll} className="flex items-center gap-1 px-3 py-2 bg-slate-100 text-slate-600 text-xs rounded-lg hover:bg-slate-200">
@@ -456,7 +456,7 @@ export default function MediaLibraryPage() {
                     <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
                     {(["name", "size", "createdTime"] as SortField[]).map(f => (
                         <button key={f} onClick={() => toggleSort(f)}
-                            className={`px-2 py-1 rounded ${sortField === f ? "bg-pink-100 text-pink-600 font-medium" : "text-slate-500 hover:bg-slate-100"}`}>
+                            className={`px-2 py-1 rounded ${sortField === f ? "bg-teal-50 text-[#00AFA9] font-medium" : "text-slate-500 hover:bg-slate-100"}`}>
                             {f === "name" ? "Tên" : f === "size" ? "Size" : "Ngày"} {sortField === f && (sortDir === "asc" ? "↑" : "↓")}
                         </button>
                     ))}
@@ -624,14 +624,14 @@ export default function MediaLibraryPage() {
             {/* Rename Modal */}
             {renameItem && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setRenameItem(null)}>
-                    <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-xl w-full max-w-md p-6 border border-slate-200" onClick={e => e.stopPropagation()}>
                         <h3 className="text-lg font-bold text-slate-800 mb-4">Đổi tên</h3>
-                        <input autoFocus className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-pink-200 mb-4"
+                        <input autoFocus className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-teal-400 focus:border-[#00AFA9] mb-4"
                             value={renameName} onChange={e => setRenameName(e.target.value)}
                             onKeyDown={e => { if (e.key === "Enter") doRename(); if (e.key === "Escape") setRenameItem(null); }} />
                         <div className="flex justify-end gap-2">
                             <button onClick={() => setRenameItem(null)} className="px-4 py-2 bg-slate-100 text-slate-600 text-sm rounded-lg hover:bg-slate-200">Hủy</button>
-                            <button onClick={doRename} disabled={!renameName.trim()} className="px-4 py-2 bg-pink-600 text-white text-sm rounded-lg hover:bg-pink-700 disabled:opacity-50">Lưu</button>
+                            <button onClick={doRename} disabled={!renameName.trim()} className="px-4 py-2 bg-[#00AFA9] text-white text-sm rounded-lg hover:bg-[#009690] disabled:opacity-50 transition-colors">Lưu</button>
                         </div>
                     </div>
                 </div>
@@ -640,7 +640,7 @@ export default function MediaLibraryPage() {
             {/* Move Modal */}
             {moveItems.length > 0 && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setMoveItems([])}>
-                    <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-xl w-full max-w-md p-6 border border-slate-200" onClick={e => e.stopPropagation()}>
                         <h3 className="text-lg font-bold text-slate-800 mb-2">Di chuyển {moveItems.length} mục</h3>
                         <p className="text-xs text-slate-400 mb-4">Chọn thư mục đích:</p>
                         {loadingMoveFolders ? (
@@ -648,12 +648,12 @@ export default function MediaLibraryPage() {
                         ) : (
                             <div className="max-h-60 overflow-y-auto space-y-1 mb-4">
                                 <button onClick={() => setMoveTarget(rootFolderId)}
-                                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${moveTarget === rootFolderId ? "bg-pink-50 text-pink-600 border border-pink-200" : "hover:bg-slate-50"}`}>
+                                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${moveTarget === rootFolderId ? "bg-teal-50 text-[#00AFA9] border border-teal-200" : "hover:bg-slate-50 border border-transparent"}`}>
                                     <Home className="w-4 h-4 text-amber-400" /> LYHU Media (Gốc)
                                 </button>
                                 {moveFolders.filter(f => !moveItems.find(mi => mi.id === f.id)).map(f => (
                                     <button key={f.id} onClick={() => setMoveTarget(f.id)}
-                                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${moveTarget === f.id ? "bg-pink-50 text-pink-600 border border-pink-200" : "hover:bg-slate-50"}`}>
+                                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${moveTarget === f.id ? "bg-teal-50 text-[#00AFA9] border border-teal-200" : "hover:bg-slate-50 border border-transparent"}`}>
                                         <Folder className="w-4 h-4 text-amber-400" /> {f.name}
                                     </button>
                                 ))}
@@ -661,7 +661,7 @@ export default function MediaLibraryPage() {
                         )}
                         <div className="flex justify-end gap-2">
                             <button onClick={() => setMoveItems([])} className="px-4 py-2 bg-slate-100 text-slate-600 text-sm rounded-lg hover:bg-slate-200">Hủy</button>
-                            <button onClick={doMove} disabled={!moveTarget} className="px-4 py-2 bg-pink-600 text-white text-sm rounded-lg hover:bg-pink-700 disabled:opacity-50">Di chuyển</button>
+                            <button onClick={doMove} disabled={!moveTarget} className="px-4 py-2 bg-[#00AFA9] text-white text-sm rounded-lg hover:bg-[#009690] disabled:opacity-50 transition-colors">Di chuyển</button>
                         </div>
                     </div>
                 </div>

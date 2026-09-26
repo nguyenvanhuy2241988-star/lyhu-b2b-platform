@@ -152,7 +152,7 @@ export default function ScriptEditor() {
                 <button 
                     onClick={handleSave}
                     disabled={saving}
-                    className="px-6 py-2 bg-slate-900 hover:bg-black text-white font-medium rounded-lg shadow-sm flex items-center transition-all disabled:opacity-50"
+                    className="px-6 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white font-medium rounded-lg flex items-center transition-colors disabled:opacity-50"
                 >
                     {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                     Lưu kịch bản
@@ -161,7 +161,7 @@ export default function ScriptEditor() {
 
             <div className="flex gap-6 h-full min-h-0">
                 {/* Left: Editor */}
-                <div className="flex-1 bg-white border border-gray-200 rounded-xl overflow-hidden flex flex-col shadow-sm">
+                <div className="flex-1 bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col">
                     <RichTextEditor 
                         content={form.content}
                         onChange={(html) => setForm({...form, content: html})}
@@ -172,33 +172,33 @@ export default function ScriptEditor() {
                 {/* Right: Sidebar & AI Tool */}
                 <div className="w-[380px] flex-shrink-0 space-y-4 overflow-y-auto pr-2 pb-10">
                     {/* Block AI Generator */}
-                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-5 rounded-xl border border-indigo-100 shadow-sm relative overflow-hidden">
+                    <div className="bg-teal-50/50 p-5 rounded-xl border border-teal-200 relative overflow-hidden">
                         <div className="absolute -right-4 -top-4 opacity-10">
-                            <Sparkles className="w-24 h-24 text-indigo-500" />
+                            <Sparkles className="w-24 h-24 text-[#00AFA9]" />
                         </div>
-                        <h3 className="font-bold text-indigo-900 mb-2 flex items-center text-sm">
-                            <Sparkles className="w-4 h-4 mr-1.5 text-indigo-600" /> Kỹ sư AI Kịch Bản
+                        <h3 className="font-bold text-slate-900 mb-2 flex items-center text-sm">
+                            <Sparkles className="w-4 h-4 mr-1.5 text-[#00AFA9]" /> Kỹ sư AI Kịch Bản
                         </h3>
-                        <p className="text-xs text-indigo-700/80 mb-3 leading-relaxed">
+                        <p className="text-xs text-slate-600 mb-3 leading-relaxed">
                             Nhập 1 ý tưởng ngắn gọn, AI Gemini sẽ phân tích tư duy Đạo Diễn và tự động sinh Form kịch bản Tiktok/Reels 2 cột tiêu chuẩn (Hình Ảnh - Lời Thoại).
                         </p>
                         <textarea
                             value={aiTopic}
                             onChange={(e) => setAiTopic(e.target.value)}
                             placeholder="VD: Quay 1 video hài 30s bá đạo để bán Bánh Tráng Bơ chi nhánh Quận 1..."
-                            className="w-full h-24 p-3 text-sm rounded-lg border-indigo-200 bg-white/80 focus:ring-indigo-500 focus:border-indigo-500 placeholder-indigo-300 resize-none"
+                            className="w-full h-24 p-3 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-[#00AFA9] placeholder-slate-400 resize-none"
                         ></textarea>
                         <button 
                             onClick={handleAIGenerate}
                             disabled={generating}
-                            className="mt-3 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg flex justify-center items-center disabled:opacity-50 transition-colors"
+                            className="mt-3 w-full py-2.5 bg-[#00AFA9] hover:bg-[#009690] text-white text-sm font-semibold rounded-lg flex justify-center items-center disabled:opacity-50 transition-colors"
                         >
                             {generating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
                             Tạo Form Kịch bản
                         </button>
                     </div>
 
-                    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                    <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-4">
                         <h3 className="font-bold text-gray-900 border-l-4 border-gray-400 pl-2">Thông tin (Metadata)</h3>
                         
                         <div>

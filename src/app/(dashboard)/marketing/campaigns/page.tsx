@@ -273,14 +273,14 @@ export default function CampaignsPage() {
                     </button>
                     <button 
                         onClick={() => setIsOptimizeOpen(true)}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 h-10 px-4 py-2 gap-2 shadow-sm transition-all hover:shadow-md"
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-[#00AFA9] text-white hover:bg-[#009690] h-10 px-4 py-2 gap-2 transition-colors"
                     >
                         <Bot className="w-4 h-4" />
                         AI Tối ưu
                     </button>
                     <button
                         onClick={handleOpenCreate}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-slate-800 text-white hover:bg-slate-900 h-10 px-4 py-2 gap-2"
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-slate-800 text-white hover:bg-slate-900 h-10 px-4 py-2 gap-2 transition-colors"
                     >
                         <Plus className="w-4 h-4" /> Tạo chiến dịch
                     </button>
@@ -290,7 +290,7 @@ export default function CampaignsPage() {
             {/* Modal */}
             {isDialogOpen && (
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-white rounded-lg border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex justify-between items-center p-6 border-b">
                             <h3 className="text-lg font-semibold">{editingId ? "Cập nhật chiến dịch" : "Tạo chiến dịch mới"}</h3>
                             <button onClick={() => setIsDialogOpen(false)} className="text-slate-500 hover:text-slate-700">
@@ -610,7 +610,7 @@ export default function CampaignsPage() {
             {/* MODAL KẾT NỐI FACEBOOK ADS */}
             {isFbModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+                    <div className="bg-white rounded-lg border border-slate-200 w-full max-w-md overflow-hidden">
                         <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
                             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                                 <Facebook className="w-5 h-5 text-blue-600" />
@@ -664,7 +664,7 @@ export default function CampaignsPage() {
             {/* MODAL AUTO SETUP FB ADS */}
             {isSetupModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden my-8">
+                    <div className="bg-white rounded-lg border border-slate-200 w-full max-w-2xl overflow-hidden my-8">
                         <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
                             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                                 <Rocket className="w-5 h-5 text-indigo-600" />
@@ -771,7 +771,7 @@ export default function CampaignsPage() {
                             <button
                                 onClick={handleAutoSetupFbAds}
                                 disabled={isSettingUpFb}
-                                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-md disabled:opacity-50 flex items-center gap-2 shadow-sm"
+                                className="px-4 py-2 text-sm font-medium text-white bg-[#00AFA9] hover:bg-[#009690] rounded-md disabled:opacity-50 flex items-center gap-2 transition-colors"
                             >
                                 {isSettingUpFb ? "Đang xử lý ngầm (5 bước)..." : "Khởi chạy Quảng Cáo"}
                                 <Rocket className="w-4 h-4" />

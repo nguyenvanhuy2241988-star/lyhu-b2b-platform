@@ -580,7 +580,7 @@ export default function PosterStudioPage() {
                         </div>
 
                         <div className="flex justify-end pt-4">
-                            <button onClick={generatePrompt} disabled={!headline.trim()} className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                            <button onClick={generatePrompt} disabled={!headline.trim()} className="flex items-center gap-2 px-6 py-2.5 bg-[#00AFA9] text-white rounded-lg font-medium hover:bg-[#009690] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                                 <Wand2 className="w-4 h-4" /> Tạo Prompt theo mẫu
                             </button>
                         </div>
@@ -699,20 +699,20 @@ export default function PosterStudioPage() {
 
                                 {/* Auto-Analysis Button */}
                                 {selectedBrand.logo_image && (
-                                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4">
+                                    <div className="bg-teal-50/50 border border-teal-200 rounded-xl p-4">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <h4 className="text-sm font-bold text-purple-800 flex items-center gap-2">
-                                                    <Zap className="w-4 h-4" /> Phân tích tự động bằng AI
+                                                <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                                    <Zap className="w-4 h-4 text-[#00AFA9]" /> Phân tích tự động bằng AI
                                                 </h4>
-                                                <p className="text-xs text-purple-600 mt-0.5">
+                                                <p className="text-xs text-slate-600 mt-0.5">
                                                     Trích xuất mã màu, phong cách thiết kế, font chữ từ logo{selectedBrand.product_images?.length ? ' & sản phẩm' : ''}
                                                 </p>
                                             </div>
                                             <button
                                                 onClick={analyzeBrand}
                                                 disabled={analyzing}
-                                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg text-sm font-medium hover:from-purple-700 hover:to-blue-700 transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                                className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white rounded-lg text-sm font-medium hover:bg-[#009690] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                             >
                                                 {analyzing ? (
                                                     <><Loader2 className="w-4 h-4 animate-spin" /> Đang phân tích...</>
@@ -725,8 +725,8 @@ export default function PosterStudioPage() {
                                         {/* Font Suggestion Badge */}
                                         {selectedBrand.font_suggestion && (
                                             <div className="mt-3 flex items-center gap-2">
-                                                <span className="text-xs font-medium text-purple-700">🔤 Font gợi ý:</span>
-                                                <span className="px-2.5 py-1 bg-white/80 border border-purple-200 rounded-full text-xs font-medium text-purple-800 shadow-sm">
+                                                <span className="text-xs font-medium text-slate-700">Font gợi ý:</span>
+                                                <span className="px-2.5 py-1 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-800">
                                                     {selectedBrand.font_suggestion}
                                                 </span>
                                             </div>
@@ -1078,7 +1078,7 @@ export default function PosterStudioPage() {
                             <button onClick={() => setStep(2)} className="flex items-center gap-2 px-5 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition text-sm">
                                 <ChevronLeft className="w-4 h-4" /> Quay lại
                             </button>
-                            <button onClick={generatePrompt} className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition shadow-sm">
+                            <button onClick={generatePrompt} className="flex items-center gap-2 px-6 py-2.5 bg-[#00AFA9] text-white rounded-lg font-medium hover:bg-[#009690] transition-colors">
                                 <Wand2 className="w-4 h-4" /> Tạo Prompt
                             </button>
                         </div>

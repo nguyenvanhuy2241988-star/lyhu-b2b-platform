@@ -919,18 +919,18 @@ function SaleAdminCreateOrderContent() {
                             <div className="lg:sticky lg:top-4">
                                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                                     {/* Cart Header */}
-                                    <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-gradient-to-r from-teal-50 to-white">
+                                    <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-teal-50/60">
                                         <div className="flex items-center gap-2">
-                                            <ShoppingCart className="w-5 h-5 text-teal-600" />
+                                            <ShoppingCart className="w-5 h-5 text-[#00AFA9]" />
                                             <h3 className="font-semibold text-slate-900">Đơn hàng</h3>
                                             {orderItems.length > 0 && (
-                                                <span className="bg-teal-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+                                                <span className="bg-[#00AFA9] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
                                                     {orderItems.length}
                                                 </span>
                                             )}
                                         </div>
                                         {orderItems.length > 0 && (
-                                            <span className="text-lg font-bold text-teal-600">
+                                            <span className="text-lg font-bold text-[#00AFA9]">
                                                 {formatPrice(finalTotal)}
                                             </span>
                                         )}
