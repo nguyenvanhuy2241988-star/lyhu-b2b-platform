@@ -18,12 +18,12 @@ export default function CTVAntiFraudPage() {
             </div>
 
             {/* Status Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100 flex items-start gap-4">
-                    <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0 mt-1" />
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div className="p-6 bg-emerald-50/70 border-b border-emerald-100 flex items-start gap-4">
+                    <CheckCircle className="w-8 h-8 text-emerald-600 flex-shrink-0 mt-1" />
                     <div>
-                        <h2 className="text-lg font-bold text-green-800">Tài khoản Trong sạch</h2>
-                        <p className="text-green-700 text-sm mt-1">
+                        <h2 className="text-lg font-bold text-emerald-800">Tài khoản Trong sạch</h2>
+                        <p className="text-emerald-700 text-sm mt-1">
                             Tuyệt vời! Tài khoản của bạn không vi phạm bất kỳ quy tắc nào.
                             Hãy tiếp tục duy trì hoạt động minh bạch.
                         </p>

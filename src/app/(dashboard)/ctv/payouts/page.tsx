@@ -145,7 +145,7 @@ export default function CTVPayoutsPage() {
 
             {/* Current Cycle Draft */}
             {currentDraft && currentDraft.status === "DRAFT" && (
-                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 border border-yellow-200">
+                <div className="bg-amber-50 rounded-xl p-6 border border-amber-200">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h3 className="font-semibold text-slate-900 mb-1">Đề xuất thanh toán kỳ {getCycleLabel(currentDraft.cycleKey || "")}</h3>
@@ -154,11 +154,11 @@ export default function CTVPayoutsPage() {
                                 <span>Hoa hồng đơn: <strong>{formatPrice(currentDraft.commissionFromOrders)}</strong></span>
                                 <span>Thưởng giới thiệu: <strong>{formatPrice(currentDraft.commissionFromReferrals)}</strong></span>
                             </div>
-                            <p className="mt-2 text-lg font-bold text-green-600">Tổng: {formatPrice(currentDraft.requestedAmount)}</p>
+                            <p className="mt-2 text-lg font-bold text-emerald-600">Tổng: {formatPrice(currentDraft.requestedAmount)}</p>
                         </div>
                         <button
                             onClick={handleConfirmDraft}
-                            className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 flex-shrink-0"
+                            className="px-6 py-3 bg-[#00AFA9] text-white rounded-xl hover:bg-[#009b95] transition-colors flex items-center gap-2 flex-shrink-0 font-bold text-sm"
                         >
                             <CheckCircle className="w-5 h-5" />
                             <span>Xác nhận yêu cầu trả</span>

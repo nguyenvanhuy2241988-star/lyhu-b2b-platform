@@ -24,9 +24,9 @@ const formatPrice = (price: number) => {
 };
 
 const STATUS_CONFIG = {
-    NEW: { label: "Mới", color: "bg-blue-100 text-blue-700" },
-    CONTACTED: { label: "Đã liên hệ", color: "bg-yellow-100 text-yellow-700" },
-    CONVERTED: { label: "Đã chuyển đổi", color: "bg-green-100 text-green-700" },
+    NEW: { label: "Mới", color: "border border-blue-200 bg-blue-50 text-blue-700" },
+    CONTACTED: { label: "Đã liên hệ", color: "border border-amber-200 bg-amber-50 text-amber-700" },
+    CONVERTED: { label: "Đã chuyển đổi", color: "border border-emerald-200 bg-emerald-50 text-emerald-700" },
 };
 
 export default function CTVDashboard() {
@@ -170,9 +170,9 @@ export default function CTVDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Level Card */}
                 {levelInfo && (
-                    <div className={`p-6 rounded-xl shadow-sm border-2 ${LEVEL_COLORS[levelInfo.level].border} ${LEVEL_COLORS[levelInfo.level].bg}`}>
+                    <div className={`p-6 rounded-xl border-2 ${LEVEL_COLORS[levelInfo.level].border} ${LEVEL_COLORS[levelInfo.level].bg}`}>
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-white rounded-full shadow">
+                            <div className="p-3 bg-white rounded-xl border border-slate-100">
                                 <Award className={`w-8 h-8 ${LEVEL_COLORS[levelInfo.level].text}`} />
                             </div>
                             <div>
@@ -191,7 +191,7 @@ export default function CTVDashboard() {
                             </div>
                             <div className="h-2 bg-white rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all"
+                                    className="h-full bg-[#00AFA9] transition-all"
                                     style={{ width: `${Math.max(levelInfo.salesProgress, levelInfo.ordersProgress)}%` }}
                                 />
                             </div>
@@ -200,10 +200,10 @@ export default function CTVDashboard() {
                 )}
 
                 {/* Missions Summary */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                            <Target className="w-5 h-5 text-primary-600" />
+                            <Target className="w-5 h-5 text-[#00AFA9]" />
                             <h3 className="font-semibold text-slate-900">Nhiệm vụ tháng này</h3>
                         </div>
                         {missionsSummary && (
@@ -216,22 +216,22 @@ export default function CTVDashboard() {
                         {missionsSummary?.missions.map((mission) => (
                             <div
                                 key={mission.id}
-                                className={`p-4 rounded-lg border ${mission.completed ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}`}
+                                className={`p-4 rounded-lg border ${mission.completed ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}
                             >
                                 <div className="flex items-start justify-between mb-2">
                                     <p className="text-sm font-medium text-slate-800">{mission.title}</p>
                                     {mission.completed && (
-                                        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                                        <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                                     )}
                                 </div>
                                 <div className="mt-2">
                                     <div className="flex justify-between text-xs text-slate-500 mb-1">
                                         <span>{formatMissionProgress(mission)}</span>
-                                        <span className="text-green-600">{mission.rewardText}</span>
+                                        <span className="text-emerald-600 font-semibold">{mission.rewardText}</span>
                                     </div>
                                     <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                                         <div
-                                            className={`h-full transition-all ${mission.completed ? 'bg-green-500' : 'bg-primary-500'}`}
+                                            className={`h-full transition-all ${mission.completed ? 'bg-emerald-500' : 'bg-[#00AFA9]'}`}
                                             style={{ width: `${getMissionProgressPercent(mission)}%` }}
                                         />
                                     </div>
@@ -249,7 +249,7 @@ export default function CTVDashboard() {
                     return (
                         <div
                             key={index}
-                            className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
+                            className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200"
                         >
                             <div className="flex items-center justify-between mb-4">
                                 <div className={`p-3 rounded-lg ${stat.bg}`}>
@@ -272,88 +272,85 @@ export default function CTVDashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <a
                     href="/ctv/create-order"
-                    className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all group flex items-center gap-4"
+                    className="bg-white p-5 rounded-xl border border-slate-200 hover:border-[#00AFA9] transition-colors group flex items-center gap-4"
                 >
-                    <div className="p-3 bg-primary-50 rounded-lg group-hover:bg-primary-100 transition-colors">
-                        <ShoppingBag className="w-6 h-6 text-primary-600" />
+                    <div className="p-3 bg-teal-50 rounded-xl group-hover:bg-teal-100 transition-colors">
+                        <ShoppingBag className="w-6 h-6 text-[#00AFA9]" />
                     </div>
                     <div>
-                        <h4 className="font-semibold text-slate-900 mb-1">Tạo đơn hàng</h4>
-                        <p className="text-sm text-slate-600">Lên đơn mới ngay</p>
+                        <h4 className="font-semibold text-slate-900 mb-0.5 group-hover:text-[#00AFA9] transition-colors">Tạo đơn hàng</h4>
+                        <p className="text-xs text-slate-500">Lên đơn mới ngay</p>
                     </div>
                 </a>
                 <a
                     href="/ctv/referrals"
-                    className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all group flex items-center gap-4"
+                    className="bg-white p-5 rounded-xl border border-slate-200 hover:border-[#00AFA9] transition-colors group flex items-center gap-4"
                 >
-                    <div className="p-3 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
+                    <div className="p-3 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors">
                         <UserPlus className="w-6 h-6 text-purple-600" />
                     </div>
                     <div>
-                        <h4 className="font-semibold text-slate-900 mb-1">Giới thiệu CTV</h4>
-                        <p className="text-sm text-slate-600">Chia sẻ mã & xem tuyến dưới</p>
+                        <h4 className="font-semibold text-slate-900 mb-0.5 group-hover:text-[#00AFA9] transition-colors">Giới thiệu CTV</h4>
+                        <p className="text-xs text-slate-500">Chia sẻ mã & xem tuyến dưới</p>
                     </div>
                 </a>
                 <a
                     href="/ctv/earnings"
-                    className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all group flex items-center gap-4"
+                    className="bg-white p-5 rounded-xl border border-slate-200 hover:border-[#00AFA9] transition-colors group flex items-center gap-4"
                 >
-                    <div className="p-3 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
-                        <DollarSign className="w-6 h-6 text-green-600" />
+                    <div className="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition-colors">
+                        <DollarSign className="w-6 h-6 text-emerald-600" />
                     </div>
                     <div>
-                        <h4 className="font-semibold text-slate-900 mb-1">Thu nhập & Hoa hồng</h4>
-                        <p className="text-sm text-slate-600">Xem chi tiết từng tháng</p>
+                        <h4 className="font-semibold text-slate-900 mb-0.5 group-hover:text-[#00AFA9] transition-colors">Thu nhập & Hoa hồng</h4>
+                        <p className="text-xs text-slate-500">Xem chi tiết từng tháng</p>
                     </div>
                 </a>
             </div>
 
-            {/* Recent Leads Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-                    <h3 className="text-lg font-semibold text-slate-900">Leads gần đây</h3>
-                    <a href="/ctv/my-leads" className="text-sm text-primary-600 hover:text-primary-700 font-medium">Xem tất cả</a>
+            {/* Recent Leads Section */}
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div className="p-4 sm:p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900">Leads gần đây</h3>
+                    <a href="/ctv/my-leads" className="text-xs sm:text-sm text-[#00AFA9] hover:text-[#009b95] font-bold transition-colors">
+                        Xem tất cả
+                    </a>
                 </div>
-                <div className="overflow-x-auto">
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left text-sm min-w-[768px]">
-                        <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                        <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 text-xs">
                             <tr>
-                                <th className="px-6 py-3 font-medium">Tên cửa hàng</th>
-                                <th className="px-6 py-3 font-medium">Người liên hệ</th>
-                                <th className="px-6 py-3 font-medium">Số điện thoại</th>
-                                <th className="px-6 py-3 font-medium">Khu vực</th>
-                                <th className="px-6 py-3 font-medium">Loại</th>
-                                <th className="px-6 py-3 font-medium">Trạng thái</th>
-                                <th className="px-6 py-3 font-medium">Ngày tạo</th>
+                                <th className="px-6 py-3 font-semibold uppercase tracking-wider text-[11px]">Tên cửa hàng</th>
+                                <th className="px-6 py-3 font-semibold uppercase tracking-wider text-[11px]">Người liên hệ</th>
+                                <th className="px-6 py-3 font-semibold uppercase tracking-wider text-[11px]">Số điện thoại</th>
+                                <th className="px-6 py-3 font-semibold uppercase tracking-wider text-[11px]">Khu vực</th>
+                                <th className="px-6 py-3 font-semibold uppercase tracking-wider text-[11px]">Loại</th>
+                                <th className="px-6 py-3 font-semibold uppercase tracking-wider text-[11px]">Trạng thái</th>
+                                <th className="px-6 py-3 font-semibold uppercase tracking-wider text-[11px]">Ngày tạo</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-200">
+                        <tbody className="divide-y divide-slate-100">
                             {leads.slice(0, 5).map((lead) => {
                                 const statusConfig = STATUS_CONFIG[lead.status as keyof typeof STATUS_CONFIG];
                                 return (
-                                    <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4 font-medium text-slate-900">{lead.storeName}</td>
+                                    <tr key={lead.id} className="hover:bg-slate-50/60 transition-colors">
+                                        <td className="px-6 py-4 font-semibold text-slate-900">{lead.storeName}</td>
                                         <td className="px-6 py-4 text-slate-600">{lead.contactName}</td>
                                         <td className="px-6 py-4 text-slate-600">{lead.phone}</td>
                                         <td className="px-6 py-4 text-slate-600">{lead.area}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lead.customerType === "NPP"
-                                                ? "bg-purple-100 text-purple-700"
-                                                : lead.customerType === "Đại lý"
-                                                    ? "bg-blue-100 text-blue-700"
-                                                    : lead.customerType === "Mini mart"
-                                                        ? "bg-green-100 text-green-700"
-                                                        : "bg-orange-100 text-orange-700"
-                                                }`}>
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border border-slate-200 bg-slate-50 text-slate-700">
                                                 {lead.customerType}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusConfig.color}`}>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${statusConfig.color}`}>
                                                 {statusConfig.label}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-600">{formatDate(lead.createdAt)}</td>
+                                        <td className="px-6 py-4 text-slate-500 text-xs">{formatDate(lead.createdAt)}</td>
                                     </tr>
                                 );
                             })}
@@ -361,8 +358,32 @@ export default function CTVDashboard() {
                     </table>
                 </div>
 
+                {/* Mobile Card List View */}
+                <div className="md:hidden divide-y divide-slate-100">
+                    {leads.slice(0, 5).map((lead) => {
+                        const statusConfig = STATUS_CONFIG[lead.status as keyof typeof STATUS_CONFIG];
+                        return (
+                            <div key={lead.id} className="p-3.5 space-y-2">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <h4 className="font-bold text-slate-900 text-sm">{lead.storeName}</h4>
+                                        <p className="text-xs text-slate-500 mt-0.5">{lead.contactName} • {lead.phone}</p>
+                                    </div>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${statusConfig.color} shrink-0`}>
+                                        {statusConfig.label}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-50">
+                                    <span>{lead.area} • {lead.customerType}</span>
+                                    <span>{formatDate(lead.createdAt)}</span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
                 {leads.length === 0 && (
-                    <div className="p-8 text-center text-slate-500">
+                    <div className="p-8 text-center text-slate-400 text-xs sm:text-sm">
                         Chưa có lead nào
                     </div>
                 )}

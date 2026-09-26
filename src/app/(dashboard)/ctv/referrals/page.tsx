@@ -95,15 +95,15 @@ export default function CTVReferralsPage() {
             </div>
 
             {/* Referral Code Card */}
-            <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl p-6 text-white">
+            <div className="bg-[#00AFA9] rounded-xl p-6 text-white border border-[#009b95]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <p className="text-primary-100 text-sm mb-1">Mã giới thiệu của bạn</p>
+                        <p className="text-teal-100 text-sm mb-1">Mã giới thiệu của bạn</p>
                         <p className="text-3xl font-bold tracking-wider">{fullUser?.referralCode || "---"}</p>
                     </div>
                     <button
                         onClick={handleCopy}
-                        className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl transition-colors font-semibold text-sm"
                     >
                         {copied ? (
                             <>
@@ -122,7 +122,7 @@ export default function CTVReferralsPage() {
                 <div className="mt-4 pt-4 border-t border-white/20">
                     <div className="flex items-start gap-2">
                         <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-primary-100">
+                        <p className="text-sm text-teal-100">
                             Chia sẻ mã này cho CTV mới. Khi họ có đơn giao thành công, bạn nhận {formatPrice(ACTIVATION_BONUS)} thưởng kích hoạt
                             + {(OVERRIDE_RATE * 100).toFixed(0)}% hoa hồng họ trong {OVERRIDE_DURATION_DAYS} ngày đầu.
                         </p>

@@ -102,27 +102,27 @@ export default function CTVLeaderboardPage() {
 
             {/* My Rank Card */}
             {myRank?.stats && (
-                <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-6 text-white">
+                <div className="bg-[#00AFA9] rounded-xl p-6 text-white border border-[#009b95]">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
-                            <p className="text-primary-100 text-sm">Thứ hạng của bạn</p>
+                            <p className="text-teal-100 text-sm">Thứ hạng của bạn</p>
                             <div className="flex items-center gap-4 mt-2">
                                 <div className="flex items-center gap-2">
                                     <Trophy className="w-8 h-8" />
                                     <span className="text-4xl font-bold">#{myRank.overallRank}</span>
                                 </div>
-                                <div className="text-primary-100">
+                                <div className="text-teal-100">
                                     <p>Toàn quốc</p>
                                 </div>
                             </div>
                             {myRank.region && myRank.regionRank && (
-                                <p className="mt-2 text-primary-100">
+                                <p className="mt-2 text-teal-100">
                                     <MapPin className="w-4 h-4 inline mr-1" />
                                     #{myRank.regionRank} {REGION_LABELS[myRank.region]}
                                 </p>
                             )}
                             {myRank.province && myRank.provinceRank && (
-                                <p className="mt-1 text-primary-100">
+                                <p className="mt-1 text-teal-100">
                                     <MapPin className="w-4 h-4 inline mr-1" />
                                     #{myRank.provinceRank} {myRank.province}
                                 </p>
@@ -245,7 +245,7 @@ export default function CTVLeaderboardPage() {
             </div>
 
             {/* Motivational */}
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-200">
+            <div className="bg-amber-50 rounded-xl p-6 border border-amber-200">
                 <div className="flex items-center gap-3">
                     <TrendingUp className="w-6 h-6 text-amber-600" />
                     <div>

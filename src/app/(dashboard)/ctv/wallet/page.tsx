@@ -112,23 +112,23 @@ export default function CTVWalletPage() {
             </div>
 
             {/* Current Cycle Info */}
-            <div className="bg-gradient-to-r from-primary-50 to-primary-100 rounded-xl p-6 border border-primary-200">
+            <div className="bg-teal-50/60 rounded-xl p-6 border border-teal-100">
                 <div className="flex items-center gap-3 mb-3">
-                    <Calendar className="w-5 h-5 text-primary-600" />
-                    <h3 className="font-semibold text-primary-900">Kỳ chốt hiện tại</h3>
+                    <Calendar className="w-5 h-5 text-[#00AFA9]" />
+                    <h3 className="font-semibold text-slate-900">Kỳ chốt hiện tại</h3>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <p className="text-2xl font-bold text-primary-700">{cycle.label}</p>
-                        <p className="text-sm text-primary-600">
+                        <p className="text-2xl font-bold text-[#00AFA9]">{cycle.label}</p>
+                        <p className="text-sm text-slate-600">
                             Kỳ {cycle.cycleLetter === "A" ? "đầu tháng (1-15)" : "cuối tháng (16-cuối)"}
                         </p>
                     </div>
                     {currentDraft && (
-                        <div className="bg-white rounded-lg px-4 py-3 border border-primary-300">
+                        <div className="bg-white rounded-xl px-4 py-3 border border-teal-200">
                             <p className="text-sm text-slate-600">Đề xuất thanh toán</p>
-                            <p className="text-lg font-bold text-green-600">{formatPrice(currentDraft.requestedAmount)}</p>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                            <p className="text-lg font-bold text-emerald-600">{formatPrice(currentDraft.requestedAmount)}</p>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold border border-amber-200 bg-amber-50 text-amber-700">
                                 {currentDraft.status === "DRAFT" ? "Chờ xác nhận" : currentDraft.status}
                             </span>
                         </div>
@@ -141,8 +141,8 @@ export default function CTVWalletPage() {
                 <button
                     onClick={() => setShowRequestModal(true)}
                     disabled={!wallet || wallet.balance < 50000} // Minimum withdrawal
-                    className={`bg-white p-6 rounded-xl shadow-sm border border-slate-200 transition-all group flex items-center justify-between text-left w-full
-                        ${(!wallet || wallet.balance < 50000) ? "opacity-60 cursor-not-allowed" : "hover:shadow-md hover:border-primary-200"}`}
+                    className={`bg-white p-6 rounded-xl border border-slate-200 transition-colors group flex items-center justify-between text-left w-full
+                        ${(!wallet || wallet.balance < 50000) ? "opacity-60 cursor-not-allowed" : "hover:border-[#00AFA9]"}`}
                 >
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
