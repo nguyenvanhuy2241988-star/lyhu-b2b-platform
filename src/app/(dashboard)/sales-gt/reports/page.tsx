@@ -70,15 +70,17 @@ export default function ReportsPage() {
     const totalCheckins = reports.reduce((s, r) => s + r.checkinCount, 0);
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-xl font-bold text-slate-900">📈 Báo cáo Sales GT</h1>
-                <div className="flex bg-slate-100 p-1 rounded-lg">
+        <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-[#00AFA9]" /> Báo cáo Sales GT
+                </h1>
+                <div className="flex bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
                     {([["today", "Hôm nay"], ["week", "Tuần"], ["month", "Tháng"]] as const).map(([key, label]) => (
                         <button
                             key={key}
                             onClick={() => setPeriod(key)}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${period === key ? 'bg-white text-teal-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${period === key ? 'bg-[#00AFA9] text-white' : 'text-slate-600 hover:text-slate-900'}`}
                         >
                             {label}
                         </button>
@@ -87,27 +89,27 @@ export default function ReportsPage() {
             </div>
 
             {/* Summary */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white p-5 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-blue-50 rounded-lg"><MapPin className="w-4 h-4 text-blue-600" /></div>
-                        <span className="text-sm text-slate-600">Tổng điểm bán</span>
+                        <div className="p-2 bg-slate-100 rounded-lg"><MapPin className="w-4 h-4 text-slate-600" /></div>
+                        <span className="text-xs sm:text-sm text-slate-600 font-medium">Tổng điểm bán</span>
                     </div>
-                    <p className="text-2xl font-bold text-slate-900">{totalOutlets}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-slate-900">{totalOutlets}</p>
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-slate-200">
+                <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-teal-50 rounded-lg"><BarChart3 className="w-4 h-4 text-teal-600" /></div>
-                        <span className="text-sm text-slate-600">Lượt check-in</span>
+                        <div className="p-2 bg-teal-50 rounded-lg"><BarChart3 className="w-4 h-4 text-[#00AFA9]" /></div>
+                        <span className="text-xs sm:text-sm text-slate-600 font-medium">Lượt check-in</span>
                     </div>
-                    <p className="text-2xl font-bold text-slate-900">{totalCheckins}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-slate-900">{totalCheckins}</p>
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-slate-200">
+                <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-green-50 rounded-lg"><TrendingUp className="w-4 h-4 text-green-600" /></div>
-                        <span className="text-sm text-slate-600">Tỷ lệ viếng thăm</span>
+                        <div className="p-2 bg-lime-50 rounded-lg"><TrendingUp className="w-4 h-4 text-[#5f8c21]" /></div>
+                        <span className="text-xs sm:text-sm text-slate-600 font-medium">Tỷ lệ viếng thăm</span>
                     </div>
-                    <p className="text-2xl font-bold text-slate-900">{totalOutlets > 0 ? Math.round((totalCheckins / totalOutlets) * 100) : 0}%</p>
+                    <p className="text-xl sm:text-2xl font-bold text-slate-900">{totalOutlets > 0 ? Math.round((totalCheckins / totalOutlets) * 100) : 0}%</p>
                 </div>
             </div>
 
@@ -142,7 +144,7 @@ export default function ReportsPage() {
                                             <td className="px-5 py-3 text-center">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-teal-500 rounded-full" style={{ width: `${r.outletCount > 0 ? Math.min(100, (r.checkinCount / r.outletCount) * 100) : 0}%` }} />
+                                                        <div className="h-full bg-[#00AFA9] rounded-full" style={{ width: `${r.outletCount > 0 ? Math.min(100, (r.checkinCount / r.outletCount) * 100) : 0}%` }} />
                                                     </div>
                                                     <span className="text-xs text-slate-500">{r.outletCount > 0 ? Math.round((r.checkinCount / r.outletCount) * 100) : 0}%</span>
                                                 </div>
@@ -161,7 +163,7 @@ export default function ReportsPage() {
                                         <span className="font-semibold text-slate-800">{r.district}</span>
                                         <div className="flex items-center gap-2">
                                             <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                                <div className="h-full bg-teal-500 rounded-full" style={{ width: `${r.outletCount > 0 ? Math.min(100, (r.checkinCount / r.outletCount) * 100) : 0}%` }} />
+                                                <div className="h-full bg-[#00AFA9] rounded-full" style={{ width: `${r.outletCount > 0 ? Math.min(100, (r.checkinCount / r.outletCount) * 100) : 0}%` }} />
                                             </div>
                                             <span className="text-xs font-medium text-slate-600">{r.outletCount > 0 ? Math.round((r.checkinCount / r.outletCount) * 100) : 0}%</span>
                                         </div>
