@@ -2,6 +2,7 @@
 
 import { AlertTriangle, Package } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 interface LowStockItem {
     productId: string;
@@ -26,33 +27,49 @@ export default function LowStockAlert({ items, isLoading }: LowStockAlertProps) 
     }
 
     return (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+        <div className="bg-amber-50/80 border border-amber-200/90 rounded-xl p-3.5 sm:p-4 mb-6">
             <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                    <AlertTriangle className="w-5 h-5 text-amber-600" />
+                <div className="p-2 bg-amber-100 rounded-lg shrink-0">
+                    <AlertTriangle className="w-5 h-5 text-amber-700" />
                 </div>
-                <div className="flex-1">
-                    <h3 className="font-semibold text-amber-800 mb-2">
-                        ⚠️ Cảnh báo tồn kho thấp
-                    </h3>
-                    <p className="text-sm text-amber-700 mb-3">
-                        Có {items.length} sản phẩm cần nhập thêm hàng
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                        <h3 className="font-bold text-sm sm:text-base text-amber-900">
+                            Cảnh báo tồn kho thấp
+                        </h3>
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-200/70 text-amber-900 shrink-0">
+                            {items.length} sản phẩm
+                        </span>
+                    </div>
+                    <p className="text-xs text-amber-800 mb-3">
+                        Các mặt hàng cần kiểm tra và tạo lệnh nhập kho sớm
                     </p>
                     <div className="space-y-2">
                         {items.slice(0, 5).map((item) => (
                             <div
                                 key={item.productId}
-                                className="flex items-center justify-between bg-white rounded-lg p-2 text-sm"
+                                className="flex items-center justify-between gap-2 bg-white rounded-lg p-2.5 text-xs sm:text-sm border border-slate-200/70 shadow-none"
                             >
-                                <div className="flex items-center gap-2">
-                                    <Package className="w-4 h-4 text-slate-400" />
-                                    <span className="font-medium text-slate-700">{item.productName}</span>
-                                    <span className="text-slate-400">({item.sku})</span>
+                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                    <Package className="w-4 h-4 text-slate-400 shrink-0" />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="font-medium text-slate-900 truncate" title={item.productName}>
+                                            {item.productName}
+                                        </p>
+                                        <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                            SKU: {item.sku}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-red-600 font-bold">{item.currentStock}</span>
-                                    <span className="text-slate-400">/</span>
-                                    <span className="text-slate-500">{item.minStockLevel} min</span>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <span className={cn(
+                                        "px-2 py-0.5 rounded text-[10px] font-bold border",
+                                        item.currentStock === 0 
+                                            ? "bg-red-50 text-red-700 border-red-200" 
+                                            : "bg-amber-50 text-amber-800 border-amber-200"
+                                    )}>
+                                        {item.currentStock === 0 ? "Hết hàng" : `Còn ${item.currentStock}`} ({item.currentStock}/{item.minStockLevel})
+                                    </span>
                                 </div>
                             </div>
                         ))}

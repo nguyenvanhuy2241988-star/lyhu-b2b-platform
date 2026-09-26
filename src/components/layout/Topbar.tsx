@@ -61,7 +61,10 @@ export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps
                 >
                     <Menu className="w-6 h-6 text-slate-600" />
                 </button>
-                <h2 className="text-base sm:text-lg font-semibold text-slate-900 tracking-tight">{title}</h2>
+                <div className="flex items-center gap-2">
+                    <img src="/logo-icon.png" alt="LYHU" className="w-6 h-6 object-contain lg:hidden" />
+                    <h2 className="text-base sm:text-lg font-semibold text-slate-900 tracking-tight">{title}</h2>
+                </div>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4">
@@ -75,7 +78,7 @@ export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
                         className={`flex items-center gap-2 p-1.5 pl-2 rounded-full transition-all border active:scale-95 ${isProfileOpen ? 'bg-slate-50 border-slate-300 shadow-sm' : 'border-transparent hover:bg-slate-50 hover:border-slate-200'}`}
                     >
-                        <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center shadow-sm">
+                        <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
                             <span className="text-white text-xs font-bold uppercase">{userName.charAt(0)}</span>
                         </div>
                         <div className="hidden sm:flex flex-col items-start gap-0 ml-1 mr-1">

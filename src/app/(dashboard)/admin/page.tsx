@@ -136,27 +136,92 @@ export default function AdminDashboard() {
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
             {/* Header & Filters */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Tổng quan Admin</h1>
-                    <p className="text-sm text-slate-500 mt-1">
-                        {fromDate && toDate ? `Dữ liệu từ ${formatDate(fromDate)} - ${formatDate(toDate)}` : "Thống kê toàn thời gian"}
-                    </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
-                        <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="px-2 py-1 text-sm bg-transparent border-none outline-none text-slate-600 font-medium" />
-                        <span className="text-slate-400">-</span>
-                        <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="px-2 py-1 text-sm bg-transparent border-none outline-none text-slate-600 font-medium" />
+            <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/80 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h1 className="text-base sm:text-2xl font-bold text-slate-900 tracking-tight">
+                            Tổng quan hoạt động
+                        </h1>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                            {fromDate && toDate ? `Kỳ xem: ${formatDate(fromDate)} - ${formatDate(toDate)}` : "Thống kê dữ liệu toàn thời gian"}
+                        </p>
                     </div>
-                    <button onClick={() => {
-                        const now = new Date();
-                        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-                        setFromDate(firstDay.toISOString().split('T')[0]);
-                        setToDate(now.toISOString().split('T')[0]);
-                    }} className="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50">Tháng này</button>
-                    <button onClick={loadData} disabled={isLoading} className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-70">
-                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Filter className="w-4 h-4" />}
+
+                    {/* Quick Preset Pills */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 sm:pt-0">
+                        <button
+                            onClick={() => {
+                                const now = new Date();
+                                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                                setFromDate(firstDay.toISOString().split('T')[0]);
+                                setToDate(now.toISOString().split('T')[0]);
+                            }}
+                            className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors shrink-0 ${
+                                fromDate && toDate && fromDate.endsWith("-01")
+                                    ? "bg-primary-50 text-primary-700 border-primary-300"
+                                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                            }`}
+                        >
+                            Tháng này
+                        </button>
+                        <button
+                            onClick={() => {
+                                const now = new Date();
+                                const past = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                                setFromDate(past.toISOString().split('T')[0]);
+                                setToDate(now.toISOString().split('T')[0]);
+                            }}
+                            className="px-2.5 py-1 text-xs font-semibold rounded-lg border bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 shrink-0 transition-colors"
+                        >
+                            7 ngày qua
+                        </button>
+                        <button
+                            onClick={() => {
+                                const today = new Date().toISOString().split('T')[0];
+                                setFromDate(today);
+                                setToDate(today);
+                            }}
+                            className="px-2.5 py-1 text-xs font-semibold rounded-lg border bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 shrink-0 transition-colors"
+                        >
+                            Hôm nay
+                        </button>
+                        <button
+                            onClick={() => {
+                                setFromDate("");
+                                setToDate("");
+                            }}
+                            className="px-2.5 py-1 text-xs font-semibold rounded-lg border bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 shrink-0 transition-colors"
+                        >
+                            Tất cả
+                        </button>
+                    </div>
+                </div>
+
+                {/* Custom Date Range Picker (Compact Flat) */}
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs">
+                    <span className="text-[11px] font-medium text-slate-400 shrink-0">Tùy chọn ngày:</span>
+                    <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
+                        <input
+                            type="date"
+                            value={fromDate}
+                            onChange={(e) => setFromDate(e.target.value)}
+                            className="bg-transparent border-none outline-none text-slate-700 font-medium text-xs"
+                        />
+                        <span className="text-slate-400">-</span>
+                        <input
+                            type="date"
+                            value={toDate}
+                            onChange={(e) => setToDate(e.target.value)}
+                            className="bg-transparent border-none outline-none text-slate-700 font-medium text-xs"
+                        />
+                    </div>
+                    <button
+                        onClick={loadData}
+                        disabled={isLoading}
+                        className="px-3 py-1 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 disabled:opacity-70 flex items-center gap-1 shrink-0 ml-auto sm:ml-0"
+                    >
+                        {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Filter className="w-3.5 h-3.5" />}
+                        <span>Lọc</span>
                     </button>
                 </div>
             </div>
