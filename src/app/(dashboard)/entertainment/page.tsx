@@ -70,8 +70,8 @@ const LeaderboardWidget = ({ gamePrefix, gameName }: LeaderboardWidgetProps) => 
     }, [difficulty, gamePrefix]); // Refetch when difficulty or game changes
 
     return (
-        <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-yellow-400 to-orange-400 p-4 text-white">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="bg-amber-500 p-4 text-white">
                 <h3 className="font-bold flex items-center gap-2"><Trophy className="w-5 h-5" /> Bảng Xếp Hạng</h3>
                 <p className="text-xs opacity-90 mt-1">Top cao thủ "{gameName}"</p>
             </div>
@@ -216,7 +216,7 @@ export default function EntertainmentPage() {
             </div>
 
             {/* Content Area */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 min-h-[600px] p-6 text-slate-800">
+            <div className="bg-white rounded-2xl border border-slate-200 min-h-[600px] p-6 text-slate-800">
                 {activeTab === 'wheel' && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                         <div className="text-center mb-6">

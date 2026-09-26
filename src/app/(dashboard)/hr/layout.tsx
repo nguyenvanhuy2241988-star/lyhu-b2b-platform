@@ -31,7 +31,7 @@ function HRLayoutContent({ children }: { children: React.ReactNode }) {
             <div className="flex flex-col lg:flex-row gap-6 p-6 h-full overflow-hidden">
                 {/* Local Sidebar (Modules) */}
                 <div className="w-full lg:w-64 flex-shrink-0 space-y-4 max-h-full overflow-y-auto chrome-scrollbar bg-slate-50/50 rounded-xl">
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                    <div className="bg-white rounded-xl border border-slate-200 p-4">
                         <h3 className="text-xs font-semibold text-slate-500 uppercase mb-3 px-1">Module HR</h3>
                         <div className="space-y-1">
                             {HR_NAV.map((item) => {
@@ -58,7 +58,7 @@ function HRLayoutContent({ children }: { children: React.ReactNode }) {
                     </div>
 
                     {/* Culture & Poster Widget */}
-                    <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl p-4 text-white shadow-lg overflow-hidden relative">
+                    <div className="bg-[#00AFA9] rounded-xl p-4 text-white border border-teal-600 overflow-hidden relative">
                         <div className="relative z-10">
                             <h4 className="font-bold text-sm mb-1 flex items-center gap-2">
                                 <Gift className="w-4 h-4" /> Cải tiến Văn hóa?
@@ -79,7 +79,7 @@ function HRLayoutContent({ children }: { children: React.ReactNode }) {
                     {hasPosters && (
                         <div className="space-y-3">
                             {posters.map((url, idx) => url && (
-                                <div key={idx} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative group">
+                                <div key={idx} className="bg-white rounded-xl border border-slate-200 overflow-hidden relative group">
                                     <img
                                         src={url}
                                         alt={`Poster ${idx + 1}`}
@@ -89,7 +89,7 @@ function HRLayoutContent({ children }: { children: React.ReactNode }) {
                                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
                                             onClick={() => setPreviewImage(url)}
-                                            className="bg-white/90 p-1.5 rounded-full shadow-md text-slate-600 hover:text-blue-600 hover:bg-white transition-all transform hover:scale-110"
+                                            className="bg-white/90 p-1.5 rounded-full border border-slate-200 text-slate-600 hover:text-blue-600 hover:bg-white transition-all transform hover:scale-110"
                                             title="Xem phóng to"
                                         >
                                             <Eye className="w-4 h-4" />
@@ -102,7 +102,7 @@ function HRLayoutContent({ children }: { children: React.ReactNode }) {
                 </div>
 
                 {/* Main Content Area */}
-                <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                <div className="flex-1 bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
                     {children}
                 </div>
             </div>
@@ -156,7 +156,7 @@ function HRLayoutContent({ children }: { children: React.ReactNode }) {
                     </button>
                     <img
                         src={previewImage}
-                        className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                        className="max-w-full max-h-[90vh] object-contain rounded-lg border border-slate-700"
                         onClick={e => e.stopPropagation()}
                     />
                 </div>

@@ -110,7 +110,7 @@ export default function EventsPage() {
                             onClick={() => setViewMode('list')}
                             className={cn(
                                 "p-2 rounded-md transition-all",
-                                viewMode === 'list' ? "bg-white text-teal-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                viewMode === 'list' ? "bg-white text-[#00AFA9] font-bold border border-slate-200" : "text-slate-400 hover:text-slate-600"
                             )}
                             title="Danh sách"
                         >
@@ -120,7 +120,7 @@ export default function EventsPage() {
                             onClick={() => setViewMode('calendar')}
                             className={cn(
                                 "p-2 rounded-md transition-all",
-                                viewMode === 'calendar' ? "bg-white text-teal-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                viewMode === 'calendar' ? "bg-white text-[#00AFA9] font-bold border border-slate-200" : "text-slate-400 hover:text-slate-600"
                             )}
                             title="Lịch"
                         >
@@ -139,7 +139,7 @@ export default function EventsPage() {
                     {/* Featured Event / Banner */}
                     {featuredEvent ? (
                         <Link href={`/events/${featuredEvent.id}`}>
-                            <div className="relative rounded-xl overflow-hidden bg-slate-900 text-white min-h-[300px] flex items-end cursor-pointer group transition-all duration-300 shadow-xl">
+                            <div className="relative rounded-xl overflow-hidden bg-slate-900 text-white min-h-[300px] flex items-end cursor-pointer group transition-all duration-300 border border-slate-200">
                                 {featuredEvent.banner_url ? (
                                     <>
                                         <img
@@ -147,11 +147,11 @@ export default function EventsPage() {
                                             alt={featuredEvent.title}
                                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                         />
-                                        {/* Gradient Overlay for text readability */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-90" />
+                                        {/* Overlay for text readability */}
+                                        <div className="absolute inset-0 bg-black/60" />
                                     </>
                                 ) : (
-                                    <div className="absolute inset-0 bg-gradient-to-r from-teal-600 to-emerald-600" />
+                                    <div className="absolute inset-0 bg-[#00AFA9]" />
                                 )}
 
                                 <div className="relative p-8 z-10 w-full">
