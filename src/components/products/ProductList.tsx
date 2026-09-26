@@ -517,8 +517,8 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                 <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                     <div className="bg-white p-4 rounded-lg border border-slate-200">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-primary-50 rounded-lg">
-                                <Package className="w-5 h-5 text-primary-600" />
+                            <div className="p-2 bg-teal-50 rounded-lg">
+                                <Package className="w-5 h-5 text-[#00AFA9]" />
                             </div>
                             <div>
                                 <p className="text-xs text-slate-600">Tổng SP</p>
@@ -722,7 +722,7 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                                         <div className="flex justify-between items-start gap-2 mb-1">
                                             <h4 className="font-bold text-slate-900 text-sm leading-tight">{product.name}</h4>
                                             <div className="text-right shrink-0">
-                                                <div className="font-bold text-primary-600">{formatPrice(product.price || 0)}</div>
+                                                <div className="font-bold text-[#00AFA9]">{formatPrice(product.price || 0)}</div>
                                             </div>
                                         </div>
                                         
@@ -767,9 +767,9 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
 
             {/* Bulk Actions Bar */}
             {!readOnly && selectedIds.size > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-6 z-40 animate-in slide-in-from-bottom-5 fade-in duration-300">
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-xl border border-slate-700 flex items-center gap-6 z-40 animate-in slide-in-from-bottom-5 fade-in duration-300">
                     <div className="flex items-center gap-2 border-r border-slate-700 pr-4">
-                        <span className="bg-blue-600 text-xs font-bold px-2 py-0.5 rounded-full">{selectedIds.size}</span>
+                        <span className="bg-[#00AFA9] text-xs font-bold px-2 py-0.5 rounded-full">{selectedIds.size}</span>
                         <span className="text-sm font-medium">Đã chọn</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -797,7 +797,7 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
             {/* Create/Edit Modal */}
             {isModalOpen && !readOnly && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 max-h-[90vh] flex flex-col">
+                    <div className="bg-white rounded-xl border border-slate-200 w-full max-w-2xl overflow-hidden animate-in zoom-in-95 max-h-[90vh] flex flex-col">
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
                             <h3 className="font-bold text-lg text-slate-800">
                                 {editingProduct ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
@@ -1086,7 +1086,7 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
             {/* Bulk Edit Modal — Multi-field Grid */}
             {isBulkEditOpen && !readOnly && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95">
+                    <div className="bg-white rounded-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95">
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <h3 className="font-bold text-lg text-slate-800">Cập nhật nhanh {selectedIds.size} SP</h3>
                             <button onClick={() => setIsBulkEditOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
@@ -1094,18 +1094,18 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                         <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
                             <p className="text-xs text-slate-500 mb-1">Tích chọn trường cần cập nhật, nhập giá trị rồi bấm Áp dụng.</p>
                             {[
-                                { key: 'stock', label: '📦 Tồn kho', type: 'number', placeholder: 'VD: 100' },
-                                { key: 'price', label: '💰 Giá bán (₫)', type: 'number', placeholder: 'VD: 22000' },
-                                { key: 'brand', label: '🏷️ Thương hiệu', type: 'text', placeholder: 'VD: LYHU' },
-                                { key: 'items_per_carton', label: '📐 Số SP / Thùng', type: 'number', placeholder: 'VD: 50' },
-                                { key: 'weight', label: '⚖️ Trọng lượng', type: 'text', placeholder: 'VD: 35g, 180g' },
-                                { key: 'packaging_spec', label: '📋 Quy cách đóng gói', type: 'text', placeholder: 'VD: 50 gói/thùng' },
+                                { key: 'stock', label: 'Tồn kho', type: 'number', placeholder: 'VD: 100' },
+                                { key: 'price', label: 'Giá bán (₫)', type: 'number', placeholder: 'VD: 22000' },
+                                { key: 'brand', label: 'Thương hiệu', type: 'text', placeholder: 'VD: LYHU' },
+                                { key: 'items_per_carton', label: 'Số SP / Thùng', type: 'number', placeholder: 'VD: 50' },
+                                { key: 'weight', label: 'Trọng lượng', type: 'text', placeholder: 'VD: 35g, 180g' },
+                                { key: 'packaging_spec', label: 'Quy cách đóng gói', type: 'text', placeholder: 'VD: 50 gói/thùng' },
                             ].map(item => (
                                 <div
                                     key={item.key}
                                     className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
                                         bulkFields[item.key]?.enabled
-                                            ? 'border-blue-400 bg-blue-50/50 shadow-sm'
+                                            ? 'border-[#00AFA9] bg-teal-50/40'
                                             : 'border-slate-200 bg-white hover:border-slate-300'
                                     }`}
                                 >

@@ -43,32 +43,32 @@ const STATUS_CONFIG = {
     pending: {
         label: "Chờ xác nhận",
         icon: Clock,
-        color: "bg-yellow-100 text-yellow-700",
+        color: "bg-amber-50 text-amber-700 border border-amber-200",
     },
     processing: {
         label: "Đang xử lý",
         icon: Package,
-        color: "bg-blue-100 text-blue-700",
+        color: "bg-teal-50 text-[#00AFA9] border border-teal-200",
     },
     delivering: {
         label: "Đang giao hàng",
         icon: Truck,
-        color: "bg-indigo-100 text-indigo-700",
+        color: "bg-blue-50 text-blue-700 border border-blue-200",
     },
     delivered: {
         label: "Đã giao",
         icon: CheckCircle,
-        color: "bg-green-100 text-green-700",
+        color: "bg-emerald-50 text-emerald-700 border border-emerald-200",
     },
     returned: {
         label: "Hoàn hàng",
         icon: RotateCcw,
-        color: "bg-orange-100 text-orange-700",
+        color: "bg-orange-50 text-orange-700 border border-orange-200",
     },
     cancelled: {
         label: "Đã hủy",
         icon: XCircle,
-        color: "bg-red-100 text-red-700",
+        color: "bg-rose-50 text-rose-700 border border-rose-200",
     },
 };
 
@@ -364,9 +364,9 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                     </div>
                 ))}
                 {!hideRevenue && (
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div className="bg-white p-4 rounded-xl border border-slate-200">
                         <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Doanh thu</p>
-                        <p className="text-xl font-bold text-primary-600 mt-1 truncate">
+                        <p className="text-xl font-bold text-[#00AFA9] mt-1 truncate">
                             {isLoading ? '-' : new Intl.NumberFormat("vi-VN", { notation: "compact", compactDisplay: "short", currency: "VND", style: "currency" }).format(stats.totalRevenue)}
                         </p>
                     </div>
@@ -383,8 +383,8 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                 key={filter.value}
                                 onClick={() => setStatusFilter(filter.value)}
                                 className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${statusFilter === filter.value
-                                    ? "bg-slate-900 text-white"
-                                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 shadow-sm"
+                                    ? "bg-[#00AFA9] text-white"
+                                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
                                     }`}
                             >
                                 {filter.label}
@@ -395,7 +395,7 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                     <div className="flex flex-wrap items-center gap-2">
                         {/* User Filter (For Admin/Manager) */}
                         {!readOnly && role !== 'telesales' && users.length > 0 && (
-                            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+                            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200">
                                 <UserIcon className="w-4 h-4 text-slate-400" />
                                 <select
                                     className="bg-transparent border-none text-xs font-bold focus:ring-0 p-0 text-slate-700 min-w-[120px]"
@@ -411,7 +411,7 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                         )}
 
                         {/* Date Filters */}
-                        <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+                        <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200">
                             <Calendar className="w-4 h-4 text-slate-400" />
                             <div className="flex items-center gap-1">
                                 <input
@@ -442,28 +442,28 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
 
                 {/* Search Bar */}
                 <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-[#00AFA9] transition-colors" />
                     <input
                         type="text"
                         placeholder="Tìm kiếm thông minh: Tên khách, Số điện thoại, Mã đơn hàng..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all text-sm font-medium"
+                        className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-[#00AFA9] transition-colors text-sm font-medium"
                     />
                 </div>
             </div>
 
             {/* Orders Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-left text-sm">
                         <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                             <tr>
                                 {!readOnly && (
                                     <th className="px-3 py-3 w-10">
-                                        <button onClick={toggleSelectAll} className="p-0.5 hover:text-primary-600 transition-colors">
+                                        <button onClick={toggleSelectAll} className="p-0.5 hover:text-[#00AFA9] transition-colors">
                                             {selectedIds.size > 0 && selectedIds.size === filteredOrders.length
-                                                ? <CheckSquare className="w-4 h-4 text-primary-600" />
+                                                ? <CheckSquare className="w-4 h-4 text-[#00AFA9]" />
                                                 : <Square className="w-4 h-4 text-slate-400" />}
                                         </button>
                                     </th>
@@ -501,13 +501,13 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                     return (
                                         <React.Fragment key={order.id}>
                                             <tr
-                                                className={`hover:bg-slate-50 transition-colors ${isCompleted ? "opacity-75" : ""} ${selectedIds.has(order.id) ? 'bg-primary-50/50' : ''}`}
+                                                className={`hover:bg-slate-50 transition-colors ${isCompleted ? "opacity-75" : ""} ${selectedIds.has(order.id) ? 'bg-teal-50/40' : ''}`}
                                             >
                                                 {!readOnly && (
                                                     <td className="px-3 py-4 w-10">
                                                         <button onClick={() => toggleSelect(order.id)} className="p-0.5">
                                                             {selectedIds.has(order.id)
-                                                                ? <CheckSquare className="w-4 h-4 text-primary-600" />
+                                                                ? <CheckSquare className="w-4 h-4 text-[#00AFA9]" />
                                                                 : <Square className="w-4 h-4 text-slate-300 hover:text-slate-500" />}
                                                         </button>
                                                     </td>
@@ -565,7 +565,7 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                     <div className="flex items-center justify-end gap-2">
                                                         <button
                                                             onClick={() => setChatOrder({ id: order.id, readableId: String(order.readableId || order.id.slice(0, 8)) })}
-                                                            className="relative p-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                                                            className="relative p-2 text-slate-500 hover:text-[#00AFA9] hover:bg-teal-50 rounded-lg transition-colors"
                                                             title="Chat"
                                                         >
                                                             <MessageCircle className="w-4 h-4" />
@@ -634,7 +634,7 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                             <select
                                                                 value={order.status}
                                                                 onChange={(e) => handleStatusUpdate(order.id, e.target.value as OrderStatus)}
-                                                                className="text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                                className="text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-[#00AFA9] bg-white font-medium"
                                                                 disabled={readOnly}
                                                             >
                                                                 <option value="pending">Chờ xác nhận</option>
@@ -742,64 +742,64 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                             const hasShippingData = order.shippingCarrier || order.trackingCode || order.packedByName || (order.totalBoxes && order.totalBoxes > 0) || order.shippingFee || order.shippingNote;
 
                             return (
-                                <div key={order.id} className={`p-4 bg-white transition-colors ${isCompleted ? "opacity-80" : ""} ${selectedIds.has(order.id) ? 'bg-primary-50/50' : 'hover:bg-slate-50'}`}>
+                                <div key={order.id} className={`p-4 bg-white transition-colors ${isCompleted ? "opacity-80" : ""} ${selectedIds.has(order.id) ? 'bg-teal-50/40' : 'hover:bg-slate-50'}`}>
                                     <div className="flex justify-between items-start mb-3">
-                                        <div className="flex items-start gap-2">
-                                            {!readOnly && (
-                                                <button onClick={() => toggleSelect(order.id)} className="p-1 mt-[-2px] flex-shrink-0">
-                                                    {selectedIds.has(order.id)
-                                                        ? <CheckSquare className="w-5 h-5 text-primary-600" />
-                                                        : <Square className="w-5 h-5 text-slate-300" />}
-                                                </button>
-                                            )}
-                                            <div>
-                                                <div className="font-bold text-slate-900 text-base flex items-center gap-2">
-                                                    {order.readableId ? `#${order.readableId}` : order.id.slice(0, 8)}
-                                                    {order.flagged && (
-                                                        <span className="text-xs text-red-600 font-semibold flex items-center gap-1">
-                                                            <ShieldAlert className="w-3 h-3" />
-                                                            Gian lận
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="text-xs text-slate-500 mt-0.5">{formatDate(order.createdAt)}</div>
-                                            </div>
-                                        </div>
-                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${statusConfig.color} flex-shrink-0`}>
-                                            <StatusIcon className="w-3 h-3" />
-                                            {statusConfig.label}
-                                        </span>
-                                    </div>
+                                         <div className="flex items-start gap-2">
+                                             {!readOnly && (
+                                                 <button onClick={() => toggleSelect(order.id)} className="p-1 mt-[-2px] flex-shrink-0">
+                                                     {selectedIds.has(order.id)
+                                                         ? <CheckSquare className="w-5 h-5 text-[#00AFA9]" />
+                                                         : <Square className="w-5 h-5 text-slate-300" />}
+                                                 </button>
+                                             )}
+                                             <div>
+                                                 <div className="font-bold text-slate-900 text-base flex items-center gap-2">
+                                                     {order.readableId ? `#${order.readableId}` : order.id.slice(0, 8)}
+                                                     {order.flagged && (
+                                                         <span className="text-xs text-red-600 font-semibold flex items-center gap-1">
+                                                             <ShieldAlert className="w-3 h-3" />
+                                                             Gian lận
+                                                         </span>
+                                                     )}
+                                                 </div>
+                                                 <div className="text-xs text-slate-500 mt-0.5">{formatDate(order.createdAt)}</div>
+                                             </div>
+                                         </div>
+                                         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${statusConfig.color} flex-shrink-0`}>
+                                             <StatusIcon className="w-3 h-3" />
+                                             {statusConfig.label}
+                                         </span>
+                                     </div>
 
-                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-3 space-y-2">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-slate-800 text-sm">{order.customerName}</span>
-                                                <span className="text-xs text-slate-500 mt-0.5">{maskSensitiveData ? maskPhone(order.receiverPhone) : order.receiverPhone}</span>
-                                            </div>
-                                            <div className="text-right flex-shrink-0">
-                                                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold mb-1 ${order.source === "CUSTOMER"
-                                                    ? "bg-purple-100 text-purple-700"
-                                                    : order.source === "CTV"
-                                                        ? "bg-emerald-100 text-emerald-700"
-                                                        : "bg-blue-100 text-blue-700"
-                                                    }`}>
-                                                    {order.source}
-                                                </span>
-                                                {order.creatorName && (
-                                                    <div className="text-[10px] text-slate-500 font-medium">
-                                                        {order.creatorName}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
-                                            <span className="text-xs text-slate-500 font-medium">{order.items?.length ?? 0} sản phẩm</span>
-                                            {!hideRevenue && (
-                                                <span className="font-bold text-primary-600 text-base">{formatPrice(order.totalAmount)}</span>
-                                            )}
-                                        </div>
-                                    </div>
+                                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 mb-3 space-y-2">
+                                         <div className="flex items-start justify-between gap-2">
+                                             <div className="flex flex-col">
+                                                 <span className="font-bold text-slate-800 text-sm">{order.customerName}</span>
+                                                 <span className="text-xs text-slate-500 mt-0.5">{maskSensitiveData ? maskPhone(order.receiverPhone) : order.receiverPhone}</span>
+                                             </div>
+                                             <div className="text-right flex-shrink-0">
+                                                 <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold mb-1 ${order.source === "CUSTOMER"
+                                                     ? "bg-purple-100 text-purple-700"
+                                                     : order.source === "CTV"
+                                                         ? "bg-emerald-100 text-emerald-700"
+                                                         : "bg-blue-100 text-blue-700"
+                                                     }`}>
+                                                     {order.source}
+                                                 </span>
+                                                 {order.creatorName && (
+                                                     <div className="text-[10px] text-slate-500 font-medium">
+                                                         {order.creatorName}
+                                                     </div>
+                                                 )}
+                                             </div>
+                                         </div>
+                                         <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                                             <span className="text-xs text-slate-500 font-medium">{order.items?.length ?? 0} sản phẩm</span>
+                                             {!hideRevenue && (
+                                                 <span className="font-bold text-[#00AFA9] text-base">{formatPrice(order.totalAmount)}</span>
+                                             )}
+                                         </div>
+                                     </div>
 
                                     {hasShippingData && (
                                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs mb-4 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
@@ -875,7 +875,7 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                             <select
                                                 value={order.status}
                                                 onChange={(e) => handleStatusUpdate(order.id, e.target.value as OrderStatus)}
-                                                className="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2.5 font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                className="flex-1 text-sm border border-slate-200 rounded-lg px-3 py-2.5 font-semibold text-slate-700 focus:outline-none focus:border-[#00AFA9] bg-white"
                                             >
                                                 <option value="pending">Chờ xác nhận</option>
                                                 <option value="processing">Đang xử lý</option>
