@@ -163,137 +163,146 @@ export default function WarehouseDashboard() {
     ];
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-4 sm:space-y-6">
             {/* Header Area */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div>
-                    <div className="flex items-center gap-2 text-primary-600 font-bold mb-1">
-                        <WarehouseIcon className="w-5 h-5" />
-                        <span className="text-xs uppercase tracking-widest">Trung tâm Vận hành</span>
+                    <div className="flex items-center gap-2 text-[#00AFA9] font-bold mb-1">
+                        <WarehouseIcon className="w-4 h-4" />
+                        <span className="text-[11px] uppercase tracking-wider">Trung tâm Vận hành Kho</span>
                     </div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Quản lý Kho vận</h1>
-                    <p className="text-slate-500 text-sm mt-1">
-                    Theo dõi tồn kho và tối ưu quy trình xử lý đơn hàng.
-                    {lastSync && (
-                        <span className="ml-2 text-xs text-emerald-600 font-medium">
-                            ✅ Sync lúc {lastSync.time} ({lastSync.changed} SP thay đổi)
-                        </span>
-                    )}
-                    {syncError && (
-                        <span className="ml-2 text-xs text-red-500 font-medium">
-                            ❌ {syncError}
-                        </span>
-                    )}
-                </p>
+                    <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Quản Lý Kho Vận</h1>
+                    <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
+                        Kiểm soát xuất nhập tồn và điều phối đóng gói đơn hàng.
+                        {lastSync && (
+                            <span className="ml-2 text-xs text-emerald-600 font-semibold">
+                                • Sync lúc {lastSync.time} ({lastSync.changed} SP)
+                            </span>
+                        )}
+                        {syncError && (
+                            <span className="ml-2 text-xs text-rose-500 font-semibold">
+                                • {syncError}
+                            </span>
+                        )}
+                    </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex items-center gap-2.5">
                     <button
                         onClick={handleMisaSync}
                         disabled={isSyncing}
-                        className={`px-4 py-2 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center gap-2 ${
+                        className={`px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 ${
                             isSyncing
                                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95'
+                                : 'bg-slate-900 text-white hover:bg-slate-800'
                         }`}
                     >
-                        <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                        {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ MISA'}
+                        <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                        <span>{isSyncing ? 'Đang sync...' : 'Đồng bộ MISA'}</span>
                     </button>
-                    <Link href="/warehouse/import" className="px-4 py-2 bg-primary-600 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-primary-700 transition-all flex items-center gap-2">
+                    <Link 
+                        href="/warehouse/import" 
+                        className="px-4 py-2 bg-[#00AFA9] text-white rounded-xl font-bold text-xs sm:text-sm hover:bg-[#009893] transition-colors flex items-center gap-1.5"
+                    >
                         <CheckCircle2 className="w-4 h-4" />
-                        Nhập kho mới
+                        <span>Nhập kho</span>
                     </Link>
                 </div>
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Quick Stats Grid (3 Columns on Mobile & Desktop) */}
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
                 {dashCards.map((card, idx) => (
-                    <Link key={idx} href={card.link} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-primary-200 transition-all group relative overflow-hidden">
-                        <div className={`absolute top - 0 right - 0 w - 24 h - 24 ${card.bg} rounded - bl - full - mr - 8 - mt - 8 opacity - 50 group - hover: scale - 110 transition - transform`} />
-                        <div className="flex items-start justify-between relative">
-                            <div className={`p - 3 ${card.bg} ${card.color} rounded - xl`}>
-                                <card.icon className="w-6 h-6" />
+                    <Link 
+                        key={idx} 
+                        href={card.link} 
+                        className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 hover:border-slate-300 transition-colors flex flex-col justify-between"
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider line-clamp-1">
+                                {card.label}
+                            </span>
+                            <div className={`w-7 h-7 sm:w-8 sm:h-8 ${card.bg} ${card.color} rounded-lg flex items-center justify-center shrink-0`}>
+                                <card.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </div>
                         </div>
-                        <div className="mt-4 relative">
-                            <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">{card.label}</p>
-                            <div className="flex items-end gap-2 mt-1">
-                                <h3 className="text-3xl font-black text-slate-900">
-                                    {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-slate-300" /> : card.value}
-                                </h3>
-                                <span className="text-xs text-slate-400 font-medium mb-1.5">{card.desc}</span>
-                            </div>
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-slate-50 flex items-center text-xs font-bold text-primary-600 opacity-0 group-hover:opacity-100 transition-all">
-                            XỬ LÝ NGAY <ArrowRight className="ml-1 w-3 h-3" />
+                        <div>
+                            <h3 className="text-xl sm:text-3xl font-black text-slate-900">
+                                {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-slate-300" /> : card.value}
+                            </h3>
+                            <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 line-clamp-1 hidden sm:block">
+                                {card.desc}
+                            </p>
                         </div>
                     </Link>
                 ))}
             </div>
 
-            {/* Practical Operations Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Operations Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {/* Inventory Management */}
-                <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group">
-                    <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform">
-                        <Package className="w-32 h-32" />
-                    </div>
-                    <div className="relative">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#00AFA9] flex items-center justify-center">
                                 <Package className="w-5 h-5" />
                             </div>
-                            <h3 className="text-xl font-bold text-slate-900">Quản lý Kho hàng</h3>
+                            <div>
+                                <h3 className="text-base sm:text-lg font-bold text-slate-900">Quản Lý Tồn Kho</h3>
+                                <p className="text-xs text-slate-400">Kiểm tra thực tế và định mức tồn</p>
+                            </div>
                         </div>
-                        <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-                            Kiểm tra số lượng tồn thực tế, cập nhật thông tin sản phẩm và thực hiện điều chỉnh kho định kỳ.
-                        </p>
-                        <div className="space-y-3">
-                            <Link href="/warehouse/inventory" className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 transition-all group/item">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-bold text-slate-700">Xem danh sách tồn kho</span>
-                                </div>
-                                <ArrowRight className="w-4 h-4 text-slate-300 group-hover/item:text-primary-600 group-hover/item:translate-x-1 transition-all" />
+                        <div className="space-y-2 mt-4">
+                            <Link 
+                                href="/warehouse/inventory" 
+                                className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors"
+                            >
+                                <span className="text-xs sm:text-sm font-semibold text-slate-800">Danh sách tồn kho chi tiết</span>
+                                <ArrowRight className="w-4 h-4 text-slate-400" />
                             </Link>
-                            <Link href="/warehouse/history" className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 transition-all group/item">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-bold text-slate-700">Lịch sử biến động</span>
-                                </div>
-                                <ArrowRight className="w-4 h-4 text-slate-300 group-hover/item:text-primary-600 group-hover/item:translate-x-1 transition-all" />
+                            <Link 
+                                href="/warehouse/history" 
+                                className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors"
+                            >
+                                <span className="text-xs sm:text-sm font-semibold text-slate-800">Lịch sử biến động kho</span>
+                                <ArrowRight className="w-4 h-4 text-slate-400" />
                             </Link>
                         </div>
                     </div>
                 </div>
 
-                {/* Logistics & Shipping */}
-                <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden group">
-                    <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform">
-                        <ClipboardList className="w-32 h-32" />
-                    </div>
-                    <div className="relative">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                {/* Logistics & Fulfillment */}
+                <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-9 h-9 rounded-xl bg-lime-50 text-[#679924] flex items-center justify-center">
                                 <ClipboardList className="w-5 h-5" />
                             </div>
-                            <h3 className="text-xl font-bold text-slate-900">Vận hành Đơn hàng</h3>
+                            <div>
+                                <h3 className="text-base sm:text-lg font-bold text-slate-900">Đóng Gói & Xuất Hàng</h3>
+                                <p className="text-xs text-slate-400">Quy trình xử lý đơn hàng B2B</p>
+                            </div>
                         </div>
-                        <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-                            Xử lý quy trình đóng gói, in phiếu giao hàng và bàn giao cho đơn vị vận chuyển (Fulfillment).
-                        </p>
-                        <div className="space-y-3">
-                            <Link href="/warehouse/fulfillment" className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 transition-all group/item">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-bold text-slate-700">Đơn hàng chờ xử lý</span>
-                                    {stats.ordersToPack > 0 && <span className="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-black rounded-lg">+{stats.ordersToPack}</span>}
+                        <div className="space-y-2 mt-4">
+                            <Link 
+                                href="/warehouse/fulfillment" 
+                                className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs sm:text-sm font-semibold text-slate-800">Đơn hàng chờ đóng gói</span>
+                                    {stats.ordersToPack > 0 && (
+                                        <span className="px-2 py-0.5 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-md border border-rose-200">
+                                            {stats.ordersToPack} đơn
+                                        </span>
+                                    )}
                                 </div>
-                                <ArrowRight className="w-4 h-4 text-slate-300 group-hover/item:text-primary-600 group-hover/item:translate-x-1 transition-all" />
+                                <ArrowRight className="w-4 h-4 text-slate-400" />
                             </Link>
-                            <Link href="/warehouse/export" className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100 transition-all group/item">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-bold text-slate-700">Xuất kho thủ công</span>
-                                </div>
-                                <ArrowRight className="w-4 h-4 text-slate-300 group-hover/item:text-primary-600 group-hover/item:translate-x-1 transition-all" />
+                            <Link 
+                                href="/warehouse/export" 
+                                className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors"
+                            >
+                                <span className="text-xs sm:text-sm font-semibold text-slate-800">Tạo phiếu xuất kho</span>
+                                <ArrowRight className="w-4 h-4 text-slate-400" />
                             </Link>
                         </div>
                     </div>

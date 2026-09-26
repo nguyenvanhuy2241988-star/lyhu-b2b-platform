@@ -358,8 +358,8 @@ export default function CheckinPage() {
                         const isDone = i < currentIdx;
                         return (
                             <div key={step} className="flex items-center gap-2">
-                                {i > 0 && <div className={`w-8 h-0.5 ${isDone ? 'bg-teal-500' : 'bg-slate-200'}`} />}
-                                <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full font-medium ${isActive ? 'bg-teal-100 text-teal-700' : isDone ? 'bg-green-100 text-green-700' : 'text-slate-400'}`}>
+                                {i > 0 && <div className={`w-8 h-0.5 ${isDone ? 'bg-[#00AFA9]' : 'bg-slate-200'}`} />}
+                                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${isActive ? 'bg-[#00AFA9] text-white' : isDone ? 'bg-lime-50 text-[#5f8c21]' : 'text-slate-400'}`}>
                                     {isDone ? <CheckCircle className="w-3.5 h-3.5" /> : <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center text-[10px]">{i + 1}</span>}
                                     <span className="hidden sm:inline">{step}</span>
                                 </div>
@@ -386,16 +386,16 @@ export default function CheckinPage() {
                                             key={outlet.id}
                                             disabled={alreadyChecked}
                                             onClick={() => { setSelectedOutlet(outlet); setCheckinStep("gps"); }}
-                                            className={`flex items-center justify-between p-3 rounded-lg border text-left transition-all ${alreadyChecked ? 'bg-green-50 border-green-200 opacity-60 cursor-not-allowed' : 'bg-slate-50 border-slate-200 hover:border-teal-300 hover:bg-teal-50'}`}
+                                            className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all ${alreadyChecked ? 'bg-lime-50/50 border-lime-200 opacity-60 cursor-not-allowed' : 'bg-slate-50 border-slate-200 hover:border-[#00AFA9] hover:bg-white'}`}
                                         >
                                             <div className="flex items-center gap-3">
-                                                {alreadyChecked ? <CheckCircle className="w-5 h-5 text-green-500" /> : <MapPin className="w-5 h-5 text-slate-400" />}
+                                                {alreadyChecked ? <CheckCircle className="w-5 h-5 text-[#8EC63F]" /> : <MapPin className="w-5 h-5 text-slate-400" />}
                                                 <div>
-                                                    <p className="font-medium text-sm text-slate-800">{outlet.name}</p>
+                                                    <p className="font-bold text-sm text-slate-800">{outlet.name}</p>
                                                     <p className="text-xs text-slate-500">{outlet.district} • {OUTLET_TYPE_LABELS[outlet.outlet_type] || outlet.outlet_type}</p>
                                                 </div>
                                             </div>
-                                            {alreadyChecked && <span className="text-xs text-green-600 font-medium">Đã check-in</span>}
+                                            {alreadyChecked && <span className="text-xs text-[#5f8c21] font-semibold">Đã check-in</span>}
                                         </button>
                                     );
                                 })}
@@ -407,14 +407,14 @@ export default function CheckinPage() {
                 {/* Step 2: GPS Verify */}
                 {checkinStep === "gps" && selectedOutlet && (
                     <div className="text-center space-y-4">
-                        <div className="bg-teal-50 rounded-lg p-4 inline-block mx-auto">
-                            <Store className="w-8 h-8 text-teal-600 mx-auto mb-2" />
-                            <p className="font-semibold text-slate-800">{selectedOutlet.name}</p>
+                        <div className="bg-teal-50 rounded-2xl p-4 inline-block mx-auto border border-teal-100">
+                            <Store className="w-8 h-8 text-[#00AFA9] mx-auto mb-2" />
+                            <p className="font-bold text-slate-900">{selectedOutlet.name}</p>
                             <p className="text-xs text-slate-500">{selectedOutlet.address}</p>
                         </div>
 
                         {gpsError && (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-center gap-2">
+                            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-sm text-rose-700 flex items-center gap-2">
                                 <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {gpsError}
                             </div>
                         )}
@@ -422,15 +422,17 @@ export default function CheckinPage() {
                         <button
                             onClick={handleGetGPS}
                             disabled={gpsLoading}
-                            className="flex items-center gap-2 mx-auto bg-teal-600 text-white px-6 py-3 rounded-xl hover:bg-teal-700 transition-colors disabled:opacity-50 font-medium"
+                            className="flex items-center gap-2 mx-auto bg-[#00AFA9] text-white px-6 py-3 rounded-xl hover:bg-[#009893] transition-colors disabled:opacity-50 font-bold text-sm"
                         >
                             <Navigation className={`w-5 h-5 ${gpsLoading ? 'animate-spin' : ''}`} />
                             {gpsLoading ? "Đang lấy GPS..." : "📍 Xác nhận vị trí GPS"}
                         </button>
 
-                        <button onClick={resetCheckin} className="text-sm text-slate-500 hover:text-slate-700">
-                            ← Chọn lại
-                        </button>
+                        <div>
+                            <button onClick={resetCheckin} className="text-xs text-slate-400 hover:text-slate-600 font-semibold">
+                                ← Chọn lại điểm bán
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -520,25 +522,27 @@ export default function CheckinPage() {
                             <button
                                 onClick={() => cameraInputRef.current?.click()}
                                 disabled={processingPhoto}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-teal-300 rounded-xl text-teal-700 hover:bg-teal-50 transition-colors disabled:opacity-50 font-medium text-sm"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-[#00AFA9] rounded-xl text-[#00AFA9] hover:bg-teal-50 transition-colors disabled:opacity-50 font-bold text-sm"
                             >
                                 {processingPhoto ? (
                                     <><Loader2 className="w-5 h-5 animate-spin" /> Đang xử lý ảnh...</>
                                 ) : (
-                                    <><Camera className="w-5 h-5" /> {photos.length > 0 ? 'Chụp thêm ảnh' : 'Chụp ảnh cửa hàng'}</>
+                                    <><Camera className="w-5 h-5" /> {photos.length > 0 ? 'Chụp thêm ảnh' : 'Chụp ảnh điểm bán (Watermark)'}</>
                                 )}
                             </button>
-                            <p className="text-[11px] text-slate-400 mt-1 text-center">Ảnh tự ghi thời gian, GPS, tên điểm bán</p>
+                            <p className="text-[11px] text-slate-400 mt-1 text-center">Ảnh tự động gắn mộc ngày giờ, tọa độ GPS, tên điểm bán</p>
                         </div>
 
-                        <div className="flex gap-3 pt-2">
-                            <button onClick={resetCheckin} className="flex-1 text-sm text-slate-600 hover:bg-slate-100 py-2 rounded-lg border border-slate-200">← Quay lại</button>
+                        <div className="flex gap-2.5 pt-2">
+                            <button onClick={resetCheckin} className="flex-1 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 py-2.5 rounded-xl border border-slate-200">
+                                ← Quay lại
+                            </button>
                             <button
                                 onClick={handleSubmitCheckin}
                                 disabled={submitting}
-                                className="flex-1 bg-teal-600 text-white py-2 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 text-sm font-medium flex items-center justify-center gap-2"
+                                className="flex-1 bg-[#00AFA9] text-white py-2.5 rounded-xl hover:bg-[#009893] transition-colors disabled:opacity-50 text-xs sm:text-sm font-bold flex items-center justify-center gap-2"
                             >
-                                {submitting ? "Đang lưu..." : "✅ Check-in"}
+                                {submitting ? "Đang lưu..." : "Xác nhận Check-in"}
                             </button>
                         </div>
                     </div>
@@ -547,15 +551,15 @@ export default function CheckinPage() {
                 {/* Step 4: Done */}
                 {checkinStep === "done" && (
                     <div className="text-center py-6">
-                        <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                        <CheckCircle className="w-12 h-12 text-[#8EC63F] mx-auto mb-3" />
                         <h3 className="text-lg font-bold text-slate-900">Check-in thành công!</h3>
                         <p className="text-sm text-slate-500 mt-1">{selectedOutlet?.name}</p>
-                        <div className="flex gap-3 justify-center mt-6">
-                            <button onClick={resetCheckin} className="px-4 py-2 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700">
-                                Check-in tiếp
+                        <div className="flex gap-2.5 justify-center mt-6">
+                            <button onClick={resetCheckin} className="px-4 py-2.5 text-xs sm:text-sm font-bold bg-[#00AFA9] text-white rounded-xl hover:bg-[#009893] transition-colors">
+                                Check-in điểm tiếp theo
                             </button>
-                            <Link href="/sales-gt/create-order" className="px-4 py-2 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700">
-                                Tạo đơn hàng →
+                            <Link href="/sales-gt/create-order" className="px-4 py-2.5 text-xs sm:text-sm font-bold bg-[#8EC63F] text-slate-900 rounded-xl hover:bg-[#7eb336] transition-colors">
+                                Lên đơn ngay →
                             </Link>
                         </div>
                     </div>
