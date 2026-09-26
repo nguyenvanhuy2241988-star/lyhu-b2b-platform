@@ -217,7 +217,7 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
     return (
         <>
             {dropIndicator?.dealId === deal.id && dropIndicator.position === 'top' && (
-                <div className="mb-3 h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse pointer-events-none" />
+                <div className="mb-3 h-24 rounded-lg border-2 border-dashed border-teal-300 bg-teal-50/50 animate-pulse pointer-events-none" />
             )}
 
             <div
@@ -234,13 +234,13 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
                     e.stopPropagation();
                     onDragOver(e, deal.id);
                 }}
-                className={`relative bg-white p-3 rounded-lg shadow-sm border cursor-move transition-all mb-3 group/card 
-                ${isDragging ? 'opacity-50 scale-95 ring-2 ring-primary-200 rotate-1' :
-                        isHighlighted ? 'border-yellow-400 ring-2 ring-yellow-400 shadow-md scale-[1.02] z-10' :
+                className={`relative bg-white p-3 rounded-lg border cursor-move transition-all mb-3 group/card 
+                ${isDragging ? 'opacity-50 scale-95 ring-2 ring-teal-200 rotate-1' :
+                        isHighlighted ? 'border-yellow-400 ring-2 ring-yellow-400 z-10' :
                             deal.status === 'won' ? 'border-green-200 bg-green-50/30' :
                                 deal.status === 'lost' ? 'border-red-200 bg-red-50/30 opacity-60' :
                                     isOverdue ? 'border-red-300 ring-1 ring-red-100' :
-                                        'border-slate-200 hover:shadow-md hover:border-primary-200'
+                                        'border-slate-200 hover:border-[#00AFA9]'
                     }`}
             >
                 {/* Status Badge */}
@@ -263,7 +263,7 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
                             </div>
                             <div className="flex items-center gap-1 text-xs text-slate-500">
                                 <Phone className="w-3 h-3" />
-                                <a href={`tel:${deal.customer?.phone}`} onClick={e => e.stopPropagation()} className="hover:text-primary-600">
+                                <a href={`tel:${deal.customer?.phone}`} onClick={e => e.stopPropagation()} className="hover:text-[#00AFA9]">
                                     {deal.customer?.phone || "N/A"}
                                 </a>
                             </div>
@@ -311,9 +311,9 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
                         {deal.owner && (
                             <div className="flex items-center gap-1 group/owner relative cursor-help" title={`Phụ trách: ${deal.owner.full_name}`}>
                                 {deal.owner.avatar_url ? (
-                                    <img src={deal.owner.avatar_url} alt={deal.owner.full_name} className="w-5 h-5 rounded-full object-cover border border-white shadow-sm" />
+                                    <img src={deal.owner.avatar_url} alt={deal.owner.full_name} className="w-5 h-5 rounded-full object-cover border border-slate-200" />
                                 ) : (
-                                    <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-[9px] border border-white shadow-sm">
+                                    <div className="w-5 h-5 rounded-full bg-teal-50 text-[#00AFA9] flex items-center justify-center font-bold text-[9px] border border-teal-200">
                                         {deal.owner.full_name?.charAt(0).toUpperCase()}
                                     </div>
                                 )}
@@ -398,7 +398,7 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
             </div>
 
             {dropIndicator?.dealId === deal.id && dropIndicator.position === 'bottom' && (
-                <div className="mb-3 h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse pointer-events-none" />
+                <div className="mb-3 h-24 rounded-lg border-2 border-dashed border-teal-300 bg-teal-50/50 animate-pulse pointer-events-none" />
             )}
         </>
     );
@@ -1286,7 +1286,7 @@ export default function CRMPage() {
                                         const input = document.getElementById(pickerId) as HTMLInputElement;
                                         if (input) input.showPicker();
                                     }}
-                                    className={`px-3 py-1.5 text-xs font-medium transition-colors min-w-[120px] text-center relative ${kpiIsCurrentMonth ? 'text-primary-600' : 'text-slate-700 hover:text-primary-600'}`}
+                                    className={`px-3 py-1.5 text-xs font-medium transition-colors min-w-[120px] text-center relative ${kpiIsCurrentMonth ? 'text-[#00AFA9] font-bold' : 'text-slate-700 hover:text-[#00AFA9]'}`}
                                 >
                                     {kpiMonthLabel}
                                     {/* Date picker for day/week modes */}
@@ -1331,22 +1331,22 @@ export default function CRMPage() {
                                 </button>
                             </div>
                             {/* Quick Filters */}
-                            <div className="flex bg-slate-100 p-0.5 rounded-lg">
+                            <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
                                 <button
                                     onClick={() => { setKpiViewMode('day'); setKpiDate(getLocalDateStr()); }}
-                                    className={`px-2 py-1 text-[11px] font-medium rounded transition-colors ${kpiViewMode === 'day' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    className={`px-2 py-1 text-[11px] font-medium rounded transition-colors ${kpiViewMode === 'day' ? 'bg-white text-[#00AFA9] font-bold border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
                                 >
                                     Ngày
                                 </button>
                                 <button
                                     onClick={() => setKpiViewMode('week')}
-                                    className={`px-2 py-1 text-[11px] font-medium rounded transition-colors ${kpiViewMode === 'week' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    className={`px-2 py-1 text-[11px] font-medium rounded transition-colors ${kpiViewMode === 'week' ? 'bg-white text-[#00AFA9] font-bold border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
                                 >
                                     Tuần
                                 </button>
                                 <button
                                     onClick={() => setKpiViewMode('month')}
-                                    className={`px-2 py-1 text-[11px] font-medium rounded transition-colors ${kpiViewMode === 'month' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    className={`px-2 py-1 text-[11px] font-medium rounded transition-colors ${kpiViewMode === 'month' ? 'bg-white text-[#00AFA9] font-bold border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
                                 >
                                     Tháng
                                 </button>
@@ -1376,7 +1376,7 @@ export default function CRMPage() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => openCreateModal()}
-                        className="hidden lg:flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
+                        className="hidden lg:flex items-center gap-2 bg-[#00AFA9] text-white px-4 py-2 rounded-xl hover:bg-[#009b95] transition-colors border border-teal-600 font-medium"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Tạo cơ hội</span>
@@ -1385,7 +1385,7 @@ export default function CRMPage() {
                     {/* Notification Bell */}
                     <button
                         onClick={(e) => { e.stopPropagation(); setIsNotificationOpen(true); }}
-                        className="relative p-2 bg-white border rounded-lg hover:bg-slate-50 text-slate-600"
+                        className="relative p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600"
                     >
                         <Bell className="w-4 h-4" />
                         {(overdueCount + todayCount) > 0 && (
@@ -1402,26 +1402,26 @@ export default function CRMPage() {
                         <div className="relative z-[60]">
                             <button
                                 onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(!isSettingsOpen); }}
-                                className={`bg-white border p-2 rounded-lg hover:bg-slate-50 ${isSettingsOpen ? 'ring-2 ring-primary-100' : ''}`}
+                                className={`bg-white border border-slate-200 p-2 rounded-lg hover:bg-slate-50 ${isSettingsOpen ? 'ring-2 ring-teal-100 border-[#00AFA9]' : ''}`}
                             >
                                 <Settings className="w-4 h-4" />
                             </button>
 
                             {isSettingsOpen && (
-                                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border p-2 z-[9999]" onClick={e => e.stopPropagation()}>
+                                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl border border-slate-200 p-2 z-[9999]" onClick={e => e.stopPropagation()}>
                                     <h4 className="text-xs font-semibold text-slate-500 uppercase px-2 py-1">Hiển thị cột</h4>
                                     <div className="max-h-[300px] overflow-y-auto space-y-1">
                                         {columns.map(col => (
                                             <div key={col.id} className="flex items-center justify-between px-2 py-1.5 hover:bg-slate-50 rounded text-sm">
                                                 <span>{col.label}</span>
                                                 <button onClick={() => toggleColumnVisibility(col.id, col.isVisible !== false)}>
-                                                    {col.isVisible !== false ? <Eye className="w-4 h-4 text-primary-600" /> : <EyeOff className="w-4 h-4 text-slate-300" />}
+                                                    {col.isVisible !== false ? <Eye className="w-4 h-4 text-[#00AFA9]" /> : <EyeOff className="w-4 h-4 text-slate-300" />}
                                                 </button>
                                             </div>
                                         ))}
                                     </div>
                                     <div className="border-t mt-2 pt-2">
-                                        <button onClick={() => { handleAddColumn(); setIsSettingsOpen(false); }} className="w-full flex items-center justify-center gap-2 text-sm text-primary-600 hover:bg-primary-50 py-2 rounded">
+                                        <button onClick={() => { handleAddColumn(); setIsSettingsOpen(false); }} className="w-full flex items-center justify-center gap-2 text-sm text-[#00AFA9] hover:bg-teal-50 py-2 rounded font-medium">
                                             <Plus className="w-4 h-4" /> Thêm cột
                                         </button>
                                         <button onClick={() => { resetColumns(); setColumns(loadCRMColumns()); setIsSettingsOpen(false); }} className="w-full flex items-center justify-center gap-2 text-sm text-slate-500 hover:bg-slate-50 py-2 rounded">
@@ -1446,43 +1446,43 @@ export default function CRMPage() {
 
             {/* Stats Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                <div className="bg-white p-3 rounded-xl border shadow-sm">
+                <div className="bg-white p-3 rounded-xl border border-slate-200">
                     <div className="text-2xl font-bold text-slate-900">{totalDeals}</div>
                     <div className="text-xs text-slate-500">Tổng cơ hội</div>
                 </div>
-                <div className="bg-white p-3 rounded-xl border shadow-sm">
+                <div className="bg-white p-3 rounded-xl border border-slate-200">
                     <div className="text-2xl font-bold text-blue-600">{openDeals}</div>
                     <div className="text-xs text-slate-500">Đang mở</div>
                 </div>
-                <div className="bg-white p-3 rounded-xl border shadow-sm">
+                <div className="bg-white p-3 rounded-xl border border-slate-200">
                     <div className="text-2xl font-bold text-green-600">{wonDeals}</div>
                     <div className="text-xs text-slate-500">Thắng</div>
                 </div>
-                <div className="bg-white p-3 rounded-xl border shadow-sm">
+                <div className="bg-white p-3 rounded-xl border border-slate-200">
                     <div className="text-2xl font-bold text-red-600">{lostDeals}</div>
                     <div className="text-xs text-slate-500">Thua</div>
                 </div>
-                <div className="bg-white p-3 rounded-xl border shadow-sm col-span-2 sm:col-span-1">
+                <div className="bg-white p-3 rounded-xl border border-slate-200 col-span-2 sm:col-span-1">
                     <div className="text-2xl font-bold text-purple-600">{conversionRate}%</div>
                     <div className="text-xs text-slate-500">Tỷ lệ thắng</div>
                 </div>
             </div>
 
             {/* Toolbar */}
-            <div className="bg-white p-3 rounded-xl border shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between sticky top-[60px] z-10">
+            <div className="bg-white p-3 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between sticky top-[60px] z-10">
                 <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                         type="text"
                         placeholder="Tìm theo tên cơ hội, khách hàng, SĐT..."
-                        className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
 
                 <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value as any)} className="px-3 py-2 border rounded-lg text-sm bg-primary-50 text-primary-700 font-medium border-primary-100">
+                    <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value as any)} className="px-3 py-2 border rounded-lg text-sm bg-teal-50 text-teal-700 font-medium border-teal-100">
                         <option value="all">Tất cả giai đoạn</option>
                         {Object.entries(DEAL_STAGE_LABELS).map(([value, label]) => (
                             <option key={value} value={value}>{label}</option>
@@ -1490,7 +1490,7 @@ export default function CRMPage() {
                     </select>
 
                     {isAdminOrSaleAdmin && (
-                        <select value={filterUserId} onChange={(e) => setFilterUserId(e.target.value)} className="px-3 py-2 border rounded-lg text-sm max-w-[150px]">
+                        <select value={filterUserId} onChange={(e) => setFilterUserId(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-lg text-sm max-w-[150px]">
                             <option value="all">Tất cả nhân viên</option>
                             {userOptions.map(u => (
                                 <option key={u.id} value={u.id}>{u.full_name || 'Unnamed'}</option>
@@ -1498,20 +1498,20 @@ export default function CRMPage() {
                         </select>
                     )}
 
-                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as any)} className="px-3 py-2 border rounded-lg text-sm">
+                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as any)} className="px-3 py-2 border border-slate-200 rounded-lg text-sm">
                         <option value="all">Tất cả trạng thái</option>
                         <option value="open">Đang mở</option>
                         <option value="won">Thắng</option>
                         <option value="lost">Thua</option>
                     </select>
-                    <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value as any)} className="px-3 py-2 border rounded-lg text-sm">
+                    <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value as any)} className="px-3 py-2 border border-slate-200 rounded-lg text-sm">
                         <option value="all">Tất cả ưu tiên</option>
                         <option value="low">Thấp</option>
                         <option value="normal">Bình thường</option>
                         <option value="high">Cao</option>
                         <option value="urgent">Khẩn</option>
                     </select>
-                    <select value={filterCustomerType} onChange={(e) => setFilterCustomerType(e.target.value)} className="px-3 py-2 border rounded-lg text-sm">
+                    <select value={filterCustomerType} onChange={(e) => setFilterCustomerType(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-lg text-sm">
                         <option value="all">Tất cả loại khách</option>
                         <option value="tap_hoa">Tạp hóa</option>
                         <option value="mini_mart">Mini mart</option>
@@ -1520,14 +1520,14 @@ export default function CRMPage() {
                         <option value="sieu_thi">Siêu thị</option>
                     </select>
 
-                    <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="px-3 py-2 border rounded-lg text-sm bg-indigo-50 text-indigo-700 border-indigo-100 font-medium">
+                    <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="px-3 py-2 border border-indigo-100 rounded-lg text-sm bg-indigo-50 text-indigo-700 font-medium">
                         <option value="all">Nguồn khách hàng</option>
                         <option value="COMPANY">Công ty cấp</option>
                         <option value="SELF_FOUND">Tự tìm kiếm</option>
                         <option value="SELF_CONTACT">Tự liên hệ</option>
                         <option value="MARKETING">Chiến dịch Marketing</option>
                     </select>
-                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="px-3 py-2 border rounded-lg text-sm">
+                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="px-3 py-2 border border-slate-200 rounded-lg text-sm">
                         <option value="newest">Mới nhất</option>
                         <option value="oldest">Cũ nhất</option>
                         <option value="due_date">Hạn nhắc việc</option>
@@ -1551,7 +1551,7 @@ export default function CRMPage() {
                                     <div key={col.id} className="flex items-start">
                                         {/* Left drop indicator */}
                                         {showLeftIndicator && (
-                                            <div className="w-1 h-full min-h-[200px] bg-primary-500 rounded animate-pulse mx-1" />
+                                            <div className="w-1 h-full min-h-[200px] bg-[#00AFA9] rounded animate-pulse mx-1" />
                                         )}
                                         <div
                                             draggable={isAdmin}
@@ -1565,7 +1565,7 @@ export default function CRMPage() {
                                                 handleColumnDrop(e, col.id);
                                                 handleDrop(e, col.id);
                                             }}
-                                            className={`flex-1 min-w-[280px] bg-slate-50/50 rounded-xl flex flex-col max-h-[calc(100vh-280px)] group/col border-2 transition-all ${dragOverColId === col.id ? 'border-primary-300 bg-primary-50/20' : 'border-transparent hover:border-slate-200'
+                                            className={`flex-1 min-w-[280px] bg-slate-50/50 rounded-xl flex flex-col max-h-[calc(100vh-280px)] group/col border-2 transition-all ${dragOverColId === col.id ? 'border-teal-300 bg-teal-50/20' : 'border-transparent hover:border-slate-200'
                                                 } ${isColDragging ? 'opacity-50 scale-95' : ''}`}
                                         >
                                             {/* Column Header */}
@@ -1650,7 +1650,7 @@ export default function CRMPage() {
                                                     })
                                                 )}
                                                 {showAppendPlaceholder && (
-                                                    <div className="h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse" />
+                                                    <div className="h-24 rounded-lg border-2 border-dashed border-teal-300 bg-teal-50/50 animate-pulse" />
                                                 )}
 
                                                 {/* Load More Button for Column */}
@@ -1661,7 +1661,7 @@ export default function CRMPage() {
                                                             loadDealsForStage(col.stage as DealStage, (stagePages[col.stage] || 1) + 1, true);
                                                         }}
                                                         disabled={loadingStages[col.stage]}
-                                                        className="w-full py-2 mt-2 text-xs font-medium text-primary-600 hover:bg-primary-50 rounded-lg border border-dashed border-primary-200 transition-colors disabled:opacity-50"
+                                                        className="w-full py-2 mt-2 text-xs font-medium text-[#00AFA9] hover:bg-teal-50 rounded-lg border border-dashed border-teal-200 transition-colors disabled:opacity-50"
                                                     >
                                                         {loadingStages[col.stage] ? (
                                                             <div className="flex items-center justify-center gap-2">
@@ -1677,7 +1677,7 @@ export default function CRMPage() {
                                         </div>
                                         {/* Right drop indicator */}
                                         {showRightIndicator && (
-                                            <div className="w-1 h-full min-h-[200px] bg-primary-500 rounded animate-pulse mx-1" />
+                                            <div className="w-1 h-full min-h-[200px] bg-[#00AFA9] rounded animate-pulse mx-1" />
                                         )}
                                     </div>
                                 );
@@ -1696,20 +1696,20 @@ export default function CRMPage() {
             }
 
             {/* List View (Always on mobile, toggleable on desktop) */}
-            <div className={`flex-1 bg-white rounded-xl shadow-sm border p-4 ${viewMode === 'kanban' ? 'block lg:hidden' : ''}`}>
+            <div className={`flex-1 bg-white rounded-xl border border-slate-200 p-4 ${viewMode === 'kanban' ? 'block lg:hidden' : ''}`}>
                 <div className="space-y-2">
                             {filteredDeals.map(deal => (
-                                <div key={deal.id} className="flex justify-between items-center p-3 border rounded hover:bg-slate-50 cursor-pointer" onClick={() => handleEditDeal(deal)}>
+                                <div key={deal.id} className="flex justify-between items-center p-3 border border-slate-200 rounded-lg hover:border-[#00AFA9] cursor-pointer transition-colors" onClick={() => handleEditDeal(deal)}>
                                     <div className="flex items-center gap-3">
                                         <Building className="w-5 h-5 text-slate-400" />
                                         <div>
-                                            <div className="font-medium">{deal.customer?.name} - {deal.title}</div>
-                                            <div className="text-sm text-slate-500">{deal.customer?.phone} • {DEAL_STAGE_LABELS[deal.stage]}</div>
+                                            <div className="font-semibold text-slate-900 text-sm">{deal.customer?.name} - {deal.title}</div>
+                                            <div className="text-xs text-slate-500 mt-0.5">{deal.customer?.phone} • {DEAL_STAGE_LABELS[deal.stage]}</div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <PriorityBadge priority={deal.priority} />
-                                        <span className={`px-2 py-0.5 rounded text-xs ${deal.status === 'won' ? 'bg-green-100 text-green-700' : deal.status === 'lost' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${deal.status === 'won' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : deal.status === 'lost' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-teal-50 text-[#00AFA9] border border-teal-200'}`}>
                                             {deal.status.toUpperCase()}
                                         </span>
                                     </div>
@@ -1720,16 +1720,16 @@ export default function CRMPage() {
             {/* Pagination Controls */}
             {
                 !isDataLoading && totalCount > pageSize && (
-                    <div className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border shadow-sm mt-4">
+                    <div className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-slate-200 mt-4">
                         <div className="text-sm text-slate-500">
-                            Hiển thị <span className="font-medium">{deals.length}</span> cơ hội
-                            (Tổng <span className="font-medium">{totalCount}</span>)
+                            Hiển thị <span className="font-medium text-slate-900">{deals.length}</span> cơ hội
+                            (Tổng <span className="font-medium text-slate-900">{totalCount}</span>)
                         </div>
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={(e) => { e.stopPropagation(); setCurrentPage(p => Math.max(1, p - 1)); }}
                                 disabled={currentPage === 1}
-                                className="p-2 border rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
@@ -1737,7 +1737,7 @@ export default function CRMPage() {
                             <button
                                 onClick={(e) => { e.stopPropagation(); setCurrentPage(p => p + 1); }}
                                 disabled={currentPage >= Math.ceil(totalCount / pageSize)}
-                                className="p-2 border rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <ChevronRight className="w-4 h-4" />
                             </button>
@@ -1749,7 +1749,7 @@ export default function CRMPage() {
             {/* Mobile FAB */}
             <button
                 onClick={() => openCreateModal()}
-                className="lg:hidden fixed bottom-[150px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 hover:shadow-xl active:scale-95 transition-all duration-200"
+                className="lg:hidden fixed bottom-[150px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-[#00AFA9] text-white rounded-full border border-teal-600 hover:bg-[#009b95] active:scale-95 transition-all"
             >
                 <Plus className="w-6 h-6" />
             </button>
@@ -1770,24 +1770,24 @@ export default function CRMPage() {
                 isNotificationOpen && (
                     <>
                         <div className="fixed inset-0 bg-black/20 z-[9990]" onClick={() => setIsNotificationOpen(false)} />
-                        <div className="fixed top-0 right-0 h-full w-[320px] bg-white shadow-2xl z-[9999] flex flex-col">
-                            <div className="p-4 border-b flex items-center justify-between">
-                                <h3 className="font-semibold flex items-center gap-2"><Bell className="w-4 h-4" /> Thông báo</h3>
+                        <div className="fixed top-0 right-0 h-full w-[320px] bg-white border-l border-slate-200 z-[9999] flex flex-col">
+                            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+                                <h3 className="font-semibold flex items-center gap-2"><Bell className="w-4 h-4 text-[#00AFA9]" /> Thông báo</h3>
                                 <button onClick={() => setIsNotificationOpen(false)} className="text-slate-400 hover:text-slate-600">×</button>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                                <div className="text-sm font-medium text-slate-700">Quá hạn ({overdueCount})</div>
+                                <div className="text-sm font-semibold text-slate-700">Quá hạn ({overdueCount})</div>
                                 {deals.filter(d => d.next_action_at && new Date(d.next_action_at).getTime() < msToday && d.status === 'open').map(d => (
-                                    <div key={d.id} className="p-3 bg-red-50 border border-red-200 rounded-lg cursor-pointer hover:shadow" onClick={() => { setIsNotificationOpen(false); setHighlightedDealId(d.id); setTimeout(() => setHighlightedDealId(null), 2000); }}>
-                                        <div className="font-medium text-sm">{d.customer?.name}</div>
-                                        <div className="text-xs text-red-600">{d.title}</div>
+                                    <div key={d.id} className="p-3 bg-red-50 border border-red-200 rounded-lg cursor-pointer hover:border-red-300" onClick={() => { setIsNotificationOpen(false); setHighlightedDealId(d.id); setTimeout(() => setHighlightedDealId(null), 2000); }}>
+                                        <div className="font-medium text-sm text-slate-900">{d.customer?.name}</div>
+                                        <div className="text-xs text-red-600 mt-0.5">{d.title}</div>
                                     </div>
                                 ))}
-                                <div className="text-sm font-medium text-slate-700 mt-4">Hôm nay ({todayCount})</div>
+                                <div className="text-sm font-semibold text-slate-700 mt-4">Hôm nay ({todayCount})</div>
                                 {deals.filter(d => d.next_action_at && new Date(d.next_action_at).setHours(0, 0, 0, 0) === msToday && d.status === 'open').map(d => (
-                                    <div key={d.id} className="p-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:shadow" onClick={() => { setIsNotificationOpen(false); setHighlightedDealId(d.id); setTimeout(() => setHighlightedDealId(null), 2000); }}>
-                                        <div className="font-medium text-sm">{d.customer?.name}</div>
-                                        <div className="text-xs text-blue-600">{d.title}</div>
+                                    <div key={d.id} className="p-3 bg-teal-50 border border-teal-200 rounded-lg cursor-pointer hover:border-teal-300" onClick={() => { setIsNotificationOpen(false); setHighlightedDealId(d.id); setTimeout(() => setHighlightedDealId(null), 2000); }}>
+                                        <div className="font-medium text-sm text-slate-900">{d.customer?.name}</div>
+                                        <div className="text-xs text-[#00AFA9] mt-0.5">{d.title}</div>
                                     </div>
                                 ))}
                             </div>
@@ -1799,7 +1799,7 @@ export default function CRMPage() {
             {
                 isDataLoading && (
                     <div className="absolute inset-0 bg-white/50 z-[100] flex items-center justify-center">
-                        <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full"></div>
+                        <div className="animate-spin w-8 h-8 border-4 border-[#00AFA9] border-t-transparent rounded-full"></div>
                     </div>
                 )
             }
