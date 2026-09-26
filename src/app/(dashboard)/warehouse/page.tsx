@@ -137,8 +137,8 @@ export default function WarehouseDashboard() {
             label: "Đơn chờ đóng gói",
             value: stats.ordersToPack,
             icon: ClipboardList,
-            color: "text-indigo-600",
-            bg: "bg-indigo-50",
+            color: "text-[#00AFA9]",
+            bg: "bg-teal-50",
             link: "/warehouse/fulfillment",
             desc: "Đơn hàng mới cần xử lý"
         },

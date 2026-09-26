@@ -174,14 +174,14 @@ export default function GTCustomersPage() {
                         <input
                             type="text"
                             placeholder="Tên, SĐT..."
-                            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:border-[#00AFA9] transition-colors"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <button
                         onClick={() => router.push('/sales-gt/outlets')}
-                        className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors"
+                        className="flex items-center gap-2 bg-[#00AFA9] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#009893] transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         <span className="hidden sm:inline">Thêm điểm bán</span>
@@ -194,7 +194,7 @@ export default function GTCustomersPage() {
                 <div className="flex justify-end">
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${showFilters ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${showFilters ? 'bg-teal-50 text-[#00AFA9] border border-teal-200' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                     >
                         <Filter className="w-4 h-4" />
                         Bộ lọc nâng cao
@@ -288,7 +288,7 @@ export default function GTCustomersPage() {
                     ].map(p => (
                         <button key={p.key} onClick={() => setTimePreset(p.key)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${timePreset === p.key
-                                    ? 'bg-teal-600 text-white shadow-sm'
+                                    ? 'bg-[#00AFA9] text-white'
                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                 }`}>
                             {p.label}
@@ -305,7 +305,7 @@ export default function GTCustomersPage() {
                     )}
                 </div>
                 <button onClick={() => setShowDashboard(!showDashboard)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showDashboard ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showDashboard ? 'bg-[#00AFA9] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                     <TrendingUp className="w-3.5 h-3.5" /> Dashboard
                 </button>
             </div>
@@ -429,7 +429,7 @@ export default function GTCustomersPage() {
                                         <div className="flex items-center justify-end gap-2">
                                             <button
                                                 onClick={() => router.push(`/sales-gt/create-order?outletId=${outlet.id}`)}
-                                                className="px-3 py-1.5 bg-teal-50 text-teal-600 hover:bg-teal-100 rounded text-xs font-medium transition-colors"
+                                                className="px-3 py-1.5 bg-[#00AFA9]/10 text-[#00AFA9] hover:bg-[#00AFA9]/20 rounded-lg text-xs font-semibold transition-colors"
                                             >
                                                 <Plus className="w-3.5 h-3.5 inline mr-1" />
                                                 Tạo đơn
@@ -439,7 +439,7 @@ export default function GTCustomersPage() {
                                                     setEditingOutlet(outlet as GTOutletData);
                                                     setShowEditModal(true);
                                                 }}
-                                                className="px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded text-xs font-medium transition-colors"
+                                                className="px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-medium transition-colors"
                                             >
                                                 Sửa
                                             </button>
@@ -536,7 +536,7 @@ export default function GTCustomersPage() {
                             <div className="mt-4 flex gap-2 pl-13 ml-13">
                                 <button
                                     onClick={() => router.push(`/sales-gt/create-order?outletId=${outlet.id}`)}
-                                    className="flex-1 bg-teal-50 text-teal-700 py-1.5 rounded-lg text-xs font-medium hover:bg-teal-100 flex items-center justify-center gap-1.5"
+                                    className="flex-1 bg-[#00AFA9] text-white py-1.5 rounded-lg text-xs font-semibold hover:bg-[#009893] transition-colors flex items-center justify-center gap-1.5"
                                 >
                                     <Plus className="w-3.5 h-3.5" /> Tạo đơn
                                 </button>
@@ -545,7 +545,7 @@ export default function GTCustomersPage() {
                                         setEditingOutlet(outlet as GTOutletData);
                                         setShowEditModal(true);
                                     }}
-                                    className="flex-1 border border-slate-200 text-slate-600 py-1.5 rounded-lg text-xs font-medium hover:bg-slate-50 flex items-center justify-center gap-1.5"
+                                    className="flex-1 border border-slate-200 text-slate-700 py-1.5 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors flex items-center justify-center gap-1.5"
                                 >
                                     <Pencil className="w-3.5 h-3.5" /> Sửa
                                 </button>
@@ -564,7 +564,7 @@ export default function GTCustomersPage() {
             {/* Global Dropdown Menu */}
             {openMenuId && (
                 <div
-                    className="fixed bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-[9999] w-48 animate-in fade-in zoom-in-95 duration-100"
+                    className="fixed bg-white rounded-xl shadow-md border border-slate-200 py-1 z-[9999] w-48 animate-in fade-in zoom-in-95 duration-100"
                     style={{ top: `${menuPos.top}px`, right: `${menuPos.right}px` }}
                     onClick={(e) => e.stopPropagation()}
                 >
@@ -573,7 +573,7 @@ export default function GTCustomersPage() {
                             e.stopPropagation();
                             router.push(`/sales-gt/create-order?outletId=${openMenuId}`);
                         }}
-                        className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal-600 flex items-center gap-2"
+                        className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-[#00AFA9] flex items-center gap-2 transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         Tạo đơn hàng
