@@ -108,6 +108,39 @@ export default function VoiceStudioPage() {
     // Average Vietnamese speech rate: ~140-160 words per minute at 1.0x (~2.5 words/sec)
     const estimatedSeconds = Math.round(wordCount / 2.6);
 
+    const getSpeedMultiplier = (speed: string) => {
+        if (speed === "-10%") return 0.9;
+        if (speed === "+15%") return 1.15;
+        if (speed === "+25%") return 1.25;
+        return 1.0;
+    };
+
+    const [isBrowserSpeaking, setIsBrowserSpeaking] = useState(false);
+
+    const speakWithBrowser = () => {
+        if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+        if (isBrowserSpeaking) {
+            window.speechSynthesis.cancel();
+            setIsBrowserSpeaking(false);
+            return;
+        }
+
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text.trim());
+        utterance.lang = "vi-VN";
+        utterance.rate = getSpeedMultiplier(selectedSpeed);
+
+        const voices = window.speechSynthesis.getVoices();
+        const vnVoice = voices.find(v => v.lang.startsWith("vi"));
+        if (vnVoice) utterance.voice = vnVoice;
+
+        utterance.onend = () => setIsBrowserSpeaking(false);
+        utterance.onerror = () => setIsBrowserSpeaking(false);
+
+        setIsBrowserSpeaking(true);
+        window.speechSynthesis.speak(utterance);
+    };
+
     const handleGenerateVoice = async () => {
         if (!text.trim()) {
             setErrorMessage("Vui lòng nhập lời thoại hoặc kịch bản cần lồng tiếng.");
@@ -131,10 +164,14 @@ export default function VoiceStudioPage() {
 
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.error || "Không thể tạo giọng đọc. Vui lòng thử lại.");
+                throw new Error(errData.error || `Lỗi máy chủ (${res.status}). Vui lòng thử lại.`);
             }
 
             const blob = await res.blob();
+            if (blob.size < 100) {
+                throw new Error("Dữ liệu âm thanh không hợp lệ. Vui lòng thử lại.");
+            }
+
             if (audioUrl) {
                 URL.revokeObjectURL(audioUrl);
             }
@@ -146,6 +183,7 @@ export default function VoiceStudioPage() {
             // Auto play preview
             setTimeout(() => {
                 if (audioRef.current) {
+                    audioRef.current.playbackRate = getSpeedMultiplier(selectedSpeed);
                     audioRef.current.currentTime = 0;
                     audioRef.current.play().catch(() => {});
                     setIsPlaying(true);
@@ -153,7 +191,8 @@ export default function VoiceStudioPage() {
             }, 100);
 
         } catch (err: any) {
-            setErrorMessage(err.message || "Có lỗi xảy ra khi tạo giọng đọc.");
+            console.error("TTS Error:", err);
+            setErrorMessage(err.message || "Có lỗi xảy ra khi tạo giọng đọc. Bạn cũng có thể bấm 'Nghe thử tức thì' để nghe bằng giọng máy tính.");
         } finally {
             setLoading(false);
         }
@@ -414,25 +453,42 @@ export default function VoiceStudioPage() {
                             </div>
                         )}
 
-                        {/* Big Submit Button */}
-                        <button
-                            type="button"
-                            onClick={handleGenerateVoice}
-                            disabled={loading || !text.trim()}
-                            className="w-full py-3.5 px-6 rounded-xl font-bold text-white bg-[#00AFA9] hover:bg-[#009690] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-base"
-                        >
-                            {loading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    <span>Đang chuyển văn bản thành voice AI...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Sparkles className="w-5 h-5" />
-                                    <span>TẠO GIỌNG ĐỌC AI NGAY</span>
-                                </>
-                            )}
-                        </button>
+                        {/* Action Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+                            <button
+                                type="button"
+                                onClick={handleGenerateVoice}
+                                disabled={loading || !text.trim()}
+                                className="flex-1 py-3.5 px-6 rounded-xl font-bold text-white bg-[#00AFA9] hover:bg-[#009690] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        <span>Đang tạo file MP3...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-5 h-5" />
+                                        <span>TẠO FILE MP3 ĐỂ GHÉP VIDEO</span>
+                                    </>
+                                )}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={speakWithBrowser}
+                                disabled={!text.trim()}
+                                className={`py-3.5 px-4 rounded-xl font-semibold border transition-all flex items-center justify-center gap-1.5 text-sm disabled:opacity-40 disabled:cursor-not-allowed ${
+                                    isBrowserSpeaking 
+                                        ? "bg-amber-500 text-white border-amber-600 animate-pulse shadow-md" 
+                                        : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
+                                }`}
+                                title="Bấm để máy tính đọc ngay tức thì không cần đợi tạo file"
+                            >
+                                <Volume2 className="w-4 h-4" />
+                                <span>{isBrowserSpeaking ? "Dừng đọc" : "Nghe thử tức thì"}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
