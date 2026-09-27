@@ -119,11 +119,11 @@ const VOICE_STYLES: VoiceStyleOption[] = [
         border: "border-slate-300"
     },
     {
-        id: "male-news",
-        name: "Nam Trầm Ấm Phóng Sự",
+        id: "male-pro",
+        name: "Nam Trầm Ấm Chuyên Nghiệp",
         gender: "male",
         category: "news",
-        description: "Trầm dày, nam tính, uy tín và đáng tin cậy.",
+        description: "Trầm dày, nam tính, uy tín và đáng tin cậy. Phù hợp phim doanh nghiệp, phóng sự.",
         tag: "Khuyên dùng: Phim giới thiệu công ty LYHU, Phóng sự xưởng sản xuất",
         avatar: "👨‍💼",
         pitchVal: 0.90,
@@ -131,6 +131,20 @@ const VOICE_STYLES: VoiceStyleOption[] = [
         recommendedSpeed: 1.0,
         color: "from-blue-500/10 to-cyan-500/10 text-blue-700",
         border: "border-blue-300"
+    },
+    {
+        id: "female-pro",
+        name: "Nữ Chuyên Nghiệp & Tự Tin",
+        gender: "female",
+        category: "energetic",
+        description: "Giọng nữ chuyên nghiệp, rõ ràng, tự tin. Phù hợp video giới thiệu sản phẩm và quảng cáo.",
+        tag: "Khuyên dùng: Video quảng cáo, Giới thiệu sản phẩm, Landing page",
+        avatar: "💎",
+        pitchVal: 1.0,
+        pitchStr: "+0Hz",
+        recommendedSpeed: 1.05,
+        color: "from-violet-500/10 to-fuchsia-500/10 text-violet-700",
+        border: "border-violet-300"
     }
 ];
 
@@ -279,6 +293,7 @@ export default function VoiceStudioPage() {
                 body: JSON.stringify({
                     text: phoneticText,
                     voice: selectedStyle.gender === "female" ? "vi-VN-HoaiMyNeural" : "vi-VN-NamMinhNeural",
+                    style: selectedStyle.id,
                     rate: rateStr,
                     pitch: selectedStyle.pitchStr
                 })
@@ -507,12 +522,12 @@ export default function VoiceStudioPage() {
                                 </div>
                             </div>
 
-                            {/* Interactive Slider */}
+                            {/* Interactive Slider up to 2.5x */}
                             <div className="space-y-2 pt-2">
                                 <input
                                     type="range"
-                                    min="0.75"
-                                    max="1.50"
+                                    min="0.50"
+                                    max="2.50"
                                     step="0.05"
                                     value={speedRate}
                                     onChange={(e) => setSpeedRate(parseFloat(e.target.value))}
@@ -520,42 +535,56 @@ export default function VoiceStudioPage() {
                                 />
 
                                 {/* Ruler / Markers */}
-                                <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono pt-1">
+                                <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-gray-400 font-mono pt-1">
                                     <button
                                         type="button"
-                                        onClick={() => setSpeedRate(0.85)}
-                                        className={`hover:text-[#00AFA9] ${speedRate === 0.85 ? "text-[#00AFA9] font-bold" : ""}`}
+                                        onClick={() => setSpeedRate(0.80)}
+                                        className={`hover:text-[#00AFA9] ${speedRate === 0.80 ? "text-[#00AFA9] font-bold underline" : ""}`}
                                     >
-                                        0.85x (Chậm)
+                                        0.8x
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setSpeedRate(1.0)}
-                                        className={`hover:text-[#00AFA9] ${speedRate === 1.0 ? "text-[#00AFA9] font-bold" : ""}`}
+                                        className={`hover:text-[#00AFA9] ${speedRate === 1.0 ? "text-[#00AFA9] font-bold underline" : ""}`}
                                     >
                                         1.0x (Chuẩn)
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setSpeedRate(1.15)}
-                                        className={`flex items-center gap-0.5 hover:text-[#00AFA9] ${speedRate === 1.15 ? "text-[#00AFA9] font-bold" : ""}`}
+                                        className={`flex items-center gap-0.5 hover:text-[#00AFA9] ${speedRate === 1.15 ? "text-[#00AFA9] font-bold underline" : ""}`}
                                     >
                                         <Flame className="w-3 h-3 text-amber-500" />
                                         1.15x (TikTok)
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setSpeedRate(1.25)}
-                                        className={`hover:text-[#00AFA9] ${speedRate === 1.25 ? "text-[#00AFA9] font-bold" : ""}`}
+                                        onClick={() => setSpeedRate(1.35)}
+                                        className={`hover:text-[#00AFA9] ${speedRate === 1.35 ? "text-[#00AFA9] font-bold underline" : ""}`}
                                     >
-                                        1.25x (Nhanh)
+                                        1.35x (Nhanh)
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setSpeedRate(1.40)}
-                                        className={`hover:text-[#00AFA9] ${speedRate === 1.40 ? "text-[#00AFA9] font-bold" : ""}`}
+                                        onClick={() => setSpeedRate(1.60)}
+                                        className={`hover:text-[#00AFA9] ${speedRate === 1.60 ? "text-[#00AFA9] font-bold underline" : ""}`}
                                     >
-                                        1.40x (Rất nhanh)
+                                        1.60x (Siêu tốc)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSpeedRate(2.00)}
+                                        className={`hover:text-[#00AFA9] ${speedRate === 2.00 ? "text-[#00AFA9] font-bold underline" : ""}`}
+                                    >
+                                        2.0x (Gấp đôi)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSpeedRate(2.50)}
+                                        className={`hover:text-[#00AFA9] ${speedRate === 2.50 ? "text-[#00AFA9] font-bold underline" : ""}`}
+                                    >
+                                        2.5x (Max)
                                     </button>
                                 </div>
                             </div>
