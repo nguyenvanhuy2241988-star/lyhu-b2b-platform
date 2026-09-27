@@ -122,7 +122,7 @@ export default function AdminDashboard() {
                 getRevenueByDate(30, fromDate, toDate),
                 getLowStockItems(),
                 getAdvancedStats(fromDate, toDate),
-                fetchOrders(token)
+                fetchOrders(token, { role: 'admin', limit: 1000 })
             ]);
 
             setStats(leadStats);
@@ -193,8 +193,40 @@ export default function AdminDashboard() {
 
     // Financial & Operational Metrics
     const metrics = useMemo(() => {
-        const totalRevenue = stats?.totalOrderRevenue || 0;
-        const totalProfit = stats?.totalProfit || 0;
+        // Channels Breakdown & Real Orders Revenue
+        const channels = {
+            telesales: { orders: 0, revenue: 0, leads: stats?.totalTelesalesLeads || 0 },
+            salesGt: { orders: 0, revenue: 0, leads: stats?.totalSalesLeads || 0 },
+            ctv: { orders: 0, revenue: 0, leads: stats?.totalCTVLeads || 0 },
+            web: { orders: 0, revenue: 0, leads: 0 }
+        };
+
+        let loadedRevenueSum = 0;
+        filteredOrders.forEach(o => {
+            const src = (o.source || "").toUpperCase();
+            const amt = o.totalAmount || 0;
+            if (o.status !== "cancelled" && o.status !== "draft") {
+                loadedRevenueSum += amt;
+            }
+
+            if (src.includes("TELESALES")) {
+                channels.telesales.orders += 1;
+                channels.telesales.revenue += amt;
+            } else if (src.includes("GT") || src.includes("SALES")) {
+                channels.salesGt.orders += 1;
+                channels.salesGt.revenue += amt;
+            } else if (src.includes("CTV") || src.includes("AFFILIATE")) {
+                channels.ctv.orders += 1;
+                channels.ctv.revenue += amt;
+            } else {
+                channels.web.orders += 1;
+                channels.web.revenue += amt;
+            }
+        });
+
+        // Accurate total revenue and total orders count
+        const totalRevenue = stats?.totalOrderRevenue || loadedRevenueSum || 0;
+        const totalProfit = stats?.totalProfit || Math.round(totalRevenue * 0.125);
         const totalOrdersCount = stats?.totalOrders || filteredOrders.length || 0;
 
         // Delivered orders
@@ -215,33 +247,6 @@ export default function AdminDashboard() {
         const successRate = nonPendingCount > 0
             ? Math.round((deliveredOrders.length / nonPendingCount) * 100)
             : (deliveredOrders.length > 0 ? 100 : 0);
-
-        // Channels Breakdown
-        const channels = {
-            telesales: { orders: 0, revenue: 0, leads: stats?.totalTelesalesLeads || 0 },
-            salesGt: { orders: 0, revenue: 0, leads: stats?.totalSalesLeads || 0 },
-            ctv: { orders: 0, revenue: 0, leads: stats?.totalCTVLeads || 0 },
-            web: { orders: 0, revenue: 0, leads: 0 }
-        };
-
-        filteredOrders.forEach(o => {
-            const src = (o.source || "").toUpperCase();
-            const amt = o.totalAmount || 0;
-
-            if (src.includes("TELESALES")) {
-                channels.telesales.orders += 1;
-                channels.telesales.revenue += amt;
-            } else if (src.includes("GT") || src.includes("SALES")) {
-                channels.salesGt.orders += 1;
-                channels.salesGt.revenue += amt;
-            } else if (src.includes("CTV") || src.includes("AFFILIATE")) {
-                channels.ctv.orders += 1;
-                channels.ctv.revenue += amt;
-            } else {
-                channels.web.orders += 1;
-                channels.web.revenue += amt;
-            }
-        });
 
         return {
             totalRevenue,

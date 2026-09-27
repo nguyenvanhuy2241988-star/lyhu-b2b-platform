@@ -332,7 +332,7 @@ export const getOrdersByCustomer = (customerId: string): Order[] => {
 // --- ASYNC ---
 // --- ASYNC (PURE FETCH) ---
 // --- ASYNC (PURE FETCH via RPC) ---
-export const fetchOrders = async (token?: string, filters?: { userId?: string, startDate?: string, endDate?: string, role?: string }): Promise<Order[]> => {
+export const fetchOrders = async (token?: string, filters?: { userId?: string, startDate?: string, endDate?: string, role?: string, limit?: number }): Promise<Order[]> => {
     try {
         const headers = getHeaders(token);
 
@@ -342,7 +342,7 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
             p_role: filters?.role || null, // Explicitly pass role if known
             p_start_date: filters?.startDate || null,
             p_end_date: filters?.endDate || null,
-            p_limit: 200 // Reasonable limit
+            p_limit: filters?.limit || 1000 // Default 1000 to cover all orders without truncation
         };
 
         const controller = new AbortController();

@@ -24,16 +24,15 @@ export async function getRevenueByDate(days: number = 30, fromDate?: string, toD
     let p_start_date: string;
     let p_end_date: string;
 
-    if (fromDate && toDate) {
-        const start = new Date(fromDate);
-        const end = new Date(toDate);
+    if (fromDate || toDate) {
+        const start = fromDate ? new Date(fromDate) : new Date('2023-01-01T00:00:00');
+        const end = toDate ? new Date(toDate) : new Date();
         end.setHours(23, 59, 59, 999);
         p_start_date = start.toISOString();
         p_end_date = end.toISOString();
     } else {
-        // Fallback to "last N days"
-        const start = new Date();
-        start.setDate(start.getDate() - days);
+        // Fallback: When no dates provided (preset 'all'), query from project start
+        const start = new Date('2023-01-01T00:00:00');
         const end = new Date();
         end.setHours(23, 59, 59, 999);
         p_start_date = start.toISOString();
