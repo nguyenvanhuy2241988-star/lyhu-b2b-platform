@@ -128,9 +128,11 @@ function DocumentsPageContent() {
             if (accessible.length > 0) {
                 // If no folder in URL or selected folder is not permitted for this role
                 if (!selectedFolderId || !accessible.some(f => f.id === selectedFolderId)) {
-                    const root = accessible.find(f => f.name === 'Công ty' && !f.parent_id);
-                    const defaultId = root?.id || accessible[0].id;
-                    replaceFolderUrl(defaultId);
+                    const defaultFolder = accessible.find(f => f.name === 'Công ty' && !f.parent_id)
+                        || accessible.find(f => f.name === 'Kinh Doanh' && !f.parent_id)
+                        || accessible.find(f => !f.parent_id)
+                        || accessible[0];
+                    if (defaultFolder) replaceFolderUrl(defaultFolder.id);
                 }
             }
         });
@@ -154,9 +156,11 @@ function DocumentsPageContent() {
         if (folders.length > 0 && selectedFolderId) {
             const isAccessible = folders.some(f => f.id === selectedFolderId);
             if (!isAccessible) {
-                const root = folders.find(f => f.name === 'Công ty' && !f.parent_id);
-                const defaultId = root?.id || folders[0].id;
-                replaceFolderUrl(defaultId);
+                const defaultFolder = folders.find(f => f.name === 'Công ty' && !f.parent_id)
+                    || folders.find(f => f.name === 'Kinh Doanh' && !f.parent_id)
+                    || folders.find(f => !f.parent_id)
+                    || folders[0];
+                if (defaultFolder) replaceFolderUrl(defaultFolder.id);
             }
         }
     }, [folders, selectedFolderId, replaceFolderUrl]);

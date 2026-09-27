@@ -155,19 +155,29 @@ export async function updateFolderPermissions(
 
 // Default role mappings for root department folders
 export const DEFAULT_FOLDER_ROLES: Record<string, string[]> = {
-    "công ty": ["*"], // Toàn bộ công ty
+    "công ty": ["admin"], // Ẩn với tất cả role trừ admin
     "kế toán": ["admin", "accountant"],
     "hr": ["admin", "recruiter", "hr"],
     "nhân sự": ["admin", "recruiter", "hr"],
     "kho vận": ["admin", "warehouse", "shipper"],
     "kho": ["admin", "warehouse", "shipper"],
-    "kinh doanh": ["admin", "sales", "telesales", "ctv", "sale_admin", "sales_gt", "ecommerce", "livestream"],
-    "sales": ["admin", "sales", "telesales", "ctv", "sale_admin", "sales_gt", "ecommerce", "livestream"],
-    "marketing": ["admin", "marketing", "media_creator", "ecommerce", "livestream"],
+    "kinh doanh": ["admin", "telesales", "sales_gt", "sales", "sale_admin", "ctv"],
+    "sales": ["admin", "telesales", "sales_gt", "sales", "sale_admin", "ctv"],
+    "marketing": ["admin", "marketing", "media_creator"],
 };
 
 export function isFolderAllowedForRole(folder: DocumentFolder, role?: string | null): boolean {
     if (!role || role === 'admin') return true;
+
+    const normalizedName = folder.name.trim().toLowerCase();
+
+    // 0. "Công ty" is strictly restricted to admin unless explicitly given custom roles
+    if (normalizedName === 'công ty' || normalizedName.startsWith('công ty')) {
+        if (folder.visibility === 'roles' && folder.allowed_roles && folder.allowed_roles.length > 0) {
+            return folder.allowed_roles.includes(role);
+        }
+        return false;
+    }
 
     // 1. Explicit folder visibility check
     if (folder.visibility === 'roles' && folder.allowed_roles && folder.allowed_roles.length > 0) {
@@ -183,7 +193,6 @@ export function isFolderAllowedForRole(folder: DocumentFolder, role?: string | n
     }
 
     // 3. Fallback to default department roles by name
-    const normalizedName = folder.name.trim().toLowerCase();
     for (const [key, allowed] of Object.entries(DEFAULT_FOLDER_ROLES)) {
         if (normalizedName === key || normalizedName.startsWith(key)) {
             if (allowed.includes("*") || allowed.includes(role)) {
