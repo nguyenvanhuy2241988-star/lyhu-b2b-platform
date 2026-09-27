@@ -409,7 +409,7 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
                 {/* Controls */}
                 <div className="quote-controls bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-primary-600" />
+                        <FileText className="w-5 h-5 text-[#00AFA9]" />
                         <h2 className="text-base font-bold text-slate-800">Xem trước báo giá #{quote.readable_id}</h2>
                         <select
                             value={paperSize}
@@ -430,7 +430,7 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
                             <FileSpreadsheet className="w-4 h-4" /> Excel
                         </button>
                         <button onClick={handlePrint} disabled={isExporting}
-                            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50">
+                            className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50">
                             <Printer className="w-4 h-4" /> In
                         </button>
                         <button onClick={handleExportPDF} disabled={isExporting}
@@ -447,7 +447,7 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
                 {/* Scrollable preview */}
                 <div className="quote-scroll-container flex-1 overflow-y-auto bg-slate-100 p-8 flex justify-center">
                     <div ref={printRef}
-                        className="quote-print-page bg-white w-full max-w-[800px] rounded-lg shadow-2xl"
+                        className="quote-print-page bg-white w-full max-w-[800px] rounded-lg border border-slate-200 shadow-sm"
                         style={{ fontFamily: "'Segoe UI', 'Roboto', sans-serif", fontSize: '13px', color: '#1e293b' }}>
 
                         {/* ===== HEADER ===== */}
@@ -478,7 +478,7 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
 
                             {/* Title */}
                             <div className="text-center mt-6 mb-2">
-                                <h2 className="text-xl font-extrabold text-primary-700 uppercase tracking-wide">
+                                <h2 className="text-xl font-extrabold text-[#00AFA9] uppercase tracking-wide">
                                     BÁO GIÁ SẢN PHẨM
                                 </h2>
                                 <p className="text-xs text-slate-400 mt-1">
@@ -496,7 +496,7 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
                         </div>
 
                         {/* ===== DIVIDER ===== */}
-                        <div className="mx-10 h-[2px] bg-gradient-to-r from-primary-500 via-primary-400 to-secondary-400" />
+                        <div className="mx-10 h-[2px] bg-[#00AFA9]" />
 
                         {/* ===== CUSTOMER INFO ===== */}
                         {(!isPriceList || quote.customer_name !== 'Kính gửi Quý khách hàng') && (
@@ -661,7 +661,7 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
                                                             <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.expiry || '-'}</td>
                                                             <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.packSize || '-'}</td>
                                                             <td className="px-1.5 py-2 text-right border border-slate-300 font-bold text-slate-700 align-middle">{fmtPrice(item.retailPrice || 0)}</td>
-                                                            <td className="px-1.5 py-2 text-right border border-slate-300 font-bold text-primary-700 align-middle">{fmtPrice(item.wholesalePrice || 0)}</td>
+                                                            <td className="px-1.5 py-2 text-right border border-slate-300 font-bold text-[#00AFA9] align-middle">{fmtPrice(item.wholesalePrice || 0)}</td>
                                                             <td className="px-1.5 py-1 text-center border border-slate-300 align-middle">
                                                                 {item.imageUrl ? (
                                                                     <div className="w-12 h-12 mx-auto overflow-hidden rounded bg-white relative">
@@ -719,10 +719,10 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
                                                     </tr>
                                                 )}
                                                 <tr style={{ backgroundColor: '#00afa9' }}>
-                                                    <td className="px-3 py-3 border border-primary-400 text-white font-extrabold text-sm uppercase">
+                                                    <td className="px-3 py-3 border border-[#009690] text-white font-extrabold text-sm uppercase">
                                                         Tổng cộng
                                                     </td>
-                                                    <td className="px-3 py-3 border border-primary-400 text-right font-extrabold text-white text-sm w-36">
+                                                    <td className="px-3 py-3 border border-[#009690] text-right font-extrabold text-white text-sm w-36">
                                                         {fmtPrice(quote.total)} đ
                                                     </td>
                                                 </tr>

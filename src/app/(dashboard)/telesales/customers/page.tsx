@@ -276,14 +276,14 @@ export default function TelesalesCustomersPage() {
                         <input
                             type="text"
                             placeholder="Tên, SĐT..."
-                            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9]"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <button
                         onClick={() => { setEditingCustomer(null); setShowAddForm(true); }}
-                        className="hidden lg:flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+                        className="hidden lg:flex items-center gap-2 bg-[#00AFA9] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#009690] transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Thêm khách</span>
@@ -312,7 +312,7 @@ export default function TelesalesCustomersPage() {
                                 <select
                                     value={selectedType}
                                     onChange={e => setSelectedType(e.target.value)}
-                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20"
+                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-[#00AFA9]/20"
                                 >
                                     <option value="">Tất cả</option>
                                     {CUSTOMER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -323,7 +323,7 @@ export default function TelesalesCustomersPage() {
                                 <select
                                     value={selectedProvince}
                                     onChange={e => setSelectedProvince(e.target.value)}
-                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20"
+                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-[#00AFA9]/20"
                                 >
                                     <option value="">Tất cả</option>
                                     {PROVINCES.map(p => <option key={p.code} value={p.value}>{p.label}</option>)}
@@ -336,7 +336,7 @@ export default function TelesalesCustomersPage() {
                                         value={selectedWard}
                                         onChange={e => setSelectedWard(e.target.value)}
                                         disabled={!selectedProvince}
-                                        className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 disabled:bg-slate-50"
+                                        className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-[#00AFA9]/20 disabled:bg-slate-50"
                                     >
                                         <option value="">Tất cả</option>
                                         {wards.map(w => <option key={w.code} value={w.value}>{w.label}</option>)}
@@ -354,7 +354,7 @@ export default function TelesalesCustomersPage() {
                                     type="date"
                                     value={fromDate}
                                     onChange={e => setFromDate(e.target.value)}
-                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20"
+                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-[#00AFA9]/20"
                                 />
                             </div>
                             <div>
@@ -363,7 +363,7 @@ export default function TelesalesCustomersPage() {
                                     type="date"
                                     value={toDate}
                                     onChange={e => setToDate(e.target.value)}
-                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20"
+                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-[#00AFA9]/20"
                                 />
                             </div>
                             <div>
@@ -371,7 +371,7 @@ export default function TelesalesCustomersPage() {
                                 <select
                                     value={sortBy}
                                     onChange={e => setSortBy(e.target.value)}
-                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20"
+                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-[#00AFA9]/20"
                                 >
                                     <option value="newest">Mới nhất</option>
                                     <option value="oldest">Cũ nhất</option>
@@ -394,19 +394,19 @@ export default function TelesalesCustomersPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-white p-4 rounded-xl border">
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
                     <div className="text-2xl font-bold text-slate-900">{customers.length}</div>
                     <div className="text-sm text-slate-500">Tổng khách hàng</div>
                 </div>
-                <div className="bg-white p-4 rounded-xl border">
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
                     <div className="text-2xl font-bold text-green-600">{customers.filter(c => c.type === 'tap_hoa').length}</div>
                     <div className="text-sm text-slate-500">Tạp hóa</div>
                 </div>
-                <div className="bg-white p-4 rounded-xl border">
-                    <div className="text-2xl font-bold text-purple-600">{customers.filter(c => c.type === 'mini_mart').length}</div>
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                    <div className="text-2xl font-bold text-[#00AFA9]">{customers.filter(c => c.type === 'mini_mart').length}</div>
                     <div className="text-sm text-slate-500">Mini mart</div>
                 </div>
-                <div className="bg-white p-4 rounded-xl border">
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
                     <div className="text-2xl font-bold text-orange-600">{customers.filter(c => c.type === 'npp' || c.type === 'dai_ly').length}</div>
                     <div className="text-sm text-slate-500">NPP/Đại lý</div>
                 </div>
@@ -428,7 +428,7 @@ export default function TelesalesCustomersPage() {
                             key={p.key}
                             onClick={() => setTimePreset(p.key)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${timePreset === p.key
-                                    ? 'bg-primary-600 text-white shadow-sm'
+                                    ? 'bg-[#00AFA9] text-white shadow-sm'
                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                 }`}
                         >
@@ -446,11 +446,11 @@ export default function TelesalesCustomersPage() {
                     )}
                 </div>
                 <button onClick={() => setShowDashboard(!showDashboard)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showDashboard ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showDashboard ? 'bg-[#00AFA9] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                     <TrendingUp className="w-3.5 h-3.5" /> Dashboard
                 </button>
                 <button onClick={() => setShowMarket(!showMarket)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showMarket ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showMarket ? 'bg-[#00AFA9] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                     <Globe className="w-3.5 h-3.5" /> Thị trường
                 </button>
             </div>
@@ -612,7 +612,7 @@ export default function TelesalesCustomersPage() {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2 text-slate-600 mb-1">
                                             <Phone className="w-3.5 h-3.5" />
-                                            <a href={`tel:${customer.phone}`} className="hover:text-primary-600">{customer.phone}</a>
+                                            <a href={`tel:${customer.phone}`} className="hover:text-[#00AFA9]">{customer.phone}</a>
                                         </div>
                                         {customer.email && (
                                             <div className="flex items-center gap-2 text-slate-500 text-xs">
@@ -631,10 +631,10 @@ export default function TelesalesCustomersPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${customer.type === 'tap_hoa' ? 'bg-green-100 text-green-700' :
-                                            customer.type === 'mini_mart' ? 'bg-purple-100 text-purple-700' :
+                                            customer.type === 'mini_mart' ? 'bg-teal-50 text-[#00AFA9] border border-teal-200' :
                                                 customer.type === 'npp' ? 'bg-orange-100 text-orange-700' :
                                                     customer.type === 'dai_ly' ? 'bg-blue-100 text-blue-700' :
-                                                        customer.type === 'sieu_thi' ? 'bg-pink-100 text-pink-700' :
+                                                        customer.type === 'sieu_thi' ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' :
                                                             'bg-slate-100 text-slate-600'
                                             }`}>
                                             {CUSTOMER_TYPES.find(t => t.value === customer.type)?.label || customer.type}
@@ -644,7 +644,7 @@ export default function TelesalesCustomersPage() {
                                         <div className="flex items-center justify-end gap-2">
                                             <button
                                                 onClick={() => handleCreateDeal(customer)}
-                                                className="px-3 py-1.5 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded text-xs font-medium transition-colors"
+                                                className="px-3 py-1.5 bg-teal-50 text-[#00AFA9] hover:bg-teal-100 rounded text-xs font-medium transition-colors"
                                             >
                                                 <UserPlus className="w-3.5 h-3.5 inline mr-1" />
                                                 Tạo cơ hội
@@ -704,10 +704,10 @@ export default function TelesalesCustomersPage() {
                                     <div>
                                         <div className="font-semibold text-slate-900">{customer.name}</div>
                                         <span className={`inline-flex items-center px-1.5 py-0.5 mt-1.5 rounded text-[10px] font-bold uppercase ${customer.type === 'tap_hoa' ? 'bg-green-100 text-green-700' :
-                                            customer.type === 'mini_mart' ? 'bg-purple-100 text-purple-700' :
+                                            customer.type === 'mini_mart' ? 'bg-teal-50 text-[#00AFA9] border border-teal-200' :
                                                 customer.type === 'npp' ? 'bg-orange-100 text-orange-700' :
                                                     customer.type === 'dai_ly' ? 'bg-blue-100 text-blue-700' :
-                                                        customer.type === 'sieu_thi' ? 'bg-pink-100 text-pink-700' :
+                                                        customer.type === 'sieu_thi' ? 'bg-cyan-50 text-cyan-700 border border-cyan-200' :
                                                             'bg-slate-100 text-slate-600'
                                             }`}>
                                             {CUSTOMER_TYPES.find(t => t.value === customer.type)?.label || customer.type}
@@ -737,7 +737,7 @@ export default function TelesalesCustomersPage() {
                             <div className="space-y-2 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
                                 <div className="flex items-center gap-2 text-slate-700 text-sm">
                                     <Phone className="w-4 h-4 text-slate-400" />
-                                    <a href={`tel:${customer.phone}`} className="hover:text-primary-600 font-medium">{customer.phone}</a>
+                                    <a href={`tel:${customer.phone}`} className="hover:text-[#00AFA9] font-medium">{customer.phone}</a>
                                 </div>
                                 {customer.email && (
                                     <div className="flex items-center gap-2 text-slate-600 text-sm">
@@ -754,7 +754,7 @@ export default function TelesalesCustomersPage() {
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => handleCreateDeal(customer)}
-                                    className="flex-1 flex items-center justify-center gap-1.5 bg-primary-50 text-primary-700 hover:bg-primary-100 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                    className="flex-1 flex items-center justify-center gap-1.5 bg-teal-50 text-[#00AFA9] hover:bg-teal-100 py-2.5 rounded-lg text-sm font-semibold transition-colors"
                                 >
                                     <UserPlus className="w-4 h-4" />
                                     Tạo cơ hội

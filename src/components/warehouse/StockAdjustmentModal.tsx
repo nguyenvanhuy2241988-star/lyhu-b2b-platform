@@ -33,7 +33,7 @@ export function StockAdjustmentModal({ isOpen, onClose, onSave, productName, cur
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 w-full max-w-md mx-4 overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b">
                     <h3 className="font-bold text-lg text-slate-900">Điều chỉnh tồn kho</h3>
                     <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
@@ -54,14 +54,14 @@ export function StockAdjustmentModal({ isOpen, onClose, onSave, productName, cur
                         <label className="block text-sm font-medium text-slate-700 mb-1">Tồn kho thực tế (Cái)</label>
                         <input
                             type="number"
-                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-bold text-lg"
+                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none font-bold text-lg"
                             value={quantity}
                             onChange={(e) => setQuantity(Number(e.target.value))}
                             min="0"
                         />
                         <div className="mt-1 text-xs text-slate-500 flex justify-between">
                             <span>Tồn hiện tại: {currentStock}</span>
-                            <span className={quantity !== currentStock ? "text-indigo-600 font-medium" : ""}>
+                            <span className={quantity !== currentStock ? "text-[#00AFA9] font-medium" : ""}>
                                 Thay đổi: {quantity - currentStock > 0 ? '+' : ''}{quantity - currentStock}
                             </span>
                         </div>
@@ -70,7 +70,7 @@ export function StockAdjustmentModal({ isOpen, onClose, onSave, productName, cur
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Ghi chú / Lý do</label>
                         <textarea
-                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none"
                             placeholder="VD: Kiểm kê định kỳ, Phát hiện sai lệch..."
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
@@ -89,7 +89,7 @@ export function StockAdjustmentModal({ isOpen, onClose, onSave, productName, cur
                     </button>
                     <button
                         onClick={handleSave}
-                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium flex items-center gap-2"
+                        className="px-4 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-lg font-medium flex items-center gap-2 shadow-sm"
                         disabled={isLoading}
                     >
                         {isLoading ? (

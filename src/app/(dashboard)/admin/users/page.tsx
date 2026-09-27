@@ -520,7 +520,7 @@ export default function UsersPage() {
                                         <div className="flex justify-between items-center">
                                             <span className="text-slate-500">Vai trò:</span>
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider
-                                                ${user.role === 'admin' ? 'bg-purple-50 border-purple-100 text-purple-700' :
+                                                ${user.role === 'admin' ? 'bg-teal-50 border-teal-100 text-[#00AFA9]' :
                                                     user.role === 'customer' ? 'bg-green-50 border-green-100 text-green-700' : 'bg-blue-50 border-blue-100 text-blue-700'
                                                 }`}>
                                                 {ROLE_LABELS[user.role] || user.role}
@@ -598,7 +598,7 @@ export default function UsersPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                                    ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                                                    ${user.role === 'admin' ? 'bg-teal-50 text-[#00AFA9]' :
                                                         user.role === 'customer' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
                                                     }`}>
                                                     {ROLE_LABELS[user.role] || user.role}
@@ -862,7 +862,7 @@ export default function UsersPage() {
                                                     {/* Dot */}
                                                     <div className={`absolute -left-[39px] text-white rounded-full p-1.5 border-4 border-white shadow-sm
                                                         ${log.type === 'call' ? 'bg-green-500' :
-                                                            log.type === 'system' ? 'bg-purple-500' :
+                                                            log.type === 'system' ? 'bg-[#00AFA9]' :
                                                                 log.type === 'note' ? 'bg-amber-500' : 'bg-blue-500'}`}>
                                                         {log.type === 'call' ? <Smartphone size={14} /> :
                                                             log.type === 'system' ? <Activity size={14} /> :

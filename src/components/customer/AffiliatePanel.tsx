@@ -296,7 +296,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                 </button>
                 <button
                     onClick={() => setActiveTab('guide')}
-                    className={`py-3 px-4 font-semibold text-sm border-b-2 transition-colors ${activeTab === 'guide' ? 'border-primary-600 text-primary-600' : 'border-transparent text-slate-500 hover:text-slate-700'} flex items-center gap-1.5`}
+                    className={`py-3 px-4 font-semibold text-sm border-b-2 transition-colors ${activeTab === 'guide' ? 'border-[#00AFA9] text-[#00AFA9]' : 'border-transparent text-slate-500 hover:text-slate-700'} flex items-center gap-1.5`}
                 >
                     <BookOpen size={16} /> Hướng dẫn
                 </button>
@@ -611,8 +611,8 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
 
                 {activeTab === 'guide' && (
                     <div className="space-y-6">
-                        <div className="bg-primary-50 p-5 rounded-xl border border-primary-100 flex items-start gap-4">
-                            <div className="p-3 bg-white rounded-lg text-primary-600 shadow-sm shrink-0">
+                        <div className="bg-teal-50 p-5 rounded-xl border border-teal-100 flex items-start gap-4">
+                            <div className="p-3 bg-white rounded-lg text-[#00AFA9] shadow-sm shrink-0">
                                 <Lightbulb size={24} />
                             </div>
                             <div>
@@ -625,23 +625,23 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
 
                         <div className="grid gap-5">
                             {/* Step 1 */}
-                            <div className="flex flex-col sm:flex-row gap-5 p-5 border border-slate-200 rounded-xl hover:border-primary-300 transition-colors bg-white shadow-sm items-center sm:items-start">
-                                <div className="w-24 h-24 rounded-2xl bg-primary-50 flex items-center justify-center shrink-0 border border-primary-100 relative">
-                                    <LinkIcon size={36} className="text-primary-600" />
+                            <div className="flex flex-col sm:flex-row gap-5 p-5 border border-slate-200 rounded-xl hover:border-[#00AFA9] transition-colors bg-white shadow-sm items-center sm:items-start">
+                                <div className="w-24 h-24 rounded-2xl bg-teal-50 flex items-center justify-center shrink-0 border border-teal-100 relative">
+                                    <LinkIcon size={36} className="text-[#00AFA9]" />
                                     <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1.5 shadow-sm border border-slate-100">
                                         <Copy size={16} className="text-slate-500"/>
                                     </div>
                                 </div>
                                 <div className="flex-1 text-center sm:text-left w-full">
                                     <div className="flex items-center gap-2 mb-2 justify-center sm:justify-start">
-                                        <div className="bg-primary text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm">Bước 1</div>
+                                        <div className="bg-[#00AFA9] text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-sm">Bước 1</div>
                                         <h4 className="font-bold text-slate-800 text-lg">Lấy link giới thiệu</h4>
                                     </div>
                                     <p className="text-sm text-slate-600 leading-relaxed mb-3">
                                         Ở mục <strong>Tổng quan</strong>, bạn có thể copy link của bất kỳ sản phẩm nào có sẵn, hoặc dán link trang LYHU bất kỳ vào ô tạo link để lấy link.
                                     </p>
                                     <div className="bg-slate-50 rounded border border-slate-100 p-2.5 text-xs font-mono text-slate-500 break-all text-left">
-                                        Link của bạn sẽ có dạng: <br/>lyhu.com.vn/san-pham<strong className="text-primary-600 font-bold bg-primary-50 px-1 rounded">?ref={profile.affiliate_code}</strong>
+                                        Link của bạn sẽ có dạng: <br/>lyhu.com.vn/san-pham<strong className="text-[#00AFA9] font-bold bg-teal-50 px-1 rounded">?ref={profile.affiliate_code}</strong>
                                     </div>
                                 </div>
                             </div>
@@ -727,10 +727,10 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
             
             {showWelcomeModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden transform scale-100 animate-in fade-in zoom-in duration-300 border border-slate-100">
+                    <div className="bg-white rounded-xl border border-slate-200 w-full max-w-sm overflow-hidden transform scale-100 animate-in fade-in zoom-in duration-300">
                         <div className="p-6 text-center space-y-5">
-                            <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-2">
-                                <PartyPopper className="w-8 h-8 text-primary animate-bounce" />
+                            <div className="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <PartyPopper className="w-8 h-8 text-[#00AFA9] animate-bounce" />
                             </div>
                             
                             <div>
@@ -742,7 +742,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                             
                             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-center">
                                 <p className="text-xs text-slate-500">
-                                    Ngay bây giờ, bạn có thể tạo link giới thiệu sản phẩm và nhận <strong className="text-primary-600 font-bold">hoa hồng không giới hạn!</strong>
+                                    Ngay bây giờ, bạn có thể tạo link giới thiệu sản phẩm và nhận <strong className="text-[#00AFA9] font-bold">hoa hồng không giới hạn!</strong>
                                 </p>
                             </div>
                             
@@ -751,7 +751,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                                     localStorage.setItem(`affiliate_welcome_seen_${profile.id}`, 'true');
                                     setShowWelcomeModal(false);
                                 }}
-                                className="w-full bg-primary hover:bg-primary-600 text-white font-medium py-2.5 px-4 rounded-lg shadow-sm transition-colors active:scale-95"
+                                className="w-full bg-[#00AFA9] hover:bg-[#009690] text-white font-medium py-2.5 px-4 rounded-lg shadow-sm transition-colors active:scale-95"
                             >
                                 Bắt đầu kiếm tiền ngay
                             </button>

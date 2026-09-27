@@ -126,9 +126,9 @@ export default function TelesalesActivityLogModal({ date, userId, onClose, onSuc
 
                             {/* Section: Cuộc gọi & Data */}
                             <div>
-                                <h3 className="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wider text-blue-800/70 border-b border-slate-100 pb-2">Cuộc gọi & Data Tự kiếm</h3>
+                                <h3 className="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wider border-b border-slate-100 pb-2">Cuộc gọi & Data Tự kiếm</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center group hover:border-blue-200 transition-colors">
+                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center group hover:border-teal-200 transition-colors">
                                         <div>
                                             <p className="font-semibold text-slate-700 text-sm">Số cuộc gọi</p>
                                         </div>
@@ -136,7 +136,7 @@ export default function TelesalesActivityLogModal({ date, userId, onClose, onSuc
                                             type="number" min="0"
                                             value={formData.calls_completed}
                                             onChange={(e) => handleInputChange('calls_completed', parseInt(e.target.value) || 0)}
-                                            className="w-20 text-center font-bold text-lg text-blue-700 bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none shadow-sm transition-all"
+                                            className="w-20 text-center font-bold text-lg text-[#00AFA9] bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent outline-none shadow-sm transition-all"
                                         />
                                     </div>
                                     <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center group hover:border-teal-200 transition-colors">
@@ -147,7 +147,7 @@ export default function TelesalesActivityLogModal({ date, userId, onClose, onSuc
                                             type="number" min="0"
                                             value={formData.self_sourced_data}
                                             onChange={(e) => handleInputChange('self_sourced_data', parseInt(e.target.value) || 0)}
-                                            className="w-20 text-center font-bold text-lg text-teal-700 bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none shadow-sm transition-all"
+                                            className="w-20 text-center font-bold text-lg text-[#00AFA9] bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent outline-none shadow-sm transition-all"
                                         />
                                     </div>
                                 </div>
@@ -155,9 +155,9 @@ export default function TelesalesActivityLogModal({ date, userId, onClose, onSuc
 
                             {/* Section: Tương tác Mạng Xã Hội */}
                             <div>
-                                <h3 className="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wider text-indigo-800/70 border-b border-slate-100 pb-2">Marketing Online (FB/Zalo)</h3>
+                                <h3 className="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wider border-b border-slate-100 pb-2">Marketing Online (FB/Zalo)</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center group hover:border-indigo-200 transition-colors">
+                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center group hover:border-teal-200 transition-colors">
                                         <div>
                                             <p className="font-semibold text-slate-700 text-sm">FB Groups (Bài đăng)</p>
                                         </div>
@@ -165,11 +165,11 @@ export default function TelesalesActivityLogModal({ date, userId, onClose, onSuc
                                             type="number" min="0"
                                             value={formData.fb_group_posts}
                                             onChange={(e) => handleInputChange('fb_group_posts', parseInt(e.target.value) || 0)}
-                                            className="w-20 text-center font-bold text-lg text-indigo-700 bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none shadow-sm transition-all"
+                                            className="w-20 text-center font-bold text-lg text-[#00AFA9] bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent outline-none shadow-sm transition-all"
                                         />
                                     </div>
 
-                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center group hover:border-indigo-200 transition-colors">
+                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center group hover:border-teal-200 transition-colors">
                                         <div>
                                             <p className="font-semibold text-slate-700 text-sm">FB Seeding (Comment)</p>
                                         </div>
@@ -177,11 +177,11 @@ export default function TelesalesActivityLogModal({ date, userId, onClose, onSuc
                                             type="number" min="0"
                                             value={formData.fb_comments}
                                             onChange={(e) => handleInputChange('fb_comments', parseInt(e.target.value) || 0)}
-                                            className="w-20 text-center font-bold text-lg text-indigo-700 bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none shadow-sm transition-all"
+                                            className="w-20 text-center font-bold text-lg text-[#00AFA9] bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent outline-none shadow-sm transition-all"
                                         />
                                     </div>
 
-                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center group hover:border-indigo-200 transition-colors">
+                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center group hover:border-teal-200 transition-colors">
                                         <div>
                                             <p className="font-semibold text-slate-700 text-sm">FB Bạn mới (Add Friend)</p>
                                         </div>
@@ -189,11 +189,11 @@ export default function TelesalesActivityLogModal({ date, userId, onClose, onSuc
                                             type="number" min="0"
                                             value={formData.fb_friends}
                                             onChange={(e) => handleInputChange('fb_friends', parseInt(e.target.value) || 0)}
-                                            className="w-20 text-center font-bold text-lg text-indigo-700 bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none shadow-sm transition-all"
+                                            className="w-20 text-center font-bold text-lg text-[#00AFA9] bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent outline-none shadow-sm transition-all"
                                         />
                                     </div>
 
-                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center group hover:border-blue-200 transition-colors">
+                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center group hover:border-teal-200 transition-colors">
                                         <div>
                                             <p className="font-semibold text-slate-700 text-sm">Zalo Cá nhân (Bài)</p>
                                         </div>
@@ -201,11 +201,11 @@ export default function TelesalesActivityLogModal({ date, userId, onClose, onSuc
                                             type="number" min="0"
                                             value={formData.zalo_posts}
                                             onChange={(e) => handleInputChange('zalo_posts', parseInt(e.target.value) || 0)}
-                                            className="w-20 text-center font-bold text-lg text-blue-700 bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none shadow-sm transition-all"
+                                            className="w-20 text-center font-bold text-lg text-[#00AFA9] bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent outline-none shadow-sm transition-all"
                                         />
                                     </div>
 
-                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center group hover:border-purple-200 transition-colors">
+                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex justify-between items-center group hover:border-teal-200 transition-colors">
                                         <div>
                                             <p className="font-semibold text-slate-700 text-sm">FB Cá nhân (Bài đăng)</p>
                                         </div>
@@ -213,7 +213,7 @@ export default function TelesalesActivityLogModal({ date, userId, onClose, onSuc
                                             type="number" min="0"
                                             value={formData.fb_personal_posts}
                                             onChange={(e) => handleInputChange('fb_personal_posts', parseInt(e.target.value) || 0)}
-                                            className="w-20 text-center font-bold text-lg text-purple-700 bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none shadow-sm transition-all"
+                                            className="w-20 text-center font-bold text-lg text-[#00AFA9] bg-white border border-slate-200 rounded-lg py-1.5 focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent outline-none shadow-sm transition-all"
                                         />
                                     </div>
                                 </div>
@@ -226,7 +226,7 @@ export default function TelesalesActivityLogModal({ date, userId, onClose, onSuc
                                     value={formData.notes}
                                     onChange={(e) => handleInputChange('notes', e.target.value)}
                                     placeholder="Có khó khăn hoặc vấn đề gì trong lúc thực hiện công việc không?"
-                                    className="w-full text-sm border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none h-24 bg-slate-50 hover:bg-white transition-colors"
+                                    className="w-full text-sm border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent outline-none resize-none h-24 bg-slate-50 hover:bg-white transition-colors"
                                 ></textarea>
                             </div>
                         </div>
@@ -246,7 +246,7 @@ export default function TelesalesActivityLogModal({ date, userId, onClose, onSuc
                         <button
                             onClick={handleSave}
                             disabled={saving}
-                            className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-[#00AFA9] hover:bg-[#009b95] text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+                            className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-[#00AFA9] hover:bg-[#009690] text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
                         >
                             {saving ? (
                                 <>

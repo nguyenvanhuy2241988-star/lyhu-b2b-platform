@@ -45,7 +45,7 @@ export const FulfillmentModal: React.FC<FulfillmentModalProps> = ({ isOpen, onCl
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-200">
+            <div className="bg-white w-full max-w-2xl rounded-2xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-200">
                 {/* Header */}
                 <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                     <div>
@@ -191,7 +191,7 @@ export const FulfillmentModal: React.FC<FulfillmentModalProps> = ({ isOpen, onCl
                         <button
                             onClick={handleConfirm}
                             disabled={isConfirming}
-                            className="flex-1 sm:flex-none px-6 py-2.5 bg-[#00AFA9] hover:bg-[#009b95] text-white rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
+                            className="flex-1 sm:flex-none px-6 py-2.5 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
                         >
                             {isConfirming ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />

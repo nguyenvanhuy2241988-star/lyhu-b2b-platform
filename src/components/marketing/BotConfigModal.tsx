@@ -168,7 +168,7 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
                             <div className="grid grid-cols-3 gap-2">
                                 <button
                                     onClick={() => setStrategy('commander')}
-                                    className={`p-2 border rounded-lg text-sm text-left transition-all ${strategy === 'commander' ? 'border-purple-500 bg-purple-50 text-purple-700 ring-1 ring-purple-500' : 'border-slate-200 hover:border-slate-300'}`}
+                                    className={`p-2 border rounded-lg text-sm text-left transition-all ${strategy === 'commander' ? 'border-[#00AFA9] bg-teal-50 text-[#00AFA9] ring-1 ring-[#00AFA9]' : 'border-slate-200 hover:border-slate-300'}`}
                                 >
                                     <span className="font-bold block">🧠 Tự động</span>
                                     <span className="text-[10px] opacity-80">Hiểu lệnh nói</span>
@@ -257,7 +257,7 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Chủ đề Hội Nhóm để tìm kiếm mới</label>
                                     <input
                                         type="text"
-                                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                         placeholder="VD: Chợ sỉ quần áo, Tìm việc làm..."
                                         value={arg.split('|')[0] ? arg.split('|')[0].trim() : arg}
                                         onChange={(e) => {
@@ -287,7 +287,7 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
                                         type="number"
                                         min={1}
                                         max={30}
-                                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                         value={arg.split('|')[2] ? parseInt(arg.split('|')[2]) : 5}
                                         onChange={(e) => {
                                             const parts = arg.split('|');
@@ -471,7 +471,7 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
                                         <label className="block text-sm font-medium text-slate-700 mb-1">Đường dẫn FB Group (Tùy chọn)</label>
                                         <input
                                             type="text"
-                                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                             placeholder="Bỏ trống để tự động rải vào tất cả Group đã tham gia"
                                             value={arg.split('|')[0]?.trim() || ''}
                                             onChange={(e) => {
@@ -490,7 +490,7 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
                             <input
                                 type="text"
                                 list="modal-category-suggestions"
-                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                 placeholder="Gõ tên hoặc chọn Kho có sẵn (Bỏ trống = Mặc định)"
                                 value={scriptName === 'auto_post_group.js' || scriptName === 'auto_comment_group.js' ? arg.split('|')[1]?.trim() || '' : arg}
                                 onChange={(e) => {
@@ -557,7 +557,7 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-xl border border-slate-200 w-full max-w-md mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                     <h3 className="font-bold text-lg text-slate-800">Cấu hình: {title}</h3>

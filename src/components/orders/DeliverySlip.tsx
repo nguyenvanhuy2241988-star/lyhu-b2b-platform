@@ -49,7 +49,7 @@ export default function DeliverySlip({ order, paperSize = 'A4', onClose }: Deliv
 
             {/* Overlay */}
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print">
-                <div className="bg-white rounded-2xl shadow-2xl max-w-[700px] w-full max-h-[90vh] overflow-y-auto">
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm max-w-[700px] w-full max-h-[90vh] overflow-y-auto">
                     {/* Controls */}
                     <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
                         <div className="flex items-center gap-3">
@@ -66,7 +66,7 @@ export default function DeliverySlip({ order, paperSize = 'A4', onClose }: Deliv
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={handlePrint}
-                                className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-colors"
+                                className="px-5 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white text-sm font-bold rounded-xl transition-colors"
                             >
                                 🖨️ In phiếu
                             </button>

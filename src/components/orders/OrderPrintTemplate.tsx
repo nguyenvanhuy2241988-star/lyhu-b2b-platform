@@ -38,13 +38,13 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
             <div className="flex justify-between items-start mb-6 border-b border-gray-300 pb-6">
                 <div>
                     <img src="/logo-full.png" alt="LYHU Logo" className="h-16 w-auto mb-3 object-contain" />
-                    <h1 className="text-xl font-bold uppercase mb-2 text-indigo-900">{company.name}</h1>
+                    <h1 className="text-xl font-bold uppercase mb-2 text-[#00AFA9]">{company.name}</h1>
                     <p className="text-sm">Địa chỉ: {company.address}</p>
                     <p className="text-sm">Hotline: {company.hotline} - Email: {company.email}</p>
                     <p className="text-sm">Website: {company.website}</p>
                 </div>
                 <div className="text-right">
-                    <h2 className="text-2xl font-bold uppercase text-indigo-900 whitespace-nowrap">ĐƠN ĐẶT HÀNG</h2>
+                    <h2 className="text-2xl font-bold uppercase text-[#00AFA9] whitespace-nowrap">ĐƠN ĐẶT HÀNG</h2>
                     <p className="text-base font-bold text-gray-800 mt-1">Mã đơn: {order.readableId || order.id}</p>
                     <p className="text-sm text-gray-600">Ngày tạo: {formatDate(order.createdAt)}</p>
                     {order.creatorName && <p className="text-sm text-gray-600">Người tạo: <span className="font-semibold">{order.creatorName}</span></p>}
@@ -98,7 +98,7 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
                                 <td className="border border-gray-300 px-2 py-2 text-gray-600 font-mono text-xs">{item.product?.sku || item.sku || '---'}</td>
                                 <td className="border border-gray-300 px-2 py-2">
                                     <div className="font-medium">{item.product?.name || item.name || 'Sản phẩm'}</div>
-                                    {(item.isGift || item.is_gift) && <span className="inline-block bg-purple-100 text-purple-800 text-xs px-1 rounded mt-0.5">Quà tặng</span>}
+                                    {(item.isGift || item.is_gift) && <span className="inline-block bg-teal-50 text-[#00AFA9] text-xs px-1 rounded mt-0.5">Quà tặng</span>}
                                 </td>
                                 <td className="border border-gray-300 px-2 py-2 text-center">{item.unit || item.product?.unit || 'Cái'}</td>
                                 <td className="border border-gray-300 px-2 py-2 text-center font-semibold">{item.quantity}</td>
@@ -188,7 +188,7 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
                                 <div className="border-t border-gray-300 my-2"></div>
                                 <div className="flex justify-between text-lg font-bold items-center bg-gray-50 p-2 rounded">
                                     <span>Tổng thanh toán:</span>
-                                    <span className="text-indigo-700">{formatPrice(order.totalAmount)}</span>
+                                    <span className="text-[#00AFA9]">{formatPrice(order.totalAmount)}</span>
                                 </div>
                                 <div className="text-right text-xs text-gray-500 italic mt-1">
                                     (Đã bao gồm VAT nếu có)

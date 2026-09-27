@@ -89,7 +89,7 @@ export default function CampaignBuilderModal({ isOpen, onClose, onSaved }: Campa
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl flex flex-col h-[85vh] animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-xl border border-slate-200 w-full max-w-3xl flex flex-col h-[85vh] animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center rounded-t-xl shrink-0">
                     <h3 className="font-bold text-lg text-slate-800">Xây Dựng Chiến Dịch (Macro)</h3>
@@ -105,7 +105,7 @@ export default function CampaignBuilderModal({ isOpen, onClose, onSaved }: Campa
                         <label className="block text-sm font-bold text-slate-700 mb-2">Tên Chiến Dịch (Gợi Nhớ)</label>
                         <input
                             type="text"
-                            className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 font-medium"
+                            className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none text-slate-800 font-medium"
                             placeholder="VD: Cày Clone Trưa, Quét Sỉ Lẻ Khuya..."
                             value={name}
                             onChange={(e) => setName(e.target.value)}
@@ -117,7 +117,7 @@ export default function CampaignBuilderModal({ isOpen, onClose, onSaved }: Campa
                         <div className="flex items-center justify-between">
                             <h4 className="font-bold text-slate-700 flex items-center gap-2">
                                 Chuỗi Hành Động (Trình tự chạy)
-                                <span className="bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full text-xs">{tasks.length} Bước</span>
+                                <span className="bg-teal-50 text-[#00AFA9] border border-teal-200 font-bold px-2 py-0.5 rounded-full text-xs">{tasks.length} Bước</span>
                             </h4>
                         </div>
 
@@ -128,15 +128,15 @@ export default function CampaignBuilderModal({ isOpen, onClose, onSaved }: Campa
                         ) : (
                             <div className="space-y-3">
                                 {tasks.map((task, idx) => (
-                                    <div key={task.id} className="flex flex-col sm:flex-row items-stretch sm:items-start gap-4 p-4 bg-white border border-slate-200 hover:border-blue-300 rounded-xl shadow-sm transition-all group relative overflow-hidden">
+                                    <div key={task.id} className="flex flex-col sm:flex-row items-stretch sm:items-start gap-4 p-4 bg-white border border-slate-200 hover:border-[#00AFA9] rounded-xl shadow-sm transition-all group relative overflow-hidden">
                                         {/* Step Number Ribbon */}
-                                        <div className="absolute top-0 left-0 bg-blue-600 text-white text-[10px] uppercase font-bold px-2 py-1 rounded-br-lg">
+                                        <div className="absolute top-0 left-0 bg-[#00AFA9] text-white text-[10px] uppercase font-bold px-2 py-1 rounded-br-lg">
                                             Bước {idx + 1}
                                         </div>
 
                                         <div className="flex flex-col gap-1 mt-4 sm:mt-0 shrink-0">
-                                            <button disabled={idx === 0} onClick={() => moveTask(idx, 'up')} className="text-slate-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-slate-400"><ArrowUp className="w-4 h-4"/></button>
-                                            <button disabled={idx === tasks.length - 1} onClick={() => moveTask(idx, 'down')} className="text-slate-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-slate-400"><ArrowDown className="w-4 h-4"/></button>
+                                            <button disabled={idx === 0} onClick={() => moveTask(idx, 'up')} className="text-slate-400 hover:text-[#00AFA9] disabled:opacity-30 disabled:hover:text-slate-400"><ArrowUp className="w-4 h-4"/></button>
+                                            <button disabled={idx === tasks.length - 1} onClick={() => moveTask(idx, 'down')} className="text-slate-400 hover:text-[#00AFA9] disabled:opacity-30 disabled:hover:text-slate-400"><ArrowDown className="w-4 h-4"/></button>
                                         </div>
 
                                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 sm:mt-0">
@@ -145,7 +145,7 @@ export default function CampaignBuilderModal({ isOpen, onClose, onSaved }: Campa
                                                 <select 
                                                     value={task.script_name}
                                                     onChange={e => handleUpdateTask(task.id, 'script_name', e.target.value)}
-                                                    className="w-full text-sm p-2 border border-slate-300 rounded-md outline-none focus:ring-1 focus:ring-blue-500 bg-slate-50"
+                                                    className="w-full text-sm p-2 border border-slate-300 rounded-md outline-none focus:ring-1 focus:ring-[#00AFA9] bg-slate-50"
                                                 >
                                                     {availableScripts.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
                                                 </select>
@@ -157,7 +157,7 @@ export default function CampaignBuilderModal({ isOpen, onClose, onSaved }: Campa
                                                     value={task.args}
                                                     onChange={e => handleUpdateTask(task.id, 'args', e.target.value)}
                                                     placeholder={task.script_name.includes('search') ? 'Bản Lề, Tạp hóa...' : task.script_name.includes('invite') ? '50 (Số người)' : 'Bỏ trống để Mặc định'}
-                                                    className="w-full text-sm p-2 border border-slate-300 rounded-md outline-none focus:ring-1 focus:ring-blue-500"
+                                                    className="w-full text-sm p-2 border border-slate-300 rounded-md outline-none focus:ring-1 focus:ring-[#00AFA9]"
                                                 />
                                             </div>
                                         </div>
@@ -172,7 +172,7 @@ export default function CampaignBuilderModal({ isOpen, onClose, onSaved }: Campa
 
                         <button 
                             onClick={handleAddTask}
-                            className="w-full py-4 border-2 border-dashed border-blue-200 hover:border-blue-500 hover:bg-blue-50 text-blue-600 font-semibold rounded-xl flex items-center justify-center gap-2 transition-all mt-4"
+                            className="w-full py-4 border-2 border-dashed border-teal-200 hover:border-[#00AFA9] hover:bg-teal-50 text-[#00AFA9] font-semibold rounded-xl flex items-center justify-center gap-2 transition-all mt-4"
                         >
                             <Plus className="w-5 h-5" /> Thêm Bước Tiết Diện
                         </button>
@@ -190,7 +190,7 @@ export default function CampaignBuilderModal({ isOpen, onClose, onSaved }: Campa
                     <button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="px-6 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm flex items-center gap-2 disabled:opacity-50 transition-all"
+                        className="px-6 py-2.5 text-sm font-bold text-white bg-[#00AFA9] hover:bg-[#009690] rounded-lg shadow-sm flex items-center gap-2 disabled:opacity-50 transition-all"
                     >
                         {isSaving ? "Đang đúc khuôn..." : "Lưu Phôi Chiến Dịch"}
                         {!isSaving && <Save className="w-4 h-4" />}

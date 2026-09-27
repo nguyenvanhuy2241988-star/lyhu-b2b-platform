@@ -253,7 +253,7 @@ export default function CreateOrderPage() {
                                 const inOrder = orderItems.find((item) => item.product.id === product.id);
                                 const brandColors: Record<string, string> = {
                                     UHI: "bg-orange-500",
-                                    BOYO: "bg-purple-500",
+                                    BOYO: "bg-[#00AFA9]",
                                     CVT: "bg-blue-500",
                                     LYHU: "bg-[#00AFA9]",
                                 };

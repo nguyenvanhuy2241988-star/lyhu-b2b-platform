@@ -307,7 +307,7 @@ export default function DealDetailPage() {
                     </button>
                     <button
                         onClick={() => router.push(`/telesales/create-order?deal_id=${deal.id}&customer_id=${deal.customer_id}`)}
-                        className="p-2 hover:bg-slate-100 rounded-lg text-indigo-600"
+                        className="p-2 hover:bg-slate-100 rounded-lg text-[#00AFA9]"
                         title="Tạo đơn hàng"
                     >
                         <ShoppingCart className="w-5 h-5" />
@@ -412,7 +412,7 @@ export default function DealDetailPage() {
                         <div className="space-y-3">
                             <div>
                                 <div className="text-xs text-slate-500">Giá trị dự kiến</div>
-                                <div className="font-medium text-indigo-600 font-bold">{formatPrice(deal.expected_value)}</div>
+                                <div className="font-medium text-[#00AFA9] font-bold">{formatPrice(deal.expected_value)}</div>
                             </div>
                             <div>
                                 <div className="text-xs text-slate-500">Độ ưu tiên</div>

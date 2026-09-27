@@ -77,7 +77,7 @@ export default function CalendarView() {
                     </div>
                     <button
                         onClick={goToToday}
-                        className="px-3 py-1.5 text-sm font-medium text-primary-700 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+                        className="px-3 py-1.5 text-sm font-medium text-[#00AFA9] bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
                     >
                         Hôm nay
                     </button>
@@ -106,7 +106,7 @@ export default function CalendarView() {
                                 onClick={() => setSelectedDate(day)}
                                 className={`bg-white min-h-[100px] p-2 cursor-pointer transition-colors relative hover:bg-slate-50
                                     ${!isCurrentMonth ? "bg-slate-50/50 text-slate-400" : "text-slate-900"}
-                                    ${isSelected ? "ring-2 ring-inset ring-primary-500 z-10" : ""}
+                                    ${isSelected ? "ring-2 ring-inset ring-[#00AFA9] z-10" : ""}
                                 `}
                             >
                                 <div className="flex items-center justify-between mb-1">
@@ -141,7 +141,7 @@ export default function CalendarView() {
             <div className="w-full lg:w-80 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-[600px] lg:h-auto">
                 <div className="p-4 border-b border-slate-200 bg-slate-50">
                     <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                        <CalendarIcon className="w-4 h-4 text-primary-600" />
+                        <CalendarIcon className="w-4 h-4 text-[#00AFA9]" />
                         Lịch trình ngày {format(selectedDate, "dd/MM/yyyy")}
                     </h3>
                 </div>
@@ -152,12 +152,12 @@ export default function CalendarView() {
                         selectedDateTasks.map((task) => (
                             <div key={task.id} className="p-3 bg-white border border-slate-200 rounded-lg hover:shadow-md transition-all group">
                                 <div className="flex items-start justify-between mb-2">
-                                    <div className="flex items-center gap-1.5 text-xs font-semibold text-primary-700 bg-primary-50 px-2 py-1 rounded">
+                                    <div className="flex items-center gap-1.5 text-xs font-semibold text-[#00AFA9] bg-teal-50 px-2 py-1 rounded">
                                         <Clock className="w-3 h-3" />
                                         {format(new Date(task.due_date), "HH:mm")}
                                     </div>
                                     <span className={`text-[10px] px-2 py-0.5 rounded-full border uppercase font-bold
-                                        ${task.source_type === 'task' ? 'bg-purple-50 border-purple-100 text-purple-700' :
+                                        ${task.source_type === 'task' ? 'bg-teal-50 border-teal-100 text-[#00AFA9]' :
                                             task.status === 'won' ? 'bg-green-50 border-green-100 text-green-700' :
                                                 task.status === 'lost' ? 'bg-red-50 border-red-100 text-red-700' :
                                                     'bg-blue-50 border-blue-100 text-blue-700'}
@@ -198,7 +198,7 @@ export default function CalendarView() {
                                     ) : (
                                         <Link
                                             href={taskPageHref}
-                                            className="flex-1 text-center text-xs bg-purple-600 text-white py-1.5 rounded hover:bg-purple-700 transition-colors"
+                                            className="flex-1 text-center text-xs bg-[#00AFA9] text-white py-1.5 rounded hover:bg-[#009690] transition-colors"
                                         >
                                             Xem Task
                                         </Link>

@@ -522,7 +522,7 @@ export default function CampaignsPage() {
                                         <div className="flex items-center justify-end gap-3">
                                             <button 
                                                 onClick={() => setReportCampaign({ id: fbCamp.id, name: fbCamp.name })}
-                                                className="text-indigo-600 hover:text-indigo-900 transition-colors flex items-center gap-1"
+                                                className="text-[#00AFA9] hover:text-[#009690] transition-colors flex items-center gap-1"
                                                 title="Báo cáo & Phân tích"
                                             >
                                                 <BarChart3 className="w-4 h-4" /> Báo cáo
@@ -667,7 +667,7 @@ export default function CampaignsPage() {
                     <div className="bg-white rounded-lg border border-slate-200 w-full max-w-2xl overflow-hidden my-8">
                         <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
                             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                <Rocket className="w-5 h-5 text-indigo-600" />
+                                <Rocket className="w-5 h-5 text-[#00AFA9]" />
                                 Tự động Thiết lập Quảng cáo FB
                             </h3>
                             <button onClick={() => setIsSetupModalOpen(false)} className="text-slate-400 hover:text-slate-600">

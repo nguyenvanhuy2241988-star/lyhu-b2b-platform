@@ -66,7 +66,7 @@ export default function LeaderboardWidget({
     return (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full ring-1 ring-slate-900/5">
             {/* Header */}
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-amber-50/50 to-white">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                 <h3 className="font-bold text-slate-900 flex items-center gap-2">
                     <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg">
                         <Trophy className="w-5 h-5" />
@@ -99,7 +99,7 @@ export default function LeaderboardWidget({
                         onClick={() => onFilterChange?.(opt.key as any)}
                         className={`text-[11px] px-3 py-1 rounded-full font-semibold transition-all whitespace-nowrap border
                             ${timeFilter === opt.key
-                                ? 'bg-slate-800 text-white border-slate-800 shadow-sm'
+                                ? 'bg-[#00AFA9] text-white border-[#00AFA9] shadow-sm'
                                 : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                             }`}
                     >
@@ -115,7 +115,7 @@ export default function LeaderboardWidget({
                         <div
                             key={entry.user_id}
                             className={`flex items-center justify-between p-3 rounded-xl transition-all relative overflow-hidden group
-                                ${idx === 0 ? 'bg-gradient-to-r from-amber-100/40 via-yellow-50/40 to-amber-100/40 border border-amber-200 shadow-sm' :
+                                ${idx === 0 ? 'bg-amber-50 border border-amber-200 shadow-sm' :
                                     idx === 1 ? 'bg-slate-50 border border-slate-200' :
                                         'bg-white border border-slate-100 hover:border-slate-200 hover:bg-slate-50'
                                 }

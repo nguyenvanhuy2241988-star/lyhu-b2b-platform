@@ -304,7 +304,7 @@ export default function MarketingContentPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${post.status === 'published' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                    post.status === 'scheduled' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                    post.status === 'scheduled' ? 'bg-teal-50 text-[#00AFA9] border-teal-200' :
                                                         'bg-slate-50 text-slate-600 border-slate-200'
                                                     }`}>
                                                     {post.status === 'published' ? 'Đã đăng' :
@@ -340,7 +340,7 @@ export default function MarketingContentPage() {
                                                     )}
                                                 </div>
                                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 border ${post.status === 'published' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                    post.status === 'scheduled' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                    post.status === 'scheduled' ? 'bg-teal-50 text-[#00AFA9] border-teal-200' :
                                                         'bg-slate-50 text-slate-600 border-slate-200'
                                                     }`}>
                                                     {post.status === 'published' ? 'Đã đăng' :

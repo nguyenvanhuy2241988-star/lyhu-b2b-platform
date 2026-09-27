@@ -179,7 +179,7 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
     return (
         <>
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm print:hidden">
-                <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 border-b border-slate-200">
                         <div>
@@ -214,8 +214,8 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                         {/* Status & Date */}
                         <div className="flex flex-wrap gap-4 justify-between bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-50 rounded-lg">
-                                    <Calendar className="w-5 h-5 text-indigo-600" />
+                                <div className="p-2 bg-teal-50 rounded-lg">
+                                    <Calendar className="w-5 h-5 text-[#00AFA9]" />
                                 </div>
                                 <div>
                                     <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Ngày đặt hàng</p>
@@ -285,7 +285,7 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                                             return (
                                                 <tr key={idx} className="hover:bg-slate-50/50">
                                                     <td className="px-4 py-3 font-medium text-slate-900">
-                                                        {isGiftItem && <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 mr-2">QUÀ</span>}
+                                                        {isGiftItem && <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-[#00AFA9] border border-teal-200 mr-2">QUÀ</span>}
                                                         {item.product?.name || item.name || 'Sản phẩm'}
                                                     </td>
                                                     <td className="px-4 py-3 text-center">{item.quantity}</td>
@@ -356,7 +356,7 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                                                     )}
                                                     <tr>
                                                         <td colSpan={4} className="px-4 py-3 text-right font-bold text-slate-900">Tổng thanh toán</td>
-                                                        <td className="px-4 py-3 text-right font-bold text-indigo-600 text-lg">{formatPrice(order.totalAmount)}</td>
+                                                        <td className="px-4 py-3 text-right font-bold text-[#00AFA9] text-lg">{formatPrice(order.totalAmount)}</td>
                                                     </tr>
                                                 </>
                                             );

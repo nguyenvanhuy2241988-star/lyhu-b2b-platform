@@ -59,10 +59,10 @@ export const WelcomeGreeting = () => {
     return (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] transition-all animate-in fade-in duration-500">
             <div
-                className="relative overflow-hidden rounded-2xl shadow-2xl transform transition-all animate-in zoom-in-95 duration-500 max-w-md w-full"
+                className="relative overflow-hidden rounded-2xl border border-white/20 transform transition-all animate-in zoom-in-95 duration-500 max-w-md w-full"
             >
                 {/* Solid Background: Primary (Turquoise) */}
-                <div className="absolute inset-0 bg-primary-500 opacity-95"></div>
+                <div className="absolute inset-0 bg-[#00AFA9]"></div>
 
                 {/* Decorative Circles */}
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
@@ -71,18 +71,18 @@ export const WelcomeGreeting = () => {
                 <div className="relative p-8 text-center text-white">
                     {/* Icon */}
                     <div className="flex justify-center mb-4">
-                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30 shadow-inner">
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
                             <Sparkles className="w-8 h-8 text-yellow-200 animate-pulse" />
                         </div>
                     </div>
 
                     {/* Title */}
-                    <h2 className="text-2xl font-bold mb-2 tracking-tight drop-shadow-md">
+                    <h2 className="text-2xl font-bold mb-2 tracking-tight">
                         Welcome to LYHU Platform
                     </h2>
 
                     {/* Message */}
-                    <p className="text-white/90 text-lg font-medium leading-relaxed flex items-center justify-center gap-2 drop-shadow">
+                    <p className="text-white/90 text-lg font-medium leading-relaxed flex items-center justify-center gap-2">
                         Chúc bạn một ngày làm việc vui vẻ và hiệu quả!!!
                         <Smile className="w-5 h-5 inline-block text-yellow-300" />
                     </p>

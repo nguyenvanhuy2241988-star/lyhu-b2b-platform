@@ -102,7 +102,7 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                     )}
                     {conversation.source_type && (
                         <span className={`text-xs px-2 py-1 rounded-full border ${conversation.source_type === 'ads' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                            conversation.source_type === 'post' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                            conversation.source_type === 'post' ? 'bg-teal-50 text-[#00AFA9] border-teal-200' :
                                 'bg-slate-50 text-slate-600 border-slate-200'
                             }`}>
                             {conversation.source_type === 'ads' ? 'Từ Quảng Cáo' : conversation.source_type === 'post' ? 'Từ Bài viết' : 'Tự nhiên'}
@@ -160,7 +160,7 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                     <div className="flex items-center gap-2">
                         <Phone className="w-4 h-4 text-slate-400 flex-shrink-0" />
                         <input
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] placeholder:text-slate-400"
                             placeholder="Số điện thoại..."
                             value={customerPhone}
                             onChange={e => setCustomerPhone(e.target.value)}
@@ -170,7 +170,7 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                     <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />
                         <input
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] placeholder:text-slate-400"
                             placeholder="Khu vực (VD: HCM, Hà Nội...)"
                             value={customerRegion}
                             onChange={e => setCustomerRegion(e.target.value)}
@@ -210,11 +210,11 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                     <div className="flex items-center gap-2">
                         <ShoppingBag className="w-4 h-4 text-slate-400 flex-shrink-0" />
                         {conversation.customer_type ? (
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${conversation.customer_type === 'Đại lý' ? 'bg-purple-100 text-purple-700' :
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${conversation.customer_type === 'Đại lý' ? 'bg-teal-50 text-[#00AFA9] border border-teal-200' :
                                 conversation.customer_type === 'Nhà phân phối' ? 'bg-blue-100 text-blue-700' :
                                     conversation.customer_type === 'Siêu thị' ? 'bg-green-100 text-green-700' :
                                         conversation.customer_type === 'Tạp hóa' ? 'bg-orange-100 text-orange-700' :
-                                            conversation.customer_type === 'Bán sỉ' ? 'bg-pink-100 text-pink-700' :
+                                            conversation.customer_type === 'Bán sỉ' ? 'bg-teal-100 text-[#00AFA9]' :
                                                 'bg-slate-100 text-slate-700'
                                 }`}>
                                 {conversation.customer_type === 'Đại lý' && '🏪'}
@@ -321,7 +321,7 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                                 setTags(updatedTags);
                                 updateConversationMetadata(conversation.id, { tags: updatedTags }, token);
                                 onUpdate({ tags: updatedTags });
-                            }} className="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded-full text-slate-500 hover:border-blue-300 hover:text-blue-600">
+                            }} className="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded-full text-slate-500 hover:border-[#00AFA9] hover:text-[#00AFA9]">
                                 + {t}
                             </button>
                         ))}
@@ -336,7 +336,7 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                     Ghi chú nội bộ
                 </div>
                 <textarea
-                    className="w-full flex-1 border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-yellow-50 placeholder:text-yellow-700/50"
+                    className="w-full flex-1 border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] resize-none bg-yellow-50 placeholder:text-yellow-700/50"
                     placeholder="Ghi chú về khách hàng này..."
                     value={notes}
                     onChange={e => setNotes(e.target.value)}

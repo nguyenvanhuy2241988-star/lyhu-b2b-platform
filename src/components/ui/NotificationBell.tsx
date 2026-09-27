@@ -93,7 +93,7 @@ export default function NotificationBell() {
             case 'warning': return <AlertTriangle className="w-4 h-4 text-amber-500" />;
             case 'error': return <AlertTriangle className="w-4 h-4 text-red-500" />;
             case 'deal': return <Package className="w-4 h-4 text-blue-500" />;
-            case 'task': return <Calendar className="w-4 h-4 text-purple-500" />;
+            case 'task': return <Calendar className="w-4 h-4 text-[#00AFA9]" />;
             default: return <Info className="w-4 h-4 text-slate-500" />;
         }
     };
@@ -111,13 +111,13 @@ export default function NotificationBell() {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-sm border border-slate-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
                     <div className="p-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                         <h3 className="font-semibold text-sm text-slate-900">Thông báo</h3>
                         {unreadCount > 0 && (
                             <button
                                 onClick={() => markAllAsRead()}
-                                className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+                                className="text-xs text-[#00AFA9] hover:text-[#009690] font-medium flex items-center gap-1"
                             >
                                 <Check className="w-3 h-3" /> Đã xem tất cả
                             </button>
@@ -134,10 +134,10 @@ export default function NotificationBell() {
                                             console.log("Inline click fired", notif.id);
                                             handleNotificationClick(notif.id, notif.link);
                                         }}
-                                        className={`w-full text-left p-4 hover:bg-slate-50 transition-colors cursor-pointer relative flex gap-3 ${!notif.is_read ? 'bg-blue-50/30' : ''}`}
+                                        className={`w-full text-left p-4 hover:bg-slate-50 transition-colors cursor-pointer relative flex gap-3 ${!notif.is_read ? 'bg-teal-50/40' : ''}`}
                                     >
                                         {!notif.is_read && (
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#00AFA9]"></div>
                                         )}
                                         {/* Content Wrapper */}
                                         <div className="mt-0.5 shrink-0">

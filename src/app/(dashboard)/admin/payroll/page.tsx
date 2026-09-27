@@ -454,7 +454,7 @@ export default function AdminPayrollPage() {
                                 <div className={`font-bold text-sm truncate w-40 ${selectedUserId === user.id ? 'text-primary-900' : 'text-slate-700'}`}>{user.name || "Chưa đặt tên"}</div>
                                 <div className="flex items-center gap-1.5">
                                     <span className={`text-[10px] ${selectedUserId === user.id ? 'text-primary-600' : 'text-slate-400'}`}>{user.email}</span>
-                                    <span className={`text-[8px] font-bold px-1 py-0.5 rounded ${user.role === 'sales_gt' ? 'bg-teal-50 text-teal-600' : user.role === 'recruiter' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'}`}>{user.role === 'sales_gt' ? 'GT' : user.role === 'recruiter' ? 'HR' : 'TS'}</span>
+                                    <span className={`text-[8px] font-bold px-1 py-0.5 rounded ${user.role === 'sales_gt' ? 'bg-teal-50 text-teal-600' : user.role === 'recruiter' ? 'bg-teal-50 text-[#00AFA9]' : 'bg-blue-50 text-blue-600'}`}>{user.role === 'sales_gt' ? 'GT' : user.role === 'recruiter' ? 'HR' : 'TS'}</span>
                                 </div>
                             </div>
                         </button>

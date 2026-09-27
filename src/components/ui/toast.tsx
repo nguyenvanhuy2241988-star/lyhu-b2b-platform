@@ -43,15 +43,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 {toasts.map(toast => (
                     <div
                         key={toast.id}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border animate-in slide-in-from-right-full transition-all ${toast.type === 'success' ? 'bg-white border-green-200 text-slate-800' :
+                        className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-sm border animate-in slide-in-from-right-full transition-all ${toast.type === 'success' ? 'bg-white border-green-200 text-slate-800' :
                                 toast.type === 'error' ? 'bg-white border-red-200 text-slate-800' :
-                                    'bg-white border-blue-200 text-slate-800' // Info
+                                    'bg-white border-teal-200 text-slate-800' // Info
                             }`}
                         style={{ minWidth: '300px' }}
                     >
                         {toast.type === 'success' && <CheckCircle className="w-5 h-5 text-green-500" />}
                         {toast.type === 'error' && <AlertCircle className="w-5 h-5 text-red-500" />}
-                        {toast.type === 'info' && <Info className="w-5 h-5 text-blue-500" />}
+                        {toast.type === 'info' && <Info className="w-5 h-5 text-[#00AFA9]" />}
 
                         <p className="text-sm font-medium flex-1">{toast.message}</p>
 

@@ -123,13 +123,13 @@ const CustomerTypeBadge = ({ type }: { type?: string }) => {
     const colors: Record<string, string> = {
         tap_hoa: "bg-green-100 text-green-700",
         RETAIL: "bg-green-100 text-green-700",
-        mini_mart: "bg-purple-100 text-purple-700",
+        mini_mart: "bg-teal-50 text-[#00AFA9]",
         dai_ly: "bg-blue-100 text-blue-700",
         AGENCY: "bg-blue-100 text-blue-700",
         npp: "bg-orange-100 text-orange-700",
         DISTRIBUTOR: "bg-orange-100 text-orange-700",
-        sieu_thi: "bg-pink-100 text-pink-700",
-        CTV: "bg-indigo-100 text-indigo-700",
+        sieu_thi: "bg-teal-50 text-[#00AFA9]",
+        CTV: "bg-teal-50 text-[#00AFA9]",
     };
     const labels: Record<string, string> = {
         tap_hoa: "Tạp hóa",
@@ -1376,7 +1376,7 @@ export default function CRMPage() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => openCreateModal()}
-                        className="hidden lg:flex items-center gap-2 bg-[#00AFA9] text-white px-4 py-2 rounded-xl hover:bg-[#009b95] transition-colors border border-teal-600 font-medium"
+                        className="hidden lg:flex items-center gap-2 bg-[#00AFA9] text-white px-4 py-2 rounded-xl hover:bg-[#009690] transition-colors border border-teal-600 font-medium"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Tạo cơ hội</span>
@@ -1749,7 +1749,7 @@ export default function CRMPage() {
             {/* Mobile FAB */}
             <button
                 onClick={() => openCreateModal()}
-                className="lg:hidden fixed bottom-[150px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-[#00AFA9] text-white rounded-full border border-teal-600 hover:bg-[#009b95] active:scale-95 transition-all"
+                className="lg:hidden fixed bottom-[150px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-[#00AFA9] text-white rounded-full border border-teal-600 hover:bg-[#009690] active:scale-95 transition-all"
             >
                 <Plus className="w-6 h-6" />
             </button>

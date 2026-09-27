@@ -134,8 +134,8 @@ export default function PlatformsPage() {
     const getIcon = (type: string) => {
         const t = type.toLowerCase();
         if (t.includes('web')) return <Globe className="w-5 h-5 text-primary-500" />;
-        if (t.includes('app')) return <Smartphone className="w-5 h-5 text-purple-500" />;
-        if (t.includes('face') || t.includes('group')) return <Users className="w-5 h-5 text-indigo-500" />;
+        if (t.includes('app')) return <Smartphone className="w-5 h-5 text-[#00AFA9]" />;
+        if (t.includes('face') || t.includes('group')) return <Users className="w-5 h-5 text-[#00AFA9]" />;
         return <Globe className="w-5 h-5 text-gray-500" />;
     };
 

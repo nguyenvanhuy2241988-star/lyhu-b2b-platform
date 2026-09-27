@@ -23,9 +23,9 @@ interface B2BSupportChatProps {
 const QUICK_REPLIES = [
     { icon: ShoppingBag, text: 'Tôi muốn báo giá sỉ', color: 'bg-blue-50 text-blue-700 border-blue-200' },
     { icon: Truck, text: 'Chính sách giao hàng', color: 'bg-green-50 text-green-700 border-green-200' },
-    { icon: CreditCard, text: 'Phương thức thanh toán', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+    { icon: CreditCard, text: 'Phương thức thanh toán', color: 'bg-teal-50 text-[#00AFA9] border-teal-200' },
     { icon: RotateCcw, text: 'Chính sách đổi trả', color: 'bg-orange-50 text-orange-700 border-orange-200' },
-    { icon: HelpCircle, text: 'Tôi cần tư vấn sản phẩm', color: 'bg-teal-50 text-teal-700 border-teal-200' },
+    { icon: HelpCircle, text: 'Tôi cần tư vấn sản phẩm', color: 'bg-teal-50 text-[#00AFA9] border-teal-200' },
 ];
 
 // Simple emoji picker
@@ -415,7 +415,7 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
             {!isOpen && (
                 <button
                     onClick={handleOpenChat}
-                    className="fixed bottom-24 right-5 z-[60] w-14 h-14 bg-gradient-to-br from-teal-500 to-teal-600 text-white rounded-full shadow-xl hover:shadow-2xl hover:scale-110 transition-all duration-300 flex items-center justify-center group"
+                    className="fixed bottom-24 right-5 z-[60] w-14 h-14 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-full shadow-md hover:scale-105 transition-all duration-300 flex items-center justify-center group"
                     id="b2b-chat-trigger"
                 >
                     <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
@@ -424,15 +424,15 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                             {unreadCount}
                         </span>
                     )}
-                    <span className="absolute inset-0 rounded-full bg-teal-400 animate-ping opacity-20"></span>
+                    <span className="absolute inset-0 rounded-full bg-[#00AFA9] animate-ping opacity-20"></span>
                 </button>
             )}
 
             {/* Chat Panel */}
             {isOpen && (
-                <div className="fixed bottom-24 right-5 z-[70] w-[360px] h-[520px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
+                <div className="fixed bottom-24 right-5 z-[70] w-[360px] h-[520px] bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
                     {/* Header */}
-                    <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-4 py-3 flex items-center justify-between shrink-0">
+                    <div className="bg-[#00AFA9] text-white px-4 py-3 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-3">
                             <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
                                 <MessageCircle className="w-5 h-5" />
@@ -454,7 +454,7 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                     {showGuestForm ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gray-50">
                             <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mb-4">
-                                <User className="w-8 h-8 text-teal-600" />
+                                <User className="w-8 h-8 text-[#00AFA9]" />
                             </div>
                             <h4 className="font-bold text-gray-800 mb-1">Xin chào! 👋</h4>
                             <p className="text-xs text-gray-500 mb-5 text-center">Vui lòng cho chúng tôi biết thông tin để hỗ trợ bạn tốt hơn</p>
@@ -466,7 +466,7 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                                         value={guestName}
                                         onChange={(e) => setGuestName(e.target.value)}
                                         placeholder="Họ tên *"
-                                        className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-white"
+                                        className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#00AFA9] focus:ring-1 focus:ring-[#00AFA9] bg-white"
                                     />
                                 </div>
                                 <div className="relative">
@@ -475,13 +475,13 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                                         value={guestPhone}
                                         onChange={(e) => setGuestPhone(e.target.value)}
                                         placeholder="Số điện thoại *"
-                                        className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-white"
+                                        className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#00AFA9] focus:ring-1 focus:ring-[#00AFA9] bg-white"
                                     />
                                 </div>
                                 <button
                                     onClick={handleGuestSubmit}
                                     disabled={!guestName.trim() || !guestPhone.trim()}
-                                    className="w-full py-2.5 bg-teal-500 text-white rounded-xl font-bold text-sm hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="w-full py-2.5 bg-[#00AFA9] text-white rounded-xl font-bold text-sm hover:bg-[#009690] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
                                     Bắt đầu chat
                                 </button>
@@ -549,12 +549,12 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                                                     <div
                                                         className={`max-w-[78%] px-3.5 py-2 rounded-2xl text-[13px] leading-relaxed ${
                                                             msg.sender_type === 'customer'
-                                                                ? 'bg-teal-500 text-white rounded-br-md'
+                                                                ? 'bg-[#00AFA9] text-white rounded-br-md'
                                                                 : 'bg-white text-gray-800 border border-gray-100 shadow-sm rounded-bl-md'
                                                         }`}
                                                     >
                                                         {msg.sender_type === 'admin' && (
-                                                            <p className="text-[10px] font-bold text-teal-600 mb-0.5">{msg.sender_name}</p>
+                                                            <p className="text-[10px] font-bold text-[#00AFA9] mb-0.5">{msg.sender_name}</p>
                                                         )}
 
                                                         {/* Image Attachment */}
@@ -573,7 +573,7 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                                                             <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                                                         )}
 
-                                                        <p className={`text-[9px] mt-1 ${msg.sender_type === 'customer' ? 'text-teal-200' : 'text-gray-400'} text-right`}>
+                                                        <p className={`text-[9px] mt-1 ${msg.sender_type === 'customer' ? 'text-teal-100' : 'text-gray-400'} text-right`}>
                                                             {formatTime(msg.created_at)}
                                                         </p>
                                                     </div>
@@ -588,7 +588,7 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                                                     <button
                                                         key={i}
                                                         onClick={() => handleSend(qr.text)}
-                                                        className="px-2.5 py-1 rounded-full border border-teal-200 text-[10px] font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors"
+                                                        className="px-2.5 py-1 rounded-full border border-teal-200 text-[10px] font-medium text-[#00AFA9] bg-teal-50 hover:bg-teal-100 transition-colors"
                                                     >
                                                         {qr.text}
                                                     </button>
@@ -625,7 +625,7 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                                 {/* Upload Progress */}
                                 {isUploading && (
                                     <div className="flex items-center gap-2 mb-2 px-1">
-                                        <Loader2 className="w-3.5 h-3.5 text-teal-500 animate-spin" />
+                                        <Loader2 className="w-3.5 h-3.5 text-[#00AFA9] animate-spin" />
                                         <span className="text-[11px] text-gray-500">Đang tải ảnh lên...</span>
                                     </div>
                                 )}
@@ -635,7 +635,7 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                                     <button
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={isUploading || isSending}
-                                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors disabled:opacity-40 shrink-0"
+                                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#00AFA9] hover:bg-teal-50 rounded-lg transition-colors disabled:opacity-40 shrink-0"
                                         title="Gửi hình ảnh"
                                     >
                                         <ImageIcon className="w-4.5 h-4.5" />
@@ -644,7 +644,7 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                                     {/* Emoji Button */}
                                     <button
                                         onClick={() => setShowEmoji(!showEmoji)}
-                                        className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors shrink-0 ${showEmoji ? 'text-teal-600 bg-teal-50' : 'text-gray-400 hover:text-teal-600 hover:bg-teal-50'}`}
+                                        className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors shrink-0 ${showEmoji ? 'text-[#00AFA9] bg-teal-50' : 'text-gray-400 hover:text-[#00AFA9] hover:bg-teal-50'}`}
                                         title="Emoji"
                                     >
                                         <Smile className="w-4.5 h-4.5" />
@@ -663,7 +663,7 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                                         }}
                                         onFocus={() => setShowEmoji(false)}
                                         placeholder="Nhập tin nhắn..."
-                                        className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:bg-white transition-colors min-w-0"
+                                        className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#00AFA9] focus:bg-white transition-colors min-w-0"
                                         disabled={isSending || isUploading}
                                     />
 
@@ -671,7 +671,7 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                                     <button
                                         onClick={() => handleSend()}
                                         disabled={!input.trim() || isSending || isUploading}
-                                        className="w-9 h-9 bg-teal-500 text-white rounded-xl flex items-center justify-center hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0"
+                                        className="w-9 h-9 bg-[#00AFA9] text-white rounded-xl flex items-center justify-center hover:bg-[#009690] disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0"
                                     >
                                         {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                                     </button>

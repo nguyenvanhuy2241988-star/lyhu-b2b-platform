@@ -120,9 +120,9 @@ export default function AffiliateReportsPage() {
                     {renderProgress(team?.actual?.found || 0, team?.target?.found || 0)}
                   </div>
 
-                  <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-100">
+                  <div className="bg-teal-50/50 p-4 rounded-xl border border-teal-100">
                     <div className="flex items-center space-x-3 mb-3">
-                      <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
+                      <div className="p-2 bg-teal-100 text-[#00AFA9] rounded-lg">
                         <PhoneCall className="w-5 h-5" />
                       </div>
                       <span className="font-medium text-slate-700">Đã liên hệ</span>
@@ -160,7 +160,7 @@ export default function AffiliateReportsPage() {
           <div className="bg-white rounded-xl shadow-sm border border-slate-200">
             <div className="p-6 pb-3 border-b border-slate-100">
               <h3 className="text-lg font-semibold flex items-center text-slate-800">
-                <Users className="w-5 h-5 mr-2 text-indigo-600" />
+                <Users className="w-5 h-5 mr-2 text-[#00AFA9]" />
                 Tiến độ KPI Cá nhân
               </h3>
             </div>
@@ -186,7 +186,7 @@ export default function AffiliateReportsPage() {
                         <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-6 py-4">
                             <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold">
+                              <div className="w-8 h-8 bg-teal-50 text-[#00AFA9] rounded-full flex items-center justify-center font-bold border border-teal-200">
                                 {stat.user?.full_name?.charAt(0) || '?'}
                               </div>
                               <div>

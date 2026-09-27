@@ -71,7 +71,7 @@ const COLOR_PRESETS = [
     { color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200", label: "Xanh lá" },
     { color: "text-orange-600", bg: "bg-orange-50 border-orange-200", label: "Cam" },
     { color: "text-indigo-600", bg: "bg-indigo-50 border-indigo-200", label: "Tím" },
-    { color: "text-teal-600", bg: "bg-teal-50 border-teal-200", label: "Teal" },
+    { color: "text-[#00AFA9]", bg: "bg-teal-50 border-teal-200", label: "Teal" },
     { color: "text-rose-600", bg: "bg-rose-50 border-rose-200", label: "Hồng" },
     { color: "text-amber-600", bg: "bg-amber-50 border-amber-200", label: "Vàng" },
     { color: "text-cyan-600", bg: "bg-cyan-50 border-cyan-200", label: "Cyan" },
@@ -98,7 +98,7 @@ function CategoryFormModal({ category, onSave, onClose, saving }: {
                 <div className="px-6 py-5 space-y-4">
                     <div>
                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Tên loại hình *</label>
-                        <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                        <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]"
                             value={form.label} onChange={e => setForm({ ...form, label: e.target.value, key: form.id ? form.key : e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '_') })}
                             placeholder="VD: Đại siêu thị"
                         />
@@ -106,7 +106,7 @@ function CategoryFormModal({ category, onSave, onClose, saving }: {
                     {!isEdit && (
                         <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Key (mã)</label>
-                            <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200 font-mono"
+                            <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9] font-mono"
                                 value={form.key} onChange={e => setForm({ ...form, key: e.target.value })}
                                 placeholder="hypermarket"
                             />
@@ -119,7 +119,7 @@ function CategoryFormModal({ category, onSave, onClose, saving }: {
                                 const Icon = ICON_MAP[name];
                                 return (
                                     <button key={name} type="button" onClick={() => setForm({ ...form, icon_name: name })}
-                                        className={`p-2.5 rounded-lg border transition-all ${form.icon_name === name ? 'bg-teal-50 border-teal-300 ring-1 ring-teal-200' : 'border-slate-200 hover:bg-slate-50'}`}
+                                        className={`p-2.5 rounded-lg border transition-all ${form.icon_name === name ? 'bg-teal-50 border-[#00AFA9] ring-1 ring-[#00AFA9]/30' : 'border-slate-200 hover:bg-slate-50'}`}
                                         title={name}>
                                         <Icon className="w-4 h-4" />
                                     </button>
@@ -132,7 +132,7 @@ function CategoryFormModal({ category, onSave, onClose, saving }: {
                         <div className="flex gap-2 flex-wrap">
                             {COLOR_PRESETS.map((preset, i) => (
                                 <button key={i} type="button" onClick={() => setForm({ ...form, color: preset.color, bg: preset.bg })}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 ${form.color === preset.color ? 'ring-2 ring-offset-1 ring-teal-400' : ''} ${preset.bg} ${preset.color}`}>
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5 ${form.color === preset.color ? 'ring-2 ring-offset-1 ring-[#00AFA9]' : ''} ${preset.bg} ${preset.color}`}>
                                     <CatIcon className="w-3 h-3" />{preset.label}
                                 </button>
                             ))}
@@ -140,7 +140,7 @@ function CategoryFormModal({ category, onSave, onClose, saving }: {
                     </div>
                     <div>
                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Thứ tự</label>
-                        <input type="number" min="0" className="w-24 px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                        <input type="number" min="0" className="w-24 px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]"
                             value={form.sort_order || 0} onChange={e => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })}
                         />
                     </div>
@@ -197,21 +197,21 @@ function ChainFormModal({ chain, categories, onSave, onClose, saving }: {
                 <div className="px-6 py-5 space-y-5">
                     <div>
                         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tên chuỗi *</label>
-                        <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                        <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]"
                             value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="VD: WinMart+ (Masan)" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Loại hình</label>
                             <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}
-                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200">
+                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]">
                                 {categories.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
                             </select>
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Trạng thái</label>
                             <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
-                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200">
+                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]">
                                 {Object.entries(STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                             </select>
                         </div>
@@ -219,17 +219,17 @@ function ChainFormModal({ chain, categories, onSave, onClose, saving }: {
                     <div className="grid grid-cols-3 gap-4">
                         <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tổng điểm bán</label>
-                            <input type="number" min="0" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                            <input type="number" min="0" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]"
                                 value={form.total_outlets} onChange={e => setForm({ ...form, total_outlets: parseInt(e.target.value) || 0 })} />
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Đã vào (điểm)</label>
-                            <input type="number" min="0" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                            <input type="number" min="0" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]"
                                 value={form.entered_outlets} onChange={e => setForm({ ...form, entered_outlets: Math.min(parseInt(e.target.value) || 0, form.total_outlets) })} />
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Website</label>
-                            <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                            <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]"
                                 value={form.website || ""} onChange={e => setForm({ ...form, website: e.target.value || null })} placeholder="https://..." />
                         </div>
                     </div>
@@ -238,7 +238,7 @@ function ChainFormModal({ chain, categories, onSave, onClose, saving }: {
                         <div className="flex gap-3">
                             {Object.entries(REGIONS).map(([k, v]) => (
                                 <button key={k} type="button" onClick={() => toggleRegion(k)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${form.regions.includes(k) ? 'bg-teal-50 text-teal-700 border-teal-300 ring-1 ring-teal-200' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${form.regions.includes(k) ? 'bg-teal-50 text-[#00AFA9] border-[#00AFA9] ring-1 ring-[#00AFA9]/30' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>
                                     <MapPin className="w-3.5 h-3.5 inline mr-1" />{v}
                                 </button>
                             ))}
@@ -246,28 +246,28 @@ function ChainFormModal({ chain, categories, onSave, onClose, saving }: {
                     </div>
                     <div>
                         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tỉnh/TP (phân cách bằng dấu phẩy)</label>
-                        <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                        <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]"
                             value={provincesText} onChange={e => setProvincesText(e.target.value)} placeholder="Hà Nội, TP.HCM, Đà Nẵng..." />
                     </div>
                     <div>
                         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Nhãn hàng đã vào (phân cách bằng dấu phẩy)</label>
-                        <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                        <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]"
                             value={brandsText} onChange={e => setBrandsText(e.target.value)} placeholder="VD: Trà Olong, Trà Vị đào..." />
                     </div>
                     <div>
                         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Liên hệ</label>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <input className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                            <input className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]"
                                 value={form.contact_name || ""} onChange={e => setForm({ ...form, contact_name: e.target.value || null })} placeholder="Tên liên hệ" />
-                            <input className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                            <input className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]"
                                 value={form.contact_phone || ""} onChange={e => setForm({ ...form, contact_phone: e.target.value || null })} placeholder="Số điện thoại" />
-                            <input className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                            <input className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]"
                                 value={form.contact_email || ""} onChange={e => setForm({ ...form, contact_email: e.target.value || null })} placeholder="Email" />
                         </div>
                     </div>
                     <div>
                         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Ghi chú</label>
-                        <textarea rows={3} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200 resize-none"
+                        <textarea rows={3} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9] resize-none"
                             value={form.notes || ""} onChange={e => setForm({ ...form, notes: e.target.value || null })} placeholder="Thông tin bổ sung..." />
                     </div>
                 </div>
@@ -536,8 +536,8 @@ export default function RetailChainsPage() {
                     <div className="text-xs text-slate-500 mt-1">Tổng điểm bán</div>
                 </div>
                 <div className="bg-white rounded-xl border border-teal-200 p-4 shadow-sm bg-teal-50/50">
-                    <div className="text-2xl font-bold text-teal-600">{totalEntered.toLocaleString()}</div>
-                    <div className="text-xs text-teal-600 mt-1 font-medium">Điểm đã vào</div>
+                    <div className="text-2xl font-bold text-[#00AFA9]">{totalEntered.toLocaleString()}</div>
+                    <div className="text-xs text-[#00AFA9] mt-1 font-medium">Điểm đã vào</div>
                 </div>
                 <div className="bg-white rounded-xl border border-emerald-200 p-4 shadow-sm bg-emerald-50/50">
                     <div className="text-2xl font-bold text-emerald-600">{entered}</div>
@@ -552,8 +552,8 @@ export default function RetailChainsPage() {
                     <div className="text-xs text-slate-500 mt-1">Chưa vào</div>
                 </div>
                 <div className="bg-white rounded-xl border border-teal-200 p-4 shadow-sm bg-teal-50/50">
-                    <div className="text-2xl font-bold text-teal-600">{outletCoverage}%</div>
-                    <div className="text-xs text-teal-600 mt-1 font-medium flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Phủ điểm bán</div>
+                    <div className="text-2xl font-bold text-[#00AFA9]">{outletCoverage}%</div>
+                    <div className="text-xs text-[#00AFA9] mt-1 font-medium flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Phủ điểm bán</div>
                 </div>
             </div>
 
@@ -562,7 +562,7 @@ export default function RetailChainsPage() {
                 <div>
                     <div className="flex justify-between items-center mb-1.5">
                         <span className="text-xs font-medium text-slate-600">Phủ sóng chuỗi</span>
-                        <span className="text-xs font-bold text-teal-600">{entered}/{totalChains}</span>
+                        <span className="text-xs font-bold text-[#00AFA9]">{entered}/{totalChains}</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
                         <div className="h-full rounded-full flex">
@@ -574,10 +574,10 @@ export default function RetailChainsPage() {
                 <div>
                     <div className="flex justify-between items-center mb-1.5">
                         <span className="text-xs font-medium text-slate-600">Phủ sóng điểm bán</span>
-                        <span className="text-xs font-bold text-teal-600">{totalEntered.toLocaleString()}/{totalOutlets.toLocaleString()}</span>
+                        <span className="text-xs font-bold text-[#00AFA9]">{totalEntered.toLocaleString()}/{totalOutlets.toLocaleString()}</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                        <div className="bg-teal-500 h-full rounded-full transition-all" style={{ width: `${outletCoverage}%` }} />
+                        <div className="bg-[#00AFA9] h-full rounded-full transition-all" style={{ width: `${outletCoverage}%` }} />
                     </div>
                 </div>
             </div>
@@ -586,11 +586,11 @@ export default function RetailChainsPage() {
             <div className="flex items-center gap-3 flex-wrap">
                 <div className="relative flex-1 min-w-[200px]">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                    <input className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]"
                         placeholder="Tìm chuỗi siêu thị..." value={search} onChange={e => setSearch(e.target.value)} />
                 </div>
                 <button onClick={() => setShowFilters(!showFilters)}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border ${showFilters ? 'bg-teal-50 text-teal-700 border-teal-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border ${showFilters ? 'bg-teal-50 text-[#00AFA9] border-teal-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
                     <Filter className="w-4 h-4" /> Bộ lọc {hasFilters && <span className="w-2 h-2 rounded-full bg-red-500" />}
                 </button>
             </div>
@@ -599,21 +599,21 @@ export default function RetailChainsPage() {
                 <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1">Loại hình</label>
-                        <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="w-full text-sm border-slate-200 rounded-lg">
+                        <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]">
                             <option value="">Tất cả</option>
                             {categories.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
                         </select>
                     </div>
                     <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1">Trạng thái</label>
-                        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="w-full text-sm border-slate-200 rounded-lg">
+                        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]">
                             <option value="">Tất cả</option>
                             {Object.entries(STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                         </select>
                     </div>
                     <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1">Khu vực</label>
-                        <select value={filterRegion} onChange={e => setFilterRegion(e.target.value)} className="w-full text-sm border-slate-200 rounded-lg">
+                        <select value={filterRegion} onChange={e => setFilterRegion(e.target.value)} className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#00AFA9]/30 focus:border-[#00AFA9]">
                             <option value="">Tất cả</option>
                             {Object.entries(REGIONS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                         </select>
@@ -669,13 +669,13 @@ export default function RetailChainsPage() {
                                         {/* Mini stats */}
                                         <div className="hidden sm:flex items-center gap-3 mr-2">
                                             <div className="text-right">
-                                                <div className="text-xs font-bold text-teal-600">{catEnteredOutlets.toLocaleString()}<span className="text-slate-400 font-normal">/{catTotalOutlets.toLocaleString()}</span></div>
+                                                <div className="text-xs font-bold text-[#00AFA9]">{catEnteredOutlets.toLocaleString()}<span className="text-slate-400 font-normal">/{catTotalOutlets.toLocaleString()}</span></div>
                                                 <div className="text-[9px] text-slate-400">điểm đã vào</div>
                                             </div>
                                             <div className="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                                                <div className="bg-teal-500 h-full rounded-full" style={{ width: `${catOutletPercent}%` }} />
+                                                <div className="bg-[#00AFA9] h-full rounded-full" style={{ width: `${catOutletPercent}%` }} />
                                             </div>
-                                            <span className="text-xs font-bold text-teal-600 min-w-[30px]">{catOutletPercent}%</span>
+                                            <span className="text-xs font-bold text-[#00AFA9] min-w-[30px]">{catOutletPercent}%</span>
                                         </div>
                                         {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
                                     </div>
@@ -702,11 +702,11 @@ export default function RetailChainsPage() {
                                                     const pct = chain.total_outlets > 0 ? Math.round(((chain.entered_outlets || 0) / chain.total_outlets) * 100) : 0;
                                                     return (
                                                         <tr key={chain.id} className="hover:bg-slate-50/50 transition-colors">
-                                                            <td className="px-5 py-3">
+                                                             <td className="px-5 py-3">
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="font-medium text-slate-800">{chain.name}</span>
                                                                     {chain.website && (
-                                                                        <a href={chain.website} target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-teal-500">
+                                                                        <a href={chain.website} target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-[#00AFA9]">
                                                                             <Globe className="w-3.5 h-3.5" />
                                                                         </a>
                                                                     )}
@@ -720,12 +720,12 @@ export default function RetailChainsPage() {
                                                             <td className="px-3 py-3">
                                                                 <div className="flex flex-col items-center gap-1">
                                                                     <span className="text-xs">
-                                                                        <span className="font-bold text-teal-600">{(chain.entered_outlets || 0).toLocaleString()}</span>
+                                                                        <span className="font-bold text-[#00AFA9]">{(chain.entered_outlets || 0).toLocaleString()}</span>
                                                                         <span className="text-slate-400"> / {(chain.total_outlets || 0).toLocaleString()}</span>
                                                                     </span>
                                                                     {chain.total_outlets > 0 && (
                                                                         <div className="w-16 bg-slate-100 rounded-full h-1 overflow-hidden">
-                                                                            <div className="bg-teal-500 h-full rounded-full" style={{ width: `${pct}%` }} />
+                                                                            <div className="bg-[#00AFA9] h-full rounded-full" style={{ width: `${pct}%` }} />
                                                                         </div>
                                                                     )}
                                                                 </div>
@@ -747,7 +747,7 @@ export default function RetailChainsPage() {
                                                                 {chain.entered_brands && chain.entered_brands.length > 0 ? (
                                                                     <div className="flex gap-1 flex-wrap">
                                                                         {chain.entered_brands.slice(0, 2).map(b => (
-                                                                            <span key={b} className="text-[10px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 font-medium whitespace-nowrap">{b}</span>
+                                                                            <span key={b} className="text-[10px] px-1.5 py-0.5 rounded bg-teal-50 text-[#00AFA9] font-medium border border-teal-200 whitespace-nowrap">{b}</span>
                                                                         ))}
                                                                         {chain.entered_brands.length > 2 && (
                                                                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">+{chain.entered_brands.length - 2}</span>
@@ -757,7 +757,7 @@ export default function RetailChainsPage() {
                                                             </td>
                                                             <td className="px-3 py-3 text-center">
                                                                 <div className="flex items-center justify-center gap-1">
-                                                                    <button onClick={() => setDetailChain(chain)} className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg" title="Xem chi tiết"><Eye className="w-4 h-4" /></button>
+                                                                    <button onClick={() => setDetailChain(chain)} className="p-1.5 text-slate-400 hover:text-[#00AFA9] hover:bg-teal-50 rounded-lg" title="Xem chi tiết"><Eye className="w-4 h-4" /></button>
                                                                     {(isAdmin || (userRole === "telesales" && chain.created_by === userId)) && <button onClick={() => openEdit(chain)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="Chỉnh sửa"><Pencil className="w-3.5 h-3.5" /></button>}
                                                                 </div>
                                                             </td>
@@ -807,8 +807,8 @@ export default function RetailChainsPage() {
                                         <div className="text-xs text-slate-500 mt-1">Tổng điểm bán</div>
                                     </div>
                                     <div className="bg-teal-50 rounded-xl p-4 border border-teal-100 text-center">
-                                        <div className="text-2xl font-bold text-teal-700">{(detailChain.entered_outlets || 0).toLocaleString()}</div>
-                                        <div className="text-xs text-teal-600 mt-1">Đã vào</div>
+                                        <div className="text-2xl font-bold text-[#00AFA9]">{(detailChain.entered_outlets || 0).toLocaleString()}</div>
+                                        <div className="text-xs text-[#00AFA9] mt-1">Đã vào</div>
                                     </div>
                                     <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 text-center">
                                         <div className="text-2xl font-bold text-slate-800">{pct}%</div>
@@ -817,14 +817,14 @@ export default function RetailChainsPage() {
                                 </div>
                                 {detailChain.total_outlets > 0 && (
                                     <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-                                        <div className="bg-teal-500 h-full rounded-full transition-all" style={{ width: `${pct}%` }} />
+                                        <div className="bg-[#00AFA9] h-full rounded-full transition-all" style={{ width: `${pct}%` }} />
                                     </div>
                                 )}
                                 <div>
                                     <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Khu vực</h4>
                                     <div className="flex flex-wrap gap-2">
                                         {(detailChain.regions || []).map(r => (
-                                            <span key={r} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-50 text-teal-700 text-xs font-medium border border-teal-200">
+                                            <span key={r} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-50 text-[#00AFA9] text-xs font-medium border border-teal-200">
                                                 <MapPin className="w-3 h-3" /> {REGIONS[r] || r}
                                             </span>
                                         ))}
@@ -843,7 +843,7 @@ export default function RetailChainsPage() {
                                         <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Nhãn hàng đã vào</h4>
                                         <div className="flex flex-wrap gap-1.5">
                                             {detailChain.entered_brands!.map(b => (
-                                                <span key={b} className="px-2.5 py-1 rounded bg-teal-50 text-teal-700 text-xs font-semibold border border-teal-200">{b}</span>
+                                                <span key={b} className="px-2.5 py-1 rounded bg-teal-50 text-[#00AFA9] text-xs font-semibold border border-teal-200">{b}</span>
                                             ))}
                                         </div>
                                     </div>
@@ -853,15 +853,15 @@ export default function RetailChainsPage() {
                                         <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Liên hệ</h4>
                                         <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-2">
                                             {detailChain.contact_name && <p className="text-sm text-slate-800 font-medium">{detailChain.contact_name}</p>}
-                                            {detailChain.contact_phone && <div className="flex items-center gap-2 text-sm text-slate-600"><Phone className="w-3.5 h-3.5 text-slate-400" /><a href={`tel:${detailChain.contact_phone}`} className="hover:text-teal-600">{detailChain.contact_phone}</a></div>}
-                                            {detailChain.contact_email && <div className="flex items-center gap-2 text-sm text-slate-600"><Mail className="w-3.5 h-3.5 text-slate-400" /><a href={`mailto:${detailChain.contact_email}`} className="hover:text-teal-600">{detailChain.contact_email}</a></div>}
+                                            {detailChain.contact_phone && <div className="flex items-center gap-2 text-sm text-slate-600"><Phone className="w-3.5 h-3.5 text-slate-400" /><a href={`tel:${detailChain.contact_phone}`} className="hover:text-[#00AFA9]">{detailChain.contact_phone}</a></div>}
+                                            {detailChain.contact_email && <div className="flex items-center gap-2 text-sm text-slate-600"><Mail className="w-3.5 h-3.5 text-slate-400" /><a href={`mailto:${detailChain.contact_email}`} className="hover:text-[#00AFA9]">{detailChain.contact_email}</a></div>}
                                         </div>
                                     </div>
                                 )}
                                 {detailChain.website && (
                                     <div>
                                         <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Website</h4>
-                                        <a href={detailChain.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-teal-600 hover:text-teal-700 font-medium">
+                                        <a href={detailChain.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-[#00AFA9] hover:text-[#009690] font-medium">
                                             <ExternalLink className="w-3.5 h-3.5" /> {detailChain.website}
                                         </a>
                                     </div>

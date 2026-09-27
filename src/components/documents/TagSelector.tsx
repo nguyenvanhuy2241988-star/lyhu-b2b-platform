@@ -20,6 +20,7 @@ interface TagSelectorProps {
 }
 
 const COLORS = [
+    { label: 'Teal', value: 'teal', bg: 'bg-teal-100', text: 'text-teal-700', border: 'border-teal-200' },
     { label: 'Gray', value: 'gray', bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-200' },
     { label: 'Red', value: 'red', bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200' },
     { label: 'Orange', value: 'orange', bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' },
@@ -43,7 +44,7 @@ export function TagSelector({ entityId, entityType, currentTags = [], onTagsChan
     // Create mode
     const [isCreating, setIsCreating] = useState(false);
     const [newTagName, setNewTagName] = useState('');
-    const [newTagColor, setNewTagColor] = useState('blue');
+    const [newTagColor, setNewTagColor] = useState('teal');
     const [actionLoading, setActionLoading] = useState(false);
 
     useEffect(() => {

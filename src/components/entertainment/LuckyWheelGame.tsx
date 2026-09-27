@@ -202,7 +202,7 @@ export const LuckyWheelGame = ({ currentUser }: LuckyWheelGameProps) => {
             <div className="flex-1 flex flex-col items-center">
                 <div className="relative">
                     {/* Pointer - Flipped to point LEFT into the wheel */}
-                    <div className="absolute top-1/2 -right-8 -mt-3 w-0 h-0 border-t-[12px] border-t-transparent border-r-[24px] border-r-red-600 border-b-[12px] border-b-transparent z-10 drop-shadow-lg"></div>
+                    <div className="absolute top-1/2 -right-8 -mt-3 w-0 h-0 border-t-[12px] border-t-transparent border-r-[24px] border-r-red-600 border-b-[12px] border-b-transparent z-10"></div>
 
                     {/* Wheel Container */}
                     <div
@@ -237,7 +237,7 @@ export const LuckyWheelGame = ({ currentUser }: LuckyWheelGameProps) => {
             {/* Controls Section */}
             <div className="w-full md:w-80 bg-white rounded-xl border border-slate-200 p-5 max-h-[600px] flex flex-col">
                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <RotateCw className="w-5 h-5 text-blue-500" /> Thiết lập vòng quay
+                    <RotateCw className="w-5 h-5 text-[#00AFA9]" /> Thiết lập vòng quay
                 </h3>
 
                 <div className="flex gap-2 mb-4">
@@ -247,21 +247,21 @@ export const LuckyWheelGame = ({ currentUser }: LuckyWheelGameProps) => {
                         onChange={e => setNewItem(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && addItem()}
                         placeholder="Nhập nội dung..."
-                        className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                     />
-                    <button onClick={addItem} className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200">
+                    <button onClick={addItem} className="p-2 bg-teal-50 text-[#00AFA9] rounded-lg hover:bg-teal-100">
                         <Plus className="w-5 h-5" />
                     </button>
                 </div>
 
                 <div className="space-y-2 overflow-y-auto pr-1 flex-1">
                     {items.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100 group hover:border-blue-200 transition-colors">
+                        <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100 group hover:border-teal-200 transition-colors">
                             {editingIndex === idx ? (
                                 <div className="flex items-center gap-1 w-full">
                                     <input
                                         autoFocus
-                                        className="w-full text-sm px-1 py-0.5 border border-blue-300 rounded focus:outline-none"
+                                        className="w-full text-sm px-1 py-0.5 border border-[#00AFA9] rounded focus:outline-none"
                                         value={editValue}
                                         onChange={e => setEditValue(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && saveEdit(idx)}
@@ -272,7 +272,7 @@ export const LuckyWheelGame = ({ currentUser }: LuckyWheelGameProps) => {
                                 <>
                                     <span className="text-sm font-medium text-slate-700 truncate cursor-pointer" onClick={() => startEdit(idx, item)} title="Bấm để sửa">{item}</span>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => startEdit(idx, item)} className="text-slate-400 hover:text-blue-500 p-1">
+                                        <button onClick={() => startEdit(idx, item)} className="text-slate-400 hover:text-[#00AFA9] p-1">
                                             <Edit2 className="w-3.5 h-3.5" />
                                         </button>
                                         <button onClick={() => removeItem(idx)} className="text-slate-400 hover:text-red-500 p-1">

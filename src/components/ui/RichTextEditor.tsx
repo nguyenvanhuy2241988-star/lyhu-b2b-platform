@@ -93,26 +93,26 @@ export default function RichTextEditor({
     }
 
     return (
-        <div className="relative border border-slate-200 rounded-xl bg-white p-4 group focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-500 transition-all">
+        <div className="relative border border-slate-200 rounded-xl bg-white p-4 group focus-within:ring-2 focus-within:ring-[#00AFA9]/20 focus-within:border-[#00AFA9] transition-all">
             {/* Bubble Menu for Formatting */}
             {editor && (
                 <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
-                    <div className="bg-slate-900/90 backdrop-blur text-white flex items-center gap-1 p-1 rounded-lg shadow-xl border border-white/10">
+                    <div className="bg-slate-900/90 backdrop-blur text-white flex items-center gap-1 p-1 rounded-lg border border-slate-700 shadow-sm">
                         <button
                             onClick={() => editor.chain().focus().toggleBold().run()}
-                            className={cn("p-1.5 rounded hover:bg-white/20 transition", editor.isActive('bold') && 'bg-white/20 text-teal-300')}
+                            className={cn("p-1.5 rounded hover:bg-white/20 transition", editor.isActive('bold') && 'bg-white/20 text-[#00AFA9]')}
                         >
                             <Bold className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => editor.chain().focus().toggleItalic().run()}
-                            className={cn("p-1.5 rounded hover:bg-white/20 transition", editor.isActive('italic') && 'bg-white/20 text-teal-300')}
+                            className={cn("p-1.5 rounded hover:bg-white/20 transition", editor.isActive('italic') && 'bg-white/20 text-[#00AFA9]')}
                         >
                             <Italic className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => editor.chain().focus().toggleStrike().run()}
-                            className={cn("p-1.5 rounded hover:bg-white/20 transition", editor.isActive('strike') && 'bg-white/20 text-teal-300')}
+                            className={cn("p-1.5 rounded hover:bg-white/20 transition", editor.isActive('strike') && 'bg-white/20 text-[#00AFA9]')}
                         >
                             <Strikethrough className="w-4 h-4" />
                         </button>
@@ -124,15 +124,15 @@ export default function RichTextEditor({
                                     editor.chain().focus().setLink({ href: url }).run();
                                 }
                             }}
-                            className={cn("p-1.5 rounded hover:bg-white/20 transition", editor.isActive('link') && 'bg-white/20 text-teal-300')}
+                            className={cn("p-1.5 rounded hover:bg-white/20 transition", editor.isActive('link') && 'bg-white/20 text-[#00AFA9]')}
                         >
                             <LinkIcon className="w-4 h-4" />
                         </button>
                         <button
-                            onClick={() => editor.chain().focus().setColor('#0d9488').run()}
-                            className={cn("p-1.5 rounded hover:bg-white/20 transition", editor.isActive('textStyle', { color: '#0d9488' }) && 'bg-white/20 text-teal-300')}
+                            onClick={() => editor.chain().focus().setColor('#00AFA9').run()}
+                            className={cn("p-1.5 rounded hover:bg-white/20 transition", editor.isActive('textStyle', { color: '#00AFA9' }) && 'bg-white/20 text-[#00AFA9]')}
                         >
-                            <div className="w-4 h-4 rounded-full bg-teal-600 border border-white" />
+                            <div className="w-4 h-4 rounded-full bg-[#00AFA9] border border-white" />
                         </button>
                     </div>
                 </BubbleMenu>
@@ -142,32 +142,32 @@ export default function RichTextEditor({
             <div className="flex flex-wrap items-center gap-1 mb-3 border-b border-slate-100 pb-2">
                 <button
                     onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                    className={cn("p-2 rounded hover:bg-slate-100 text-slate-600 transition", editor.isActive('heading', { level: 2 }) && 'bg-teal-50 text-teal-600')}
+                    className={cn("p-2 rounded hover:bg-slate-100 text-slate-600 transition", editor.isActive('heading', { level: 2 }) && 'bg-teal-50 text-[#00AFA9]')}
                 >
                     <Heading1 className="w-4 h-4" />
                 </button>
                 <button
                     onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                    className={cn("p-2 rounded hover:bg-slate-100 text-slate-600 transition", editor.isActive('heading', { level: 3 }) && 'bg-teal-50 text-teal-600')}
+                    className={cn("p-2 rounded hover:bg-slate-100 text-slate-600 transition", editor.isActive('heading', { level: 3 }) && 'bg-teal-50 text-[#00AFA9]')}
                 >
                     <Heading2 className="w-4 h-4" />
                 </button>
                 <div className="w-px h-4 bg-slate-200 mx-1" />
                 <button
                     onClick={() => editor.chain().focus().toggleBulletList().run()}
-                    className={cn("p-2 rounded hover:bg-slate-100 text-slate-600 transition", editor.isActive('bulletList') && 'bg-teal-50 text-teal-600')}
+                    className={cn("p-2 rounded hover:bg-slate-100 text-slate-600 transition", editor.isActive('bulletList') && 'bg-teal-50 text-[#00AFA9]')}
                 >
                     <List className="w-4 h-4" />
                 </button>
                 <button
                     onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                    className={cn("p-2 rounded hover:bg-slate-100 text-slate-600 transition", editor.isActive('orderedList') && 'bg-teal-50 text-teal-600')}
+                    className={cn("p-2 rounded hover:bg-slate-100 text-slate-600 transition", editor.isActive('orderedList') && 'bg-teal-50 text-[#00AFA9]')}
                 >
                     <ListOrdered className="w-4 h-4" />
                 </button>
                 <button
                     onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                    className={cn("p-2 rounded hover:bg-slate-100 text-slate-600 transition", editor.isActive('blockquote') && 'bg-teal-50 text-teal-600')}
+                    className={cn("p-2 rounded hover:bg-slate-100 text-slate-600 transition", editor.isActive('blockquote') && 'bg-teal-50 text-[#00AFA9]')}
                 >
                     <Quote className="w-4 h-4" />
                 </button>

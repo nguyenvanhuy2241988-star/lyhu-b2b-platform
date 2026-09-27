@@ -208,7 +208,7 @@ export function OrderChatModal({ isOpen, onClose, orderId, orderReadableId, onMa
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[80vh]">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm w-full max-w-lg flex flex-col max-h-[80vh]">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50 rounded-t-xl">
                     <h3 className="font-semibold text-slate-900">
@@ -286,14 +286,14 @@ export function OrderChatModal({ isOpen, onClose, orderId, orderReadableId, onMa
                             onChange={(e) => setNewMessage(e.target.value)}
                             onKeyPress={handleKeyPress}
                             placeholder="Nhập tin nhắn..."
-                            className="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            className="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent"
                         />
 
                         {/* Send button */}
                         <button
                             onClick={handleSend}
                             disabled={!newMessage.trim() || isSending}
-                            className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-2 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSending ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -326,7 +326,7 @@ function ChatBubble({
     const roleColors: Record<string, string> = {
         admin: "text-red-600",
         telesales: "text-blue-600",
-        accountant: "text-purple-600",
+        accountant: "text-[#00AFA9]",
         warehouse: "text-green-600",
     };
 
@@ -359,13 +359,13 @@ function ChatBubble({
                     <div className={`opacity-0 group-hover:opacity-100 transition-opacity ${showMenu ? 'opacity-100' : ''}`}>
                         <button
                             onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                            className="p-1 bg-white rounded-full shadow border border-slate-200 text-slate-500 hover:text-blue-600"
+                            className="p-1 bg-white rounded-full shadow-sm border border-slate-200 text-slate-500 hover:text-[#00AFA9]"
                         >
                             <MoreVertical size={14} />
                         </button>
 
                         {showMenu && (
-                            <div className="absolute right-0 mt-1 w-32 bg-white rounded-lg shadow-lg border border-slate-100 overflow-hidden text-sm animate-in fade-in zoom-in-95 origin-top-right">
+                            <div className="absolute right-0 mt-1 w-32 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden text-sm animate-in fade-in zoom-in-95 origin-top-right">
                                 <button
                                     onClick={() => { setShowMenu(false); onRecall(); }}
                                     className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-600"
@@ -388,7 +388,7 @@ function ChatBubble({
                 className={`max-w-[80%] rounded-lg p-3 ${message.isRecalled
                     ? "bg-slate-50 border border-slate-200 text-slate-400 italic"
                     : isOwn
-                        ? "bg-blue-600 text-white" // Changed to blue-600 to match primary
+                        ? "bg-[#00AFA9] text-white"
                         : "bg-slate-100 text-slate-900"
                     }`}
             >
@@ -431,7 +431,7 @@ function ChatBubble({
 
                 {/* Time */}
                 <div className={`text-[10px] mt-1 text-right ${message.isRecalled ? "text-slate-300" :
-                    isOwn ? "text-blue-100" : "text-slate-400"
+                    isOwn ? "text-teal-100" : "text-slate-400"
                     }`}>
                     {formatTime(message.createdAt)}
                 </div>

@@ -312,8 +312,8 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
                 {/* START SCREEN */}
                 {gameState === 'START' && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white rounded-lg">
-                        <Play className="w-16 h-16 mb-2 text-yellow-400 drop-shadow-md animate-pulse" />
-                        <h2 className="text-2xl font-black drop-shadow-md">NHẤN ĐỂ CHƠI</h2>
+                        <Play className="w-16 h-16 mb-2 text-yellow-400 animate-pulse" />
+                        <h2 className="text-2xl font-black">NHẤN ĐỂ CHƠI</h2>
                         <p className="text-sm opacity-90 mb-4">Cấp độ: {difficulty === 'EASY' ? 'Dễ' : (difficulty === 'MEDIUM' ? 'Vừa' : 'Khó')}</p>
                         <button
                             onClick={(e) => { e.stopPropagation(); setGameState('MENU'); }}
@@ -327,7 +327,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
                 {/* GAME OVER SCREEN */}
                 {gameState === 'GAME_OVER' && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 text-white rounded-lg animate-in zoom-in duration-300">
-                        <h2 className="text-3xl font-black text-red-500 drop-shadow-lg mb-2">GAME OVER</h2>
+                        <h2 className="text-3xl font-black text-red-500 mb-2">GAME OVER</h2>
                         <div className="bg-white/10 p-4 rounded-lg border border-white/20 mb-4 text-center">
                             <p className="text-sm text-slate-300">Điểm của bạn</p>
                             <p className="text-4xl font-bold text-yellow-400">{score}</p>
@@ -357,7 +357,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
                 {/* HUD */}
                 {gameState === 'PLAYING' && (
                     <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
-                        <span className="text-5xl font-black text-white stroke-black drop-shadow-lg stroke-2">
+                        <span className="text-5xl font-black text-white stroke-black stroke-2">
                             {score}
                         </span>
                     </div>

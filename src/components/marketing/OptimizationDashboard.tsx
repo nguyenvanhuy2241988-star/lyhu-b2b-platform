@@ -189,11 +189,11 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
 
     return (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-xl flex flex-col">
+            <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-slate-200 flex flex-col">
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                            <Bot className="w-6 h-6 text-purple-600" />
+                        <div className="p-2 bg-teal-50 rounded-lg">
+                            <Bot className="w-6 h-6 text-[#00AFA9]" />
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-slate-900">AI Media Buyer</h2>
@@ -215,14 +215,14 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                 setViewingHistoryDate(null);
                             }
                         }}
-                        className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'new' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}
+                        className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'new' ? 'border-[#00AFA9] text-[#00AFA9]' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}
                     >
                         <TrendingUp className="w-4 h-4" />
                         Phân tích Mới
                     </button>
                     <button 
                         onClick={() => setActiveTab('history')}
-                        className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'history' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}
+                        className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'history' ? 'border-[#00AFA9] text-[#00AFA9]' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}
                     >
                         <History className="w-4 h-4" />
                         Lịch sử Tối ưu
@@ -234,7 +234,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                         <div className="space-y-4">
                             {isLoadingHistory ? (
                                 <div className="flex justify-center items-center py-12">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00AFA9]"></div>
                                 </div>
                             ) : historyLogs.length === 0 ? (
                                 <div className="text-center py-12 text-slate-500">
@@ -246,7 +246,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                         <div 
                                             key={log.id} 
                                             onClick={() => handleViewHistoryItem(log)}
-                                            className="bg-white border border-slate-200 rounded-xl p-4 hover:border-purple-400 hover:shadow-md transition-all cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4"
+                                            className="bg-white border border-slate-200 rounded-xl p-4 hover:border-[#00AFA9] transition-all cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4"
                                         >
                                             <div>
                                                 <div className="flex items-center gap-3 mb-2">
@@ -262,7 +262,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                                 </p>
                                             </div>
                                             <div>
-                                                <div className="px-3 py-1.5 bg-purple-50 text-purple-600 text-sm font-semibold rounded-lg flex items-center gap-1">
+                                                <div className="px-3 py-1.5 bg-teal-50 text-[#00AFA9] text-sm font-semibold rounded-lg flex items-center gap-1">
                                                     Xem chi tiết <ChevronRight className="w-4 h-4" />
                                                 </div>
                                             </div>
@@ -273,8 +273,8 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                         </div>
                     ) : !hasAnalyzed ? (
                         <div className="text-center py-12">
-                            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-purple-50 mb-6">
-                                <TrendingUp className="w-10 h-10 text-purple-500" />
+                            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-teal-50 mb-6">
+                                <TrendingUp className="w-10 h-10 text-[#00AFA9]" />
                             </div>
                             <h3 className="text-xl font-bold text-slate-800 mb-2">Sẵn sàng tối ưu</h3>
                             <p className="text-slate-500 mb-8 max-w-md mx-auto">
@@ -288,7 +288,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                         <Filter className="w-4 h-4" /> Mục tiêu quảng cáo
                                     </label>
                                     <select 
-                                        className="w-full border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                        className="w-full border-slate-300 rounded-lg shadow-sm focus:border-[#00AFA9] focus:ring-[#00AFA9]"
                                         value={objectiveFilter}
                                         onChange={(e) => setObjectiveFilter(e.target.value)}
                                     >
@@ -303,7 +303,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                         <Calendar className="w-4 h-4" /> Thời gian phân tích
                                     </label>
                                     <select 
-                                        className="w-full border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 mb-2"
+                                        className="w-full border-slate-300 rounded-lg shadow-sm focus:border-[#00AFA9] focus:ring-[#00AFA9] mb-2"
                                         value={timeFilter}
                                         onChange={(e) => setTimeFilter(e.target.value)}
                                     >
@@ -318,14 +318,14 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                         <div className="flex items-center gap-2 mt-2">
                                             <input 
                                                 type="date" 
-                                                className="flex-1 border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm"
+                                                className="flex-1 border-slate-300 rounded-lg shadow-sm focus:border-[#00AFA9] focus:ring-[#00AFA9] text-sm"
                                                 value={sinceDate}
                                                 onChange={(e) => setSinceDate(e.target.value)}
                                             />
                                             <span className="text-slate-500">-</span>
                                             <input 
                                                 type="date" 
-                                                className="flex-1 border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm"
+                                                className="flex-1 border-slate-300 rounded-lg shadow-sm focus:border-[#00AFA9] focus:ring-[#00AFA9] text-sm"
                                                 value={untilDate}
                                                 onChange={(e) => setUntilDate(e.target.value)}
                                             />
@@ -337,7 +337,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                             <button 
                                 onClick={handleAnalyze}
                                 disabled={isAnalyzing}
-                                className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto"
+                                className="px-8 py-3 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto"
                             >
                                 {isAnalyzing ? (
                                     <>
@@ -359,7 +359,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                     <h3 className="font-bold text-slate-800">Đề xuất từ chuyên gia AI</h3>
                                     <span className="text-xs text-slate-400">Đã quét {rawCount} nhóm quảng cáo từ Facebook</span>
                                 </div>
-                                <span className="text-sm font-medium text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
+                                <span className="text-sm font-medium text-[#00AFA9] bg-teal-50 px-3 py-1 rounded-full">
                                     {recommendations.length} nhóm cần tối ưu
                                 </span>
                             </div>
@@ -376,7 +376,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                         <Filter className="w-4 h-4 text-slate-500" />
                                         <span className="text-sm font-medium text-slate-700 whitespace-nowrap">Trạng thái:</span>
                                         <select 
-                                            className="w-full border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm"
+                                            className="w-full border-slate-300 rounded-lg shadow-sm focus:border-[#00AFA9] focus:ring-[#00AFA9] text-sm"
                                             value={statusFilter}
                                             onChange={(e) => setStatusFilter(e.target.value)}
                                         >
@@ -389,7 +389,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                         <TrendingUp className="w-4 h-4 text-slate-500" />
                                         <span className="text-sm font-medium text-slate-700 whitespace-nowrap">Sắp xếp:</span>
                                         <select 
-                                            className="w-full border-slate-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm"
+                                            className="w-full border-slate-300 rounded-lg shadow-sm focus:border-[#00AFA9] focus:ring-[#00AFA9] text-sm"
                                             value={sortBy}
                                             onChange={(e) => setSortBy(e.target.value)}
                                         >
@@ -428,7 +428,7 @@ export default function OptimizationDashboard({ isOpen, onClose, accessToken, ad
                                                     </span>
                                                     <div className="w-px h-3 bg-slate-300"></div>
                                                     <span className="text-blue-600 font-bold">Số ĐT thu về: {rec.phone_count || 0}</span>
-                                                    <span className="text-purple-600 font-bold">Tỉ lệ SĐT: {((rec.phone_rate || 0) * 100).toFixed(1)}%</span>
+                                                    <span className="text-[#00AFA9] font-bold">Tỉ lệ SĐT: {((rec.phone_rate || 0) * 100).toFixed(1)}%</span>
                                                     <span className={rec.cost_per_phone < 50000 && rec.phone_count > 0 ? "text-green-600 font-bold" : "text-red-600"}>
                                                         Giá/SĐT: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(rec.cost_per_phone || 0)}
                                                     </span>

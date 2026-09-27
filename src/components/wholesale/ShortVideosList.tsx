@@ -74,7 +74,7 @@ export default function ShortVideosList() {
     return (
         <div className="mb-6">
             <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="w-1.5 h-5 bg-primary-600 rounded-full inline-block"></span>
+                <span className="w-1.5 h-5 bg-[#00AFA9] rounded-full inline-block"></span>
                 Video Nổi Bật
             </h3>
             
@@ -83,7 +83,7 @@ export default function ShortVideosList() {
                 {/* Left Arrow */}
                 <button 
                     onClick={scrollLeft}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 w-10 h-10 bg-white shadow-md border border-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:text-primary-600 hover:scale-110 transition-all opacity-0 group-hover/list:opacity-100 disabled:opacity-0"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 w-10 h-10 bg-white shadow-sm border border-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:text-[#00AFA9] hover:scale-110 transition-all opacity-0 group-hover/list:opacity-100 disabled:opacity-0"
                 >
                     <ChevronLeft className="w-6 h-6" />
                 </button>
@@ -97,7 +97,7 @@ export default function ShortVideosList() {
                         <div 
                             key={video.id} 
                             onClick={() => setSelectedVideo(video)}
-                            className="snap-start shrink-0 w-[180px] aspect-[9/16] bg-gray-100 rounded-xl relative overflow-hidden cursor-pointer group shadow-md border border-gray-200 transition-all hover:shadow-lg"
+                            className="snap-start shrink-0 w-[180px] aspect-[9/16] bg-gray-100 rounded-xl relative overflow-hidden cursor-pointer group shadow-sm border border-slate-200 transition-all hover:border-[#00AFA9]"
                         >
                             <video 
                                 src={video.video_url} 
@@ -119,7 +119,7 @@ export default function ShortVideosList() {
                 {/* Right Arrow */}
                 <button 
                     onClick={scrollRight}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 w-10 h-10 bg-white shadow-md border border-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:text-primary-600 hover:scale-110 transition-all opacity-0 group-hover/list:opacity-100"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 w-10 h-10 bg-white shadow-sm border border-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:text-[#00AFA9] hover:scale-110 transition-all opacity-0 group-hover/list:opacity-100"
                 >
                     <ChevronRight className="w-6 h-6" />
                 </button>
@@ -137,7 +137,7 @@ export default function ShortVideosList() {
                     </button>
 
                     {/* Video Container */}
-                    <div className="relative w-full max-w-[400px] aspect-[9/16] bg-black rounded-xl overflow-hidden mx-4 shadow-2xl">
+                    <div className="relative w-full max-w-[400px] aspect-[9/16] bg-black rounded-xl overflow-hidden mx-4 border border-slate-700">
                         <video
                             ref={videoRef}
                             src={selectedVideo.video_url}
@@ -153,7 +153,7 @@ export default function ShortVideosList() {
                         <div className="absolute right-4 bottom-20 flex flex-col gap-4">
                             <button 
                                 onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}
-                                className="w-10 h-10 bg-black/40 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-colors shadow-lg"
+                                className="w-10 h-10 bg-black/40 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-colors"
                             >
                                 {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                             </button>

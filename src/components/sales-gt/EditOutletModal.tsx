@@ -154,7 +154,7 @@ export default function EditOutletModal({ isOpen, onClose, onSuccess, initialDat
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col">
+            <div className="bg-white rounded-xl border border-slate-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col">
                 <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50/50 sticky top-0 z-10 backdrop-blur-md">
                     <div>
                         <h2 className="text-xl font-bold text-slate-800">
@@ -174,7 +174,7 @@ export default function EditOutletModal({ isOpen, onClose, onSuccess, initialDat
                         {/* Column 1: Store Info */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2 pb-2 border-b">
-                                <Building className="w-4 h-4 text-teal-600" />
+                                <Building className="w-4 h-4 text-[#00AFA9]" />
                                 Thông tin Điểm bán
                             </h3>
 
@@ -183,7 +183,7 @@ export default function EditOutletModal({ isOpen, onClose, onSuccess, initialDat
                                 <input
                                     value={formData.name}
                                     onChange={(e) => handleChange('name', e.target.value)}
-                                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-teal-500/20 outline-none ${errors.name ? 'border-red-500' : 'border-slate-300'}`}
+                                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] outline-none ${errors.name ? 'border-red-500' : 'border-slate-300'}`}
                                     placeholder="Ví dụ: Tạp hóa Cô Ba"
                                 />
                                 {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
@@ -194,7 +194,7 @@ export default function EditOutletModal({ isOpen, onClose, onSuccess, initialDat
                                 <input
                                     value={formData.owner_name}
                                     onChange={(e) => handleChange('owner_name', e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500/20 outline-none"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] outline-none"
                                     placeholder="Tên chủ cửa hàng"
                                 />
                             </div>
@@ -204,7 +204,7 @@ export default function EditOutletModal({ isOpen, onClose, onSuccess, initialDat
                                 <input
                                     value={formData.phone}
                                     onChange={(e) => handleChange('phone', e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500/20 outline-none"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] outline-none"
                                     placeholder="0912345678"
                                 />
                             </div>
@@ -214,7 +214,7 @@ export default function EditOutletModal({ isOpen, onClose, onSuccess, initialDat
                                 <select
                                     value={formData.outlet_type}
                                     onChange={(e) => handleChange('outlet_type', e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500/20 outline-none bg-white"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] outline-none bg-white"
                                 >
                                     {OUTLET_TYPES.map(t => (
                                         <option key={t.value} value={t.value}>{t.label}</option>
@@ -228,7 +228,7 @@ export default function EditOutletModal({ isOpen, onClose, onSuccess, initialDat
                                     value={formData.notes}
                                     onChange={(e) => handleChange('notes', e.target.value)}
                                     rows={3}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500/20 outline-none resize-none"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] outline-none resize-none"
                                 />
                             </div>
                         </div>
@@ -236,7 +236,7 @@ export default function EditOutletModal({ isOpen, onClose, onSuccess, initialDat
                         {/* Column 2: Address */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2 pb-2 border-b">
-                                <MapPin className="w-4 h-4 text-teal-600" />
+                                <MapPin className="w-4 h-4 text-[#00AFA9]" />
                                 Địa chỉ
                             </h3>
 
@@ -245,7 +245,7 @@ export default function EditOutletModal({ isOpen, onClose, onSuccess, initialDat
                                 <input
                                     value={formData.district}
                                     onChange={(e) => handleChange('district', e.target.value)}
-                                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-teal-500/20 outline-none ${errors.district ? 'border-red-500' : 'border-slate-300'}`}
+                                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] outline-none ${errors.district ? 'border-red-500' : 'border-slate-300'}`}
                                     placeholder="Ví dụ: Hà Đông"
                                 />
                                 {errors.district && <p className="text-xs text-red-500">{errors.district}</p>}
@@ -256,7 +256,7 @@ export default function EditOutletModal({ isOpen, onClose, onSuccess, initialDat
                                 <input
                                     value={formData.ward}
                                     onChange={(e) => handleChange('ward', e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500/20 outline-none"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] outline-none"
                                     placeholder="Ví dụ: Phú Lương"
                                 />
                             </div>
@@ -266,7 +266,7 @@ export default function EditOutletModal({ isOpen, onClose, onSuccess, initialDat
                                 <input
                                     value={formData.address}
                                     onChange={(e) => handleChange('address', e.target.value)}
-                                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-teal-500/20 outline-none ${errors.address ? 'border-red-500' : 'border-slate-300'}`}
+                                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] outline-none ${errors.address ? 'border-red-500' : 'border-slate-300'}`}
                                     placeholder="Số nhà, tên đường..."
                                 />
                                 {errors.address && <p className="text-xs text-red-500">{errors.address}</p>}
@@ -274,7 +274,7 @@ export default function EditOutletModal({ isOpen, onClose, onSuccess, initialDat
                         </div>
                     </div>
 
-                    <div className="mt-6 flex items-start gap-2 bg-teal-50 p-3 rounded-lg text-teal-700 text-sm">
+                    <div className="mt-6 flex items-start gap-2 bg-teal-50 p-3 rounded-lg text-[#00AFA9] border border-teal-100 text-sm">
                         <Info className="w-4 h-4 mt-0.5 shrink-0" />
                         <p>Thông tin đầy đủ sẽ giúp đội ngũ Sales và CSKH làm việc hiệu quả hơn.</p>
                     </div>
@@ -287,7 +287,7 @@ export default function EditOutletModal({ isOpen, onClose, onSuccess, initialDat
                     <button
                         onClick={handleSubmit}
                         disabled={isSaving}
-                        className="px-6 py-2.5 bg-teal-600 text-white hover:bg-teal-700 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm shadow-teal-200 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="px-6 py-2.5 bg-[#00AFA9] text-white hover:bg-[#009690] rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         {initialData ? "Lưu thay đổi" : "Thêm điểm bán"}

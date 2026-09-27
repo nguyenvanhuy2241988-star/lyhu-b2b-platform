@@ -22,7 +22,7 @@ const formatDate = (dateString: string) => {
 const STATUS_CONFIG: Record<string, any> = {
     pending: { label: "Chờ xác nhận", icon: Filter, color: "bg-amber-50 text-amber-700 border border-amber-200" },
     processing: { label: "Đang xử lý", icon: FileText, color: "bg-blue-50 text-blue-700 border border-blue-200" },
-    delivering: { label: "Đang giao", icon: Truck, color: "bg-purple-50 text-purple-700 border border-purple-200" },
+    delivering: { label: "Đang giao", icon: Truck, color: "bg-teal-50 text-[#00AFA9] border border-teal-200" },
     delivered: { label: "Đã giao", icon: Eye, color: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
     returned: { label: "Hoàn hàng", icon: RotateCcw, color: "bg-orange-50 text-orange-700 border border-orange-200" },
     cancelled: { label: "Đã hủy", icon: Trash2, color: "bg-rose-50 text-rose-700 border border-rose-200" },

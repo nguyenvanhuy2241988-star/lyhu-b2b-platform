@@ -235,7 +235,7 @@ export default function EventDetailPage() {
                             )}
                         </div>
 
-                        <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight drop-shadow-lg">{event.title}</h1>
+                        <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">{event.title}</h1>
 
                         <div className="flex flex-wrap items-center gap-6 text-white/95 font-medium drop-shadow-md">
                             <div className="flex items-center gap-2">
@@ -297,7 +297,7 @@ export default function EventDetailPage() {
                     </div>
 
                     {activeTab === 'overview' && (
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 space-y-8">
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-8">
                             <section>
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-bold text-slate-900">Chi tiết sự kiện</h3>

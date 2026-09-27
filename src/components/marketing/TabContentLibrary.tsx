@@ -185,15 +185,15 @@ export default function TabContentLibrary() {
             return (
                 <div className="h-[200px] bg-slate-900 border-b border-slate-200 relative overflow-hidden group flex items-center justify-center">
                     <video src={url} className="w-full h-full object-cover opacity-60" />
-                    <PlayCircle className="w-12 h-12 text-white absolute opacity-80 z-10 shadow-xl" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-0"></div>
+                    <PlayCircle className="w-12 h-12 text-white absolute opacity-80 z-10" />
+                    <div className="absolute inset-0 bg-black/30 z-0"></div>
                 </div>
             );
         }
         return (
             <div className="h-[200px] bg-slate-100 border-b border-slate-200 relative overflow-hidden group">
                 <img src={url} alt="asset" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                <div className="absolute inset-0 bg-[#00AFA9]/10"></div>
             </div>
         );
     }
@@ -326,14 +326,14 @@ export default function TabContentLibrary() {
                                     {imagePreview ? (
                                 <div className="border border-teal-200 bg-white rounded-xl overflow-hidden relative shadow-sm">
                                     {renderPreview(imagePreview, true)}
-                                    <button onClick={() => {setImagePreview(null); setImageFile(null); setExistingImageUrl(null);}} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg z-20">
+                                    <button onClick={() => {setImagePreview(null); setImageFile(null); setExistingImageUrl(null);}} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors z-20">
                                         <X className="w-4 h-4"/>
                                     </button>
                                 </div>
                             ) : existingImageUrl ? (
                                 <div className="border border-teal-200 bg-white rounded-xl overflow-hidden relative shadow-sm">
                                     {renderPreview(existingImageUrl, false)}
-                                    <button onClick={() => setExistingImageUrl(null)} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg z-20" title="Xóa file cữ">
+                                    <button onClick={() => setExistingImageUrl(null)} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors z-20" title="Xóa file cữ">
                                         <X className="w-4 h-4"/>
                                     </button>
                                 </div>

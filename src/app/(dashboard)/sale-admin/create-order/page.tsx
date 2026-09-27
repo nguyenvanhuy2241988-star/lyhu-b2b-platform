@@ -620,7 +620,7 @@ function SaleAdminCreateOrderContent() {
                             <input
                                 type="text"
                                 placeholder="Tìm tên hoặc SĐT..."
-                                className="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 w-64"
+                                className="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] w-64"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -640,11 +640,11 @@ function SaleAdminCreateOrderContent() {
                                 <button
                                     key={customer.id}
                                     onClick={() => handleSelectCustomer(customer.id)}
-                                    className="p-4 border border-slate-200 rounded-lg hover:border-teal-500 hover:bg-teal-50 transition-all text-left group"
+                                    className="p-4 border border-slate-200 rounded-lg hover:border-[#00AFA9] hover:bg-teal-50 transition-all text-left group"
                                 >
                                     <div className="flex items-start gap-3">
                                         <div className="p-2 bg-slate-100 group-hover:bg-teal-100 rounded-lg transition-colors">
-                                            <User className="w-5 h-5 text-slate-600 group-hover:text-teal-600" />
+                                            <User className="w-5 h-5 text-slate-600 group-hover:text-[#00AFA9]" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <h4 className="font-medium text-slate-900 mb-1 truncate">
@@ -698,7 +698,7 @@ function SaleAdminCreateOrderContent() {
                                 <div className="p-4 border-b border-slate-100 space-y-3">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <Package className="w-5 h-5 text-teal-600" />
+                                            <Package className="w-5 h-5 text-[#00AFA9]" />
                                             <h3 className="font-semibold text-slate-900">Chọn sản phẩm</h3>
                                             <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
                                                 {filteredProducts.length}/{products.length}
@@ -709,7 +709,7 @@ function SaleAdminCreateOrderContent() {
                                             <input
                                                 type="text"
                                                 placeholder="Tìm tên hoặc SKU..."
-                                                className="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 w-64"
+                                                className="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] w-64"
                                                 value={productSearchTerm}
                                                 onChange={(e) => setProductSearchTerm(e.target.value)}
                                             />
@@ -765,10 +765,10 @@ function SaleAdminCreateOrderContent() {
                                         {/* Sort */}
                                         <div className="flex items-center gap-1">
                                             <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
-                                            <select
+                                             <select
                                                 value={sortBy}
                                                 onChange={(e) => setSortBy(e.target.value)}
-                                                className="text-xs border border-slate-200 rounded-md px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer"
+                                                className="text-xs border border-slate-200 rounded-md px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-1 focus:ring-[#00AFA9] cursor-pointer"
                                             >
                                                 <option value="name-asc">Tên A→Z</option>
                                                 <option value="name-desc">Tên Z→A</option>
@@ -797,14 +797,14 @@ function SaleAdminCreateOrderContent() {
                                                 .map((product) => {
                                                     const inOrderCount = orderItems.reduce((sum, item) => item.product.id === product.id ? sum + item.quantity : sum, 0);
                                                     const brandColors: Record<string, string> = {
-                                                        ABI: "bg-teal-600",
+                                                        ABI: "bg-[#00AFA9]",
                                                         UHI: "bg-orange-500",
-                                                        BOYO: "bg-purple-500",
+                                                        BOYO: "bg-[#00AFA9]",
                                                         CVT: "bg-blue-500",
-                                                        LYHU: "bg-teal-600",
-                                                        LHU: "bg-teal-600",
+                                                        LYHU: "bg-[#00AFA9]",
+                                                        LHU: "bg-[#00AFA9]",
                                                     };
-                                                    const brandColor = brandColors[product.brand || "LHU"] || "bg-teal-600";
+                                                    const brandColor = brandColors[product.brand || "LHU"] || "bg-[#00AFA9]";
                                                     const inputValue = productQuantities[product.id] || 1;
                                                     const stock = inventory[product.id] ?? 0;
                                                     const isOutOfStock = stock <= 0;
@@ -813,7 +813,7 @@ function SaleAdminCreateOrderContent() {
                                                         <tr
                                                             key={product.id}
                                                             className={`group transition-colors ${inOrderCount > 0
-                                                                ? "bg-teal-50/60 border-l-[3px] border-l-teal-500"
+                                                                ? "bg-teal-50/60 border-l-[3px] border-l-[#00AFA9]"
                                                                 : "hover:bg-slate-50 border-l-[3px] border-l-transparent"
                                                                 }`}
                                                         >
@@ -830,7 +830,7 @@ function SaleAdminCreateOrderContent() {
                                                                         <p className="text-[11px] text-slate-400">SKU: {product.sku}</p>
                                                                     </div>
                                                                     {inOrderCount > 0 && (
-                                                                        <span className="bg-teal-100 text-teal-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                                                                        <span className="bg-teal-50 text-[#00AFA9] border border-teal-200 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
                                                                             ×{inOrderCount}
                                                                         </span>
                                                                     )}
@@ -904,7 +904,7 @@ function SaleAdminCreateOrderContent() {
                                         <div className="text-center py-8">
                                             <Filter className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                                             <p className="text-sm text-slate-500">Không tìm thấy sản phẩm phù hợp</p>
-                                            <button onClick={() => { setBrandFilter("ALL"); setProductSearchTerm(""); setHideOutOfStock(false); }} className="text-xs text-teal-600 hover:underline mt-1">Xóa bộ lọc</button>
+                                            <button onClick={() => { setBrandFilter("ALL"); setProductSearchTerm(""); setHideOutOfStock(false); }} className="text-xs text-[#00AFA9] hover:underline mt-1">Xóa bộ lọc</button>
                                         </div>
                                     )}
                                     {products.length === 0 && (
@@ -1003,7 +1003,7 @@ function SaleAdminCreateOrderContent() {
                                                                 <div className="relative">
                                                                     <input
                                                                         type="number"
-                                                                        className="w-20 pl-1.5 pr-4 py-1 text-xs font-medium text-slate-900 border border-slate-200 rounded-md focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-right"
+                                                                        className="w-20 pl-1.5 pr-4 py-1 text-xs font-medium text-slate-900 border border-slate-200 rounded-md focus:border-[#00AFA9] focus:ring-1 focus:ring-[#00AFA9] text-right"
                                                                         value={item.price}
                                                                         onChange={(e) => handleUpdatePrice(index, Number(e.target.value))}
                                                                     />
@@ -1017,7 +1017,7 @@ function SaleAdminCreateOrderContent() {
                                                                     type="checkbox"
                                                                     checked={item.isGift}
                                                                     onChange={() => handleToggleGift(index)}
-                                                                    className="w-3.5 h-3.5 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                                                                    className="w-3.5 h-3.5 rounded border-slate-300 text-[#00AFA9] focus:ring-[#00AFA9]"
                                                                 />
                                                                 <Gift className="w-3 h-3" />
                                                             </label>
@@ -1035,7 +1035,7 @@ function SaleAdminCreateOrderContent() {
                                                                     />
                                                                     <button
                                                                         onClick={() => handleUpdateDiscount(index, item.discountValue, item.discountType === 'amount' ? 'percent' : 'amount')}
-                                                                        className="px-1 py-1 bg-slate-50 border-l border-slate-200 text-[9px] text-slate-600 font-bold hover:bg-teal-50 hover:text-teal-600 transition-colors"
+                                                                        className="px-1 py-1 bg-slate-50 border-l border-slate-200 text-[9px] text-slate-600 font-bold hover:bg-teal-50 hover:text-[#00AFA9] transition-colors"
                                                                     >
                                                                         {item.discountType === 'amount' ? 'đ' : '%'}
                                                                     </button>
@@ -1062,7 +1062,7 @@ function SaleAdminCreateOrderContent() {
                                                     <FileText className="w-3.5 h-3.5" /> Ghi chú
                                                 </label>
                                                 <textarea
-                                                    className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 min-h-[40px] resize-none"
+                                                    className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] min-h-[40px] resize-none"
                                                     placeholder="Ghi chú thêm..."
                                                     value={orderNote}
                                                     onChange={(e) => setOrderNote(e.target.value)}
@@ -1084,7 +1084,7 @@ function SaleAdminCreateOrderContent() {
                                                             key={method.id}
                                                             onClick={() => setPaymentMethod(method.id)}
                                                             className={`py-1.5 px-2 text-xs rounded-md border text-center transition-colors ${paymentMethod === method.id
-                                                                ? 'bg-teal-50 border-teal-500 text-teal-700 font-medium'
+                                                                ? 'bg-teal-50 border-[#00AFA9] text-[#00AFA9] font-medium'
                                                                 : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                                                                 }`}
                                                         >
@@ -1112,7 +1112,7 @@ function SaleAdminCreateOrderContent() {
                                                         <span>CK đơn:</span>
                                                         <input
                                                             type="number"
-                                                            className="w-10 px-1 py-0.5 text-center border border-slate-300 rounded focus:border-teal-500 text-[11px]"
+                                                            className="w-10 px-1 py-0.5 text-center border border-slate-300 rounded focus:border-[#00AFA9] text-[11px]"
                                                             placeholder="0"
                                                             min={0}
                                                             max={100}
@@ -1143,7 +1143,7 @@ function SaleAdminCreateOrderContent() {
                                                         <span>VAT:</span>
                                                         <input
                                                             type="number"
-                                                            className="w-9 px-1 py-0.5 text-center border border-slate-300 rounded focus:border-teal-500 text-[11px]"
+                                                            className="w-9 px-1 py-0.5 text-center border border-slate-300 rounded focus:border-[#00AFA9] text-[11px]"
                                                             placeholder="0"
                                                             min={0}
                                                             max={100}

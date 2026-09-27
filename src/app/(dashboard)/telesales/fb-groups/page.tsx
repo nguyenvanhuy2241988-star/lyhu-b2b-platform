@@ -419,7 +419,7 @@ export default function FbGroupsPage() {
                                                 </span>
                                                 {postCounts[group.name]?.byUser && postCounts[group.name].byUser.length > 0 && (
                                                     <div className="absolute z-50 bottom-full right-0 mb-2 hidden group-hover/post:block">
-                                                        <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap">
+                                                        <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 border border-gray-700 whitespace-nowrap">
                                                             <div className="font-semibold mb-1 text-gray-300">Chi tiết bài đăng:</div>
                                                             {postCounts[group.name].byUser.map((u, i) => (
                                                                 <div key={i} className="flex justify-between gap-4">

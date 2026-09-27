@@ -255,7 +255,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     <div className="flex items-center gap-2 mb-1">
-                        <div className="p-1.5 bg-teal-50 rounded-lg"><MapPin className="w-4 h-4 text-teal-600" /></div>
+                        <div className="p-1.5 bg-teal-50 rounded-lg"><MapPin className="w-4 h-4 text-[#00AFA9]" /></div>
                         <span className="text-xs text-slate-500">Phủ sóng NPP</span>
                     </div>
                     <div className="flex items-baseline gap-1">
@@ -263,9 +263,9 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                         <span className="text-sm text-slate-400">/ {totalProvinces}</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-                        <div className="bg-teal-500 h-1.5 rounded-full transition-all" style={{ width: `${coveragePct}%` }} />
+                        <div className="bg-[#00AFA9] h-1.5 rounded-full transition-all" style={{ width: `${coveragePct}%` }} />
                     </div>
-                    <span className="text-[11px] text-teal-600 font-medium">{coveragePct}% tỉnh/thành</span>
+                    <span className="text-[11px] text-[#00AFA9] font-medium">{coveragePct}% tỉnh/thành</span>
                 </div>
 
                 <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -278,7 +278,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
 
                 <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     <div className="flex items-center gap-2 mb-1">
-                        <div className="p-1.5 bg-purple-50 rounded-lg"><Store className="w-4 h-4 text-purple-600" /></div>
+                        <div className="p-1.5 bg-teal-50 rounded-lg"><Store className="w-4 h-4 text-[#00AFA9]" /></div>
                         <span className="text-xs text-slate-500">Điểm bán dự trù</span>
                     </div>
                     <p className="text-2xl font-bold text-slate-900">{totalOutlets.toLocaleString('vi-VN')}</p>
@@ -318,7 +318,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                         placeholder="Tìm tỉnh..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        className="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-400"
+                        className="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9]"
                     />
                 </div>
                 <span className="text-[11px] text-slate-400 ml-auto">{filtered.length} tỉnh/thành</span>
@@ -388,7 +388,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                                             </span>
                                                         </td>
                                                         <td className="px-3 py-2.5 text-right">
-                                                            <span className={`text-xs font-medium ${p.estimated_outlets > 0 ? 'text-purple-600' : 'text-slate-300'}`}>
+                                                            <span className={`text-xs font-medium ${p.estimated_outlets > 0 ? 'text-[#00AFA9]' : 'text-slate-300'}`}>
                                                                 {p.estimated_outlets > 0 ? p.estimated_outlets.toLocaleString('vi-VN') : '-'}
                                                             </span>
                                                         </td>
@@ -412,7 +412,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                                             <td className="px-3 py-2.5">
                                                                 <div className="flex flex-wrap gap-1">
                                                                     {(p.npp_brands || []).length > 0 ? p.npp_brands.map((brand, i) => (
-                                                                        <span key={i} className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-medium">
+                                                                        <span key={i} className="text-[10px] bg-teal-50 text-[#00AFA9] px-1.5 py-0.5 rounded font-medium">
                                                                             {brand}
                                                                         </span>
                                                                     )) : <span className="text-[10px] text-slate-300">-</span>}
@@ -423,7 +423,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                                             <td className="px-4 py-2.5 text-right">
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); openEdit(p); }}
-                                                                    className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                                                                    className="p-1.5 text-slate-400 hover:text-[#00AFA9] hover:bg-teal-50 rounded-lg transition-colors"
                                                                     title="Sửa thông tin"
                                                                 >
                                                                     <Edit2 className="w-3.5 h-3.5" />
@@ -445,7 +445,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                                                         {!readOnly && (
                                                                             <button
                                                                                 onClick={() => openAddRoute(p.province)}
-                                                                                className="flex items-center gap-1 text-[11px] font-medium text-teal-600 hover:text-teal-700 bg-teal-50 hover:bg-teal-100 px-2.5 py-1 rounded-lg transition-colors"
+                                                                                className="flex items-center gap-1 text-[11px] font-medium text-[#00AFA9] hover:text-[#009690] bg-teal-50 hover:bg-teal-100 px-2.5 py-1 rounded-lg transition-colors"
                                                                             >
                                                                                 <Plus className="w-3 h-3" /> Thêm tuyến
                                                                             </button>
@@ -475,7 +475,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                                                                     </div>
                                                                                     <div className="flex items-center gap-3 flex-shrink-0">
                                                                                         {rt.estimated_outlets > 0 && (
-                                                                                            <span className="text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded font-medium">
+                                                                                            <span className="text-[10px] text-[#00AFA9] bg-teal-50 px-2 py-0.5 rounded font-medium">
                                                                                                 {rt.estimated_outlets} điểm bán
                                                                                             </span>
                                                                                         )}
@@ -520,7 +520,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
             {/* Edit Province Modal */}
             {editing && !readOnly && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-lg max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between p-5 border-b border-slate-200">
                             <div>
                                 <h3 className="text-lg font-bold text-slate-900">✏️ {editing.province}</h3>
@@ -536,21 +536,21 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                     <label className="block text-xs font-medium text-slate-600 mb-1">Dân số (nghìn)</label>
                                     <input type="number" value={editForm.population}
                                         onChange={e => setEditForm(f => ({ ...f, population: parseInt(e.target.value) || 0 }))}
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-slate-600 mb-1">Số tuyến</label>
                                     <input type="number" value={editForm.total_routes}
                                         onChange={e => setEditForm(f => ({ ...f, total_routes: parseInt(e.target.value) || 0 }))}
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-slate-600 mb-1">Điểm bán DT</label>
                                     <input type="number" value={editForm.estimated_outlets}
                                         onChange={e => setEditForm(f => ({ ...f, estimated_outlets: parseInt(e.target.value) || 0 }))}
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     />
                                 </div>
                             </div>
@@ -560,7 +560,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                 <label className="flex items-center gap-2 cursor-pointer mb-3">
                                     <input type="checkbox" checked={editForm.has_npp}
                                         onChange={e => setEditForm(f => ({ ...f, has_npp: e.target.checked }))}
-                                        className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                                        className="rounded border-slate-300 text-[#00AFA9] focus:ring-[#00AFA9]"
                                     />
                                     <span className="text-sm font-medium text-slate-700">Đã có NPP</span>
                                 </label>
@@ -571,7 +571,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                             <label className="block text-xs font-medium text-slate-600 mb-1">Tên NPP</label>
                                             <input value={editForm.npp_name}
                                                 onChange={e => setEditForm(f => ({ ...f, npp_name: e.target.value }))}
-                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                                 placeholder="VD: NPP Hà Nội ABC"
                                             />
                                         </div>
@@ -579,7 +579,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                             <label className="block text-xs font-medium text-slate-600 mb-1">Nhãn hiệu (cách nhau bởi dấu phẩy)</label>
                                             <input value={brandsInput}
                                                 onChange={e => setBrandsInput(e.target.value)}
-                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                                 placeholder="VD: LYHU, Brand A, Brand B"
                                             />
                                         </div>
@@ -587,7 +587,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                             <label className="block text-xs font-medium text-slate-600 mb-1">Trạng thái NPP</label>
                                             <select value={editForm.npp_status}
                                                 onChange={e => setEditForm(f => ({ ...f, npp_status: e.target.value }))}
-                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                             >
                                                 <option value="active">Đang hoạt động</option>
                                                 <option value="pending">Đang triển khai</option>
@@ -603,7 +603,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                 <textarea value={editForm.notes}
                                     onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
                                     rows={2}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none resize-none"
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9] outline-none resize-none"
                                     placeholder="Ghi chú thêm..."
                                 />
                             </div>
@@ -612,7 +612,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                 <button type="button" onClick={() => setEditing(null)}
                                     className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Hủy</button>
                                 <button type="submit" disabled={saving}
-                                    className="flex items-center gap-2 px-5 py-2 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 font-medium transition-colors">
+                                    className="flex items-center gap-2 px-5 py-2 text-sm bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] disabled:opacity-50 font-medium transition-colors">
                                     <Save className="w-4 h-4" />
                                     {saving ? "Đang lưu..." : "Lưu"}
                                 </button>
@@ -625,7 +625,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
             {/* Add Route Modal */}
             {showAddRoute && !readOnly && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                    <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md">
                         <div className="flex items-center justify-between p-5 border-b border-slate-200">
                             <div>
                                 <h3 className="text-lg font-bold text-slate-900">🛣️ Thêm tuyến — {addRouteProvince}</h3>
@@ -639,7 +639,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Tên tuyến *</label>
                                 <input required value={routeForm.route_name}
                                     onChange={e => setRouteForm(f => ({ ...f, route_name: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     placeholder="VD: Tuyến Đống Đa - Thanh Xuân"
                                 />
                             </div>
@@ -647,7 +647,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Quận/Huyện đi qua</label>
                                 <input value={routeForm.districts}
                                     onChange={e => setRouteForm(f => ({ ...f, districts: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     placeholder="VD: Đống Đa, Thanh Xuân, Hoàng Mai"
                                 />
                             </div>
@@ -656,14 +656,14 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                     <label className="block text-xs font-medium text-slate-600 mb-1">Điểm bán DT</label>
                                     <input type="number" value={routeForm.estimated_outlets}
                                         onChange={e => setRouteForm(f => ({ ...f, estimated_outlets: parseInt(e.target.value) || 0 }))}
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-slate-600 mb-1">Tần suất</label>
                                     <select value={routeForm.frequency}
                                         onChange={e => setRouteForm(f => ({ ...f, frequency: e.target.value }))}
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     >
                                         <option value="weekly">Hàng tuần</option>
                                         <option value="biweekly">2 tuần/lần</option>
@@ -675,7 +675,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Ghi chú</label>
                                 <input value={routeForm.notes}
                                     onChange={e => setRouteForm(f => ({ ...f, notes: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     placeholder="Ghi chú thêm..."
                                 />
                             </div>
@@ -684,7 +684,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                 <button type="button" onClick={() => setShowAddRoute(false)}
                                     className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Hủy</button>
                                 <button type="submit" disabled={savingRoute}
-                                    className="flex items-center gap-2 px-5 py-2 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 font-medium transition-colors">
+                                    className="flex items-center gap-2 px-5 py-2 text-sm bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] disabled:opacity-50 font-medium transition-colors">
                                     <Plus className="w-4 h-4" />
                                     {savingRoute ? "Đang thêm..." : "Thêm tuyến"}
                                 </button>

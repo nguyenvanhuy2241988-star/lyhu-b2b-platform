@@ -629,7 +629,7 @@ export default function SaleAdminDashboard() {
     const statCards = [
         { label: 'Chờ duyệt', value: String(allPending.length), icon: AlertCircle, color: 'text-amber-600', bgIcon: 'bg-amber-50', highlight: allPending.length > 0, global: true },
         { label: 'Xử lý hôm nay', value: String(todayProcessed.length), icon: ClipboardCheck, color: 'text-primary-600', bgIcon: 'bg-primary-50', global: true },
-        { label: 'Đang giao', value: String(allDelivering.length), icon: Truck, color: 'text-indigo-600', bgIcon: 'bg-indigo-50', global: true },
+        { label: 'Đang giao', value: String(allDelivering.length), icon: Truck, color: 'text-[#00AFA9]', bgIcon: 'bg-teal-50', global: true },
         { label: 'Doanh thu', value: fmtPrice(filteredRevenue), icon: DollarSign, color: 'text-emerald-600', bgIcon: 'bg-emerald-50', isPrice: true },
         { label: 'Tổng đơn', value: String(filteredOrders.length), icon: ShoppingCart, color: 'text-primary-700', bgIcon: 'bg-primary-50' },
         { label: 'Giao thành công', value: filteredOrders.length > 0 ? `${deliveryRate}%` : '—', icon: CheckCircle, color: 'text-secondary-600', bgIcon: 'bg-secondary-50' },

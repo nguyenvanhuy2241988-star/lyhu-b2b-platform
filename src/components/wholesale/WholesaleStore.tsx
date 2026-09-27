@@ -884,7 +884,7 @@ export default function WholesaleStore({
                                 handleClosePopup();
                                 if (!popupBanner.link_url) e.preventDefault();
                             }}
-                            className="block rounded-lg overflow-hidden shadow-2xl relative group bg-white"
+                            className="block rounded-lg overflow-hidden border border-slate-200 shadow-sm relative group bg-white"
                         >
                             <img src={popupBanner.image_url} alt="Khuyến mãi đặc biệt" className="w-full h-auto max-h-[70vh] object-contain" />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
@@ -934,7 +934,7 @@ export default function WholesaleStore({
                             {isNotifOpen && (
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)}></div>
-                                    <div className="absolute right-0 top-full mt-1 w-[360px] bg-white shadow-xl border border-gray-200 rounded-sm z-50 animate-in fade-in slide-in-from-top-2">
+                                    <div className="absolute right-0 top-full mt-1 w-[360px] bg-white shadow-sm border border-slate-200 rounded-sm z-50 animate-in fade-in slide-in-from-top-2">
                                         <div className="p-3 border-b border-gray-100 flex items-center justify-between">
                                             <h4 className="text-sm font-bold text-gray-800">Thông Báo Mới</h4>
                                         </div>
@@ -980,7 +980,7 @@ export default function WholesaleStore({
             </div>
 
             {/* Header LYHU Style - Shopee layout */}
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 sticky top-0 z-40 shadow-md">
+            <div className="bg-[#00AFA9] px-4 sticky top-0 z-40 shadow-sm">
                 <div className="max-w-6xl mx-auto hidden md:flex items-center gap-6 py-3">
                     {/* Col 1: Logo */}
                     <div className="shrink-0 flex items-center">
@@ -1025,7 +1025,7 @@ export default function WholesaleStore({
 
                             {/* Search History Dropdown */}
                             {isSearchFocused && searchHistory.length > 0 && !searchQuery && (
-                                <div className="absolute top-full left-0 right-0 bg-white shadow-xl border border-gray-200 rounded-b-sm z-50 mt-0.5">
+                                <div className="absolute top-full left-0 right-0 bg-white shadow-sm border border-slate-200 rounded-b-sm z-50 mt-0.5">
                                     <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
                                         <span className="text-xs font-semibold text-gray-500">Lịch sử tìm kiếm</span>
                                         <button onClick={clearSearchHistory} className="text-[11px] text-primary-600 hover:text-primary-700 font-medium">Xoá tất cả</button>
@@ -1071,7 +1071,7 @@ export default function WholesaleStore({
                                     </span>
                                 )}
                             </button>
-                            <div className="absolute top-full right-0 w-[400px] bg-white shadow-xl border border-gray-200 rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top mt-1 z-50">
+                            <div className="absolute top-full right-0 w-[400px] bg-white shadow-sm border border-slate-200 rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top mt-1 z-50">
                                 {cartAnalysis.items.length === 0 ? (
                                     <div className="p-8 flex flex-col items-center justify-center text-gray-400">
                                         <ShoppingCart className="w-16 h-16 opacity-30 mb-2" />
@@ -1154,7 +1154,7 @@ export default function WholesaleStore({
                             {isNotifOpen && (
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)}></div>
-                                    <div className="absolute right-0 top-full mt-2 w-[300px] bg-white shadow-xl border border-gray-200 rounded-sm z-50 animate-in fade-in slide-in-from-top-2 text-black">
+                                    <div className="absolute right-0 top-full mt-2 w-[300px] bg-white shadow-sm border border-slate-200 rounded-sm z-50 animate-in fade-in slide-in-from-top-2 text-black">
                                         <div className="p-3 border-b border-gray-100 flex items-center justify-between">
                                             <h4 className="text-sm font-bold text-gray-800">Thông Báo Mới</h4>
                                         </div>
@@ -1237,7 +1237,7 @@ export default function WholesaleStore({
                                     )}
                                 </>
                             ) : (
-                                <div className="w-full h-full bg-gradient-to-r from-primary-50 to-primary-100 p-6 flex flex-col justify-center">
+                                <div className="w-full h-full bg-teal-50 p-6 flex flex-col justify-center">
                                     <h2 className="text-2xl md:text-3xl font-bold text-primary-700 mb-2 uppercase tracking-wide">Siêu Hội Bán Sỉ</h2>
                                     <p className="text-gray-700 font-medium">Nhập càng nhiều - Chiết khấu càng sâu. Áp dụng bảng giá NPP mới từ tháng này.</p>
                                 </div>
@@ -1262,7 +1262,7 @@ export default function WholesaleStore({
                     </div>
                 ) : (
                     <div className="mb-4 rounded-sm overflow-hidden bg-white shadow-sm flex flex-col md:flex-row border border-gray-100">
-                        <div className="p-6 md:w-2/3 bg-gradient-to-r from-primary-50 to-primary-100">
+                        <div className="p-6 md:w-2/3 bg-teal-50">
                             <h2 className="text-2xl font-bold text-primary-700 mb-2 uppercase tracking-wide">Siêu Hội Bán Sỉ</h2>
                             <p className="text-gray-700 font-medium">Nhập càng nhiều - Chiết khấu càng sâu. Áp dụng bảng giá NPP mới từ tháng này.</p>
                             <div className="mt-4 flex gap-2">
@@ -1278,7 +1278,7 @@ export default function WholesaleStore({
                     <div className="mb-6 flex gap-3 overflow-x-auto hide-scrollbar pb-2">
                         {vouchers.map(v => (
                             <div key={v.id} className={`min-w-[280px] bg-white border rounded-sm shadow-sm flex overflow-hidden ${v.discount_type === 'freeship' ? 'border-primary-200' : 'border-secondary-500'}`}>
-                                <div className={`w-[80px] flex flex-col items-center justify-center text-white p-2 border-r border-dashed border-white ${v.discount_type === 'freeship' ? 'bg-gradient-to-br from-primary-500 to-primary-600' : 'bg-gradient-to-br from-secondary-400 to-secondary-500'}`}>
+                                <div className={`w-[80px] flex flex-col items-center justify-center text-white p-2 border-r border-dashed border-white ${v.discount_type === 'freeship' ? 'bg-[#00AFA9]' : 'bg-[#98c93c]'}`}>
                                     {v.discount_type === 'freeship' ? (
                                         <div className="w-6 h-6 border-2 border-white rounded-full flex items-center justify-center mb-1"><span className="text-xs font-bold font-serif">%</span></div>
                                     ) : (
@@ -1343,7 +1343,7 @@ export default function WholesaleStore({
                                                 {new Intl.NumberFormat('vi-VN').format(product.flashSalePrice)}
                                             </span>
                                             <div className="w-full bg-primary-100 rounded-full h-3 mb-2 relative overflow-hidden flex items-center justify-center">
-                                                <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full" style={{ width: `${product.stockRatio}%` }}></div>
+                                                <div className="absolute top-0 left-0 h-full bg-[#00AFA9] rounded-full" style={{ width: `${product.stockRatio}%` }}></div>
                                                 <span className="relative text-[9px] font-bold text-white uppercase drop-shadow-md z-1">Đã bán {product.stockRatio}%</span>
                                             </div>
                                         </div>
@@ -1491,7 +1491,7 @@ export default function WholesaleStore({
             {/* Quick View Modal (Shopee style) */}
             {selectedProduct && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setSelectedProduct(null)}>
-                    <div className="bg-white rounded-md shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row relative" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-md border border-slate-200 shadow-sm max-w-4xl w-full max-h-[90vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row relative" onClick={e => e.stopPropagation()}>
                         <button className="absolute top-3 right-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full p-2 z-20 transition-colors" onClick={() => setSelectedProduct(null)}>
                             <X className="w-5 h-5" />
                         </button>
@@ -1837,7 +1837,7 @@ export default function WholesaleStore({
             {isHistoryOpen && (
                 <>
                     <div className="fixed inset-0 bg-black/50 z-50 transition-opacity" onClick={() => setIsHistoryOpen(false)}></div>
-                    <div className="fixed inset-y-0 right-0 w-full md:w-[400px] bg-white shadow-2xl z-50 flex flex-col transform transition-transform duration-300">
+                    <div className="fixed inset-y-0 right-0 w-full md:w-[400px] bg-white border-l border-slate-200 shadow-sm z-50 flex flex-col transform transition-transform duration-300">
                         <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-primary-500 text-white">
                             <h2 className="text-lg font-bold">Lịch Sử Mua Sỉ</h2>
                             <button onClick={() => setIsHistoryOpen(false)} className="hover:bg-primary-600 p-1 rounded-full text-white"><X className="w-5 h-5"/></button>
@@ -1896,7 +1896,7 @@ export default function WholesaleStore({
             {isCheckoutOpen && (
                 <>
                     <div className="fixed inset-0 bg-black/50 z-50 transition-opacity" onClick={() => setIsCheckoutOpen(false)}></div>
-                    <div className="fixed inset-y-0 right-0 w-full md:w-[450px] bg-white shadow-2xl z-50 flex flex-col transform transition-transform duration-300">
+                    <div className="fixed inset-y-0 right-0 w-full md:w-[450px] bg-white border-l border-slate-200 shadow-sm z-50 flex flex-col transform transition-transform duration-300">
                         <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-primary-500 text-white">
                             <h2 className="text-lg font-bold">Thanh Toán Đơn Sỉ</h2>
                             <button onClick={() => setIsCheckoutOpen(false)} className="hover:bg-primary-600 p-1 rounded-full text-white"><X className="w-5 h-5"/></button>
@@ -2057,7 +2057,7 @@ export default function WholesaleStore({
                             <button 
                                 onClick={submitOrder}
                                 disabled={isSubmitting || cartAnalysis.items.length === 0 || customerName.trim() === '' || customerPhone.trim() === '' || address.trim() === ''}
-                                className="w-full bg-primary-600 text-white py-3.5 rounded-sm font-bold text-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
+                                className="w-full bg-[#00AFA9] text-white py-3.5 rounded-sm font-bold text-lg hover:bg-[#009690] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-sm"
                             >
                                 {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Đặt Hàng Sỉ Ngay'}
                             </button>
@@ -2069,7 +2069,7 @@ export default function WholesaleStore({
             {/* Popup Thông báo Thành công Mock */}
             {checkoutSuccess && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 animate-in fade-in">
-                    <div className="bg-white p-8 rounded-md flex flex-col items-center max-w-sm w-full shadow-2xl text-center transform scale-100 animate-in zoom-in-95">
+                    <div className="bg-white p-8 rounded-md flex flex-col items-center max-w-sm w-full border border-slate-200 shadow-sm text-center transform scale-100 animate-in zoom-in-95">
                         <div className="w-16 h-16 bg-secondary-100 text-secondary-500 rounded-full flex items-center justify-center mb-4">
                             <CheckCircle2 className="w-10 h-10" />
                         </div>
@@ -2098,7 +2098,7 @@ export default function WholesaleStore({
                     <div className="flex items-center justify-between h-[60px] max-w-6xl mx-auto">
                         <div className="flex items-center pl-4 relative h-full flex-1 group" onClick={() => setIsCheckoutOpen(true)}>
                             {/* Icon Cart Floating */}
-                            <div className="relative -top-3 w-12 h-12 bg-white border border-primary-500 text-primary-600 rounded-full flex items-center justify-center shadow-lg group-hover:-translate-y-1 transition-transform cursor-pointer">
+                            <div className="relative -top-3 w-12 h-12 bg-white border border-[#00AFA9] text-[#00AFA9] rounded-full flex items-center justify-center shadow-sm group-hover:-translate-y-1 transition-transform cursor-pointer">
                                 <ShoppingCart className="w-5 h-5" />
                                 <span className="absolute -top-1 -right-1 bg-secondary-500 text-white text-[10px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-1 shadow-sm border border-white">
                                     {cartAnalysis.totalItems}

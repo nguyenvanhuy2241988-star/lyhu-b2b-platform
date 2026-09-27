@@ -165,7 +165,7 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess, shippingOnly
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm w-full max-w-2xl max-h-[90vh] flex flex-col">
                 {/* Header */}
                 <div className="flex justify-between items-center p-4 border-b">
                     <h2 className="text-xl font-bold">
@@ -206,7 +206,7 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess, shippingOnly
                         <div>
                             <div className="flex justify-between items-center mb-2">
                                 <h3 className="font-semibold text-sm">Sản phẩm</h3>
-                                <button onClick={() => setIsAddingProduct(!isAddingProduct)} className="text-sm text-blue-600 font-medium flex items-center gap-1">
+                                <button onClick={() => setIsAddingProduct(!isAddingProduct)} className="text-sm text-[#00AFA9] hover:text-[#009690] font-medium flex items-center gap-1">
                                     <Plus className="w-4 h-4" /> Thêm
                                 </button>
                             </div>
@@ -300,7 +300,7 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess, shippingOnly
                                     Thùng hàng
                                     {totalBoxes > 0 && <span className="text-slate-400 font-normal ml-1">({totalBoxes} thùng · {totalWeight.toFixed(1)} kg)</span>}
                                 </label>
-                                <button onClick={addBox} className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium">
+                                <button onClick={addBox} className="flex items-center gap-1 text-xs text-[#00AFA9] hover:text-[#009690] font-medium">
                                     <Plus className="w-3 h-3" /> Thêm loại thùng
                                 </button>
                             </div>
@@ -369,7 +369,7 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess, shippingOnly
                     <button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
+                        className="px-4 py-2 bg-[#00AFA9] text-white rounded hover:bg-[#009690] flex items-center gap-2"
                     >
                         {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                         Lưu thay đổi

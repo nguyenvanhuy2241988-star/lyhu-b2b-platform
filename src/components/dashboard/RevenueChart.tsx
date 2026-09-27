@@ -33,10 +33,10 @@ const formatTooltipValue = (value: number) => {
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
+            <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-sm">
                 <p className="text-sm font-medium text-slate-700 mb-1">{`Ngày: ${label}`}</p>
                 <div className="flex flex-col gap-1">
-                    <p className="text-sm text-sky-500 font-semibold">
+                    <p className="text-sm text-[#00AFA9] font-semibold">
                         {`Doanh thu: ${formatTooltipValue(payload[0].value)}`}
                     </p>
                 </div>
@@ -72,8 +72,8 @@ export default function RevenueChart({ data, isLoading }: RevenueChartProps) {
                 <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                         <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.8} />
-                            <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                            <stop offset="5%" stopColor="#00AFA9" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#00AFA9" stopOpacity={0} />
                         </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -101,7 +101,7 @@ export default function RevenueChart({ data, isLoading }: RevenueChartProps) {
                     <Area
                         type="monotone"
                         dataKey="revenue"
-                        stroke="#0ea5e9"
+                        stroke="#00AFA9"
                         strokeWidth={3}
                         fillOpacity={1}
                         fill="url(#colorRevenue)"
