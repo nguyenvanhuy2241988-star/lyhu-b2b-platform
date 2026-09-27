@@ -175,7 +175,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
         <>
             <div onClick={() => setOpen(true)}>
                 {trigger || (
-                    <button className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors">
+                    <button className="inline-flex items-center gap-2 px-4 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-lg font-medium transition-colors">
                         <Plus className="w-4 h-4" />
                         Tạo sự kiện mới
                     </button>
@@ -184,7 +184,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
 
             {open && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+                    <div className="bg-white rounded-xl border border-slate-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
                         <div className="p-6 border-b flex items-center justify-between sticky top-0 bg-white z-10">
                             <h2 className="text-xl font-bold text-slate-900">
                                 {isEditMode ? 'Cập nhật sự kiện' : 'Lên kế hoạch sự kiện mới'}
@@ -202,7 +202,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                         required
                                         type="text"
                                         placeholder="Ví dụ: Tiệc Tất Niên 2026"
-                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300"
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] border-slate-300"
                                         value={formData.title}
                                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     />
@@ -211,7 +211,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-700">Trạng thái</label>
                                     <select
-                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300 bg-white"
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] border-slate-300 bg-white"
                                         value={formData.status}
                                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                     >
@@ -226,7 +226,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                     <input
                                         type="number"
                                         placeholder="0"
-                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300"
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] border-slate-300"
                                         value={formData.priority}
                                         onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
                                     />
@@ -236,7 +236,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-700">Loại sự kiện <span className="text-red-500">*</span></label>
                                     <select
-                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300 bg-white"
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] border-slate-300 bg-white"
                                         value={formData.event_type}
                                         onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}
                                     >
@@ -254,7 +254,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                         required
                                         type="text"
                                         placeholder="Tại văn phòng, Nhà hàng ABC..."
-                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300"
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] border-slate-300"
                                         value={formData.location}
                                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                                     />
@@ -265,7 +265,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                     <input
                                         type="date"
                                         required
-                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300"
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] border-slate-300"
                                         value={formData.start_date}
                                         onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                                     />
@@ -276,7 +276,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                     <input
                                         type="time"
                                         required
-                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300"
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] border-slate-300"
                                         value={formData.start_time}
                                         onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
                                     />
@@ -287,7 +287,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                     <input
                                         type="date"
                                         placeholder="Bỏ trống nếu trong ngày"
-                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300"
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] border-slate-300"
                                         value={formData.end_date}
                                         onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                                     />
@@ -298,7 +298,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                     <input
                                         type="time"
                                         required
-                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300"
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] border-slate-300"
                                         value={formData.end_time}
                                         onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
                                     />
@@ -307,7 +307,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                 <div className="space-y-2 col-span-2">
                                     <label className="text-sm font-medium text-slate-700">Ảnh bìa / Poster</label>
 
-                                    <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 transition-colors hover:border-teal-500 hover:bg-teal-50/30 text-center relative group">
+                                    <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 transition-colors hover:border-[#00AFA9] hover:bg-teal-50/30 text-center relative group">
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -327,9 +327,9 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                                     <button
                                                         type="button"
                                                         onClick={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation(); // Avoid triggering input
-                                                            setFormData({ ...formData, banner_url: "" });
+                                                             e.preventDefault();
+                                                             e.stopPropagation(); // Avoid triggering input
+                                                             setFormData({ ...formData, banner_url: "" });
                                                         }}
                                                         className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition shadow-sm z-30"
                                                         title="Xóa ảnh"
@@ -345,7 +345,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                             <div className="py-8 text-slate-500">
                                                 {uploading ? (
                                                     <div className="flex flex-col items-center gap-2">
-                                                        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+                                                        <Loader2 className="w-8 h-8 animate-spin text-[#00AFA9]" />
                                                         <span>Đang tải lên...</span>
                                                     </div>
                                                 ) : (
@@ -367,7 +367,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                     <input
                                         type="number"
                                         min="0"
-                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300"
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] border-slate-300"
                                         value={formData.budget_total}
                                         onChange={(e) => setFormData({ ...formData, budget_total: Number(e.target.value) })}
                                     />
@@ -377,7 +377,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                     <label className="text-sm font-medium text-slate-700">Mô tả chi tiết</label>
                                     <textarea
                                         placeholder="Nội dung chương trình, lưu ý..."
-                                        className="w-full min-h-[100px] px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300"
+                                        className="w-full min-h-[100px] px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/20 focus:border-[#00AFA9] border-slate-300"
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     />
@@ -396,7 +396,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium shadow-lg shadow-teal-200 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-lg font-medium shadow-sm transition-colors disabled:opacity-50"
                                 >
                                     {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                                     {isEditMode ? 'Cập nhật' : 'Tạo kế hoạch'}

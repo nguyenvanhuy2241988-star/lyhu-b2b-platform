@@ -304,7 +304,7 @@ export default function GTCreateOrderPage() {
                     {selectedOutlet?.name} • {orderItems.length} sản phẩm • <span className="font-bold text-[#00AFA9]">{formatPrice(finalTotal)}</span>
                 </p>
                 <div className="flex gap-3 justify-center mt-6">
-                    <button onClick={handleReset} className="px-5 py-2.5 text-sm font-semibold bg-[#00AFA9] text-white rounded-xl hover:bg-[#009b95] transition-colors">
+                    <button onClick={handleReset} className="px-5 py-2.5 text-sm font-semibold bg-[#00AFA9] text-white rounded-xl hover:bg-[#009690] transition-colors">
                         Tạo đơn mới
                     </button>
                     <Link href="/sales-gt" className="px-5 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition-colors">
@@ -845,7 +845,7 @@ export default function GTCreateOrderPage() {
                                                 className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs sm:text-sm transition-colors"
                                             >Hủy</button>
                                             <button onClick={handleSubmit} disabled={submitting}
-                                                className="flex-[2] px-4 py-2.5 bg-[#00AFA9] hover:bg-[#009b95] text-white rounded-xl font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-2"
+                                                className="flex-[2] px-4 py-2.5 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-xl font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-2"
                                             >
                                                 {submitting ? (
                                                     <><Loader2 className="w-4 h-4 animate-spin" /> Đang tạo đơn...</>
@@ -862,7 +862,7 @@ export default function GTCreateOrderPage() {
 
                     {/* Mobile Sticky Order Bar */}
                     {orderItems.length > 0 && (
-                        <div className="lg:hidden fixed bottom-3 left-3 right-3 z-40 bg-slate-900 text-white rounded-2xl p-3 px-4 shadow-xl border border-slate-800 flex items-center justify-between">
+                        <div className="lg:hidden fixed bottom-3 left-3 right-3 z-40 bg-slate-900 text-white rounded-2xl p-3 px-4 border border-slate-800 flex items-center justify-between">
                             <div>
                                 <p className="text-[11px] text-slate-400 font-medium">
                                     Đã chọn <span className="font-bold text-white">{orderItems.filter(i => !i.isGift).length} SP</span>
@@ -874,7 +874,7 @@ export default function GTCreateOrderPage() {
                                     const cartEl = document.getElementById('order-cart-panel');
                                     if (cartEl) cartEl.scrollIntoView({ behavior: 'smooth' });
                                 }}
-                                className="px-4 py-2 bg-[#00AFA9] hover:bg-[#009b95] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors shadow-sm"
+                                className="px-4 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors shadow-sm"
                             >
                                 <ShoppingCart className="w-4 h-4" />
                                 Xem đơn & Chốt

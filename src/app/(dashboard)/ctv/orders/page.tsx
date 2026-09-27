@@ -31,7 +31,7 @@ const STATUS_CONFIG = {
     delivering: {
         label: "Đang giao hàng",
         icon: Truck,
-        color: "bg-indigo-100 text-indigo-700",
+        color: "bg-teal-50 text-[#00AFA9]",
     },
     delivered: {
         label: "Đã giao",
@@ -139,7 +139,7 @@ export default function CTVOrdersPage() {
                             key={option.value}
                             onClick={() => setSelectedStatus(option.value)}
                             className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${selectedStatus === option.value
-                                ? "bg-primary-500 text-white"
+                                ? "bg-[#00AFA9] text-white"
                                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                 }`}
                         >
@@ -160,14 +160,14 @@ export default function CTVOrdersPage() {
                     return (
                         <div
                             key={order.id}
-                            className="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 hover:shadow-md transition-shadow"
+                            className="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 hover:border-[#00AFA9] transition-colors"
                         >
                             {/* Order Header */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-4 border-b border-slate-200">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <h3 className="font-semibold text-slate-900">{order.id}</h3>
-                                        <span className={`text-xs px-2 py-0.5 rounded border ${isSelfShip ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-purple-50 text-purple-700 border-purple-200"}`}>
+                                        <span className={`text-xs px-2 py-0.5 rounded border ${isSelfShip ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-teal-50 text-[#00AFA9] border-teal-200"}`}>
                                             {isSelfShip ? "Tự ship" : "LYHU giao"}
                                         </span>
                                     </div>

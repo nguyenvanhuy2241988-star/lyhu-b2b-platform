@@ -71,7 +71,7 @@ export default function AccountantPurchasesPage() {
                 </div>
                 <button
                     onClick={() => setShowAddModal(true)}
-                    className="flex items-center gap-2 bg-[#00AFA9] hover:bg-[#009b95] text-white px-4 py-2 rounded-xl text-sm font-bold border border-teal-600 transition-colors"
+                    className="flex items-center gap-2 bg-[#00AFA9] hover:bg-[#009690] text-white px-4 py-2 rounded-xl text-sm font-bold border border-teal-600 transition-colors"
                 >
                     <Plus className="w-4 h-4" />
                     Tạo đơn mua hàng
@@ -82,7 +82,7 @@ export default function AccountantPurchasesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-5 rounded-xl border border-slate-200">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                        <div className="p-2 bg-teal-50 text-[#00AFA9] rounded-lg">
                             <ShoppingCart className="w-5 h-5" />
                         </div>
                         <span className="text-sm font-medium text-slate-500">Đơn hàng hiện tại</span>
@@ -176,7 +176,7 @@ export default function AccountantPurchasesPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="text-[#00AFA9] hover:text-[#009b95] font-bold text-xs flex items-center gap-1 ml-auto">
+                                            <button className="text-[#00AFA9] hover:text-[#009690] font-bold text-xs flex items-center gap-1 ml-auto">
                                                 Chi tiết <ChevronRight className="w-3.5 h-3.5" />
                                             </button>
                                         </td>

@@ -156,8 +156,8 @@ export default function AdminReferralsPage() {
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-purple-50 rounded-lg">
-                            <Users className="w-6 h-6 text-purple-600" />
+                        <div className="p-3 bg-teal-50 rounded-lg">
+                            <Users className="w-6 h-6 text-[#00AFA9]" />
                         </div>
                         <div>
                             <p className="text-sm text-slate-600">Có người giới thiệu</p>

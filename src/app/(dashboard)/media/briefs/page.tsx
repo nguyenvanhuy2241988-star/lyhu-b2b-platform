@@ -123,7 +123,7 @@ export default function MediaBriefsPage() {
                         <div className="relative">
                             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input type="text"
-                                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                 placeholder="Tên dự án, nội dung brief..."
                                 value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                             />
@@ -133,14 +133,14 @@ export default function MediaBriefsPage() {
                         <div className="flex-1 md:w-36">
                             <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Từ ngày</label>
                             <input type="date"
-                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-teal-500 outline-none"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                 value={dateFrom} onChange={e => setDateFrom(e.target.value)}
                             />
                         </div>
                         <div className="flex-1 md:w-36">
                             <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Đến ngày</label>
                             <input type="date"
-                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-teal-500 outline-none"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                 value={dateTo} onChange={e => setDateTo(e.target.value)}
                             />
                         </div>
@@ -153,7 +153,7 @@ export default function MediaBriefsPage() {
                     </div>
                     {[{ key: "all", label: "Tất cả" }, ...Object.entries(STATUS_CONFIG).map(([k, v]) => ({ key: k, label: v.label }))].map(opt => (
                         <button key={opt.key} onClick={() => setFilterStatus(opt.key)}
-                            className={`px-3 py-1 text-xs font-bold rounded-md transition-colors border ${filterStatus === opt.key ? 'bg-pink-50 text-pink-700 border-pink-200' : 'bg-transparent text-slate-600 border-transparent hover:bg-slate-50'}`}>
+                            className={`px-3 py-1 text-xs font-bold rounded-md transition-colors border ${filterStatus === opt.key ? 'bg-teal-50 text-[#00AFA9] border-[#00AFA9]' : 'bg-transparent text-slate-600 border-transparent hover:bg-slate-50'}`}>
                             {opt.label}
                         </button>
                     ))}
@@ -205,7 +205,7 @@ export default function MediaBriefsPage() {
                                             <span className="flex items-center gap-1.5 text-slate-500 font-medium">
                                                 <User className="w-3.5 h-3.5 text-slate-400" /> Phụ trách:
                                             </span>
-                                            <span className="font-bold text-teal-700 max-w-[140px] truncate" title={getAssigneeNames(brief.assignees, brief.assigned_to)}>
+                                            <span className="font-bold text-[#00AFA9] max-w-[140px] truncate" title={getAssigneeNames(brief.assignees, brief.assigned_to)}>
                                                 {getAssigneeNames(brief.assignees, brief.assigned_to)}
                                             </span>
                                         </div>
@@ -215,7 +215,7 @@ export default function MediaBriefsPage() {
                                                 <span className="flex items-center gap-1.5 text-slate-500 font-medium">
                                                     <Clock className="w-3.5 h-3.5 text-slate-400" /> Hạn chót:
                                                 </span>
-                                                <span className="font-bold text-pink-700">{new Date(brief.deadline).toLocaleDateString('vi-VN')}</span>
+                                                <span className="font-bold text-[#00AFA9]">{new Date(brief.deadline).toLocaleDateString('vi-VN')}</span>
                                             </div>
                                         )}
                                         

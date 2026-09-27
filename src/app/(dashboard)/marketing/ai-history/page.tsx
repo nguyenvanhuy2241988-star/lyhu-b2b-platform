@@ -70,7 +70,7 @@ export default function AiHistoryPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <Bot className="w-8 h-8 text-purple-600" />
+                        <Bot className="w-8 h-8 text-[#00AFA9]" />
                         Lịch sử Tối ưu AI
                     </h1>
                     <p className="text-slate-500 mt-1">
@@ -94,10 +94,10 @@ export default function AiHistoryPage() {
             ) : (
                 <div className="grid gap-4">
                     {logs.map((log) => (
-                        <div key={log.id} className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-purple-300 transition-colors shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div key={log.id} className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-[#00AFA9] transition-colors shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="flex-1">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-lg">
+                                    <span className="px-3 py-1 bg-teal-50 text-[#00AFA9] border border-teal-200 text-xs font-bold rounded-lg">
                                         [AI OPTIMIZE]
                                     </span>
                                     <span className="text-sm font-medium text-slate-500 flex items-center gap-1">

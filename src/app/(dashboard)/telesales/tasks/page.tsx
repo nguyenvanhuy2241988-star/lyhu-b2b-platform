@@ -1390,7 +1390,7 @@ export default function TelesalesTasksPage() {
                                 onClick={() => setIsNotificationOpen(false)}
                             />
                             {/* Panel */}
-                            <div className="fixed top-0 right-0 h-full w-[320px] bg-white shadow-2xl z-[9999] flex flex-col animate-in slide-in-from-right duration-200">
+                            <div className="fixed top-0 right-0 h-full w-[320px] bg-white border-l border-slate-200 z-[9999] flex flex-col animate-in slide-in-from-right duration-200">
                                 <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                                     <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                                         <Bell className="w-4 h-4" /> Thông báo
@@ -1457,7 +1457,7 @@ export default function TelesalesTasksPage() {
                         </button>
 
                         {isSettingsOpen && (
-                            <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 p-2 z-[9999]" onClick={(e) => e.stopPropagation()}>
+                            <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl border border-slate-200 p-2 z-[9999]" onClick={(e) => e.stopPropagation()}>
                                 <h4 className="text-xs font-semibold text-slate-500 uppercase px-2 py-1 mb-1">Hiển thị cột</h4>
                                 <div className="max-h-[300px] overflow-y-auto space-y-1">
                                     {columns.map(col => (
@@ -1781,7 +1781,7 @@ export default function TelesalesTasksPage() {
             {/* Mobile FAB */}
             <button
                 onClick={() => { setEditingTask(null); setIsSimpleModalOpen(true); }}
-                className="lg:hidden fixed bottom-[150px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 hover:shadow-xl active:scale-95 transition-all duration-200"
+                className="lg:hidden fixed bottom-[150px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-[#00AFA9] text-white rounded-full border border-slate-200 hover:bg-[#009690] active:scale-95 transition-all duration-200"
             >
                 <Plus className="w-6 h-6" />
             </button>

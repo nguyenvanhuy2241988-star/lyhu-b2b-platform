@@ -296,7 +296,7 @@ export default function TelesalesCustomersPage() {
                 <div className="flex justify-end">
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${showFilters ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${showFilters ? 'bg-teal-50 text-[#00AFA9] border border-teal-200' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                     >
                         <Filter className="w-4 h-4" />
                         Bộ lọc nâng cao
@@ -469,7 +469,7 @@ export default function TelesalesCustomersPage() {
                                 {/* Pipeline CRM */}
                                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                                     <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                        <TrendingUp className="w-4 h-4 text-indigo-500" /> Pipeline CRM (Deal đang mở)
+                                        <TrendingUp className="w-4 h-4 text-[#00AFA9]" /> Pipeline CRM (Deal đang mở)
                                     </h3>
                                     {pipeline.length === 0 ? (
                                         <p className="text-xs text-slate-400 py-4 text-center">Chưa có deal nào</p>
@@ -547,7 +547,7 @@ export default function TelesalesCustomersPage() {
                                 {/* Phân loại KH */}
                                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                                     <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                        <Tag className="w-4 h-4 text-violet-500" /> Phân loại khách hàng
+                                        <Tag className="w-4 h-4 text-[#00AFA9]" /> Phân loại khách hàng
                                     </h3>
                                     {typeDist.length === 0 ? (
                                         <p className="text-xs text-slate-400 py-4 text-center">Chưa có dữ liệu</p>
@@ -781,7 +781,7 @@ export default function TelesalesCustomersPage() {
             {/* Global Dropdown Menu */}
             {openMenuId && (console.log("Rendering menu at:", menuPos),
                 <div
-                    className="fixed bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-[9999] w-48 animate-in fade-in zoom-in-95 duration-100"
+                    className="fixed bg-white rounded-xl border border-slate-200 py-1 z-[9999] w-48 animate-in fade-in zoom-in-95 duration-100"
                     style={{
                         top: `${menuPos.top}px`,
                         right: `${menuPos.right}px`
@@ -793,7 +793,7 @@ export default function TelesalesCustomersPage() {
                             e.stopPropagation();
                             router.push(`/telesales/create-order?customerId=${openMenuId}`);
                         }}
-                        className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary-600 flex items-center gap-2"
+                        className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-[#00AFA9] flex items-center gap-2"
                     >
                         <Plus className="w-4 h-4" />
                         Tạo đơn hàng
@@ -827,7 +827,7 @@ export default function TelesalesCustomersPage() {
             {/* Mobile FAB */}
             <button
                 onClick={() => { setEditingCustomer(null); setShowAddForm(true); }}
-                className="lg:hidden fixed bottom-[150px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 hover:shadow-xl active:scale-95 transition-all duration-200"
+                className="lg:hidden fixed bottom-[150px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-[#00AFA9] text-white rounded-full border border-slate-200 hover:bg-[#009690] active:scale-95 transition-all duration-200"
             >
                 <Plus className="w-6 h-6" />
             </button>

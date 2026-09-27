@@ -219,10 +219,10 @@ export default function SaleAdminQuotesPage() {
                     <p className="text-sm text-slate-500 mt-0.5">Tạo và quản lý báo giá cho khách hàng</p>
                 </div>
                 <div className="relative group">
-                    <button className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
+                    <button className="flex items-center gap-2 px-5 py-2.5 bg-[#00AFA9] hover:bg-[#009690] text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
                         <Plus className="w-4 h-4" /> Tạo báo giá
                     </button>
-                    <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 overflow-hidden">
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 overflow-hidden">
                         <button onClick={() => { setIsCreating('price_list'); setEditingQuote(null); }} className="w-full flex items-center gap-3 text-left px-4 py-3 hover:bg-slate-50 text-sm font-semibold text-slate-700">
                             <FileText className="w-4 h-4 text-emerald-600" /> Bảng báo giá chung
                         </button>
@@ -338,7 +338,7 @@ export default function SaleAdminQuotesPage() {
 
                                             {q.status === 'draft' && (
                                                 <button onClick={() => handleStatusChange(q.id, 'sent')}
-                                                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Gửi">
+                                                    className="p-1.5 text-slate-400 hover:text-[#00AFA9] hover:bg-teal-50 rounded-lg transition-colors" title="Gửi">
                                                     <Send className="w-4 h-4" />
                                                 </button>
                                             )}
@@ -421,14 +421,14 @@ export default function SaleAdminQuotesPage() {
                                 
                                 {q.status === 'draft' && (
                                     <button onClick={() => handleStatusChange(q.id, 'sent')}
-                                        className="px-2.5 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 rounded-lg transition-colors flex items-center gap-1.5">
+                                        className="px-2.5 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-teal-50 hover:text-[#00AFA9] hover:border-teal-200 rounded-lg transition-colors flex items-center gap-1.5">
                                         <Send className="w-3.5 h-3.5" /> Gửi
                                     </button>
                                 )}
                                 
                                 {q.status === 'accepted' && (
                                     <button onClick={() => handleConvert(q)}
-                                        className="px-2.5 py-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
+                                        className="px-2.5 py-1.5 text-xs font-semibold text-white bg-[#00AFA9] hover:bg-[#009690] rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
                                         <ShoppingCart className="w-3.5 h-3.5" /> Chuyển đơn
                                     </button>
                                 )}
@@ -637,7 +637,7 @@ function QuoteEditorModal({
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className={`bg-white rounded-2xl shadow-2xl w-full ${isPriceList ? 'max-w-[1200px]' : 'max-w-[800px]'} max-h-[90vh] overflow-hidden flex flex-col`}>
+            <div className={`bg-white rounded-2xl border border-slate-200 w-full ${isPriceList ? 'max-w-[1200px]' : 'max-w-[800px]'} max-h-[90vh] overflow-hidden flex flex-col`}>
                 <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10 shrink-0">
                     <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <FileText className="w-5 h-5 text-primary-500" />
@@ -926,7 +926,7 @@ function QuoteEditorModal({
                     <button
                         onClick={handleSubmit}
                         disabled={saving}
-                        className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2"
+                        className="px-6 py-2.5 bg-[#00AFA9] hover:bg-[#009690] text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2"
                     >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calculator className="w-4 h-4" />}
                         {quote ? 'Cập nhật' : 'Lưu lại'}
@@ -999,7 +999,7 @@ function ProductMultiSelector({
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
                     <div>
                         <h3 className="font-bold text-slate-800 text-lg">Thêm sản phẩm</h3>
@@ -1086,7 +1086,7 @@ function ProductMultiSelector({
                             onClick={handleConfirm}
                             disabled={selectedIds.length === 0}
                             className={`px-5 py-2 text-sm font-bold text-white rounded-lg flex items-center gap-2 transition-all ${
-                                selectedIds.length > 0 ? 'bg-primary-600 hover:bg-primary-700 shadow-md' : 'bg-slate-300 cursor-not-allowed opacity-70'
+                                selectedIds.length > 0 ? 'bg-[#00AFA9] hover:bg-[#009690] shadow-sm' : 'bg-slate-300 cursor-not-allowed opacity-70'
                             }`}
                         >
                             <PackagePlus className="w-4 h-4" /> Xác nhận thêm

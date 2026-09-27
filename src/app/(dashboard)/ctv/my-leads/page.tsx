@@ -111,7 +111,7 @@ export default function MyLeadsPage() {
                                     key={option.value}
                                     onClick={() => setSelectedStatus(option.value)}
                                     className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${selectedStatus === option.value
-                                        ? "bg-primary-500 text-white"
+                                        ? "bg-[#00AFA9] text-white"
                                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                         }`}
                                 >
@@ -125,7 +125,7 @@ export default function MyLeadsPage() {
                         <select
                             value={selectedArea}
                             onChange={(e) => setSelectedArea(e.target.value)}
-                            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                         >
                             {AREAS.map((area) => (
                                 <option key={area} value={area}>
@@ -192,7 +192,7 @@ export default function MyLeadsPage() {
                                         <td className="px-6 py-4">
                                             <span
                                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lead.customerType === "NPP"
-                                                    ? "bg-purple-100 text-purple-700"
+                                                    ? "bg-teal-50 text-[#00AFA9]"
                                                     : lead.customerType === "Đại lý"
                                                         ? "bg-blue-100 text-blue-700"
                                                         : lead.customerType === "Mini mart"
@@ -214,7 +214,7 @@ export default function MyLeadsPage() {
                                                     const updated = updateLeadStatus(lead.id, status);
                                                     setLeads(updated);
                                                 }}
-                                                className="px-2.5 py-0.5 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-primary-500 bg-blue-100 text-blue-700"
+                                                className="px-2.5 py-0.5 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-[#00AFA9] bg-blue-100 text-blue-700"
                                             >
                                                 <option value="NEW">Mới</option>
                                                 <option value="CONTACTED">Đã liên hệ</option>

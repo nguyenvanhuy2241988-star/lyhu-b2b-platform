@@ -258,7 +258,7 @@ export default function AdminTelesalesKpiPage() {
                                 {label}
                                 <ChevronDown className="w-3 h-3 text-slate-400" />
                             </button>
-                            <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 hidden group-hover:block">
+                            <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-lg py-1 z-20 hidden group-hover:block">
                                 <button onClick={() => setDateRange('today')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'today' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Hôm nay</button>
                                 <button onClick={() => setDateRange('yesterday')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'yesterday' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Hôm qua</button>
                                 <button onClick={() => setDateRange('last_7_days')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'last_7_days' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>7 ngày gần đây</button>
@@ -355,8 +355,8 @@ export default function AdminTelesalesKpiPage() {
 
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-purple-50 rounded-lg">
-                            <Phone className="w-5 h-5 text-purple-600" />
+                        <div className="p-2 bg-teal-50 rounded-lg">
+                            <Phone className="w-5 h-5 text-[#00AFA9]" />
                         </div>
                         <span className="text-sm font-medium text-slate-600">Số cuộc gọi & Tỷ lệ chốt</span>
                     </div>
@@ -364,7 +364,7 @@ export default function AdminTelesalesKpiPage() {
                         <span className="text-2xl font-bold text-slate-900">{teamStats.totalCalls}</span>
                         <span className="text-sm text-slate-500">cuộc gọi</span>
                     </div>
-                    <div className="text-sm font-medium text-purple-600 mt-1">
+                    <div className="text-sm font-medium text-[#00AFA9] mt-1">
                         {teamStats.conversionRate.toFixed(1)}% chốt đơn
                     </div>
                 </div>
@@ -439,7 +439,7 @@ export default function AdminTelesalesKpiPage() {
                                     <tr key={user.userId} className="hover:bg-slate-50">
                                         <td className="px-6 py-4 font-medium text-slate-900">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs">
+                                                <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center text-[#00AFA9] font-bold text-xs">
                                                     {user.userName.charAt(0)}
                                                 </div>
                                                 <div>

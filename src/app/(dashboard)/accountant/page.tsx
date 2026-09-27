@@ -153,7 +153,7 @@ export default function AccountantDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, idx) => (
-                    <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 group hover:border-primary-200 transition-all">
+                    <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 group hover:border-teal-200 transition-all">
                         <div className="flex items-center justify-between mb-4">
                             <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
                                 <stat.icon className="w-6 h-6" />
@@ -229,7 +229,7 @@ export default function AccountantDashboard() {
                     {/* Expense Pie Chart */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                         <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <PieChartIcon className="w-4 h-4 text-violet-500" />
+                            <PieChartIcon className="w-4 h-4 text-[#00AFA9]" />
                             Cấu trúc chi phí
                         </h3>
                         <div className="h-[200px] w-full">
@@ -270,7 +270,7 @@ export default function AccountantDashboard() {
                     </div>
 
                     {/* Quick Stats/Links */}
-                    <div className="bg-slate-900 p-6 rounded-2xl shadow-lg text-white">
+                    <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 text-white">
                         <Wallet className="w-8 h-8 opacity-50 mb-4" />
                         <h4 className="text-sm font-medium opacity-80">Lợi nhuận gộp</h4>
                         <div className="text-3xl font-bold mt-1">

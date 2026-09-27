@@ -90,8 +90,8 @@ export default function AdminCtvPage() {
             value: formatPrice(stats.totalCommission),
             sub: "Ước tính toàn hệ thống",
             icon: Wallet,
-            color: "text-purple-600",
-            bg: "bg-purple-50",
+            color: "text-[#00AFA9]",
+            bg: "bg-teal-50",
         },
         {
             label: "Hoa hồng phải trả",

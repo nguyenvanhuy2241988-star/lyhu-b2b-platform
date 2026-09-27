@@ -39,9 +39,9 @@ export default function RecruitmentDashboard() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Link href="/recruitment/candidates" className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition group">
+                <Link href="/recruitment/candidates" className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-[#00AFA9] transition group">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-primary-50 text-primary-600 rounded-xl group-hover:scale-110 transition-transform">
+                        <div className="p-3 bg-teal-50 text-[#00AFA9] rounded-xl group-hover:scale-110 transition-transform">
                             <Users className="w-8 h-8" />
                         </div>
                         <div>
@@ -51,9 +51,9 @@ export default function RecruitmentDashboard() {
                     </div>
                 </Link>
 
-                <Link href="/recruitment/interviews" className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition group">
+                <Link href="/recruitment/interviews" className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-[#00AFA9] transition group">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-purple-50 text-purple-600 rounded-xl group-hover:scale-110 transition-transform">
+                        <div className="p-3 bg-teal-50 text-[#00AFA9] rounded-xl group-hover:scale-110 transition-transform">
                             <ClipboardList className="w-8 h-8" />
                         </div>
                         <div>
@@ -63,7 +63,7 @@ export default function RecruitmentDashboard() {
                     </div>
                 </Link>
 
-                <Link href="/recruitment/jobs" className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition group">
+                <Link href="/recruitment/jobs" className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-[#00AFA9] transition group">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-green-50 text-green-600 rounded-xl group-hover:scale-110 transition-transform">
                             <UserPlus className="w-8 h-8" />
@@ -78,30 +78,30 @@ export default function RecruitmentDashboard() {
 
             {/* Quick Access */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <h3 className="font-bold text-lg mb-4 text-slate-800">Truy cập nhanh</h3>
                     <div className="space-y-3">
-                        <Link href="/recruitment/jobs" className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-primary-50 hover:text-primary-700 transition">
+                        <Link href="/recruitment/jobs" className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-teal-50 hover:text-[#00AFA9] transition">
                             <span className="font-medium">Quản lý tin tuyển dụng</span>
                             <ArrowRight className="w-4 h-4" />
                         </Link>
-                        <Link href="/recruitment/candidates" className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-primary-50 hover:text-primary-700 transition">
+                        <Link href="/recruitment/candidates" className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-teal-50 hover:text-[#00AFA9] transition">
                             <span className="font-medium">Quy trình tuyển dụng (Kanban)</span>
                             <ArrowRight className="w-4 h-4" />
                         </Link>
-                        <Link href="/recruitment/interviews" className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-primary-50 hover:text-primary-700 transition">
+                        <Link href="/recruitment/interviews" className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-teal-50 hover:text-[#00AFA9] transition">
                             <span className="font-medium">Lịch phỏng vấn</span>
                             <ArrowRight className="w-4 h-4" />
                         </Link>
                     </div>
                 </div>
 
-                <div className="bg-primary-600 p-6 rounded-2xl shadow-sm text-white flex flex-col justify-between">
+                <div className="bg-[#00AFA9] p-6 rounded-2xl shadow-sm text-white flex flex-col justify-between">
                     <div>
                         <h3 className="font-bold text-xl mb-2">Cần tuyển thêm nhân sự?</h3>
-                        <p className="text-primary-100 mb-6">Tạo tin tuyển dụng mới và chia sẻ ngay để thu hút ứng viên tiềm năng.</p>
+                        <p className="text-teal-100 mb-6">Tạo tin tuyển dụng mới và chia sẻ ngay để thu hút ứng viên tiềm năng.</p>
                     </div>
-                    <Link href="/recruitment/jobs" className="bg-white text-primary-700 px-4 py-3 rounded-xl font-bold text-center hover:bg-primary-50 transition">
+                    <Link href="/recruitment/jobs" className="bg-white text-[#00AFA9] px-4 py-3 rounded-xl font-bold text-center hover:bg-teal-50 transition">
                         + Tạo tin tuyển dụng mới
                     </Link>
                 </div>

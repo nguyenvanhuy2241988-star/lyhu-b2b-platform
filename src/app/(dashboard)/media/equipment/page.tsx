@@ -163,7 +163,7 @@ export default function MediaEquipmentPage() {
                 </div>
                 {isAdmin && (
                     <button onClick={openAdd}
-                        className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-colors">
+                        className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white text-sm font-medium rounded-lg hover:bg-[#009690] transition-colors">
                         <Plus className="w-4 h-4" /> Thêm thiết bị
                     </button>
                 )}
@@ -183,7 +183,7 @@ export default function MediaEquipmentPage() {
             <div className="flex gap-2">
                 {[{ key: "all", label: "Tất cả" }, ...Object.entries(STATUS_CONFIG).map(([k, v]) => ({ key: k, label: v.label }))].map(opt => (
                     <button key={opt.key} onClick={() => setFilter(opt.key)}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${filter === opt.key ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                        className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${filter === opt.key ? 'bg-[#00AFA9] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                         {opt.label}
                     </button>
                 ))}
@@ -202,7 +202,7 @@ export default function MediaEquipmentPage() {
                     <p className="text-sm text-slate-500 font-medium">Chưa có thiết bị nào</p>
                     {isAdmin && (
                         <button onClick={openAdd}
-                            className="mt-3 text-sm text-pink-600 hover:text-pink-700 font-medium">
+                            className="mt-3 text-sm text-[#00AFA9] hover:text-[#009690] font-medium">
                             + Thêm thiết bị đầu tiên
                         </button>
                     )}
@@ -262,7 +262,7 @@ export default function MediaEquipmentPage() {
             {/* Add/Edit Modal */}
             {showForm && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
+                    <div className="bg-white rounded-xl w-full max-w-lg border border-slate-200 overflow-hidden">
                         <div className="p-5 border-b border-slate-200 flex items-center justify-between">
                             <h2 className="text-lg font-bold text-slate-900">
                                 {editingId ? "Chỉnh sửa thiết bị" : "Thêm thiết bị mới"}
@@ -340,7 +340,7 @@ export default function MediaEquipmentPage() {
                             <button onClick={() => setShowForm(false)}
                                 className="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100">Hủy</button>
                             <button onClick={handleSave} disabled={saving}
-                                className="px-5 py-2 rounded-lg text-sm font-medium bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-50 flex items-center gap-2">
+                                className="px-5 py-2 rounded-lg text-sm font-medium bg-[#00AFA9] text-white hover:bg-[#009690] disabled:opacity-50 flex items-center gap-2">
                                 {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                                 {editingId ? "Cập nhật" : "Thêm thiết bị"}
                             </button>

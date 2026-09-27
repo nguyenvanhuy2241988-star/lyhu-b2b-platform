@@ -206,12 +206,12 @@ export default function AdminMediaEquipmentPage() {
                 <div className="flex items-center gap-3">
                     {selectedIds.size > 0 && (
                         <button onClick={() => setShowHandoverModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-900 transition-colors shadow-lg animate-fade-in-up">
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-900 transition-colors animate-fade-in-up">
                             <FileSignature className="w-4 h-4" /> Biên bản bàn giao ({selectedIds.size})
                         </button>
                     )}
                     <button onClick={openAdd}
-                        className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-colors">
+                        className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white text-sm font-medium rounded-lg hover:bg-[#009690] transition-colors">
                         <Plus className="w-4 h-4" /> Thêm thiết bị
                     </button>
                 </div>
@@ -249,7 +249,7 @@ export default function AdminMediaEquipmentPage() {
                     <Wrench className="w-12 h-12 mx-auto mb-3 text-slate-300" />
                     <p className="text-sm text-slate-500 font-medium">Chưa có thiết bị nào</p>
                     <button onClick={openAdd}
-                        className="mt-3 text-sm text-pink-600 hover:text-pink-700 font-medium">
+                        className="mt-3 text-sm text-[#00AFA9] hover:text-[#009690] font-medium">
                         + Thêm thiết bị đầu tiên
                     </button>
                 </div>
@@ -341,7 +341,7 @@ export default function AdminMediaEquipmentPage() {
             {/* Add/Edit Modal */}
             {showForm && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
-                    <div className="bg-white rounded-xl w-full max-w-2xl shadow-xl overflow-hidden my-auto">
+                    <div className="bg-white rounded-xl w-full max-w-2xl border border-slate-200 overflow-hidden my-auto">
                         <div className="p-5 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
                             <h2 className="text-lg font-bold text-slate-900">
                                 {editingId ? "Chỉnh sửa thiết bị" : "Thêm thiết bị mới"}

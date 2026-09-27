@@ -154,7 +154,7 @@ export default function OnboardingPage() {
                         {/* Progress Line */}
                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-100 z-0">
                             <div
-                                className="h-full bg-primary-500 transition-all duration-300"
+                                className="h-full bg-[#00AFA9] transition-all duration-300"
                                 style={{ width: `${((step - 1) / 2) * 100}%` }}
                             />
                         </div>
@@ -164,7 +164,7 @@ export default function OnboardingPage() {
                             <div key={s} className="relative z-10 flex flex-col items-center">
                                 <div
                                     className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all border-4 ${step >= s
-                                        ? "bg-primary-500 text-white border-white shadow-lg"
+                                        ? "bg-[#00AFA9] text-white border-white"
                                         : "bg-white text-slate-400 border-slate-100"
                                         }`}
                                 >
@@ -185,7 +185,7 @@ export default function OnboardingPage() {
                     {step === 1 && (
                         <div className="space-y-4">
                             <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                <MapPin className="w-6 h-6 text-primary-500" />
+                                <MapPin className="w-6 h-6 text-[#00AFA9]" />
                                 Cập nhật thông tin nhận hàng
                             </h2>
 
@@ -207,7 +207,7 @@ export default function OnboardingPage() {
                                         value={formData.phone}
                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                         placeholder="Nhập số điện thoại liên hệ"
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent outline-none"
                                     />
                                 </div>
 
@@ -217,7 +217,7 @@ export default function OnboardingPage() {
                                         <select
                                             value={formData.province}
                                             onChange={(e) => setFormData({ ...formData, province: e.target.value })}
-                                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent outline-none"
                                         >
                                             <option value="">Chọn Tỉnh/Thành</option>
                                             {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
@@ -228,7 +228,7 @@ export default function OnboardingPage() {
                                         <select
                                             value={formData.region}
                                             onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent outline-none"
                                         >
                                             <option value="">Chọn Khu vực</option>
                                             {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
@@ -243,7 +243,7 @@ export default function OnboardingPage() {
                                         value={formData.address}
                                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                         placeholder="Số nhà, tên đường, phường/xã..."
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent outline-none"
                                     />
                                 </div>
                             </div>
@@ -254,7 +254,7 @@ export default function OnboardingPage() {
                     {step === 2 && (
                         <div className="space-y-4">
                             <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                <Briefcase className="w-6 h-6 text-primary-500" />
+                                <Briefcase className="w-6 h-6 text-[#00AFA9]" />
                                 Chọn mô hình hoạt động
                             </h2>
                             <p className="text-slate-600 mb-4">Bạn muốn hợp tác với LYHU dưới hình thức nào?</p>
@@ -268,18 +268,18 @@ export default function OnboardingPage() {
                                             key={type.id}
                                             onClick={() => setFormData({ ...formData, ctvType: type.id })}
                                             className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-start gap-4 ${isSelected
-                                                ? "border-primary-500 bg-primary-50 shadow-md"
+                                                ? "border-[#00AFA9] bg-teal-50"
                                                 : "border-slate-200 hover:border-slate-300"
                                                 }`}
                                         >
-                                            <div className={`p-3 rounded-lg ${isSelected ? "bg-white text-primary-600" : "bg-slate-100 text-slate-500"}`}>
+                                            <div className={`p-3 rounded-lg ${isSelected ? "bg-white text-[#00AFA9]" : "bg-slate-100 text-slate-500"}`}>
                                                 <Icon className="w-6 h-6" />
                                             </div>
                                             <div>
-                                                <h3 className={`font-semibold ${isSelected ? "text-primary-800" : "text-slate-900"}`}>{type.label}</h3>
+                                                <h3 className="font-semibold text-slate-900">{type.label}</h3>
                                                 <p className="text-sm text-slate-600 mt-1">{type.description}</p>
                                             </div>
-                                            {isSelected && <CheckCircle className="w-6 h-6 text-primary-600 ml-auto self-center" />}
+                                            {isSelected && <CheckCircle className="w-6 h-6 text-[#00AFA9] ml-auto self-center" />}
                                         </button>
                                     );
                                 })}
@@ -291,7 +291,7 @@ export default function OnboardingPage() {
                     {step === 3 && (
                         <div className="space-y-4">
                             <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                <Truck className="w-6 h-6 text-primary-500" />
+                                <Truck className="w-6 h-6 text-[#00AFA9]" />
                                 Chọn hình thức vận chuyển
                             </h2>
                             <p className="text-slate-600 mb-4">Cách bạn muốn giao hàng đến tay khách?</p>
@@ -305,16 +305,16 @@ export default function OnboardingPage() {
                                             key={mode.id}
                                             onClick={() => setFormData({ ...formData, ctvMode: mode.id })}
                                             className={`p-6 rounded-xl border-2 text-left transition-all h-full flex flex-col ${isSelected
-                                                ? "border-primary-500 bg-primary-50 shadow-md"
+                                                ? "border-[#00AFA9] bg-teal-50"
                                                 : "border-slate-200 hover:border-slate-300"
                                                 }`}
                                         >
-                                            <div className={`p-3 rounded-lg w-fit mb-4 ${isSelected ? "bg-white text-primary-600" : "bg-slate-100 text-slate-500"}`}>
+                                            <div className={`p-3 rounded-lg w-fit mb-4 ${isSelected ? "bg-white text-[#00AFA9]" : "bg-slate-100 text-slate-500"}`}>
                                                 <Icon className="w-8 h-8" />
                                             </div>
-                                            <h3 className={`font-semibold text-lg mb-2 ${isSelected ? "text-primary-800" : "text-slate-900"}`}>{mode.label}</h3>
+                                            <h3 className="font-semibold text-lg mb-2 text-slate-900">{mode.label}</h3>
                                             <p className="text-sm text-slate-600">{mode.description}</p>
-                                            {isSelected && <CheckCircle className="w-6 h-6 text-primary-600 mt-auto pt-4 self-end" />}
+                                            {isSelected && <CheckCircle className="w-6 h-6 text-[#00AFA9] mt-auto pt-4 self-end" />}
                                         </button>
                                     );
                                 })}
@@ -350,7 +350,7 @@ export default function OnboardingPage() {
                             disabled={!canProceed()}
                             className={`flex items-center gap-2 px-8 py-2.5 rounded-lg font-medium shadow-sm transition-all ${!canProceed()
                                 ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                                : "bg-primary-500 hover:bg-primary-600 text-white hover:shadow-md"
+                                : "bg-[#00AFA9] hover:bg-[#009690] text-white"
                                 }`}
                         >
                             {step === 3 ? "Hoàn tất" : "Tiếp tục"}

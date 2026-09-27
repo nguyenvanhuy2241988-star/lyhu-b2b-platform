@@ -49,7 +49,7 @@ export default function BlogCMSPage() {
                 </div>
                 <Link
                     href="/marketing/blog/new"
-                    className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shrink-0"
+                    className="flex items-center gap-2 bg-[#00AFA9] text-white px-4 py-2 rounded-lg hover:bg-[#009690] transition-colors shrink-0"
                 >
                     <Plus className="w-5 h-5" />
                     <span className="font-medium">Viết bài mới</span>
@@ -102,7 +102,7 @@ export default function BlogCMSPage() {
                                             <div className="text-xs text-gray-500 mt-1 flex gap-2 items-center">
                                                 <span>/tin-tuc/{post.slug}</span>
                                                 {post.ai_summary && (
-                                                    <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded text-[10px] flex items-center gap-1 font-medium">
+                                                    <span className="bg-teal-50 text-[#00AFA9] border border-teal-200 px-1.5 py-0.5 rounded text-[10px] flex items-center gap-1 font-medium">
                                                         <CheckCircle2 className="w-3 h-3" /> AEO Optimized
                                                     </span>
                                                 )}

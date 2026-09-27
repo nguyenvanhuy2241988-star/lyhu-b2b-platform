@@ -561,7 +561,7 @@ function SaleAdminCreateOrderContent() {
                     <div className="flex items-center gap-3">
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 1
-                                ? "bg-teal-600 text-white"
+                                ? "bg-[#00AFA9] text-white"
                                 : "bg-slate-100 text-slate-400"
                                 }`}
                         >
@@ -578,7 +578,7 @@ function SaleAdminCreateOrderContent() {
                     <div className="flex items-center gap-3">
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 2
-                                ? "bg-teal-600 text-white"
+                                ? "bg-[#00AFA9] text-white"
                                 : "bg-slate-100 text-slate-400"
                                 }`}
                         >
@@ -595,7 +595,7 @@ function SaleAdminCreateOrderContent() {
                     <div className="flex items-center gap-3">
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 3 && orderItems.length > 0
-                                ? "bg-teal-600 text-white"
+                                ? "bg-[#00AFA9] text-white"
                                 : "bg-slate-100 text-slate-400"
                                 }`}
                         >
@@ -725,7 +725,7 @@ function SaleAdminCreateOrderContent() {
                                                 <button
                                                     onClick={() => setBrandFilter("ALL")}
                                                     className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${brandFilter === "ALL"
-                                                        ? "bg-teal-600 text-white shadow-sm"
+                                                        ? "bg-[#00AFA9] text-white shadow-sm"
                                                         : "text-slate-600 hover:bg-white"
                                                         }`}
                                                 >
@@ -736,7 +736,7 @@ function SaleAdminCreateOrderContent() {
                                                         key={brand}
                                                         onClick={() => setBrandFilter(brand)}
                                                         className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${brandFilter === brand
-                                                            ? "bg-teal-600 text-white shadow-sm"
+                                                            ? "bg-[#00AFA9] text-white shadow-sm"
                                                             : "text-slate-600 hover:bg-white"
                                                             }`}
                                                     >
@@ -887,8 +887,8 @@ function SaleAdminCreateOrderContent() {
                                                                     className={`px-3 py-1.5 rounded-md font-medium text-xs flex items-center gap-1 mx-auto transition-all ${isOutOfStock
                                                                         ? "bg-slate-100 text-slate-400 cursor-not-allowed"
                                                                         : inOrderCount > 0
-                                                                            ? "bg-teal-600 text-white hover:bg-teal-700 shadow-sm"
-                                                                            : "bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-700"
+                                                                            ? "bg-[#00AFA9] text-white hover:bg-[#009690] shadow-sm"
+                                                                            : "bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-[#00AFA9]"
                                                                         }`}
                                                                 >
                                                                     <Plus className="w-3.5 h-3.5" />
@@ -1159,7 +1159,7 @@ function SaleAdminCreateOrderContent() {
                                             {/* Total */}
                                             <div className="flex items-center justify-between pt-1">
                                                 <span className="text-sm font-bold text-slate-900">Tổng:</span>
-                                                <span className="text-xl font-bold text-teal-600">
+                                                <span className="text-xl font-bold text-[#00AFA9]">
                                                     {formatPrice(finalTotal)}
                                                 </span>
                                             </div>
@@ -1174,7 +1174,7 @@ function SaleAdminCreateOrderContent() {
                                                 </button>
                                                 <button
                                                     onClick={handleCreateOrder}
-                                                    className="flex-[2] px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center gap-2"
+                                                    className="flex-[2] px-4 py-2.5 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center gap-2"
                                                 >
                                                     <ShoppingCart className="w-4 h-4" />
                                                     {editOrderId ? "Cập nhật đơn" : "Tạo đơn"}
@@ -1196,7 +1196,7 @@ export default function SaleAdminCreateOrderPage() {
     return (
         <Suspense fallback={
             <div className="p-6 flex items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full"></div>
+                <div className="animate-spin w-8 h-8 border-4 border-[#00AFA9] border-t-transparent rounded-full"></div>
             </div>
         }>
             <SaleAdminCreateOrderContent />

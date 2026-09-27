@@ -254,7 +254,7 @@ export default function RoutesPage() {
                     </h1>
                     <p className="text-xs sm:text-sm text-slate-500 mt-1">{routes.length} tuyến • {totalOutlets} điểm bán</p>
                 </div>
-                <button onClick={openNewForm} className="flex items-center gap-1.5 bg-[#00AFA9] text-white px-3.5 py-2 rounded-xl hover:bg-[#009893] text-xs sm:text-sm font-semibold transition-colors">
+                <button onClick={openNewForm} className="flex items-center gap-1.5 bg-[#00AFA9] text-white px-3.5 py-2 rounded-xl hover:bg-[#009690] text-xs sm:text-sm font-semibold transition-colors">
                     <Plus className="w-4 h-4" /> Tạo tuyến
                 </button>
             </div>
@@ -358,7 +358,7 @@ export default function RoutesPage() {
                                         {isToday && !isActive && (
                                             <button
                                                 onClick={() => { setActiveRouteId(route.id); setExpandedRoute(route.id); }}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00AFA9] text-white rounded-lg text-xs font-semibold hover:bg-[#009893] transition-colors"
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00AFA9] text-white rounded-lg text-xs font-semibold hover:bg-[#009690] transition-colors"
                                             >
                                                 <Play className="w-3.5 h-3.5" /> Bắt đầu
                                             </button>
@@ -435,7 +435,7 @@ export default function RoutesPage() {
                                                                 {isNextToVisit && (
                                                                     <button
                                                                         onClick={() => router.push(`/sales-gt/checkin?outletId=${outletId}`)}
-                                                                        className="flex items-center gap-1 px-2.5 py-1 bg-[#00AFA9] text-white rounded-lg text-xs font-semibold hover:bg-[#009893] transition-colors"
+                                                                        className="flex items-center gap-1 px-2.5 py-1 bg-[#00AFA9] text-white rounded-lg text-xs font-semibold hover:bg-[#009690] transition-colors"
                                                                     >
                                                                         <MapPin className="w-3 h-3" /> Check-in
                                                                     </button>
@@ -457,7 +457,7 @@ export default function RoutesPage() {
             {/* ========== ADD/EDIT ROUTE MODAL ========== */}
             {showForm && (
                 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-lg max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-200">
                             <h3 className="text-base sm:text-lg font-bold text-slate-900">
                                 {editingRoute ? 'Sửa thông tin tuyến' : 'Tạo tuyến bán hàng mới'}
@@ -517,7 +517,7 @@ export default function RoutesPage() {
                                 <button type="button" onClick={() => { setShowForm(false); setEditingRoute(null); }}
                                     className="px-4 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Hủy</button>
                                 <button type="submit" disabled={saving || form.day_of_week.length === 0}
-                                    className="px-5 py-2 text-xs sm:text-sm bg-[#00AFA9] text-white rounded-xl hover:bg-[#009893] disabled:opacity-40 font-bold transition-colors">
+                                    className="px-5 py-2 text-xs sm:text-sm bg-[#00AFA9] text-white rounded-xl hover:bg-[#009690] disabled:opacity-40 font-bold transition-colors">
                                     {saving ? "Đang lưu..." : editingRoute ? "Lưu thay đổi" : "Tạo tuyến"}
                                 </button>
                             </div>

@@ -65,14 +65,14 @@ export default function BotCenterPage() {
             </div>
 
             {/* DOWNLOAD APP BANNER */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-600/20 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="bg-[#00AFA9] rounded-2xl p-6 text-white border border-teal-600 flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="flex-1">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-xs font-semibold mb-3">
                         <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
                         Hệ Thống Trạm Phát (Mới)
                     </div>
                     <h2 className="text-xl font-bold mb-2">Trạm kết nối LyhuBot Desktop</h2>
-                    <p className="text-blue-100 text-sm max-w-2xl">
+                    <p className="text-white/90 text-sm max-w-2xl">
                         Để tránh việc treo trình duyệt web và chống Facebook quét, bạn cần tải phần mềm **LyhuBot** về máy tính. Phần mềm sẽ tự động nhận lệnh từ trang web này và chạy ngầm (bao gồm cả trình duyệt tàng hình chống khóa).
                     </p>
                     
@@ -81,17 +81,17 @@ export default function BotCenterPage() {
                             href="https://drive.google.com/file/d/121-MNH481HA1Eq4nhm7yYTWEUYIML9UO/view?usp=drive_link" 
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 bg-white text-blue-600 px-5 py-2.5 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-sm"
+                            className="flex items-center gap-2 bg-white text-[#00AFA9] px-5 py-2.5 rounded-xl font-bold hover:bg-teal-50 transition-colors shadow-sm"
                         >
                             <Download className="w-5 h-5" />
                             Tải LyhuBot cho Windows (.exe)
                         </a>
                         
                         <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-4 py-2">
-                            <span className="text-sm font-medium text-blue-100">Mã Kích Hoạt:</span>
+                            <span className="text-sm font-medium text-white/80">Mã Kích Hoạt:</span>
                             <code className="text-white font-mono bg-black/20 px-2 py-1 rounded">{user?.id || 'Đang tải...'}</code>
                             <button onClick={handleCopyToken} className="ml-2 p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Copy mã">
-                                {isCopied ? <CheckCircle2 className="w-4 h-4 text-green-300" /> : <Copy className="w-4 h-4 text-blue-100" />}
+                                {isCopied ? <CheckCircle2 className="w-4 h-4 text-green-300" /> : <Copy className="w-4 h-4 text-white/80" />}
                             </button>
                         </div>
                     </div>
@@ -99,7 +99,7 @@ export default function BotCenterPage() {
                 
                 <div className="hidden lg:block w-48 shrink-0">
                     <div className="w-full aspect-square bg-white/10 rounded-2xl border border-white/20 flex items-center justify-center relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-transparent"></div>
+                        <div className="absolute inset-0 bg-white/5"></div>
                         <Bot className="w-24 h-24 text-white opacity-80" />
                     </div>
                 </div>
@@ -115,7 +115,7 @@ export default function BotCenterPage() {
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${
                                 activeTab === tab.id 
-                                ? 'bg-white text-blue-600 shadow-sm' 
+                                ? 'bg-white text-[#00AFA9] shadow-sm' 
                                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
                             }`}
                         >
@@ -188,7 +188,7 @@ function TabCommands({ onRunScript, userId }: { onRunScript: (s: any) => void, u
                         title="Quét Hội Nhóm"
                         desc="Tìm & Xin vào nhóm tiềm năng"
                         icon={<Users className="w-5 h-5" />}
-                        color="indigo"
+                        color="teal"
                         onClick={() => onRunScript({ name: 'group_finder.js', title: 'Quét Hội Nhóm' })}
                     />
                     <CommandCard
@@ -216,7 +216,7 @@ function TabCommands({ onRunScript, userId }: { onRunScript: (s: any) => void, u
                         title="Đăng Bài Cá Nhân"
                         desc="Đăng Text/Ảnh lên Profile"
                         icon={<Users className="w-5 h-5" />}
-                        color="indigo"
+                        color="teal"
                         onClick={() => onRunScript({ name: 'auto_post_profile.js', title: 'Đăng Bài Cá Nhân' })}
                     />
                     <CommandCard
@@ -556,7 +556,7 @@ function TabQueue({ userId }: { userId?: string }) {
                                     </td>
                                     <td className="px-5 py-4">
                                         {cmd.bot_profiles?.profile_name ? (
-                                            <span className="font-medium text-purple-700 bg-purple-50 px-2 py-1 rounded-md">{cmd.bot_profiles.profile_name}</span>
+                                            <span className="font-medium text-[#00AFA9] bg-teal-50 px-2 py-1 rounded-md">{cmd.bot_profiles.profile_name}</span>
                                         ) : (
                                             <span className="text-slate-500 italic text-xs">🌍 Mặc định</span>
                                         )}
@@ -600,7 +600,7 @@ function TabQueue({ userId }: { userId?: string }) {
                                 <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100">
                                     <div className="flex flex-col gap-1">
                                         {cmd.bot_profiles?.profile_name ? (
-                                            <span className="font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded text-[10px] self-start">{cmd.bot_profiles.profile_name}</span>
+                                            <span className="font-medium text-[#00AFA9] bg-teal-50 px-2 py-0.5 rounded text-[10px] self-start">{cmd.bot_profiles.profile_name}</span>
                                         ) : (
                                             <span className="text-slate-500 italic text-[10px] bg-slate-100 px-2 py-0.5 rounded self-start">🌍 Mặc định</span>
                                         )}
@@ -698,7 +698,7 @@ function TabCampaigns({ userId }: { userId?: string }) {
                     <FolderOpen className="w-16 h-16 text-slate-300 mx-auto mb-4" />
                     <h3 className="font-bold text-slate-700 text-lg">Chưa có Chiến Dịch nào</h3>
                     <p className="text-slate-500 mt-2 max-w-sm mx-auto">Tạo ra các khuôn đúc chứa sẵn chuỗi chu trình tương tác để rảnh tay thực sự.</p>
-                    <button onClick={() => setIsBuilderOpen(true)} className="mt-6 px-6 py-2.5 bg-white border border-slate-200 text-blue-600 font-bold rounded-xl hover:bg-slate-50 shadow-sm transition-all">
+                    <button onClick={() => setIsBuilderOpen(true)} className="mt-6 px-6 py-2.5 bg-white border border-slate-200 text-[#00AFA9] font-bold rounded-xl hover:bg-slate-50 shadow-sm transition-all">
                         Tạo Blueprint Đầu Tiên
                     </button>
                 </div>
@@ -708,8 +708,8 @@ function TabCampaigns({ userId }: { userId?: string }) {
                         <div key={c.id} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                             
                             {/* Run Overlay */}
-                            <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-white via-white to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-10 flex gap-2">
-                                <button onClick={() => openTriggerModal(c)} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30">
+                            <div className="absolute inset-x-0 bottom-0 p-4 bg-white/95 border-t border-slate-100 translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-10 flex gap-2">
+                                <button onClick={() => openTriggerModal(c)} className="flex-1 py-3 bg-[#00AFA9] hover:bg-[#009690] text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm">
                                     <PlayCircle className="w-5 h-5"/> Kích Nổ Ngay
                                 </button>
                                 <button onClick={() => handleDelete(c.id, c.name)} className="px-4 py-3 bg-red-50 hover:bg-red-100 text-red-500 rounded-xl transition-colors">
@@ -719,7 +719,7 @@ function TabCampaigns({ userId }: { userId?: string }) {
 
                             <div className="flex items-start justify-between mb-4">
                                 <h3 className="font-bold text-slate-800 text-lg line-clamp-2">{c.name}</h3>
-                                <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-100 shrink-0">
+                                <span className="bg-teal-50 text-[#00AFA9] text-xs font-bold px-2.5 py-1 rounded-full border border-teal-100 shrink-0">
                                     {c.tasks?.length || 0} Nhịp
                                 </span>
                             </div>
@@ -764,8 +764,9 @@ function TabCampaigns({ userId }: { userId?: string }) {
 
 function CommandCard({ title, desc, icon, color, onClick }: { title: string, desc: string, icon: React.ReactNode, color: string, onClick: () => void }) {
     const colors: any = {
-        blue: "bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200",
-        indigo: "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border-indigo-200",
+        blue: "bg-teal-50 text-[#00AFA9] hover:bg-teal-100 border-[#00AFA9]/30",
+        indigo: "bg-teal-50 text-[#00AFA9] hover:bg-teal-100 border-[#00AFA9]/30",
+        teal: "bg-teal-50 text-[#00AFA9] hover:bg-teal-100 border-[#00AFA9]/30",
         green: "bg-green-50 text-green-600 hover:bg-green-100 border-green-200",
         slate: "bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200",
         orange: "bg-orange-50 text-orange-600 hover:bg-orange-100 border-orange-200",
@@ -853,7 +854,7 @@ function TabCompetitors({ onRunScript, userId }: { onRunScript: (s: any) => void
                     <p className="text-sm text-slate-500">Lưu trữ Link Facebook của các đối thủ lớn để Bot dễ dàng "Cướp Khách" hàng ngày.</p>
                 </div>
                 {!isAdding && (
-                    <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
+                    <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white rounded-lg font-medium hover:bg-[#009690] transition-colors">
                         <Plus className="w-4 h-4" />
                         Thêm Đối Thủ
                     </button>
@@ -908,7 +909,7 @@ function TabCompetitors({ onRunScript, userId }: { onRunScript: (s: any) => void
                             {competitors.map(c => (
                                 <tr key={c.id} className="hover:bg-slate-50">
                                     <td className="px-6 py-4 font-bold text-slate-800">{c.name}</td>
-                                    <td className="px-6 py-4 text-blue-600 truncate max-w-xs">
+                                    <td className="px-6 py-4 text-[#00AFA9] truncate max-w-xs">
                                         <a href={c.profile_url} target="_blank" rel="noreferrer" className="hover:underline">{c.profile_url}</a>
                                     </td>
                                     <td className="px-6 py-4 text-slate-500">{c.notes}</td>
@@ -937,7 +938,7 @@ function TabCompetitors({ onRunScript, userId }: { onRunScript: (s: any) => void
                                     <div className="font-bold text-slate-800 line-clamp-1 flex-1 pr-2">{c.name}</div>
                                 </div>
                                 
-                                <div className="text-xs text-blue-600 mb-2 truncate bg-blue-50 p-1.5 rounded inline-block max-w-full">
+                                <div className="text-xs text-[#00AFA9] mb-2 truncate bg-teal-50 p-1.5 rounded inline-block max-w-full">
                                     <a href={c.profile_url} target="_blank" rel="noreferrer" className="hover:underline">{c.profile_url}</a>
                                 </div>
                                 

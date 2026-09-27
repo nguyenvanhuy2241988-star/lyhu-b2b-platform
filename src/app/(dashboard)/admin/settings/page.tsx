@@ -99,7 +99,7 @@ export default function AdminSettingsPage() {
     if (isFetching) {
         return (
             <div className="flex items-center justify-center p-12">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-[#00AFA9]" />
             </div>
         );
     }
@@ -123,7 +123,7 @@ export default function AdminSettingsPage() {
                             <input
                                 value={companyInfo.name}
                                 onChange={(e) => setCompanyInfo({ ...companyInfo, name: e.target.value })}
-                                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                 placeholder="CÔNG TY TNHH ABC"
                             />
                         </div>
@@ -132,7 +132,7 @@ export default function AdminSettingsPage() {
                             <input
                                 value={companyInfo.address}
                                 onChange={(e) => setCompanyInfo({ ...companyInfo, address: e.target.value })}
-                                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#00AFA9] outline-none"
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -141,7 +141,7 @@ export default function AdminSettingsPage() {
                                 <input
                                     value={companyInfo.hotline}
                                     onChange={(e) => setCompanyInfo({ ...companyInfo, hotline: e.target.value })}
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                 />
                             </div>
                             <div>
@@ -149,7 +149,7 @@ export default function AdminSettingsPage() {
                                 <input
                                     value={companyInfo.email}
                                     onChange={(e) => setCompanyInfo({ ...companyInfo, email: e.target.value })}
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                 />
                             </div>
                         </div>
@@ -158,7 +158,7 @@ export default function AdminSettingsPage() {
                             <input
                                 value={companyInfo.website}
                                 onChange={(e) => setCompanyInfo({ ...companyInfo, website: e.target.value })}
-                                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#00AFA9] outline-none"
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -167,7 +167,7 @@ export default function AdminSettingsPage() {
                                 <input
                                     value={companyInfo.facebook || ""}
                                     onChange={(e) => setCompanyInfo({ ...companyInfo, facebook: e.target.value })}
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     placeholder="https://facebook.com/..."
                                 />
                             </div>
@@ -176,7 +176,7 @@ export default function AdminSettingsPage() {
                                 <input
                                     value={companyInfo.tiktok || ""}
                                     onChange={(e) => setCompanyInfo({ ...companyInfo, tiktok: e.target.value })}
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     placeholder="https://tiktok.com/@..."
                                 />
                             </div>
@@ -185,7 +185,7 @@ export default function AdminSettingsPage() {
                                 <input
                                     value={companyInfo.youtube || ""}
                                     onChange={(e) => setCompanyInfo({ ...companyInfo, youtube: e.target.value })}
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     placeholder="https://youtube.com/..."
                                 />
                             </div>
@@ -199,7 +199,7 @@ export default function AdminSettingsPage() {
                         <h2 className="text-lg font-semibold text-slate-800">Tài khoản Ngân hàng</h2>
                         <button
                             onClick={addBankAccount}
-                            className="text-xs flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 font-medium"
+                            className="text-xs flex items-center gap-1 bg-teal-50 text-[#00AFA9] px-2 py-1 rounded hover:bg-teal-100 font-medium"
                         >
                             <Plus className="w-3 h-3" /> Thêm TK
                         </button>
@@ -268,7 +268,7 @@ export default function AdminSettingsPage() {
                 <button
                     onClick={handleSave}
                     disabled={isLoading}
-                    className="flex items-center gap-2 px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+                    className="flex items-center gap-2 px-8 py-3 bg-[#00AFA9] hover:bg-[#009690] text-white font-medium rounded-lg transition-colors shadow-sm"
                 >
                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                     Lưu thay đổi

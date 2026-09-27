@@ -572,7 +572,7 @@ function TelesalesCreateOrderContent() {
                     <div className="flex items-center gap-3">
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 1
-                                ? "bg-teal-600 text-white"
+                                ? "bg-[#00AFA9] text-white"
                                 : "bg-slate-100 text-slate-400"
                                 }`}
                         >
@@ -589,7 +589,7 @@ function TelesalesCreateOrderContent() {
                     <div className="flex items-center gap-3">
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 2
-                                ? "bg-teal-600 text-white"
+                                ? "bg-[#00AFA9] text-white"
                                 : "bg-slate-100 text-slate-400"
                                 }`}
                         >
@@ -606,7 +606,7 @@ function TelesalesCreateOrderContent() {
                     <div className="flex items-center gap-3">
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 3 && orderItems.length > 0
-                                ? "bg-teal-600 text-white"
+                                ? "bg-[#00AFA9] text-white"
                                 : "bg-slate-100 text-slate-400"
                                 }`}
                         >
@@ -736,7 +736,7 @@ function TelesalesCreateOrderContent() {
                                                 <button
                                                     onClick={() => setBrandFilter("ALL")}
                                                     className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${brandFilter === "ALL"
-                                                        ? "bg-teal-600 text-white shadow-sm"
+                                                        ? "bg-[#00AFA9] text-white"
                                                         : "text-slate-600 hover:bg-white"
                                                         }`}
                                                 >
@@ -747,7 +747,7 @@ function TelesalesCreateOrderContent() {
                                                         key={brand}
                                                         onClick={() => setBrandFilter(brand)}
                                                         className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${brandFilter === brand
-                                                            ? "bg-teal-600 text-white shadow-sm"
+                                                            ? "bg-[#00AFA9] text-white"
                                                             : "text-slate-600 hover:bg-white"
                                                             }`}
                                                     >
@@ -808,14 +808,14 @@ function TelesalesCreateOrderContent() {
                                                 .map((product) => {
                                                     const inOrderCount = orderItems.reduce((sum, item) => item.product.id === product.id ? sum + item.quantity : sum, 0);
                                                     const brandColors: Record<string, string> = {
-                                                        ABI: "bg-teal-600",
+                                                        ABI: "bg-[#00AFA9]",
                                                         UHI: "bg-orange-500",
-                                                        BOYO: "bg-purple-500",
+                                                        BOYO: "bg-[#00AFA9]",
                                                         CVT: "bg-blue-500",
-                                                        LYHU: "bg-teal-600",
-                                                        LHU: "bg-teal-600",
+                                                        LYHU: "bg-[#00AFA9]",
+                                                        LHU: "bg-[#00AFA9]",
                                                     };
-                                                    const brandColor = brandColors[product.brand || "LHU"] || "bg-teal-600";
+                                                    const brandColor = brandColors[product.brand || "LHU"] || "bg-[#00AFA9]";
                                                     const inputValue = productQuantities[product.id] || 1;
                                                     const stock = inventory[product.id] ?? 0;
                                                     const isOutOfStock = stock <= 0;
@@ -898,8 +898,8 @@ function TelesalesCreateOrderContent() {
                                                                     className={`px-3 py-1.5 rounded-md font-medium text-xs flex items-center gap-1 mx-auto transition-all ${isOutOfStock
                                                                         ? "bg-slate-100 text-slate-400 cursor-not-allowed"
                                                                         : inOrderCount > 0
-                                                                            ? "bg-teal-600 text-white hover:bg-teal-700 shadow-sm"
-                                                                            : "bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-700"
+                                                                            ? "bg-[#00AFA9] text-white hover:bg-[#009690]"
+                                                                            : "bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-[#00AFA9]"
                                                                         }`}
                                                                 >
                                                                     <Plus className="w-3.5 h-3.5" />
@@ -915,7 +915,7 @@ function TelesalesCreateOrderContent() {
                                         <div className="text-center py-8">
                                             <Filter className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                                             <p className="text-sm text-slate-500">Không tìm thấy sản phẩm phù hợp</p>
-                                            <button onClick={() => { setBrandFilter("ALL"); setProductSearchTerm(""); setHideOutOfStock(false); }} className="text-xs text-teal-600 hover:underline mt-1">Xóa bộ lọc</button>
+                                            <button onClick={() => { setBrandFilter("ALL"); setProductSearchTerm(""); setHideOutOfStock(false); }} className="text-xs text-[#00AFA9] hover:underline mt-1">Xóa bộ lọc</button>
                                         </div>
                                     )}
                                     {products.length === 0 && (
@@ -1178,7 +1178,7 @@ function TelesalesCreateOrderContent() {
                                             {/* Total */}
                                             <div className="flex items-center justify-between pt-1">
                                                 <span className="text-sm font-bold text-slate-900">Tổng:</span>
-                                                <span className="text-xl font-bold text-teal-600">
+                                                <span className="text-xl font-bold text-[#00AFA9]">
                                                     {formatPrice(finalTotal)}
                                                 </span>
                                             </div>
@@ -1193,7 +1193,7 @@ function TelesalesCreateOrderContent() {
                                                 </button>
                                                 <button
                                                     onClick={handleCreateOrder}
-                                                    className="flex-[2] px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center gap-2"
+                                                    className="flex-[2] px-4 py-2.5 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center gap-2"
                                                 >
                                                     <ShoppingCart className="w-4 h-4" />
                                                     {editOrderId ? "Cập nhật đơn" : "Tạo đơn"}

@@ -112,7 +112,7 @@ export default function HRSchedulingPage() {
         setPosters([schedule.poster_url || null, schedule.poster_url_2 || null, schedule.poster_url_3 || null]);
 
         if (schedule.theme_color) setThemeColor(schedule.theme_color);
-        else setThemeColor("#0d9488");
+        else setThemeColor("#00AFA9");
         setLockNote((schedule as any).lock_note || "");
 
         try {
@@ -235,7 +235,7 @@ export default function HRSchedulingPage() {
     useEffect(() => {
         if (selectedSchedule) {
             setPosters([selectedSchedule.poster_url || null, selectedSchedule.poster_url_2 || null, selectedSchedule.poster_url_3 || null]);
-            setThemeColor(selectedSchedule.theme_color || '#0d9488');
+            setThemeColor(selectedSchedule.theme_color || '#00AFA9');
         }
     }, [selectedSchedule]);
 
@@ -278,7 +278,7 @@ export default function HRSchedulingPage() {
 
     const weekDays = selectedSchedule ? getWeekDays(selectedSchedule.week_number, selectedSchedule.year) : [];
     const DAY_NAMES = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"];
-    const themeColor = selectedSchedule?.theme_color || "#0d9488";
+    const themeColor = selectedSchedule?.theme_color || "#00AFA9";
 
     // Filter profiles: non-admin never sees hidden, admin can toggle
     const displayProfiles = profiles.filter(p => {
@@ -305,7 +305,7 @@ export default function HRSchedulingPage() {
     const getShiftColor = (name: string) => {
         if (name.includes("Sáng")) return "bg-teal-50 text-teal-800 border-teal-200";
         if (name.includes("Chiều")) return "bg-orange-50 text-orange-800 border-orange-200";
-        if (name.includes("Tối")) return "bg-indigo-50 text-indigo-800 border-indigo-200";
+        if (name.includes("Tối")) return "bg-teal-50 text-teal-800 border-teal-200";
         return "bg-slate-50 text-slate-800 border-slate-200";
     };
 
@@ -333,12 +333,12 @@ export default function HRSchedulingPage() {
                         {/* Allow ALL users to change banner */}
                         <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 p-1 rounded backdrop-blur-sm">
                             {selectedSchedule.banner_url && (
-                                <button onClick={() => setPreviewImage(selectedSchedule.banner_url || null)} className="bg-white p-1.5 rounded shadow hover:text-blue-600" title="Xem ảnh đầy đủ">
+                                <button onClick={() => setPreviewImage(selectedSchedule.banner_url || null)} className="bg-white p-1.5 rounded shadow hover:text-[#00AFA9]" title="Xem ảnh đầy đủ">
                                     <Eye className="w-4 h-4" />
                                 </button>
                             )}
                             <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleAssetUpload(e.target.files[0], 'banner')} />
-                            <button onClick={() => bannerInputRef.current?.click()} className="bg-white p-1.5 rounded shadow hover:text-teal-600" title="Đổi Banner">
+                            <button onClick={() => bannerInputRef.current?.click()} className="bg-white p-1.5 rounded shadow hover:text-[#00AFA9]" title="Đổi Banner">
                                 <Edit3 className="w-4 h-4" />
                             </button>
                             {selectedSchedule.banner_url && (
@@ -369,14 +369,14 @@ export default function HRSchedulingPage() {
                 </div>
             )}
             {isHR && selectedSchedule && (
-                <div className="shrink-0 px-4 py-2 bg-blue-50 border-b border-blue-200 flex items-center gap-2">
-                    <Edit3 className="w-4 h-4 text-blue-500 shrink-0" />
+                <div className="shrink-0 px-4 py-2 bg-teal-50 border-b border-teal-200 flex items-center gap-2">
+                    <Edit3 className="w-4 h-4 text-[#00AFA9] shrink-0" />
                     <input
                         type="text"
                         value={lockNote}
                         onChange={(e) => setLockNote(e.target.value)}
                         placeholder={`Đăng ký lịch đã khóa. Mở lại ${getNextOpenTime()}. Nếu cần thay đổi, liên hệ HR hoặc Admin.`}
-                        className="flex-1 text-xs bg-transparent border-none outline-none text-blue-800 placeholder:text-blue-400"
+                        className="flex-1 text-xs bg-transparent border-none outline-none text-teal-800 placeholder:text-teal-400"
                     />
                     <button
                         onClick={async () => {
@@ -390,7 +390,7 @@ export default function HRSchedulingPage() {
                             finally { setSavingLockNote(false); }
                         }}
                         disabled={savingLockNote}
-                        className="text-[10px] px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+                        className="text-[10px] px-2 py-1 bg-[#00AFA9] text-white rounded hover:bg-[#009690] disabled:opacity-50 whitespace-nowrap shadow-sm"
                     >
                         {savingLockNote ? '...' : 'Lưu'}
                     </button>
@@ -415,7 +415,7 @@ export default function HRSchedulingPage() {
                                     ? "text-white border-transparent shadow-sm"
                                     : "bg-white text-slate-600 border-slate-300 hover:bg-slate-100"
                                     }`}
-                                style={selectedSchedule?.id === sch.id ? { backgroundColor: sch.theme_color || '#0d9488' } : {}}
+                                style={selectedSchedule?.id === sch.id ? { backgroundColor: sch.theme_color || '#00AFA9' } : {}}
                             >
                                 Tuần {sch.week_number}
                             </button>
@@ -437,7 +437,7 @@ export default function HRSchedulingPage() {
 
                             {/* Modal/Popover for 3 Posters */}
                             {showPosterModal && (
-                                <div className="absolute top-full right-0 mt-2 w-80 bg-white border border-slate-200 shadow-xl rounded-lg p-4 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                <div className="absolute top-full right-0 mt-2 w-80 bg-white border border-slate-200 shadow-sm rounded-lg p-4 z-50 animate-in fade-in zoom-in-95 duration-100">
                                     <div className="flex justify-between items-center mb-3">
                                         <h3 className="text-sm font-bold text-slate-700">Quản lý Poster (Sidebar)</h3>
                                         <button onClick={() => setShowPosterModal(false)}><X className="w-4 h-4 text-slate-400" /></button>
@@ -450,7 +450,7 @@ export default function HRSchedulingPage() {
                                                 <div className="relative group rounded border border-slate-200 overflow-hidden">
                                                     <img src={selectedSchedule.poster_url} className="w-full h-24 object-contain bg-slate-50" />
                                                     <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url || null)} className="bg-white/80 p-1 text-blue-600 rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
+                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url || null)} className="bg-white/80 p-1 text-[#00AFA9] rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
                                                         <button onClick={() => handleDeleteAsset('poster')} className="bg-white/80 p-1 text-red-600 rounded shadow"><Trash2 className="w-3 h-3" /></button>
                                                     </div>
                                                 </div>
@@ -465,7 +465,7 @@ export default function HRSchedulingPage() {
                                                 <div className="relative group rounded border border-slate-200 overflow-hidden">
                                                     <img src={selectedSchedule.poster_url_2} className="w-full h-24 object-contain bg-slate-50" />
                                                     <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url_2 || null)} className="bg-white/80 p-1 text-blue-600 rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
+                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url_2 || null)} className="bg-white/80 p-1 text-[#00AFA9] rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
                                                         <button onClick={() => handleDeleteAsset('poster2')} className="bg-white/80 p-1 text-red-600 rounded shadow"><Trash2 className="w-3 h-3" /></button>
                                                     </div>
                                                 </div>
@@ -480,7 +480,7 @@ export default function HRSchedulingPage() {
                                                 <div className="relative group rounded border border-slate-200 overflow-hidden">
                                                     <img src={selectedSchedule.poster_url_3} className="w-full h-24 object-contain bg-slate-50" />
                                                     <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url_3 || null)} className="bg-white/80 p-1 text-blue-600 rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
+                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url_3 || null)} className="bg-white/80 p-1 text-[#00AFA9] rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
                                                         <button onClick={() => handleDeleteAsset('poster3')} className="bg-white/80 p-1 text-red-600 rounded shadow"><Trash2 className="w-3 h-3" /></button>
                                                     </div>
                                                 </div>
@@ -504,11 +504,11 @@ export default function HRSchedulingPage() {
                         <div className="h-7 w-7 rounded-full overflow-hidden border border-slate-300 cursor-pointer relative shadow-sm hover:scale-105 transition-transform">
                             <input
                                 type="color"
-                                value={selectedSchedule.theme_color || '#0d9488'}
+                                value={selectedSchedule.theme_color || '#00AFA9'}
                                 onChange={(e) => handleUpdateTheme(e.target.value)}
                                 className="absolute inset-0 w-[150%] h-[150%] -top-[25%] -left-[25%] p-0 border-none opacity-0 cursor-pointer"
                             />
-                            <div className="w-full h-full pointer-events-none" style={{ backgroundColor: selectedSchedule.theme_color || '#0d9488' }} />
+                            <div className="w-full h-full pointer-events-none" style={{ backgroundColor: selectedSchedule.theme_color || '#00AFA9' }} />
                         </div>
                     )}
 
@@ -519,7 +519,7 @@ export default function HRSchedulingPage() {
                                 <Plus className="w-3 h-3" /> Tuần mới
                             </button>
                             {isCreating && (
-                                <div className="absolute top-full right-0 mt-2 w-72 bg-white border border-slate-200 shadow-xl rounded p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                <div className="absolute top-full right-0 mt-2 w-72 bg-white border border-slate-200 shadow-sm rounded p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
                                     <h3 className="text-sm font-bold text-slate-700 mb-3">Tạo lịch tuần mới</h3>
                                     <div className="mb-4">
                                         <label className="text-xs font-medium text-slate-600 block mb-1">Ngày bắt đầu (Thứ 2)</label>
@@ -560,7 +560,7 @@ export default function HRSchedulingPage() {
             <div className="flex-1 overflow-auto bg-white relative">
                 {selectedSchedule ? (
                     <table className="w-full border-collapse text-sm mb-12">
-                        <thead className="sticky top-0 z-30 text-white shadow-md" style={{ backgroundColor: themeColor }}>
+                        <thead className="sticky top-0 z-30 text-white shadow-sm border-b border-white/20" style={{ backgroundColor: themeColor }}>
                             <tr>
                                 <th className="sticky left-0 z-40 border-r border-b border-white/20 py-2 px-3 w-48 text-left text-xs font-semibold" style={{ backgroundColor: themeColor }}>Nhân viên</th>
                                 {weekDays.map((date, idx) => (
@@ -577,7 +577,7 @@ export default function HRSchedulingPage() {
                                 const isHidden = (profile as any).hidden_from_schedule;
                                 return (
                                     <tr key={profile.id} className={`${rowBg} hover:bg-slate-50 ${isHidden ? 'opacity-40' : ''}`}>
-                                        <td className={`sticky left-0 z-20 ${rowBg} border border-slate-300 px-3 py-1 h-12 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>
+                                        <td className={`sticky left-0 z-20 ${rowBg} border border-slate-300 px-3 py-1 h-12`}>
                                             <div className="flex items-center gap-2 truncate">
                                                 {/* Admin: hide/show button */}
                                                 {isAdmin && (
@@ -635,7 +635,7 @@ export default function HRSchedulingPage() {
                                                     {/* Dropdown Popup */}
                                                     {isDropdownOpen && (
                                                         <div
-                                                            className="absolute top-full left-0 z-50 w-64 bg-white border border-slate-200 shadow-2xl rounded-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+                                                            className="absolute top-full left-0 z-50 w-64 bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150"
                                                             onClick={e => e.stopPropagation()}
                                                         >
                                                             <div className="px-3 py-2 text-[10px] bg-slate-50 border-b border-slate-100 font-semibold text-slate-500 flex justify-between items-center">
@@ -647,7 +647,7 @@ export default function HRSchedulingPage() {
                                                                 {shifts.map(shift => (
                                                                     <button
                                                                         key={shift.id}
-                                                                        className={`w-full text-left px-3 py-2 text-xs rounded hover:bg-teal-50 hover:text-teal-700 flex items-center justify-between transition-colors ${reg?.shift_id === shift.id ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-700'}`}
+                                                                        className={`w-full text-left px-3 py-2 text-xs rounded hover:bg-teal-50 hover:text-[#00AFA9] flex items-center justify-between transition-colors ${reg?.shift_id === shift.id ? 'bg-teal-50 text-[#00AFA9] font-bold' : 'text-slate-700'}`}
                                                                         onClick={() => handleRegister(shift.id, dateStr, profile.id, noteValue)}
                                                                     >
                                                                         <span className="font-medium">{shift.name}</span>
@@ -662,7 +662,7 @@ export default function HRSchedulingPage() {
                                                                         autoFocus
                                                                         type="text"
                                                                         placeholder="Nhập ghi chú..."
-                                                                        className="w-full text-xs border border-slate-200 rounded px-2 py-1.5 focus:ring-1 focus:ring-teal-500 outline-none bg-white"
+                                                                        className="w-full text-xs border border-slate-200 rounded px-2 py-1.5 focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none bg-white"
                                                                         value={noteValue}
                                                                         onChange={(e) => setNoteValue(e.target.value)}
                                                                         onKeyDown={(e) => {
@@ -685,7 +685,7 @@ export default function HRSchedulingPage() {
                                                                                 if (reg) handleRegister(reg.shift_id, dateStr, profile.id, noteValue);
                                                                                 else alert("Vui lòng chọn Ca làm việc trước khi lưu ghi chú!");
                                                                             }}
-                                                                            className="flex-1 py-1.5 text-[10px] bg-teal-600 text-white hover:bg-teal-700 rounded flex items-center justify-center gap-1 font-medium"
+                                                                            className="flex-1 py-1.5 text-[10px] bg-[#00AFA9] text-white hover:bg-[#009690] rounded flex items-center justify-center gap-1 font-medium shadow-sm"
                                                                         >
                                                                             <Check className="w-3 h-3" /> Lưu
                                                                         </button>
@@ -715,7 +715,7 @@ export default function HRSchedulingPage() {
                     </button>
                     <img
                         src={previewImage}
-                        className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                        className="max-w-full max-h-[90vh] object-contain rounded-lg border border-slate-200"
                         onClick={e => e.stopPropagation()}
                     />
                 </div>

@@ -176,7 +176,7 @@ export default function ReportsPage() {
                         <select
                             value={selectedUserId}
                             onChange={(e) => setSelectedUserId(e.target.value)}
-                            className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-primary-500 bg-white font-medium text-slate-700"
+                            className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-[#00AFA9] focus:ring-1 focus:ring-[#00AFA9] bg-white font-medium text-slate-700"
                         >
                             <option value="all">Tổng (Tất cả nhân sự)</option>
                             {uniqueUsers.map(u => (
@@ -187,31 +187,31 @@ export default function ReportsPage() {
                         <div className="flex bg-white rounded-lg border border-slate-200 p-1">
                         <button
                             onClick={() => setFilterType('today')}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'today' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'today' ? 'bg-[#00AFA9] text-white' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             Hôm nay
                         </button>
                         <button
                             onClick={() => setFilterType('yesterday')}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'yesterday' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'yesterday' ? 'bg-[#00AFA9] text-white' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             Hôm qua
                         </button>
                         <button
                             onClick={() => setFilterType('week')}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'week' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'week' ? 'bg-[#00AFA9] text-white' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             Tuần này
                         </button>
                         <button
                             onClick={() => setFilterType('month')}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'month' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'month' ? 'bg-[#00AFA9] text-white' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             Tháng này
                         </button>
                         <button
                             onClick={() => setFilterType('custom')}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'custom' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'custom' ? 'bg-[#00AFA9] text-white' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             Tùy chọn
                         </button>
@@ -225,14 +225,14 @@ export default function ReportsPage() {
                                 type="date"
                                 value={format(dateRange.start, "yyyy-MM-dd")}
                                 onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                                className="px-2 py-1 text-sm border border-slate-200 rounded outline-none focus:border-primary-500"
+                                className="px-2 py-1 text-sm border border-slate-200 rounded outline-none focus:border-[#00AFA9]"
                             />
                             <span className="text-sm text-slate-500">Đến</span>
                             <input
                                 type="date"
                                 value={format(dateRange.end, "yyyy-MM-dd")}
                                 onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                                className="px-2 py-1 text-sm border border-slate-200 rounded outline-none focus:border-primary-500"
+                                className="px-2 py-1 text-sm border border-slate-200 rounded outline-none focus:border-[#00AFA9]"
                             />
                         </div>
                     )}
@@ -246,7 +246,7 @@ export default function ReportsPage() {
                         <p className="text-sm text-slate-500 mb-1">Số lượng báo cáo</p>
                         <p className="text-2xl font-bold text-slate-900">{totalReports}</p>
                     </div>
-                    <div className="p-3 bg-green-50 text-green-600 rounded-lg">
+                    <div className="p-3 bg-teal-50 text-[#00AFA9] rounded-lg">
                         <Calendar className="w-5 h-5" />
                     </div>
                 </div>
@@ -255,7 +255,7 @@ export default function ReportsPage() {
                         <p className="text-sm text-slate-500 mb-1">Tổng bài đăng</p>
                         <p className="text-2xl font-bold text-slate-900">{totalPosts}</p>
                     </div>
-                    <div className="p-3 bg-primary-50 text-primary-600 rounded-lg">
+                    <div className="p-3 bg-teal-50 text-[#00AFA9] rounded-lg">
                         <Share2 className="w-5 h-5" />
                     </div>
                 </div>
@@ -264,7 +264,7 @@ export default function ReportsPage() {
                         <p className="text-sm text-slate-500 mb-1">Tổng tương tác</p>
                         <p className="text-2xl font-bold text-slate-900">{totalInteractions}</p>
                     </div>
-                    <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
+                    <div className="p-3 bg-teal-50 text-[#00AFA9] rounded-lg">
                         <MessageSquare className="w-5 h-5" />
                     </div>
                 </div>
@@ -274,7 +274,7 @@ export default function ReportsPage() {
             {filteredLogs.length > 0 && kpiMetrics.length > 0 && (
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                     <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
-                        <Target className="w-5 h-5 text-indigo-600" />
+                        <Target className="w-5 h-5 text-[#00AFA9]" />
                         {selectedUserId === 'all' ? 'Tổng quan KPI Toàn đội' : `Tổng quan KPI Cá nhân`} ({format(dateRange.start, 'dd/MM')} - {format(dateRange.end, 'dd/MM')})
                     </h2>
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -361,7 +361,7 @@ export default function ReportsPage() {
                                                 <div className="flex items-center ml-auto">
                                                     <a
                                                         href={`/recruitment/daily?userId=${report.user_id}&date=${report.date}`}
-                                                        className="p-3 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-colors shrink-0"
+                                                        className="p-3 text-slate-400 hover:text-[#00AFA9] hover:bg-teal-50 rounded-full transition-colors shrink-0"
                                                         title="Xem chi tiết & Chấm điểm"
                                                     >
                                                         <Eye className="w-5 h-5" />
@@ -391,9 +391,9 @@ export default function ReportsPage() {
                                                         </div>
                                                     )}
                                                     {report.request_support && (
-                                                        <div className="bg-primary-50 p-3 rounded-lg border border-primary-100">
-                                                            <span className="font-semibold text-primary-800 flex items-center gap-1 mb-1"><Megaphone className="w-3 h-3" /> Đề xuất hỗ trợ</span>
-                                                            <span className="text-primary-700 break-words whitespace-pre-wrap">{report.request_support}</span>
+                                                        <div className="bg-teal-50 p-3 rounded-lg border border-teal-100">
+                                                            <span className="font-semibold text-teal-900 flex items-center gap-1 mb-1"><Megaphone className="w-3 h-3 text-[#00AFA9]" /> Đề xuất hỗ trợ</span>
+                                                            <span className="text-teal-800 break-words whitespace-pre-wrap">{report.request_support}</span>
                                                         </div>
                                                     )}
                                                     {report.plan_next_day && (

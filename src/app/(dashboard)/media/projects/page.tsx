@@ -10,7 +10,7 @@ const STATUS_COLUMNS = [
     { key: "planned", label: "Kế hoạch", color: "bg-slate-500", border: "border-slate-500" },
     { key: "shooting", label: "Chụp/Quay", color: "bg-amber-500", border: "border-amber-500" },
     { key: "editing", label: "Dựng/Chỉnh", color: "bg-blue-500", border: "border-blue-500" },
-    { key: "review", label: "Review", color: "bg-purple-500", border: "border-purple-500" },
+    { key: "review", label: "Review", color: "bg-[#00AFA9]", border: "border-[#00AFA9]" },
     { key: "completed", label: "Hoàn thành", color: "bg-green-500", border: "border-green-500" },
 ];
 
@@ -144,7 +144,7 @@ export default function MediaProjectsPage() {
                 </div>
                 <button
                     onClick={() => openModalForNew("planned")}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition font-medium text-sm"
+                    className="bg-[#00AFA9] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#009690] transition font-medium text-sm"
                 >
                     <Plus className="w-4 h-4" />
                     Tạo Dự án mới
@@ -160,7 +160,7 @@ export default function MediaProjectsPage() {
                         placeholder="Tìm kiếm dự án..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                     />
                 </div>
                 <div className="flex items-center gap-2">
@@ -168,7 +168,7 @@ export default function MediaProjectsPage() {
                     <select
                         value={typeFilter}
                         onChange={(e) => setTypeFilter(e.target.value)}
-                        className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                        className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-[#00AFA9]"
                     >
                         <option value="all">Tất cả loại hình</option>
                         <option value="photo">Ảnh (Photo)</option>
@@ -178,7 +178,7 @@ export default function MediaProjectsPage() {
                     <select
                         value={priorityFilter}
                         onChange={(e) => setPriorityFilter(e.target.value)}
-                        className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                        className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-[#00AFA9]"
                     >
                         <option value="all">Mọi mức độ</option>
                         <option value="urgent">Gấp!</option>
@@ -218,7 +218,7 @@ export default function MediaProjectsPage() {
                                     </span>
                                 </div>
                                 
-                                <div className={`flex-1 overflow-y-auto space-y-3 p-2 -mx-2 rounded-xl transition-colors flex flex-col ${isOver ? 'bg-slate-100 ring-2 ring-blue-400 ring-inset' : 'bg-slate-50/50'}`}>
+                                <div className={`flex-1 overflow-y-auto space-y-3 p-2 -mx-2 rounded-xl transition-colors flex flex-col ${isOver ? 'bg-slate-100 ring-2 ring-[#00AFA9] ring-inset' : 'bg-slate-50/50'}`}>
                                     {colProjects.map(project => (
                                         <div 
                                             key={project.id} 
@@ -227,11 +227,11 @@ export default function MediaProjectsPage() {
                                             onDragStart={(e) => handleDragStart(e, project.id)}
                                             onDragEnd={(e) => handleDragEnd(e, project.id)}
                                             onClick={() => { setSelectedProject(project); setIsModalOpen(true); }}
-                                            className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing group relative"
+                                            className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md hover:border-[#00AFA9] transition-all cursor-grab active:cursor-grabbing group relative"
                                         >
                                             {/* Edit Hover Overlay */}
                                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className="p-1.5 bg-slate-100 hover:bg-blue-100 hover:text-blue-600 text-slate-500 rounded-lg">
+                                                <button className="p-1.5 bg-slate-100 hover:bg-teal-50 hover:text-[#00AFA9] text-slate-500 rounded-lg">
                                                     <Pencil className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
@@ -245,7 +245,7 @@ export default function MediaProjectsPage() {
                                                     {project.priority === "urgent" ? "Urgent" : project.priority === "high" ? "High" : project.priority === "low" ? "Low" : "Normal"}
                                                 </span>
                                                 {project.brief_id && (
-                                                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
+                                                     <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-teal-50 text-[#00AFA9] border border-teal-100">
                                                         🔗 Linked Brief
                                                     </span>
                                                 )}
@@ -259,7 +259,7 @@ export default function MediaProjectsPage() {
                                                 <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
                                                     {project.media_type === "video" ? <Film className="w-3.5 h-3.5" /> : project.media_type === "both" ? <div className="flex"><Camera className="w-3 h-3"/><Film className="w-3 h-3 -ml-1"/></div> : <Camera className="w-3.5 h-3.5" />}
                                                     <span>{project.media_type === "photo" ? "Photo" : project.media_type === "video" ? "Video" : "Mix"}</span>
-                                                    {project.asset_count > 0 && <span className="text-blue-600 font-bold ml-1">· {project.asset_count}</span>}
+                                                    {project.asset_count > 0 && <span className="text-[#00AFA9] font-bold ml-1">· {project.asset_count}</span>}
                                                 </div>
                                                 {project.deadline && (
                                                     <span className={`text-[11px] font-medium flex items-center gap-1 ${new Date(project.deadline) < new Date() && project.status !== 'completed' ? 'text-red-500' : 'text-slate-500'}`}>
@@ -272,9 +272,9 @@ export default function MediaProjectsPage() {
                                     ))}
                                     
                                     {colProjects.length === 0 && (
-                                        <div className={`flex flex-col items-center justify-center py-6 text-xs font-medium border-2 border-dashed rounded-xl transition-colors ${isOver ? 'border-blue-400 text-blue-500 bg-blue-50' : 'border-slate-200 text-slate-400'}`}>
-                                            <div className={`p-2 rounded-full mb-1 ${isOver ? 'bg-blue-100' : 'bg-slate-100'}`}>
-                                                <Plus className={`w-4 h-4 ${isOver ? 'text-blue-500 animate-bounce' : 'text-slate-400'}`} />
+                                        <div className={`flex flex-col items-center justify-center py-6 text-xs font-medium border-2 border-dashed rounded-xl transition-colors ${isOver ? 'border-[#00AFA9] text-[#00AFA9] bg-teal-50' : 'border-slate-200 text-slate-400'}`}>
+                                            <div className={`p-2 rounded-full mb-1 ${isOver ? 'bg-teal-100' : 'bg-slate-100'}`}>
+                                                <Plus className={`w-4 h-4 ${isOver ? 'text-[#00AFA9] animate-bounce' : 'text-slate-400'}`} />
                                             </div>
                                             {isOver ? "Thả dự án vào đây" : "Kéo thả dự án vào cột"}
                                         </div>

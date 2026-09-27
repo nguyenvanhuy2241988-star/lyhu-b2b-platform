@@ -228,7 +228,7 @@ export default function AdminMediaBriefsPage() {
                     <p className="text-sm text-slate-500 mt-1">Lên lịch tác nghiệp, giao nhiệm vụ cho đội ngũ Media</p>
                 </div>
                 <button onClick={handleOpenAdd}
-                    className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-colors w-fit">
+                    className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white text-sm font-medium rounded-lg hover:bg-[#009690] transition-colors w-fit">
                     <Plus className="w-4 h-4" /> Lên lịch quay / Tạo Brief
                 </button>
             </div>
@@ -274,7 +274,7 @@ export default function AdminMediaBriefsPage() {
                     </div>
                     {[{ key: "all", label: "Tất cả" }, ...Object.entries(STATUS_CONFIG).map(([k, v]) => ({ key: k, label: v.label }))].map(opt => (
                         <button key={opt.key} onClick={() => setFilterStatus(opt.key)}
-                            className={`px-3 py-1 text-xs font-bold rounded-md transition-colors border ${filterStatus === opt.key ? 'bg-pink-50 text-pink-700 border-pink-200' : 'bg-transparent text-slate-600 border-transparent hover:bg-slate-50'}`}>
+                            className={`px-3 py-1 text-xs font-bold rounded-md transition-colors border ${filterStatus === opt.key ? 'bg-teal-50 text-[#00AFA9] border-[#00AFA9]' : 'bg-transparent text-slate-600 border-transparent hover:bg-slate-50'}`}>
                             {opt.label}
                         </button>
                     ))}
@@ -341,7 +341,7 @@ export default function AdminMediaBriefsPage() {
                                                 <span className="flex items-center gap-1.5 text-slate-500 font-medium">
                                                     <Clock className="w-3.5 h-3.5 text-slate-400" /> Hạn chót:
                                                 </span>
-                                                <span className="font-bold text-pink-700">{new Date(brief.deadline).toLocaleDateString('vi-VN')}</span>
+                                                <span className="font-bold text-[#00AFA9]">{new Date(brief.deadline).toLocaleDateString('vi-VN')}</span>
                                             </div>
                                         )}
                                         
@@ -377,10 +377,10 @@ export default function AdminMediaBriefsPage() {
             {/* Modal Lên Lịch / Tạo Brief */}
             {showForm && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+                    <div className="bg-white rounded-xl w-full max-w-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
                         <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
                             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                {editingId ? <Pencil className="w-5 h-5 text-pink-600"/> : <Plus className="w-5 h-5 text-pink-600" />}
+                                {editingId ? <Pencil className="w-5 h-5 text-[#00AFA9]"/> : <Plus className="w-5 h-5 text-[#00AFA9]" />}
                                 {editingId ? "Cập nhật Yêu cầu / Lịch quay" : "Giao việc / Lên lịch quay mới"}
                             </h2>
                             <button onClick={() => setShowForm(false)} className="p-2 hover:bg-slate-200 rounded-lg text-slate-400 transition-colors">
@@ -471,7 +471,7 @@ export default function AdminMediaBriefsPage() {
                                 Hủy bỏ
                             </button>
                             <button onClick={handleSave} disabled={saving}
-                                className="px-6 py-2.5 rounded-lg text-sm font-bold bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-50 transition-colors flex items-center gap-2 shadow-sm">
+                                className="px-6 py-2.5 rounded-lg text-sm font-bold bg-[#00AFA9] text-white hover:bg-[#009690] disabled:opacity-50 transition-colors flex items-center gap-2 shadow-sm">
                                 {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
                                 {editingId ? "Lưu thay đổi" : "Phát lệnh ngay!"}
                             </button>

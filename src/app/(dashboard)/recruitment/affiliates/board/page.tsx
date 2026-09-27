@@ -102,7 +102,7 @@ export default function AffiliateBoardPage() {
           <h1 className="text-2xl font-bold text-slate-800">Quản lý Affiliate (CTV, KOL, KOC)</h1>
           <p className="text-slate-500">Kéo thả để cập nhật trạng thái chiêu mộ</p>
         </div>
-        <button onClick={handleAddNew} className="flex items-center px-4 py-2 text-sm text-white rounded-lg bg-emerald-600 hover:bg-emerald-700 transition-colors">
+        <button onClick={handleAddNew} className="flex items-center px-4 py-2 text-sm text-white rounded-lg bg-[#00AFA9] hover:bg-[#009690] transition-colors">
           <Plus className="w-4 h-4 mr-2" />
           Thêm Đối Tác
         </button>
@@ -134,15 +134,15 @@ export default function AffiliateBoardPage() {
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
                             onClick={() => handleEdit(partner)}
-                            className={`bg-white p-3 rounded-lg shadow-sm mb-3 border border-slate-100 cursor-pointer hover:shadow-md transition-shadow
-                              ${snapshot.isDragging ? 'shadow-lg ring-2 ring-emerald-500/20' : ''}`}
+                            className={`bg-white p-3 rounded-lg shadow-sm mb-3 border border-slate-100 cursor-pointer hover:border-slate-300 transition-all
+                              ${snapshot.isDragging ? 'border border-[#00AFA9] ring-2 ring-[#00AFA9]/20' : ''}`}
                           >
                             <div className="flex justify-between items-start mb-2">
                               <h4 className="font-medium text-sm text-slate-800 line-clamp-1">{partner.name}</h4>
                               <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                                partner.type === 'KOL' ? 'bg-purple-100 text-purple-700' :
-                                partner.type === 'KOC' ? 'bg-blue-100 text-blue-700' :
-                                'bg-emerald-100 text-emerald-700'
+                                partner.type === 'KOL' ? 'bg-teal-50 text-[#00AFA9] border border-[#00AFA9]/30' :
+                                partner.type === 'KOC' ? 'bg-blue-50 text-blue-700' :
+                                'bg-slate-100 text-slate-700'
                               }`}>
                                 {partner.type}
                               </span>

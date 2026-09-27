@@ -13,7 +13,7 @@ export default function RndProjectsPage() {
     const getStatusColor = (s:string) => {
         if(s === 'Ideation') return 'bg-blue-100 text-blue-700';
         if(s === 'Testing') return 'bg-orange-100 text-orange-700';
-        if(s === 'Review') return 'bg-purple-100 text-purple-700';
+        if(s === 'Review') return 'bg-teal-50 text-[#00AFA9]';
         return 'bg-slate-100 text-slate-700';
     }
 
@@ -24,7 +24,7 @@ export default function RndProjectsPage() {
                     <h1 className="text-2xl font-bold text-slate-900">Dự án R&D</h1>
                     <p className="text-slate-500">Quản lý các dự án nghiên cứu sản phẩm mới</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 shadow-sm font-medium">
+                <button className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] shadow-sm font-medium transition-colors">
                     <Plus className="w-4 h-4" />
                     Tạo dự án
                 </button>
@@ -32,10 +32,10 @@ export default function RndProjectsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {projects.map(proj => (
-                    <div key={proj.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition">
+                    <div key={proj.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:border-[#00AFA9]/40 transition">
                         <div className="flex justify-between items-start mb-4">
-                            <div className={`p-2 rounded-lg bg-slate-50`}>
-                                <FlaskConical className="w-6 h-6 text-slate-600" />
+                            <div className="p-2 rounded-lg bg-teal-50 text-[#00AFA9]">
+                                <FlaskConical className="w-6 h-6" />
                             </div>
                             <button className="text-slate-400 hover:text-slate-600"><MoreVertical className="w-5 h-5" /></button>
                         </div>

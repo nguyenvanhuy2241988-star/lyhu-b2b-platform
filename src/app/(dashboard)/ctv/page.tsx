@@ -139,8 +139,8 @@ export default function CTVDashboard() {
             value: leadStats.total.toString(),
             change: `${leadStats.newCount} lead mới`,
             icon: Users,
-            color: "text-purple-600",
-            bg: "bg-purple-50",
+            color: "text-[#00AFA9]",
+            bg: "bg-teal-50",
         },
     ];
 
@@ -286,8 +286,8 @@ export default function CTVDashboard() {
                     href="/ctv/referrals"
                     className="bg-white p-5 rounded-xl border border-slate-200 hover:border-[#00AFA9] transition-colors group flex items-center gap-4"
                 >
-                    <div className="p-3 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors">
-                        <UserPlus className="w-6 h-6 text-purple-600" />
+                    <div className="p-3 bg-teal-50 rounded-xl group-hover:bg-teal-100 transition-colors">
+                        <UserPlus className="w-6 h-6 text-[#00AFA9]" />
                     </div>
                     <div>
                         <h4 className="font-semibold text-slate-900 mb-0.5 group-hover:text-[#00AFA9] transition-colors">Giới thiệu CTV</h4>
@@ -312,7 +312,7 @@ export default function CTVDashboard() {
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <div className="p-4 sm:p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                     <h3 className="text-base sm:text-lg font-bold text-slate-900">Leads gần đây</h3>
-                    <a href="/ctv/my-leads" className="text-xs sm:text-sm text-[#00AFA9] hover:text-[#009b95] font-bold transition-colors">
+                    <a href="/ctv/my-leads" className="text-xs sm:text-sm text-[#00AFA9] hover:text-[#009690] font-bold transition-colors">
                         Xem tất cả
                     </a>
                 </div>

@@ -12,8 +12,8 @@ import { supabase } from "@/lib/supabaseClient";
 // Candidate Status Badge Helper
 const StatusBadge = ({ status }: { status: string }) => {
     const colors: Record<string, string> = {
-        new: "bg-primary-100 text-primary-700",
-        screening: "bg-purple-100 text-purple-700",
+        new: "bg-teal-50 text-[#00AFA9]",
+        screening: "bg-blue-50 text-blue-700",
         interview: "bg-yellow-100 text-yellow-700",
         offer: "bg-orange-100 text-orange-700",
         hired: "bg-green-100 text-green-700",
@@ -125,7 +125,7 @@ export default function JobDetailPage() {
     if (isLoading) {
         return (
             <div className="flex h-screen items-center justify-center">
-                <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+                <Loader2 className="w-8 h-8 text-[#00AFA9] animate-spin" />
             </div>
         );
     }
@@ -134,7 +134,7 @@ export default function JobDetailPage() {
         return (
             <div className="p-8 text-center">
                 <h2 className="text-xl font-bold text-slate-700">Công việc không tồn tại</h2>
-                <Link href="/recruitment/jobs" className="text-primary-600 hover:underline mt-2 inline-block">
+                <Link href="/recruitment/jobs" className="text-[#00AFA9] hover:underline mt-2 inline-block">
                     Quay lại danh sách
                 </Link>
             </div>
@@ -169,16 +169,16 @@ export default function JobDetailPage() {
                     </div>
 
                     {/* Share / Tracking Box */}
-                    <div className="bg-primary-50 border border-primary-200 p-4 rounded-xl max-w-md w-full">
-                        <h3 className="text-sm font-bold text-primary-800 mb-2 flex items-center gap-2">
-                            <Share2 className="w-4 h-4" />
+                    <div className="bg-teal-50 border border-teal-200 p-4 rounded-xl max-w-md w-full">
+                        <h3 className="text-sm font-bold text-teal-900 mb-2 flex items-center gap-2">
+                            <Share2 className="w-4 h-4 text-[#00AFA9]" />
                             Lấy Link Tracking (KPI Traffic)
                         </h3>
 
                         <div className="space-y-3">
                             <div className="flex gap-2">
                                 <select
-                                    className="text-sm border-primary-200 rounded px-2 py-1 outline-none text-slate-700 bg-white"
+                                    className="text-sm border-teal-200 rounded px-2 py-1 outline-none text-slate-700 bg-white focus:border-[#00AFA9] focus:ring-1 focus:ring-[#00AFA9]"
                                     value={source}
                                     onChange={e => setSource(e.target.value)}
                                 >
@@ -192,7 +192,7 @@ export default function JobDetailPage() {
                                 <button
                                     onClick={generateTrackingLink}
                                     disabled={isGenerating}
-                                    className="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-3 py-1 rounded text-sm font-medium transition flex items-center justify-center gap-1 disabled:opacity-50"
+                                    className="flex-1 bg-[#00AFA9] hover:bg-[#009690] text-white px-3 py-1 rounded text-sm font-medium transition flex items-center justify-center gap-1 disabled:opacity-50"
                                 >
                                     {isGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
                                     Tạo Link
@@ -200,7 +200,7 @@ export default function JobDetailPage() {
                             </div>
 
                             {generatedLink && (
-                                <div className="bg-white p-2 rounded border border-primary-100 animate-in fade-in slide-in-from-top-2">
+                                <div className="bg-white p-2 rounded border border-teal-100 animate-in fade-in slide-in-from-top-2">
                                     <div className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider font-bold">Smart Link của bạn</div>
                                     <div className="flex items-center gap-2">
                                         <code className="flex-1 text-xs bg-slate-50 text-slate-600 p-1.5 rounded font-mono border border-slate-200 truncate">
@@ -279,7 +279,7 @@ export default function JobDetailPage() {
                                                     {c.cv_url ? (
                                                         <button
                                                             onClick={() => forceDownload(c.cv_url!, `CV_${c.full_name.replace(/\s+/g, '_')}`)}
-                                                            className="text-primary-600 hover:underline hover:text-primary-800 truncate max-w-[150px] block font-medium"
+                                                            className="text-[#00AFA9] hover:underline hover:text-[#009690] truncate max-w-[150px] block font-medium"
                                                         >
                                                             Tải CV
                                                         </button>
@@ -328,7 +328,7 @@ export default function JobDetailPage() {
                                                 {c.cv_url ? (
                                                     <button
                                                         onClick={() => forceDownload(c.cv_url!, `CV_${c.full_name.replace(/\s+/g, '_')}`)}
-                                                        className="text-[11px] font-bold text-primary-600 bg-primary-50 px-2.5 py-1.5 rounded-md hover:bg-primary-100 transition-colors"
+                                                        className="text-[11px] font-bold text-[#00AFA9] bg-teal-50 px-2.5 py-1.5 rounded-md hover:bg-teal-100 transition-colors"
                                                     >
                                                         Tải CV
                                                     </button>

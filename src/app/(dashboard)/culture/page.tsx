@@ -52,7 +52,7 @@ function EditableLink({ id, icon: Icon, defaultUrl, label }: { id: string, icon:
         }
 
         return (
-            <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-slate-500 hover:text-teal-600 transition-colors text-xs font-medium bg-slate-50 px-2.5 py-1.5 rounded-md border border-slate-100 hover:border-teal-200 w-fit">
+            <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-slate-500 hover:text-[#00AFA9] transition-colors text-xs font-medium bg-slate-50 px-2.5 py-1.5 rounded-md border border-slate-100 hover:border-[#00AFA9] w-fit">
                 <Icon className="w-3.5 h-3.5" />
                 {label}
             </a>
@@ -64,7 +64,7 @@ function EditableLink({ id, icon: Icon, defaultUrl, label }: { id: string, icon:
             <Icon className="w-4 h-4 text-slate-400 shrink-0" title={label} />
             <input 
                 type="text" 
-                className="w-full p-1.5 border border-slate-200 bg-slate-50 rounded-lg focus:outline-none focus:border-teal-500 text-xs shadow-sm" 
+                className="w-full p-1.5 border border-slate-200 bg-slate-50 rounded-lg focus:outline-none focus:border-[#00AFA9] text-xs shadow-sm" 
                 value={val || ''} 
                 onChange={e => updateContent(id, e.target.value)} 
                 placeholder={`Link ${label}...`}
@@ -81,7 +81,7 @@ function EditableText({ id, defaultText, className = "", multiline = false }: { 
 
     if (multiline) {
         return <textarea 
-            className={`w-full p-3 border-2 border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 min-h-[120px] transition-all resize-none shadow-sm ${className}`} 
+            className={`w-full p-3 border-2 border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00AFA9] min-h-[120px] transition-all resize-none shadow-sm ${className}`} 
             value={val} 
             onChange={e => updateContent(id, e.target.value)} 
             placeholder="Nhập nội dung..."
@@ -144,7 +144,7 @@ function EditableImage({ id, label = "Ảnh", className = "aspect-video", option
                         <button className="absolute top-6 right-6 text-white/50 hover:text-white transition bg-white/10 hover:bg-white/20 p-2 rounded-full cursor-pointer z-50 pointer-events-auto" onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(false); }}>
                             <X className="w-8 h-8" />
                         </button>
-                        <img src={imageUrl} alt={label} className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+                        <img src={imageUrl} alt={label} className="max-w-full max-h-[90vh] object-contain rounded-xl border border-slate-200 z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
                     </div>,
                     document.body
                 )}
@@ -167,7 +167,7 @@ function EditableImage({ id, label = "Ảnh", className = "aspect-video", option
                ) : (
                    <div className="flex flex-col items-center gap-3 w-max p-2 hover:z-50">
                        {/* Upload Button */}
-                       <label className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg cursor-pointer text-sm font-bold flex items-center gap-2 shadow-sm mb-1 pointer-events-auto transition hover:scale-105 active:scale-95">
+                       <label className="bg-[#00AFA9] hover:bg-[#009690] text-white px-4 py-2 rounded-lg cursor-pointer text-sm font-bold flex items-center gap-2 shadow-sm mb-1 pointer-events-auto transition hover:scale-105 active:scale-95">
                            <ImageIcon className="w-4 h-4" /> Chọn ảnh mới
                            <input 
                                 type="file" 
@@ -181,25 +181,25 @@ function EditableImage({ id, label = "Ảnh", className = "aspect-video", option
                        <div className="flex flex-col gap-2 bg-slate-900/90 p-2.5 rounded-xl border border-slate-700 shadow-sm pointer-events-auto" onClick={e => e.stopPropagation()}>
                            <div className="flex items-center gap-2 text-xs">
                                <span className="text-slate-300 w-10 font-medium tracking-wide">DÁNG:</span>
-                               <button onClick={() => updateContent(`${id}_shape`, 'square')} className={`p-1.5 rounded transition ${shape==='square'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Vuông">⏹️</button>
-                               <button onClick={() => updateContent(`${id}_shape`, 'portrait')} className={`p-1.5 rounded transition ${shape==='portrait'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Dọc A4">📄</button>
-                               <button onClick={() => updateContent(`${id}_shape`, 'video')} className={`p-1.5 rounded transition ${shape==='video'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Ngang">🖥️</button>
-                               <button onClick={() => updateContent(`${id}_shape`, 'cinema')} className={`p-1.5 rounded transition ${shape==='cinema'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Banner">▭</button>
-                               <button onClick={() => updateContent(`${id}_shape`, 'circle')} className={`p-1.5 rounded transition ${shape==='circle'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Tròn">🔵</button>
-                               <button onClick={() => updateContent(`${id}_shape`, '')} className={`p-1.5 rounded font-bold transition ${!shape?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Mặc định">MĐ</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'square')} className={`p-1.5 rounded transition ${shape==='square'?'bg-[#00AFA9] text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Vuông">⏹️</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'portrait')} className={`p-1.5 rounded transition ${shape==='portrait'?'bg-[#00AFA9] text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Dọc A4">📄</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'video')} className={`p-1.5 rounded transition ${shape==='video'?'bg-[#00AFA9] text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Ngang">🖥️</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'cinema')} className={`p-1.5 rounded transition ${shape==='cinema'?'bg-[#00AFA9] text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Banner">▭</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'circle')} className={`p-1.5 rounded transition ${shape==='circle'?'bg-[#00AFA9] text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Tròn">🔵</button>
+                               <button onClick={() => updateContent(`${id}_shape`, '')} className={`p-1.5 rounded font-bold transition ${!shape?'bg-[#00AFA9] text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Mặc định">MĐ</button>
                            </div>
                            <div className="flex items-center gap-2 text-xs">
                                <span className="text-slate-300 w-10 font-medium tracking-wide">CỠ:</span>
-                               <button onClick={() => updateContent(`${id}_size`, 'sm')} className={`px-2 py-1 rounded font-bold transition ${size==='sm'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>S</button>
-                               <button onClick={() => updateContent(`${id}_size`, 'md')} className={`px-2 py-1 rounded font-bold transition ${size==='md'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>M</button>
-                               <button onClick={() => updateContent(`${id}_size`, 'lg')} className={`px-2 py-1 rounded font-bold transition ${size==='lg'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>L</button>
-                               <button onClick={() => updateContent(`${id}_size`, 'full')} className={`px-2 py-1 rounded font-bold transition ${size==='full'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>Full</button>
-                               <button onClick={() => updateContent(`${id}_size`, '')} className={`px-2 py-1 rounded font-bold transition ${!size?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>MĐ</button>
+                               <button onClick={() => updateContent(`${id}_size`, 'sm')} className={`px-2 py-1 rounded font-bold transition ${size==='sm'?'bg-[#00AFA9] text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>S</button>
+                               <button onClick={() => updateContent(`${id}_size`, 'md')} className={`px-2 py-1 rounded font-bold transition ${size==='md'?'bg-[#00AFA9] text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>M</button>
+                               <button onClick={() => updateContent(`${id}_size`, 'lg')} className={`px-2 py-1 rounded font-bold transition ${size==='lg'?'bg-[#00AFA9] text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>L</button>
+                               <button onClick={() => updateContent(`${id}_size`, 'full')} className={`px-2 py-1 rounded font-bold transition ${size==='full'?'bg-[#00AFA9] text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>Full</button>
+                               <button onClick={() => updateContent(`${id}_size`, '')} className={`px-2 py-1 rounded font-bold transition ${!size?'bg-[#00AFA9] text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>MĐ</button>
                            </div>
                            <div className="flex items-center gap-2 text-xs border-t border-slate-700/50 pt-2 mt-0.5">
                                <span className="text-slate-300 w-10 font-medium tracking-wide">GÓC:</span>
                                <button onClick={() => updateContent(`${id}_radius`, 'none')} className={`px-2 py-1 rounded font-bold transition ${radius==='none'?'bg-red-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Bỏ bo góc (Vuông vắn)">0px</button>
-                               <button onClick={() => updateContent(`${id}_radius`, '')} className={`px-2 py-1 rounded font-bold transition ${!radius?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Bo góc mặc định theo khung">MĐ</button>
+                               <button onClick={() => updateContent(`${id}_radius`, '')} className={`px-2 py-1 rounded font-bold transition ${!radius?'bg-[#00AFA9] text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Bo góc mặc định theo khung">MĐ</button>
                                
                                {imageUrl && (
                                    <button onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }} className="ml-auto flex items-center gap-1 bg-blue-500/20 text-blue-300 hover:bg-blue-500 hover:text-white px-2 py-1 rounded transition pointer-events-auto" title="Xem trước ảnh">
@@ -218,7 +218,7 @@ function EditableImage({ id, label = "Ảnh", className = "aspect-video", option
                     <button className="absolute top-6 right-6 text-white/50 hover:text-white transition bg-white/10 hover:bg-white/20 p-2 rounded-full cursor-pointer z-50 pointer-events-auto" onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(false); }}>
                         <X className="w-8 h-8" />
                     </button>
-                    <img src={imageUrl} alt={label} className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+                    <img src={imageUrl} alt={label} className="max-w-full max-h-[90vh] object-contain rounded-xl border border-slate-200 z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
                 </div>,
                 document.body
            )}
@@ -459,7 +459,7 @@ function NextTabButton() {
     
     return (
         <div className="mt-20 pt-10 border-t border-slate-100 flex justify-center">
-            <button onClick={goToNextTab} className="group flex items-center gap-3 text-slate-500 hover:text-teal-600 transition-colors px-6 py-3 rounded-full hover:bg-slate-50">
+            <button onClick={goToNextTab} className="group flex items-center gap-3 text-slate-500 hover:text-[#00AFA9] transition-colors px-6 py-3 rounded-full hover:bg-slate-50">
                 <span className="font-medium tracking-wide uppercase text-sm">Chuyển sang: {nextTab.label}</span>
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </button>
@@ -673,7 +673,7 @@ function LogoView({ brand }: { brand: any }) {
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     {/* Base Drafting Paper Grid */}
                                     <div className="absolute inset-0 opacity-[0.15] z-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(#1e293b 1px, transparent 1px), linear-gradient(90deg, #1e293b 1px, transparent 1px)`, backgroundSize: `12px 12px`, backgroundPosition: `center center` }}></div>
-                                    <div className="absolute inset-0 opacity-30 z-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(#db2777 1px, transparent 1px), linear-gradient(90deg, #db2777 1px, transparent 1px)`, backgroundSize: `60px 60px`, backgroundPosition: `center center` }}></div>
+                                    <div className="absolute inset-0 opacity-30 z-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(#00AFA9 1px, transparent 1px), linear-gradient(90deg, #00AFA9 1px, transparent 1px)`, backgroundSize: `60px 60px`, backgroundPosition: `center center` }}></div>
 
                                     {/* Uploaded Logo (Watermark mode) */}
                                     <img src={content.img_logo_full} className="absolute inset-0 w-full h-full object-contain filter grayscale opacity-40 z-10 p-8 pointer-events-none" alt="Base Logo" />
@@ -681,29 +681,29 @@ function LogoView({ brand }: { brand: any }) {
                                     {/* Dynamic Geometry Overlay */}
                                     <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center overflow-hidden">
                                         {/* Center Construction Axes */}
-                                        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-pink-500 opacity-60"></div>
-                                        <div className="absolute left-0 right-0 top-1/2 h-px bg-pink-500 opacity-60"></div>
-                                        <div className="absolute top-1/4 bottom-1/4 left-1/4 w-px bg-pink-500 opacity-30 border-l border-dashed"></div>
-                                        <div className="absolute top-1/4 bottom-1/4 right-1/4 w-px bg-pink-500 opacity-30 border-l border-dashed"></div>
+                                        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-[#00AFA9] opacity-60"></div>
+                                        <div className="absolute left-0 right-0 top-1/2 h-px bg-[#00AFA9] opacity-60"></div>
+                                        <div className="absolute top-1/4 bottom-1/4 left-1/4 w-px bg-[#00AFA9] opacity-30 border-l border-dashed"></div>
+                                        <div className="absolute top-1/4 bottom-1/4 right-1/4 w-px bg-[#00AFA9] opacity-30 border-l border-dashed"></div>
 
                                         {/* Bounding Box with Diagonal Alignments */}
-                                        <div className="w-[65%] h-[55%] border border-pink-500 opacity-50 absolute flex items-center justify-center">
+                                        <div className="w-[65%] h-[55%] border border-[#00AFA9] opacity-50 absolute flex items-center justify-center">
                                             <svg className="w-full h-full absolute inset-0 opacity-40" preserveAspectRatio="none">
-                                                <line x1="0" y1="0" x2="100%" y2="100%" stroke="#db2777" strokeWidth="1" strokeDasharray="4 4" />
-                                                <line x1="100%" y1="0" x2="0" y2="100%" stroke="#db2777" strokeWidth="1" strokeDasharray="4 4" />
+                                                <line x1="0" y1="0" x2="100%" y2="100%" stroke="#00AFA9" strokeWidth="1" strokeDasharray="4 4" />
+                                                <line x1="100%" y1="0" x2="0" y2="100%" stroke="#00AFA9" strokeWidth="1" strokeDasharray="4 4" />
                                             </svg>
                                         </div>
 
                                         {/* Fibonacci / Golden Ratio Circles */}
-                                        <div className="w-[50%] aspect-square border border-pink-500 rounded-full opacity-60 absolute mix-blend-multiply flex items-center justify-center">
-                                            <div className="w-[61.8%] aspect-square border border-pink-500 rounded-full opacity-70 absolute mix-blend-multiply -translate-x-[20%] translate-y-[20%]"></div>
-                                            <div className="w-[38.2%] aspect-square border-2 border-pink-400 rounded-full opacity-80 absolute mix-blend-multiply translate-x-[40%] -translate-y-[40%]"></div>
+                                        <div className="w-[50%] aspect-square border border-[#00AFA9] rounded-full opacity-60 absolute mix-blend-multiply flex items-center justify-center">
+                                            <div className="w-[61.8%] aspect-square border border-[#00AFA9] rounded-full opacity-70 absolute mix-blend-multiply -translate-x-[20%] translate-y-[20%]"></div>
+                                            <div className="w-[38.2%] aspect-square border-2 border-[#00AFA9] rounded-full opacity-80 absolute mix-blend-multiply translate-x-[40%] -translate-y-[40%]"></div>
                                         </div>
 
                                         {/* Tech Annotations */}
-                                        <div className="absolute top-[20%] left-[15%] text-[10px] text-pink-600 font-mono tracking-widest opacity-80 bg-white/50 px-1 rounded">R = 1.618X</div>
-                                        <div className="absolute bottom-[20%] right-[15%] text-[10px] text-pink-600 font-mono tracking-widest opacity-80 bg-white/50 px-1 rounded">ø = X</div>
-                                        <div className="absolute top-1/2 mt-2 ml-2 left-1/2 text-[10px] text-pink-600 font-mono tracking-widest opacity-80">CENTER (0,0)</div>
+                                        <div className="absolute top-[20%] left-[15%] text-[10px] text-[#00AFA9] font-mono tracking-widest opacity-80 bg-white/50 px-1 rounded">R = 1.618X</div>
+                                        <div className="absolute bottom-[20%] right-[15%] text-[10px] text-[#00AFA9] font-mono tracking-widest opacity-80 bg-white/50 px-1 rounded">ø = X</div>
+                                        <div className="absolute top-1/2 mt-2 ml-2 left-1/2 text-[10px] text-[#00AFA9] font-mono tracking-widest opacity-80">CENTER (0,0)</div>
                                     </div>
                                 </div>
                             ) : (
@@ -757,7 +757,7 @@ function LogoView({ brand }: { brand: any }) {
                     ].map((item, idx) => {
                         const Icon = item.icon;
                         return (
-                        <div key={idx} className="bg-slate-50/70 p-4 sm:p-6 rounded-2xl flex gap-4 border border-slate-100 hover:border-teal-200 transition-colors group">
+                        <div key={idx} className="bg-slate-50/70 p-4 sm:p-6 rounded-2xl flex gap-4 border border-slate-100 hover:border-[#00AFA9] transition-colors group">
                             <div className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 bg-white rounded-xl border border-slate-200 flex items-center justify-center" style={{ color: brand.teal }}>
                                 <Icon className="w-6 h-6 stroke-[1.75]" />
                             </div>
@@ -1003,7 +1003,7 @@ function BrandsView({ brand }: { brand: any }) {
                 <div className="mb-20">
                     <div className="flex items-center gap-4 mb-10">
                          <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center shrink-0">
-                             <div className="w-2.5 h-2.5 rounded-full bg-teal-500"></div>
+                             <div className="w-2.5 h-2.5 rounded-full bg-[#00AFA9]"></div>
                          </div>
                          <h2 className="text-2xl font-bold text-slate-800 tracking-tight uppercase">Lĩnh Vực Hoạt Động</h2>
                          <div className="flex-1 h-px bg-slate-200"></div>
@@ -1016,13 +1016,13 @@ function BrandsView({ brand }: { brand: any }) {
                             { name: "Bán lẻ", color: brand.green, icon: "M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" },
                             { name: "Thương mại", color: brand.teal, icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" }
                         ].map((item, idx) => (
-                            <div key={idx} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-sm hover:border-teal-300 transition-all group flex flex-col items-start gap-4">
+                            <div key={idx} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-sm hover:border-[#00AFA9] transition-all group flex flex-col items-start gap-4">
                                 <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm" style={{ backgroundColor: `${item.color}15`, color: item.color }}>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d={item.icon} /></svg>
                                 </div>
                                 <div>
                                     <div className="text-xs font-bold text-slate-400 mb-1 tracking-widest uppercase">0{idx + 1}</div>
-                                    <div className="font-semibold text-slate-800 tracking-wide text-lg group-hover:text-teal-700 transition-colors">
+                                    <div className="font-semibold text-slate-800 tracking-wide text-lg group-hover:text-[#00AFA9] transition-colors">
                                         <EditableText id={`brand_lv_${idx}`} defaultText={item.name} />
                                     </div>
                                     <p className="text-sm text-slate-500 mt-2 leading-relaxed"><EditableText id={`brand_lv_desc_${idx}`} defaultText="Nền tảng vững chắc trong chuỗi cung ứng." /></p>

@@ -425,9 +425,9 @@ export default function HRCulturePage() {
                                                         <p className="text-sm font-medium text-slate-900 truncate">{event.title}</p>
                                                         <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">{event.description}</p>
                                                         <div className="flex items-center gap-2 mt-1.5">
-                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${event.type === 'party' ? 'bg-pink-50 text-pink-600' :
+                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${event.type === 'party' ? 'bg-teal-50 text-[#00AFA9]' :
                                                                 event.type === 'holiday' ? 'bg-red-50 text-red-600' :
-                                                                    'bg-blue-50 text-blue-600'
+                                                                    'bg-teal-50 text-[#00AFA9]'
                                                                 }`}>{event.type}</span>
                                                             <span className="text-[10px] text-slate-400">{format(new Date(event.start_time), 'HH:mm')}</span>
                                                         </div>
@@ -494,7 +494,7 @@ export default function HRCulturePage() {
                                     <div className="flex items-center justify-between">
                                         <h3 className="text-sm font-semibold text-slate-900">Hoạt động gần đây</h3>
                                         {isAdmin && (
-                                            <button onClick={openAddTransaction} className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium">
+                                            <button onClick={openAddTransaction} className="flex items-center gap-1 text-xs text-[#00AFA9] hover:text-[#009690] font-medium">
                                                 <Plus className="w-3.5 h-3.5" /> Thêm
                                             </button>
                                         )}
@@ -514,7 +514,7 @@ export default function HRCulturePage() {
                                                 <div className="flex items-center gap-2">
                                                     <p className="text-sm font-medium text-slate-900">{t.description}</p>
                                                     {t.attachment_url && (
-                                                        <a href={JSON.parse(t.attachment_url)[0]} target="_blank" rel="noreferrer" title="Xem hóa đơn/chứng từ" className="text-slate-400 hover:text-primary-600 transition-colors">
+                                                        <a href={JSON.parse(t.attachment_url)[0]} target="_blank" rel="noreferrer" title="Xem hóa đơn/chứng từ" className="text-slate-400 hover:text-[#00AFA9] transition-colors">
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                                                         </a>
                                                     )}
@@ -531,7 +531,7 @@ export default function HRCulturePage() {
                                                 </span>
                                                 {isAdmin && (
                                                     <div className="hidden group-hover:flex items-center gap-1">
-                                                        <button onClick={() => openEditTransaction(t)} className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-md transition-colors"><Edit3 className="w-4 h-4" /></button>
+                                                        <button onClick={() => openEditTransaction(t)} className="p-1.5 text-slate-400 hover:text-[#00AFA9] hover:bg-teal-50 rounded-md transition-colors"><Edit3 className="w-4 h-4" /></button>
                                                         <button onClick={() => setDeletingTransId(t.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"><Trash2 className="w-4 h-4" /></button>
                                                     </div>
                                                 )}
@@ -582,7 +582,7 @@ export default function HRCulturePage() {
                             <div className="flex items-center gap-4">
                                 {isAdmin && (
                                     <label className="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} className="rounded text-primary-600 focus:ring-primary-500" />
+                                        <input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} className="rounded text-[#00AFA9] focus:ring-[#00AFA9]" />
                                         <span className="text-xs text-slate-500">Hiển thị người bị ẩn</span>
                                     </label>
                                 )}
@@ -616,7 +616,7 @@ export default function HRCulturePage() {
                                                 </span>
                                                 {isAdmin && c.contribId && (
                                                     <button onClick={() => handleConfirmContribution(c.contribId!)}
-                                                        className="text-xs text-primary-600 hover:text-primary-700 font-medium">Xác nhận</button>
+                                                        className="text-xs text-[#00AFA9] hover:text-[#009690] font-medium">Xác nhận</button>
                                                 )}
                                                 {isAdmin && (
                                                     <button onClick={() => handleMarkUnpaid(c.userId)}
@@ -628,7 +628,7 @@ export default function HRCulturePage() {
                                                 <span className="text-xs text-slate-400 italic">Đã ẩn</span>
                                                 {isAdmin && (
                                                     <button onClick={() => handleUnhideProfile(c.userId, c.fullName)} title="Khôi phục lại nhân sự"
-                                                        className="text-primary-600 hover:text-primary-700 p-1 rounded transition-colors"><Eye className="w-4 h-4" /></button>
+                                                        className="text-[#00AFA9] hover:text-[#009690] p-1 rounded transition-colors"><Eye className="w-4 h-4" /></button>
                                                 )}
                                             </div>
                                         ) : (
@@ -637,7 +637,7 @@ export default function HRCulturePage() {
                                                 {isAdmin && (
                                                     <div className="flex items-center gap-3">
                                                         <button onClick={() => handleMarkPaid(c.userId)}
-                                                            className="text-xs text-primary-600 hover:text-primary-700 font-medium">Đánh dấu đã đóng</button>
+                                                            className="text-xs text-[#00AFA9] hover:text-[#009690] font-medium">Đánh dấu đã đóng</button>
                                                         <button onClick={() => handleHideProfile(c.userId, c.fullName)} title="Ẩn nhân sự khỏi danh sách"
                                                             className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors"><EyeOff className="w-4 h-4" /></button>
                                                     </div>
@@ -746,7 +746,7 @@ export default function HRCulturePage() {
                                                         {isAdmin && (
                                                             <td className="px-3 py-2.5">
                                                                 <div className="hidden group-hover:flex items-center gap-1 justify-center">
-                                                                    <button onClick={() => openEditTransaction(t)} className="p-1 text-slate-400 hover:text-primary-600 rounded"><Pencil className="w-3 h-3" /></button>
+                                                                    <button onClick={() => openEditTransaction(t)} className="p-1 text-slate-400 hover:text-[#00AFA9] rounded"><Pencil className="w-3 h-3" /></button>
                                                                     <button onClick={() => setDeletingTransId(t.id)} className="p-1 text-slate-400 hover:text-rose-600 rounded"><Trash2 className="w-3 h-3" /></button>
                                                                 </div>
                                                             </td>
@@ -831,7 +831,7 @@ export default function HRCulturePage() {
                         <div className="p-5 space-y-4">
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Ngân hàng</label>
-                                <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] transition-colors"
                                     value={editBank.bankId} onChange={e => setEditBank({ ...editBank, bankId: e.target.value })}>
                                     <option value="MB">MB Bank</option><option value="VCB">Vietcombank</option><option value="TCB">Techcombank</option>
                                     <option value="ACB">ACB</option><option value="BIDV">BIDV</option><option value="VTB">VietinBank</option>
@@ -841,33 +841,33 @@ export default function HRCulturePage() {
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Số tài khoản</label>
-                                <input className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                <input className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] transition-colors"
                                     placeholder="VD: 0388123456" value={editBank.accountNo} onChange={e => setEditBank({ ...editBank, accountNo: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Tên chủ tài khoản <span className="text-slate-300">(không dấu)</span></label>
-                                <input className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                <input className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] transition-colors"
                                     placeholder="VD: CONG TY TNHH LYHU" value={editBank.accountName} onChange={e => setEditBank({ ...editBank, accountName: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Nhân sự đóng / tháng / người</label>
-                                <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] transition-colors"
                                     placeholder="50000" value={editBank.monthlyAmount} onChange={e => setEditBank({ ...editBank, monthlyAmount: Number(e.target.value) })} />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Công ty đóng / tháng</label>
-                                <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] transition-colors"
                                     placeholder="950000" value={editBank.companyAmount} onChange={e => setEditBank({ ...editBank, companyAmount: Number(e.target.value) })} />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Số dư ban đầu (VNĐ)</label>
-                                <input type="number" disabled={!isAdmin} className={`w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors ${!isAdmin ? 'bg-slate-50 cursor-not-allowed text-slate-400' : ''}`}
+                                <input type="number" disabled={!isAdmin} className={`w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] transition-colors ${!isAdmin ? 'bg-slate-50 cursor-not-allowed text-slate-400' : ''}`}
                                     placeholder="0" value={editBank.initialBalance} onChange={e => setEditBank({ ...editBank, initialBalance: Number(e.target.value) })} />
                                 {!isAdmin && <p className="text-[10px] text-slate-400 mt-1">Chỉ Admin và Kế toán được sửa số dư đầu kỳ.</p>}
                             </div>
                         </div>
                         <div className="px-5 pb-5">
-                            <button onClick={saveBankConfig} className="w-full py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors">Lưu cài đặt</button>
+                            <button onClick={saveBankConfig} className="w-full py-2.5 bg-[#00AFA9] text-white rounded-lg text-sm font-medium hover:bg-[#009690] transition-colors shadow-sm">Lưu cài đặt</button>
                         </div>
                     </div>
                 </div>
@@ -893,12 +893,12 @@ export default function HRCulturePage() {
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Số tiền</label>
-                                <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors" placeholder="0"
+                                <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] transition-colors" placeholder="0"
                                     value={newTrans.amount} onChange={e => setNewTrans({ ...newTrans, amount: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Danh mục</label>
-                                <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] transition-colors"
                                     value={newTrans.category} onChange={e => setNewTrans({ ...newTrans, category: e.target.value })}>
                                     <option value="Đóng quỹ">Đóng quỹ hàng tháng</option>
                                     <option value="Ăn uống">Ăn uống / Party</option>
@@ -909,17 +909,17 @@ export default function HRCulturePage() {
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Mô tả</label>
-                                <input className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors" placeholder="Nội dung giao dịch..."
+                                <input className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] transition-colors" placeholder="Nội dung giao dịch..."
                                     value={newTrans.description} onChange={e => setNewTrans({ ...newTrans, description: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Thời gian giao dịch</label>
-                                <input type="datetime-local" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                <input type="datetime-local" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] transition-colors"
                                     value={newTrans.created_at} onChange={e => setNewTrans({ ...newTrans, created_at: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Hóa đơn / Chứng từ (Nhiều ảnh)</label>
-                                <input type="file" multiple accept="image/*" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                                <input type="file" multiple accept="image/*" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-teal-50 file:text-[#00AFA9] hover:file:bg-teal-100"
                                     onChange={e => setReceiptFiles(e.target.files ? Array.from(e.target.files) : [])} />
                                 {editingTrans?.attachment_url && receiptFiles.length === 0 && (
                                     <p className="text-xs text-emerald-600 mt-2 font-medium flex items-center gap-1">
@@ -931,7 +931,7 @@ export default function HRCulturePage() {
                         </div>
                         <div className="px-5 pb-5">
                             <button onClick={handleSaveTransaction} disabled={isUploading}
-                                className={`w-full py-2.5 text-white rounded-lg text-sm font-medium transition-colors ${isUploading ? 'bg-slate-400 cursor-not-allowed' : 'bg-primary-600 hover:bg-primary-700'}`}>
+                                className={`w-full py-2.5 text-white rounded-lg text-sm font-medium transition-colors shadow-sm ${isUploading ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#00AFA9] hover:bg-[#009690]'}`}>
                                 {isUploading ? 'Đang lưu và tải ảnh...' : 'Lưu giao dịch'}
                             </button>
                         </div>

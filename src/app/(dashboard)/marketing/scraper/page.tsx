@@ -671,7 +671,7 @@ export default function MarketingScraperPage() {
             {/* Results Modal */}
             {selectedJob && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[85vh] flex flex-col">
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm w-full max-w-5xl max-h-[85vh] flex flex-col">
                         <div className="p-4 border-b">
                             <div className="flex justify-between items-center mb-3">
                                 <h3 className="font-bold text-lg flex items-center gap-2">

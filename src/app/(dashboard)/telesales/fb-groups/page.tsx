@@ -236,7 +236,7 @@ export default function FbGroupsPage() {
                     </button>
                     <button
                         onClick={() => { resetForm(); setShowModal(true); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] hover:bg-[#009b95] text-white rounded-xl transition-colors text-xs sm:text-sm font-bold"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-xl transition-colors text-xs sm:text-sm font-bold"
                     >
                         <Plus className="w-4 h-4" /> Thêm nhóm
                     </button>
@@ -258,7 +258,7 @@ export default function FbGroupsPage() {
                     <div className="text-xs text-gray-500 mt-1">Bị cấm đăng</div>
                 </div>
                 <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                    <div className="text-2xl font-bold text-blue-600">{Object.values(postCounts).reduce((a, b) => a + b.total, 0)}</div>
+                    <div className="text-2xl font-bold text-[#00AFA9]">{Object.values(postCounts).reduce((a, b) => a + b.total, 0)}</div>
                     <div className="text-xs text-gray-500 mt-1">Tổng bài đã đăng</div>
                 </div>
             </div>
@@ -301,15 +301,15 @@ export default function FbGroupsPage() {
 
             {/* Bulk Action Bar */}
             {showBulkBar && (
-                <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 mb-4 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
-                    <span className="text-sm font-medium text-indigo-700">
+                <div className="bg-teal-50 border border-[#00AFA9]/30 rounded-xl p-3 mb-4 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
+                    <span className="text-sm font-medium text-[#00AFA9]">
                         <CheckSquare className="w-4 h-4 inline mr-1" />
                         Đã chọn {selectedIds.size} nhóm
                     </span>
                     <select
                         value={bulkCategory}
                         onChange={(e) => setBulkCategory(e.target.value)}
-                        className="px-3 py-1.5 text-sm border border-indigo-200 rounded-lg bg-white"
+                        className="px-3 py-1.5 text-sm border border-[#00AFA9]/30 rounded-lg bg-white"
                     >
                         <option value="">Chọn phân loại...</option>
                         {FB_GROUP_CATEGORIES.map(c => (
@@ -319,7 +319,7 @@ export default function FbGroupsPage() {
                     <button
                         onClick={handleBulkCategory}
                         disabled={!bulkCategory}
-                        className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium"
+                        className="px-3 py-1.5 text-sm bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] disabled:opacity-50 font-medium"
                     >
                         Gán phân loại
                     </button>
@@ -385,7 +385,7 @@ export default function FbGroupsPage() {
                                         <td className="px-4 py-3">
                                             <div className="font-medium text-gray-900">{group.name}</div>
                                             {group.link && (
-                                                <a href={group.link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline mt-0.5 w-fit">
+                                                <a href={group.link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-[#00AFA9] hover:underline mt-0.5 w-fit">
                                                     <ExternalLink className="w-3 h-3" /> Mở link
                                                 </a>
                                             )}
@@ -414,7 +414,7 @@ export default function FbGroupsPage() {
                                         </td>
                                         <td className="px-4 py-3 text-right">
                                             <div className="relative group/post inline-block cursor-default">
-                                                <span className={`font-semibold ${(postCounts[group.name]?.total || 0) > 0 ? 'text-blue-600' : 'text-gray-400'}`}>
+                                                <span className={`font-semibold ${(postCounts[group.name]?.total || 0) > 0 ? 'text-[#00AFA9]' : 'text-gray-400'}`}>
                                                     {postCounts[group.name]?.total || 0}
                                                 </span>
                                                 {postCounts[group.name]?.byUser && postCounts[group.name].byUser.length > 0 && (
@@ -424,7 +424,7 @@ export default function FbGroupsPage() {
                                                             {postCounts[group.name].byUser.map((u, i) => (
                                                                 <div key={i} className="flex justify-between gap-4">
                                                                     <span>{u.name}</span>
-                                                                    <span className="font-bold text-blue-300">{u.count}</span>
+                                                                    <span className="font-bold text-teal-300">{u.count}</span>
                                                                 </div>
                                                             ))}
                                                             <div className="border-t border-gray-700 mt-1 pt-1 flex justify-between gap-4 font-semibold">
@@ -455,7 +455,7 @@ export default function FbGroupsPage() {
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                                                <button onClick={() => openEdit(group)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Sửa">
+                                                <button onClick={() => openEdit(group)} className="p-1.5 text-gray-400 hover:text-[#00AFA9] hover:bg-teal-50 rounded-lg transition-colors" title="Sửa">
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button onClick={() => handleDelete(group.id, group.name)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Xóa">
@@ -490,7 +490,7 @@ export default function FbGroupsPage() {
             {/* Add/Edit Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white animate-in zoom-in-95 duration-200 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white animate-in zoom-in-95 duration-200 rounded-2xl border border-slate-200 w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto">
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 sticky top-0 z-10">
                             <h2 className="text-lg font-semibold text-gray-900">
                                 {selectedId ? "Cập nhật Nhóm" : "Thêm Nhóm Mới"}
@@ -613,7 +613,7 @@ export default function FbGroupsPage() {
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800 transition-all active:scale-95 shadow-lg shadow-gray-200 font-medium disabled:opacity-50"
+                                    className="px-4 py-2 bg-[#00AFA9] text-white rounded-xl hover:bg-[#009690] transition-all active:scale-95 font-medium disabled:opacity-50"
                                 >
                                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : (selectedId ? "Cập nhật" : "Thêm mới")}
                                 </button>

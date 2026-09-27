@@ -369,7 +369,7 @@ export default function AutomationPage() {
                                                 {rule.response_type === 'image' ? '[Hình ảnh] ' + (rule.response_text || '') : rule.response_text}
                                             </td>
                                             <td className="p-4 text-center">
-                                                <span className={`text-xs px-2 py-1 rounded-full ${rule.match_type === 'exact' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
+                                                <span className={`text-xs px-2 py-1 rounded-full ${rule.match_type === 'exact' ? 'bg-teal-50 text-[#00AFA9] border border-teal-200' : 'bg-slate-100 text-slate-600'}`}>
                                                     {rule.match_type === 'exact' ? 'Chính xác' : 'Chứa'}
                                                 </span>
                                             </td>
@@ -419,7 +419,7 @@ export default function AutomationPage() {
                                         </div>
                                         
                                         <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${rule.match_type === 'exact' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${rule.match_type === 'exact' ? 'bg-teal-50 text-[#00AFA9] border border-teal-200' : 'bg-slate-100 text-slate-600'}`}>
                                                 {rule.match_type === 'exact' ? 'Chính xác' : 'Chứa'}
                                             </span>
                                             
@@ -658,11 +658,11 @@ export default function AutomationPage() {
                         </div>
 
                         {/* Auto-Hide Comments on Ad Posts */}
-                        <div className="flex items-center gap-3 bg-purple-50 p-4 rounded-lg border border-purple-100">
+                        <div className="flex items-center gap-3 bg-teal-50/60 p-4 rounded-lg border border-teal-200">
                             <input
                                 type="checkbox"
                                 id="autoHideAll"
-                                className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                                className="w-5 h-5 text-[#00AFA9] rounded focus:ring-[#00AFA9]"
                                 checked={autoHideAll}
                                 onChange={e => setAutoHideAll(e.target.checked)}
                             />
@@ -670,7 +670,7 @@ export default function AutomationPage() {
                                 <label htmlFor="autoHideAll" className="font-medium text-slate-800 cursor-pointer select-none">
                                     📢 Ẩn bình luận trên bài QUẢNG CÁO
                                 </label>
-                                <p className="text-xs text-purple-600">Tự động ẩn tất cả bình luận trên bài quảng cáo (promoted posts). Bài viết bình thường không bị ảnh hưởng.</p>
+                                <p className="text-xs text-[#00AFA9]">Tự động ẩn tất cả bình luận trên bài quảng cáo (promoted posts). Bài viết bình thường không bị ảnh hưởng.</p>
                             </div>
                         </div>
 
@@ -717,11 +717,11 @@ export default function AutomationPage() {
                         </div>
 
                         {/* Post Comment Scanner (Minigame) */}
-                        <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100 relative z-10">
+                        <div className="bg-teal-50/60 p-4 rounded-lg border border-teal-200 relative z-10">
                             <div className="flex items-center justify-between gap-4">
                                 <div>
                                     <p className="font-medium text-slate-800">🎯 Quét Comment Bài Viết</p>
-                                    <p className="text-xs text-indigo-600">Lọc số chơi MiniGame, sự kiện, hoặc chương trình khuyến mãi. Hỗ trợ lọc theo deadline, xếp hạng, xuất CSV.</p>
+                                    <p className="text-xs text-[#00AFA9]">Lọc số chơi MiniGame, sự kiện, hoặc chương trình khuyến mãi. Hỗ trợ lọc theo deadline, xếp hạng, xuất CSV.</p>
                                 </div>
                                 <button
                                     type="button"
@@ -729,7 +729,7 @@ export default function AutomationPage() {
                                         if (!selectedPageId) return toast.error('Chọn Fanpage trước');
                                         setShowCommentScanner(true);
                                     }}
-                                    className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition whitespace-nowrap cursor-pointer"
+                                    className="bg-[#00AFA9] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#009690] transition whitespace-nowrap cursor-pointer"
                                 >
                                     🎯 Mở Scanner
                                 </button>

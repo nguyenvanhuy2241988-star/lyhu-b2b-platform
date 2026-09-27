@@ -243,7 +243,7 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                    <span className="w-2 h-6 bg-blue-600 rounded-full"></span>
+                    <span className="w-2 h-6 bg-[#00AFA9] rounded-full"></span>
                     Minh chứng ({logs.length})
                 </h2>
                 {!readOnly && (
@@ -252,7 +252,7 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                             handleCancel();
                             setShowForm(!showForm);
                         }}
-                        className="text-sm px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-medium flex items-center gap-1 transition-colors"
+                        className="text-sm px-3 py-1.5 bg-teal-50 text-[#00AFA9] rounded-lg hover:bg-teal-100 font-medium flex items-center gap-1 transition-colors border border-teal-200"
                     >
                         <Plus className="w-4 h-4" /> Thêm mới
                     </button>
@@ -261,7 +261,7 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
 
             {/* Add/Edit Form — placed above list for convenience */}
             {showForm && !readOnly && (
-                <div className="bg-slate-50 p-4 rounded-lg border border-blue-100 animate-in fade-in slide-in-from-top-2 mb-4">
+                <div className="bg-slate-50 p-4 rounded-lg border border-teal-100 animate-in fade-in slide-in-from-top-2 mb-4">
                     <h3 className="text-sm font-bold text-slate-800 mb-3">
                         {editingLogId ? "Chỉnh sửa minh chứng" : "Thêm minh chứng mới"}
                     </h3>
@@ -313,7 +313,7 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                                     />
                                     {/* Custom searchable dropdown */}
                                     {showGroupDropdown && (
-                                        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                        <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg max-h-48 overflow-y-auto">
                                             {savedGroups
                                                 .filter(g => !newLog.group_name || g.name.toLowerCase().includes(newLog.group_name.toLowerCase()))
                                                 .map(g => {
@@ -322,7 +322,7 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                                                         <button
                                                             key={g.id}
                                                             type="button"
-                                                            className={`w-full text-left px-3 py-2 hover:bg-blue-50 flex items-center justify-between gap-2 text-sm border-b border-gray-50 last:border-0 transition-colors ${g.status === 'banned' ? 'bg-red-50/50' : ''
+                                                            className={`w-full text-left px-3 py-2 hover:bg-teal-50 flex items-center justify-between gap-2 text-sm border-b border-gray-50 last:border-0 transition-colors ${g.status === 'banned' ? 'bg-red-50/50' : ''
                                                                 }`}
                                                             onClick={() => {
                                                                 setNewLog({
@@ -390,7 +390,7 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                             <div
                                 className={cn(
                                     "relative border-2 border-dashed rounded-lg p-4 transition-all",
-                                    isDragging ? "border-blue-500 bg-blue-50" : "border-slate-200 hover:border-blue-300",
+                                    isDragging ? "border-[#00AFA9] bg-teal-50" : "border-slate-200 hover:border-[#00AFA9]/50",
                                     uploading && "opacity-60 pointer-events-none"
                                 )}
                                 onDragOver={handleDragOver}
@@ -399,8 +399,8 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                             >
                                 {uploading ? (
                                     <div className="flex items-center justify-center gap-2 py-2">
-                                        <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-                                        <span className="text-xs text-blue-600 font-medium">Đang tải lên server...</span>
+                                        <Loader2 className="w-4 h-4 animate-spin text-[#00AFA9]" />
+                                        <span className="text-xs text-[#00AFA9] font-medium">Đang tải lên server...</span>
                                     </div>
                                 ) : newLog.image_url ? (
                                     <div className="flex items-center gap-3">
@@ -421,8 +421,8 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                                 ) : (
                                     <div className="flex flex-col items-center gap-2 py-2">
                                         <div className="flex items-center gap-3">
-                                            <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors shadow-sm">
-                                                <ImageIcon className="w-4 h-4 text-blue-500" />
+                                            <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-white border border-[#00AFA9]/30 rounded-lg hover:bg-teal-50 transition-colors shadow-sm">
+                                                <ImageIcon className="w-4 h-4 text-[#00AFA9]" />
                                                 <span className="text-xs text-slate-700 font-medium">Chọn ảnh</span>
                                                 <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
                                             </label>
@@ -458,7 +458,7 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                         </button>
                         <button
                             onClick={handleSaveLog}
-                            className="px-4 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm"
+                            className="px-4 py-1.5 text-xs font-medium bg-[#00AFA9] text-white rounded-md hover:bg-[#009690] shadow-sm"
                             disabled={uploading}
                         >
                             {editingLogId ? "Cập nhật" : "Lưu vào báo cáo"}
@@ -474,7 +474,7 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                 ) : logs.length === 0 ? (
                     <div className="text-center py-6 border border-dashed border-slate-200 rounded-lg bg-slate-50">
                         <p className="text-slate-500 text-sm">Chưa có tương tác / mồi chài / ảnh Zalo nào được lưu hôm nay.</p>
-                        {showForm && <p className="text-xs text-blue-600 mt-1">Điền thông tin bên trên để thêm.</p>}
+                        {showForm && <p className="text-xs text-[#00AFA9] mt-1">Điền thông tin bên trên để thêm.</p>}
                     </div>
                 ) : (
                     logs.map((log) => (
@@ -502,7 +502,7 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                                         "text-xs px-2 py-0.5 rounded-full font-medium capitalize flex items-center gap-1 w-max",
                                         log.activity_type === 'comment' ? "bg-orange-100 text-orange-700" :
                                             log.activity_type === 'message' ? "bg-green-100 text-green-700" :
-                                                log.activity_type === 'friend' ? "bg-purple-100 text-purple-700" :
+                                                log.activity_type === 'friend' ? "bg-teal-50 text-[#00AFA9]" :
                                                     "bg-blue-100 text-blue-700"
                                     )}>
                                         {log.activity_type === 'comment' && <MessageSquare className="w-3 h-3" />}
@@ -527,7 +527,7 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                                 </div>
                                 <div className="space-y-1">
                                     {log.post_link && (
-                                        <a href={log.post_link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline font-medium truncate w-fit max-w-[200px] sm:max-w-[400px]">
+                                        <a href={log.post_link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-[#00AFA9] hover:underline font-medium truncate w-fit max-w-[200px] sm:max-w-[400px]">
                                             <ExternalLink className="w-3 h-3 min-w-[12px]" /> Xem link
                                         </a>
                                     )}
@@ -542,7 +542,7 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                             {/* Actions */}
                             {!readOnly && (
                                 <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all self-center">
-                                    <button onClick={() => handleEdit(log)} className="p-2 text-slate-400 hover:text-blue-600" title="Sửa">
+                                    <button onClick={() => handleEdit(log)} className="p-2 text-slate-400 hover:text-[#00AFA9]" title="Sửa">
                                         <Pencil className="w-4 h-4" />
                                     </button>
                                     <button onClick={() => handleDelete(log.id)} className="p-2 text-slate-400 hover:text-red-600" title="Xóa">

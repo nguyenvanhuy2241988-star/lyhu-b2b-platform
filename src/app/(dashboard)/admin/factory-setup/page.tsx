@@ -689,8 +689,8 @@ export default function FactorySetupPage() {
 
             {/* AI DIALOG - MODAL */}
             {showAIDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm shadow-2xl">
-                    <div className="bg-white rounded-xl w-full max-w-lg overflow-hidden border border-slate-200 shadow-xl">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl w-full max-w-lg overflow-hidden border border-slate-200">
                         <div className="p-6 border-b border-slate-100 bg-teal-50">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xl font-bold text-teal-950 flex items-center gap-2">

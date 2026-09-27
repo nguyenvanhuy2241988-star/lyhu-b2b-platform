@@ -30,7 +30,7 @@ const STATUS_CONFIG = {
     delivering: {
         label: "Đang giao hàng",
         icon: Package, // Truck not imported, falling back to Package or imported one
-        color: "bg-indigo-100 text-indigo-700",
+        color: "bg-teal-50 text-[#00AFA9]",
     },
     delivered: {
         label: "Đã giao",
@@ -84,7 +84,7 @@ export default function SalesOrdersPage() {
                         placeholder="Tìm theo mã đơn hoặc tên khách hàng..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                     />
                 </div>
             </div>

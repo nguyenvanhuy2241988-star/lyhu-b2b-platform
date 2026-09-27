@@ -739,7 +739,7 @@ export default function AdminPayrollPage() {
             {/* Modal: KPI Configuration */}
             {isKpiModalOpen && kpiSettings && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-lg w-full max-w-2xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div className="bg-white rounded-lg w-full max-w-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
                         <div className="p-5 border-b border-slate-200 flex justify-between items-center">
                             <div>
                                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -1051,7 +1051,7 @@ export default function AdminPayrollPage() {
             {
                 isPolicyModalOpen && policyData && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-                        <div className="bg-white rounded-lg w-full max-w-2xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                        <div className="bg-white rounded-lg w-full max-w-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
                             <div className="p-5 border-b border-slate-200 flex justify-between items-center">
                                 <div>
                                     <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -1212,7 +1212,7 @@ export default function AdminPayrollPage() {
 
                                 {/* Custom Notes */}
                                 <div className="space-y-3">
-                                    <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-purple-500 pl-3">Ghi chú bổ sung</h3>
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-[#00AFA9] pl-3">Ghi chú bổ sung</h3>
                                     {(policyData.customNotes || []).map((note: any, i: number) => (
                                         <div key={i} className="space-y-1.5 bg-slate-50 rounded-lg p-3 border border-slate-100">
                                             <div className="flex gap-2 items-center">
@@ -1362,7 +1362,7 @@ export default function AdminPayrollPage() {
                             <div className="px-6 pb-6">
                                 <button
                                     onClick={handleAddTransaction}
-                                    className="w-full bg-[#00AFA9] hover:bg-[#009b95] text-white py-2.5 rounded-xl font-bold text-sm transition-colors border border-teal-600"
+                                    className="w-full bg-[#00AFA9] hover:bg-[#009690] text-white py-2.5 rounded-xl font-bold text-sm transition-colors border border-teal-600"
                                 >
                                     Xác nhận ghi nhận
                                 </button>

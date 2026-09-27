@@ -114,7 +114,7 @@ export default function RecruiterRulesPage() {
                 {isAdmin && !isEditing && (
                     <button
                         onClick={openEdit}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#00AFA9] hover:bg-[#009690] rounded-lg transition-colors"
                     >
                         <Pencil className="w-3.5 h-3.5" />
                         Chỉnh sửa chính sách
@@ -181,9 +181,9 @@ export default function RecruiterRulesPage() {
                                 </div>
                             )}
 
-                            <div className="flex items-start gap-2 p-3 bg-primary-50 rounded-lg">
-                                <Info className="w-3.5 h-3.5 text-primary-500 mt-0.5 shrink-0" />
-                                <p className="text-xs text-primary-700 leading-relaxed">
+                            <div className="flex items-start gap-2 p-3 bg-teal-50 rounded-lg border border-[#00AFA9]/20">
+                                <Info className="w-3.5 h-3.5 text-[#00AFA9] mt-0.5 shrink-0" />
+                                <p className="text-xs text-slate-700 leading-relaxed">
                                     Lương cứng được đảm bảo dựa trên sự chuyên cần. Nghỉ không phép quá {policy.maxUnexcusedAbsences} buổi sẽ bị xem xét lại định mức.
                                 </p>
                             </div>
@@ -268,12 +268,12 @@ export default function RecruiterRulesPage() {
                         <section className="space-y-3">
                             {policy.customNotes.map((note, idx) => (
                                 note.title && note.content ? (
-                                    <div key={idx} className="bg-purple-50 rounded-xl border border-purple-200 p-5">
+                                    <div key={idx} className="bg-teal-50/50 rounded-xl border border-[#00AFA9]/30 p-5">
                                         <div className="flex items-start gap-2">
-                                            <Info className="w-4 h-4 text-purple-600 mt-0.5 shrink-0" />
+                                            <Info className="w-4 h-4 text-[#00AFA9] mt-0.5 shrink-0" />
                                             <div>
-                                                <p className="text-sm font-semibold text-purple-800 mb-1">{note.title}</p>
-                                                <p className="text-sm text-purple-700 leading-relaxed whitespace-pre-line">{note.content}</p>
+                                                <p className="text-sm font-semibold text-slate-900 mb-1">{note.title}</p>
+                                                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{note.content}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -291,12 +291,12 @@ export default function RecruiterRulesPage() {
 
             {/* Edit Modal */}
             {isEditing && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-primary-600/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-lg w-full max-w-2xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-lg w-full max-w-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
                         <div className="p-5 border-b border-slate-200 flex justify-between items-center">
                             <div>
                                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                    <Settings className="w-5 h-5 text-primary-500" />
+                                    <Settings className="w-5 h-5 text-[#00AFA9]" />
                                     Chỉnh sửa Chính sách {DEPT_LABEL}
                                 </h2>
                             </div>
@@ -348,7 +348,7 @@ export default function RecruiterRulesPage() {
                                     </div>
                                 ))}
                                 <button onClick={() => setEditPolicy({ ...editPolicy, allowances: [...editPolicy.allowances, { name: "", amount: "" }] })}
-                                    className="text-xs text-primary-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm phụ cấp</button>
+                                    className="text-xs text-[#00AFA9] hover:text-[#009690] flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm phụ cấp</button>
                             </div>
 
                             {/* Bonuses */}
@@ -367,7 +367,7 @@ export default function RecruiterRulesPage() {
                                     </div>
                                 ))}
                                 <button onClick={() => setEditPolicy({ ...editPolicy, bonuses: [...editPolicy.bonuses, { title: "", amount: "", desc: "" }] })}
-                                    className="text-xs text-primary-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm mục thưởng</button>
+                                    className="text-xs text-[#00AFA9] hover:text-[#009690] flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm mục thưởng</button>
                             </div>
 
                             {/* Penalties */}
@@ -386,7 +386,7 @@ export default function RecruiterRulesPage() {
                                     </div>
                                 ))}
                                 <button onClick={() => setEditPolicy({ ...editPolicy, penalties: [...editPolicy.penalties, { name: "", desc: "", fine: "" }] })}
-                                    className="text-xs text-primary-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm chế tài</button>
+                                    className="text-xs text-[#00AFA9] hover:text-[#009690] flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm chế tài</button>
                             </div>
 
                             {/* Commission Notes */}
@@ -411,7 +411,7 @@ export default function RecruiterRulesPage() {
                                 <button onClick={() => {
                                     const existing = Array.isArray(editPolicy.commissionNotes) ? editPolicy.commissionNotes : (editPolicy.commissionNote ? [editPolicy.commissionNote] : []);
                                     setEditPolicy({ ...editPolicy, commissionNotes: [...existing, ''] });
-                                }} className="text-xs text-primary-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm ghi chú hoa hồng</button>
+                                }} className="text-xs text-[#00AFA9] hover:text-[#009690] flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm ghi chú hoa hồng</button>
                             </div>
 
                             {/* Penalty Notes */}
@@ -436,7 +436,7 @@ export default function RecruiterRulesPage() {
                                 <button onClick={() => {
                                     const existing = Array.isArray(editPolicy.penaltyNotes) ? editPolicy.penaltyNotes : (editPolicy.penaltyNote ? [editPolicy.penaltyNote] : []);
                                     setEditPolicy({ ...editPolicy, penaltyNotes: [...existing, ''] });
-                                }} className="text-xs text-primary-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm ghi chú phạt</button>
+                                }} className="text-xs text-[#00AFA9] hover:text-[#009690] flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm ghi chú phạt</button>
                             </div>
 
                             {/* Custom Notes */}
@@ -458,14 +458,14 @@ export default function RecruiterRulesPage() {
                                     </div>
                                 ))}
                                 <button onClick={() => setEditPolicy({ ...editPolicy, customNotes: [...(editPolicy.customNotes || []), { title: "", content: "" }] })}
-                                    className="text-xs text-primary-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm ghi chú</button>
+                                    className="text-xs text-[#00AFA9] hover:text-[#009690] flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm ghi chú</button>
                             </div>
                         </div>
 
                         <div className="p-4 border-t border-slate-200 flex justify-end gap-3">
                             <button onClick={() => setIsEditing(false)} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100">Hủy</button>
                             <button onClick={handleSave} disabled={isSaving}
-                                className="px-5 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2">
+                                className="px-5 py-2 rounded-lg text-sm font-medium bg-[#00AFA9] text-white hover:bg-[#009690] disabled:opacity-50 flex items-center gap-2">
                                 {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <SaveIcon className="w-4 h-4" />}
                                 Lưu chính sách
                             </button>

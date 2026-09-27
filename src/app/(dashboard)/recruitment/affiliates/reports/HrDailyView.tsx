@@ -86,7 +86,7 @@ export default function HrDailyView() {
         }));
     };
 
-    if (!user?.id) return <div className="p-10 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-teal-600" /></div>;
+    if (!user?.id) return <div className="p-10 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-[#00AFA9]" /></div>;
 
     return (
         <div className="max-w-5xl mx-auto space-y-6">
@@ -108,9 +108,9 @@ export default function HrDailyView() {
                     <span className="text-sm font-medium text-slate-600">Tìm thấy mới</span>
                     <div className="text-2xl font-bold text-blue-700 mt-1">{stats.found}</div>
                 </div>
-                <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-100">
+                <div className="bg-teal-50/50 p-4 rounded-xl border border-[#00AFA9]/20">
                     <span className="text-sm font-medium text-slate-600">Đã liên hệ</span>
-                    <div className="text-2xl font-bold text-purple-700 mt-1">{stats.contacted}</div>
+                    <div className="text-2xl font-bold text-[#00AFA9] mt-1">{stats.contacted}</div>
                 </div>
                 <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
                     <span className="text-sm font-medium text-slate-600">Chốt hợp tác</span>
@@ -194,10 +194,10 @@ export default function HrDailyView() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
-                                <span className="text-purple-600 font-semibold">Phản hồi của Affiliate / Thị trường</span>
+                                <span className="text-[#00AFA9] font-semibold">Phản hồi của Affiliate / Thị trường</span>
                             </label>
                             <textarea
-                                className="w-full p-3 border border-purple-200 bg-purple-50/30 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none min-h-[100px] text-purple-900"
+                                className="w-full p-3 border border-slate-200 bg-teal-50/30 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none min-h-[100px] text-slate-800"
                                 placeholder="Ví dụ: KOL A đòi phí booking cao, CTV B bảo sản phẩm khó bán..."
                                 value={formData.candidate_feedback || ""}
                                 onChange={e => handleChange('candidate_feedback', e.target.value)}
@@ -208,7 +208,7 @@ export default function HrDailyView() {
                                 Kế hoạch ngày mai <span className="text-red-500">*</span>
                             </label>
                             <textarea
-                                className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none min-h-[80px]"
+                                className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none min-h-[80px]"
                                 placeholder="Ví dụ: Liên hệ thêm 10 KOC TikTok, gửi hợp đồng cho KOL X..."
                                 value={formData.plan_next_day || ""}
                                 onChange={e => handleChange('plan_next_day', e.target.value)}
@@ -221,7 +221,7 @@ export default function HrDailyView() {
                     <button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-teal-700 flex items-center gap-2 transition-all shadow-lg shadow-teal-500/30"
+                        className="bg-[#00AFA9] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#009690] flex items-center gap-2 transition-all"
                     >
                         {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                         Lưu Báo Cáo

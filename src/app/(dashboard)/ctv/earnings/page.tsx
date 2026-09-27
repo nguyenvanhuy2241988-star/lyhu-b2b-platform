@@ -55,8 +55,8 @@ export default function CTVEarningsPage() {
             subLabel: `Tháng ${selectedMonth}`,
             value: formatPrice(stats.lyhuShipSales),
             icon: TrendingUp,
-            color: "text-purple-600",
-            bg: "bg-purple-50",
+            color: "text-[#00AFA9]",
+            bg: "bg-teal-50",
         },
         {
             label: "Tổng hoa hồng tháng",
@@ -154,7 +154,7 @@ export default function CTVEarningsPage() {
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.fulfillmentMode === "SELF_SHIP"
                                                 ? "bg-blue-100 text-blue-700"
-                                                : "bg-purple-100 text-purple-700"
+                                                : "bg-teal-50 text-[#00AFA9]"
                                                 }`}>
                                                 {order.fulfillmentMode === "SELF_SHIP" ? "Tự giao" : "LYHU giao"}
                                             </span>

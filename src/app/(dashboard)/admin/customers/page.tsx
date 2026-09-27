@@ -413,7 +413,7 @@ export default function AdminCustomersPage() {
                             {[
                                 { label: 'Tổng KH', value: dashStats.totalCustomers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
                                 { label: 'Mới trong kỳ', value: dashStats.newThisMonth, icon: UserPlus, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                                { label: 'Đã liên hệ', value: dashStats.contacted, icon: PhoneCall, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                                { label: 'Đã liên hệ', value: dashStats.contacted, icon: PhoneCall, color: 'text-[#00AFA9]', bg: 'bg-teal-50' },
                                 { label: 'Đã mua hàng', value: dashStats.withOrders, icon: ShoppingCart, color: 'text-amber-600', bg: 'bg-amber-50' },
                                 { label: 'Chưa liên hệ', value: dashStats.cold, icon: Snowflake, color: 'text-slate-500', bg: 'bg-slate-50' },
                             ].map(card => (
@@ -493,7 +493,7 @@ export default function AdminCustomersPage() {
                                                         {c.ownerName && <div className="text-[10px] text-slate-400">NV: {c.ownerName}</div>}
                                                     </td>
                                                     <td className="py-2">
-                                                        <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase">
+                                                        <span className="px-1.5 py-0.5 rounded bg-teal-50 text-[#00AFA9] text-[10px] font-bold uppercase">
                                                             {typeLabels[c.type] || c.type || '-'}
                                                         </span>
                                                     </td>
@@ -539,7 +539,7 @@ export default function AdminCustomersPage() {
                         {ownerDist.length > 0 && (
                             <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
                                 <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                    <UserCog className="w-4 h-4 text-indigo-600" />
+                                    <UserCog className="w-4 h-4 text-[#00AFA9]" />
                                     Phân bổ NV phụ trách
                                 </h3>
                                 <div className="space-y-1.5">
@@ -565,7 +565,7 @@ export default function AdminCustomersPage() {
                         {typeDist.length > 0 && (
                             <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
                                 <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                    <Tag className="w-4 h-4 text-purple-600" />
+                                    <Tag className="w-4 h-4 text-[#00AFA9]" />
                                     Phân loại khách hàng
                                 </h3>
                                 <div className="space-y-1.5">
@@ -747,7 +747,7 @@ export default function AdminCustomersPage() {
                                                 <div className="text-[10px] text-slate-400 font-mono mt-0.5 uppercase tracking-wider">{customer.id.split('-')[0]}</div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold uppercase">
+                                                <span className="px-2 py-0.5 rounded-full bg-teal-50 text-[#00AFA9] text-[11px] font-bold uppercase">
                                                     {typeMap[customer.type || ''] || customer.type || '-'}
                                                 </span>
                                             </td>
@@ -816,7 +816,7 @@ export default function AdminCustomersPage() {
                                                 <div className="text-[10px] text-slate-400 font-mono mt-0.5 uppercase tracking-wider">{customer.id.split('-')[0]}</div>
                                             </div>
                                         </div>
-                                        <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase flex-shrink-0">
+                                        <span className="px-2 py-0.5 rounded bg-teal-50 text-[#00AFA9] text-[10px] font-bold uppercase flex-shrink-0">
                                             {typeMap[customer.type || ''] || customer.type || '-'}
                                         </span>
                                     </div>
@@ -894,7 +894,7 @@ export default function AdminCustomersPage() {
             {/* Edit Modal */}
             {editingCustomer && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
                         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white">
                             <div>
                                 <h3 className="text-lg font-bold text-slate-900">Chi tiết khách hàng</h3>
@@ -972,7 +972,7 @@ export default function AdminCustomersPage() {
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-primary-200 transition-all active:scale-95"
+                                    className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95"
                                 >
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-5 h-5" />}
                                     Cập nhật ngay
@@ -986,7 +986,7 @@ export default function AdminCustomersPage() {
             {/* Mobile FAB */}
             <button
                 onClick={() => { setEditingCustomer(null); setShowAddForm(true); }}
-                className="lg:hidden fixed bottom-[150px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 hover:shadow-xl active:scale-95 transition-all duration-200"
+                className="lg:hidden fixed bottom-[150px] right-4 z-[45] flex items-center justify-center w-14 h-14 bg-primary-600 text-white rounded-full hover:bg-primary-700 active:scale-95 transition-all duration-200"
             >
                 <Plus className="w-6 h-6" />
             </button>

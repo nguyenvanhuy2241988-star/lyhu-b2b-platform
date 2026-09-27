@@ -75,14 +75,14 @@ export default function HRDirectoryPage() {
                         <input
                             type="text"
                             placeholder="Tìm theo tên, email, sđt..."
-                            className="w-full pl-9 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full pl-9 pr-4 py-2 border rounded-lg focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <div className="w-full md:w-64">
                         <select
-                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none bg-white"
                             value={selectedDept}
                             onChange={e => setSelectedDept(e.target.value)}
                         >
@@ -102,13 +102,13 @@ export default function HRDirectoryPage() {
                         {filteredProfiles.map(profile => (
                             <div
                                 key={profile.id}
-                                className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition cursor-pointer"
+                                className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:border-[#00AFA9]/50 transition cursor-pointer"
                                 onClick={() => setViewingProfile(profile)}
                             >
                                 <div className="p-6">
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                                            <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center text-[#00AFA9] font-bold text-lg">
                                                 {profile.avatar_url ? (
                                                     <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full rounded-full object-cover" />
                                                 ) : (
@@ -126,7 +126,7 @@ export default function HRDirectoryPage() {
                                                     e.stopPropagation();
                                                     setEditingProfile(profile);
                                                 }}
-                                                className="text-xs text-blue-600 hover:bg-blue-50 px-2 py-1 rounded"
+                                                className="text-xs text-[#00AFA9] hover:bg-teal-50 px-2 py-1 rounded"
                                             >
                                                 Sửa
                                             </button>
@@ -178,7 +178,7 @@ export default function HRDirectoryPage() {
                                         )}
                                         {profile.interests && (
                                             <div className="flex items-start gap-2 pt-1 border-t border-slate-100 mt-2">
-                                                <Heart className="w-4 h-4 text-pink-400 mt-0.5" />
+                                                <Heart className="w-4 h-4 text-[#00AFA9] mt-0.5" />
                                                 <p className="text-xs text-slate-500 line-clamp-2">{profile.interests}</p>
                                             </div>
                                         )}
@@ -198,10 +198,10 @@ export default function HRDirectoryPage() {
             {/* View Modal */}
             {viewingProfile && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+                    <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
                         <div className="flex justify-between items-start mb-6">
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl">
+                                <div className="w-16 h-16 rounded-full bg-teal-50 flex items-center justify-center text-[#00AFA9] font-bold text-2xl">
                                     {viewingProfile.avatar_url ? (
                                         <img src={viewingProfile.avatar_url} alt={viewingProfile.full_name} className="w-full h-full rounded-full object-cover" />
                                     ) : (
@@ -225,7 +225,7 @@ export default function HRDirectoryPage() {
                             {/* Contact Info */}
                             <div className="space-y-3">
                                 <h3 className="font-semibold text-slate-900 border-b pb-2 flex items-center gap-2">
-                                    <UserIcon className="w-4 h-4 text-blue-500" /> Thông tin liên hệ
+                                    <UserIcon className="w-4 h-4 text-[#00AFA9]" /> Thông tin liên hệ
                                 </h3>
                                 <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
                                     <div className="col-span-2 sm:col-span-1">
@@ -247,7 +247,7 @@ export default function HRDirectoryPage() {
                                     {viewingProfile.social_facebook && (
                                         <div className="col-span-2">
                                             <p className="text-slate-500 text-xs">Mạng xã hội</p>
-                                            <a href={viewingProfile.social_facebook} target="_blank" className="text-blue-600 hover:underline flex items-center gap-1">
+                                            <a href={viewingProfile.social_facebook} target="_blank" className="text-[#00AFA9] hover:underline flex items-center gap-1">
                                                 <Facebook className="w-3 h-3" /> Facebook
                                             </a>
                                         </div>
@@ -286,7 +286,7 @@ export default function HRDirectoryPage() {
                             {/* Education & Interests */}
                             <div className="space-y-3">
                                 <h3 className="font-semibold text-slate-900 border-b pb-2 flex items-center gap-2">
-                                    <GraduationCap className="w-4 h-4 text-purple-500" /> Học vấn & Sở thích
+                                    <GraduationCap className="w-4 h-4 text-[#00AFA9]" /> Học vấn & Sở thích
                                 </h3>
                                 <div className="space-y-3 text-sm">
                                     <div>
@@ -320,7 +320,7 @@ export default function HRDirectoryPage() {
                                     setEditingProfile(viewingProfile);
                                     setViewingProfile(null);
                                 }}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm flex items-center gap-2"
+                                className="px-4 py-2 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] shadow-sm font-medium text-sm flex items-center gap-2 transition-colors"
                             >
                                 <FileText className="w-4 h-4" /> Chỉnh sửa hồ sơ
                             </button>
@@ -332,7 +332,7 @@ export default function HRDirectoryPage() {
             {/* Edit Modal */}
             {editingProfile && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-md p-6">
+                    <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md p-6">
                         <h2 className="text-xl font-bold mb-4">Cập nhật hồ sơ: {editingProfile.full_name}</h2>
                         <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
                             {/* Group 1: Work Info */}
@@ -344,7 +344,7 @@ export default function HRDirectoryPage() {
                                     <div>
                                         <label className="block text-xs font-medium mb-1">Phòng ban</label>
                                         <select
-                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                             value={editingProfile.department_id || ''}
                                             onChange={e => setEditingProfile({ ...editingProfile, department_id: e.target.value })}
                                         >
@@ -357,7 +357,7 @@ export default function HRDirectoryPage() {
                                     <div>
                                         <label className="block text-xs font-medium mb-1">Loại hình</label>
                                         <select
-                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                             value={editingProfile.work_type || 'fulltime'}
                                             onChange={e => setEditingProfile({ ...editingProfile, work_type: e.target.value as any })}
                                         >
@@ -369,7 +369,7 @@ export default function HRDirectoryPage() {
                                     <div className="col-span-2">
                                         <label className="block text-xs font-medium mb-1">Vị trí / Chức danh</label>
                                         <input
-                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                             value={editingProfile.position || ''}
                                             onChange={e => setEditingProfile({ ...editingProfile, position: e.target.value })}
                                             placeholder="VD: Telesales Part-time"
@@ -387,7 +387,7 @@ export default function HRDirectoryPage() {
                                     <div className="col-span-2">
                                         <label className="block text-xs font-medium mb-1">Họ và tên</label>
                                         <input
-                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                             value={editingProfile.full_name || ''}
                                             onChange={e => setEditingProfile({ ...editingProfile, full_name: e.target.value })}
                                             placeholder="VD: Nguyễn Văn A"
@@ -397,7 +397,7 @@ export default function HRDirectoryPage() {
                                         <label className="block text-xs font-medium mb-1">Ngày sinh</label>
                                         <input
                                             type="date"
-                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                             value={editingProfile.dob || ''}
                                             onChange={e => setEditingProfile({ ...editingProfile, dob: e.target.value })}
                                         />
@@ -405,7 +405,7 @@ export default function HRDirectoryPage() {
                                     <div>
                                         <label className="block text-xs font-medium mb-1">Số điện thoại</label>
                                         <input
-                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                             value={editingProfile.phone || ''}
                                             onChange={e => setEditingProfile({ ...editingProfile, phone: e.target.value })}
                                         />
@@ -413,7 +413,7 @@ export default function HRDirectoryPage() {
                                     <div className="col-span-2">
                                         <label className="block text-xs font-medium mb-1">Quê quán</label>
                                         <input
-                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                             value={editingProfile.place_of_origin || ''}
                                             onChange={e => setEditingProfile({ ...editingProfile, place_of_origin: e.target.value })}
                                             placeholder="VD: Nam Định"
@@ -422,7 +422,7 @@ export default function HRDirectoryPage() {
                                     <div className="col-span-2">
                                         <label className="block text-xs font-medium mb-1">CMND/The căn cước</label>
                                         <input
-                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                             value={editingProfile.identity_card || ''}
                                             onChange={e => setEditingProfile({ ...editingProfile, identity_card: e.target.value })}
                                             placeholder="Số CCCD"
@@ -440,7 +440,7 @@ export default function HRDirectoryPage() {
                                     <div>
                                         <label className="block text-xs font-medium mb-1">Trường học</label>
                                         <input
-                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                             value={editingProfile.education_school || ''}
                                             onChange={e => setEditingProfile({ ...editingProfile, education_school: e.target.value })}
                                             placeholder="VD: ĐH Kinh tế"
@@ -449,7 +449,7 @@ export default function HRDirectoryPage() {
                                     <div>
                                         <label className="block text-xs font-medium mb-1">Chuyên ngành</label>
                                         <input
-                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                             value={editingProfile.education_major || ''}
                                             onChange={e => setEditingProfile({ ...editingProfile, education_major: e.target.value })}
                                             placeholder="VD: QTKD"
@@ -458,7 +458,7 @@ export default function HRDirectoryPage() {
                                     <div className="col-span-2">
                                         <label className="block text-xs font-medium mb-1">Sở thích</label>
                                         <textarea
-                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                             rows={2}
                                             value={editingProfile.interests || ''}
                                             onChange={e => setEditingProfile({ ...editingProfile, interests: e.target.value })}
@@ -468,7 +468,7 @@ export default function HRDirectoryPage() {
                                     <div className="col-span-2">
                                         <label className="block text-xs font-medium mb-1">Facebook Profile</label>
                                         <input
-                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                             value={editingProfile.social_facebook || ''}
                                             onChange={e => setEditingProfile({ ...editingProfile, social_facebook: e.target.value })}
                                             placeholder="https://facebook.com/..."
@@ -478,12 +478,12 @@ export default function HRDirectoryPage() {
                             </div>
                         </div>
                         <div className="mt-6 flex justify-end gap-3">
-                            <button onClick={() => setEditingProfile(null)} className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded">Hủy</button>
+                            <button onClick={() => setEditingProfile(null)} className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded text-sm font-medium">Hủy</button>
                             <button
                                 onClick={() => handleUpdateProfile(editingProfile)}
-                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                className="px-4 py-2 bg-[#00AFA9] text-white rounded hover:bg-[#009690] shadow-sm font-medium text-sm transition-colors"
                             >
-                                Update
+                                Cập nhật
                             </button>
                         </div>
                     </div>

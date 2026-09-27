@@ -244,7 +244,7 @@ export default function AdminAffiliatesPage() {
             {/* Modal Thêm Đối Tác */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+                    <div className="bg-white rounded-xl border border-slate-200 w-full max-w-md p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold">Thêm Đối Tác Affiliate</h2>
                             <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -312,7 +312,7 @@ export default function AdminAffiliatesPage() {
             {/* Modal Cài đặt riêng cho CTV */}
             {selectedAffiliateForConfig && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="bg-slate-50 rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
+                    <div className="bg-slate-50 rounded-xl border border-slate-200 w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
                         <div className="flex justify-between items-center p-6 bg-white border-b border-slate-200">
                             <div>
                                 <h2 className="text-xl font-bold flex items-center gap-2">

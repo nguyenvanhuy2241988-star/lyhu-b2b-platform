@@ -297,7 +297,7 @@ export default function GTEarningsPage() {
 
                 <div className="bg-white p-4 rounded-xl border border-slate-200">
                     <div className="flex items-center gap-2 mb-3">
-                        <div className="p-2 bg-purple-50 rounded-lg"><DollarSign className="w-4 h-4 text-purple-600" /></div>
+                        <div className="p-2 bg-teal-50 rounded-lg"><DollarSign className="w-4 h-4 text-[#00AFA9]" /></div>
                         <span className="text-xs font-medium text-slate-500">Doanh số</span>
                     </div>
                     <p className="text-2xl font-bold text-slate-900">{formatPrice(metrics.totalRevenue)}</p>

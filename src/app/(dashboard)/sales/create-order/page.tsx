@@ -145,7 +145,7 @@ export default function CreateOrderPage() {
                     <div className="flex items-center gap-3">
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 1
-                                ? "bg-primary-500 text-white"
+                                ? "bg-[#00AFA9] text-white"
                                 : "bg-slate-100 text-slate-400"
                                 }`}
                         >
@@ -162,7 +162,7 @@ export default function CreateOrderPage() {
                     <div className="flex items-center gap-3">
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 2
-                                ? "bg-primary-500 text-white"
+                                ? "bg-[#00AFA9] text-white"
                                 : "bg-slate-100 text-slate-400"
                                 }`}
                         >
@@ -179,7 +179,7 @@ export default function CreateOrderPage() {
                     <div className="flex items-center gap-3">
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 3 && orderItems.length > 0
-                                ? "bg-primary-500 text-white"
+                                ? "bg-[#00AFA9] text-white"
                                 : "bg-slate-100 text-slate-400"
                                 }`}
                         >
@@ -202,11 +202,11 @@ export default function CreateOrderPage() {
                             <button
                                 key={customer.id}
                                 onClick={() => handleSelectCustomer(customer.id)}
-                                className="p-4 border border-slate-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all text-left group"
+                                className="p-4 border border-slate-200 rounded-lg hover:border-[#00AFA9] hover:bg-teal-50 transition-all text-left group"
                             >
                                 <div className="flex items-start gap-3">
-                                    <div className="p-2 bg-slate-100 group-hover:bg-primary-100 rounded-lg transition-colors">
-                                        <User className="w-5 h-5 text-slate-600 group-hover:text-primary-600" />
+                                    <div className="p-2 bg-slate-100 group-hover:bg-teal-100 rounded-lg transition-colors">
+                                        <User className="w-5 h-5 text-slate-600 group-hover:text-[#00AFA9]" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h4 className="font-medium text-slate-900 mb-1 truncate">
@@ -227,19 +227,19 @@ export default function CreateOrderPage() {
             {currentStep >= 2 && selectedCustomer && (
                 <>
                     {/* Selected Customer Info */}
-                    <div className="bg-primary-50 border border-primary-200 p-4 rounded-lg flex items-center justify-between">
+                    <div className="bg-teal-50 border border-teal-200 p-4 rounded-lg flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-primary-700 font-medium">Khách hàng đã chọn:</p>
-                            <p className="text-lg font-semibold text-primary-900">
+                            <p className="text-sm text-teal-800 font-medium">Khách hàng đã chọn:</p>
+                            <p className="text-lg font-semibold text-teal-900">
                                 {selectedCustomer.storeName}
                             </p>
-                            <p className="text-xs text-primary-600 mt-1">
+                            <p className="text-xs text-teal-700 mt-1">
                                 {selectedCustomer.type} • {selectedCustomer.area}
                             </p>
                         </div>
                         <button
                             onClick={handleReset}
-                            className="px-4 py-2 bg-white text-primary-700 border border-primary-300 rounded-lg text-sm font-medium hover:bg-primary-100 transition-colors"
+                            className="px-4 py-2 bg-white text-[#00AFA9] border border-teal-300 rounded-lg text-sm font-medium hover:bg-teal-100 transition-colors"
                         >
                             Đổi khách
                         </button>
@@ -255,14 +255,14 @@ export default function CreateOrderPage() {
                                     UHI: "bg-orange-500",
                                     BOYO: "bg-purple-500",
                                     CVT: "bg-blue-500",
-                                    LYHU: "bg-primary-500",
+                                    LYHU: "bg-[#00AFA9]",
                                 };
-                                const brandColor = brandColors[product.brand] || "bg-primary-500";
+                                const brandColor = brandColors[product.brand] || "bg-[#00AFA9]";
 
                                 return (
                                     <div
                                         key={product.id}
-                                        className={`p-4 border rounded-lg ${inOrder ? "border-primary-500 bg-primary-50" : "border-slate-200"
+                                        className={`p-4 border rounded-lg ${inOrder ? "border-[#00AFA9] bg-teal-50" : "border-slate-200"
                                             }`}
                                     >
                                         <span className={`inline-block ${brandColor} text-white text-xs font-semibold px-2 py-1 rounded mb-2`}>
@@ -278,7 +278,7 @@ export default function CreateOrderPage() {
                                         <button
                                             onClick={() => handleAddProduct(product)}
                                             className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors ${inOrder
-                                                ? "bg-primary-600 text-white hover:bg-primary-700"
+                                                ? "bg-[#00AFA9] text-white hover:bg-[#009690]"
                                                 : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                                                 }`}
                                         >
@@ -345,7 +345,7 @@ export default function CreateOrderPage() {
                             <div className="border-t border-slate-200 pt-4">
                                 <div className="flex items-center justify-between mb-4">
                                     <span className="text-lg font-semibold text-slate-900">Tổng cộng:</span>
-                                    <span className="text-2xl font-bold text-primary-600">
+                                    <span className="text-2xl font-bold text-[#00AFA9]">
                                         {formatPrice(calculateTotal())}
                                     </span>
                                 </div>
@@ -359,7 +359,7 @@ export default function CreateOrderPage() {
                                     </button>
                                     <button
                                         onClick={handleCreateOrder}
-                                        className="flex-1 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                                        className="flex-1 px-6 py-3 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
                                     >
                                         <ShoppingCart className="w-5 h-5" />
                                         Tạo đơn hàng

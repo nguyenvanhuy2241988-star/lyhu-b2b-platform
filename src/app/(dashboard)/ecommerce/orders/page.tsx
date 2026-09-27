@@ -11,7 +11,7 @@ const formatDate = (dateString: string) => new Date(dateString).toLocaleDateStri
 const STATUS_CONFIG: Record<string, any> = {
     pending: { label: "Chờ xác nhận", icon: Clock, color: "bg-yellow-100 text-yellow-700" },
     processing: { label: "Đang xử lý", icon: Package, color: "bg-blue-100 text-blue-700" },
-    delivering: { label: "Đang giao hàng", icon: Package, color: "bg-indigo-100 text-indigo-700" },
+    delivering: { label: "Đang giao hàng", icon: Package, color: "bg-teal-50 text-[#00AFA9]" },
     delivered: { label: "Đã giao", icon: CheckCircle, color: "bg-green-100 text-green-700" },
     returned: { label: "Hoàn hàng", icon: RotateCcw, color: "bg-orange-100 text-orange-700" },
     cancelled: { label: "Đã hủy", icon: XCircle, color: "bg-red-100 text-red-700" },
@@ -20,7 +20,7 @@ const STATUS_CONFIG: Record<string, any> = {
 const SOURCE_CONFIG: Record<string, any> = {
     SHOPEE: { label: "Shopee", icon: ShoppingBag, color: "text-orange-600 bg-orange-50" },
     TIKTOK: { label: "TikTok", icon: ShoppingCart, color: "text-black bg-slate-100" },
-    WEB: { label: "Website", icon: Globe, color: "text-violet-600 bg-violet-50" },
+    WEB: { label: "Website", icon: Globe, color: "text-[#00AFA9] bg-teal-50" },
     FACEBOOK: { label: "Facebook", icon: MessageCircle, color: "text-blue-600 bg-blue-50" },
     ZALO: { label: "Zalo", icon: MessageCircle, color: "text-blue-500 bg-blue-50" },
     CUSTOMER: { label: "Khách lẻ", icon: Package, color: "text-slate-600 bg-slate-50" },
@@ -76,14 +76,14 @@ export default function EcommerceOrdersPage() {
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
-                            className="pl-9 pr-4 py-2 border rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-violet-200"
+                            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg w-64 focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] text-sm"
                             placeholder="Tìm đơn hàng..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />
                     </div>
                     <select
-                        className="pl-3 pr-8 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-200 bg-white"
+                        className="pl-3 pr-8 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] bg-white text-sm"
                         value={filterSource}
                         onChange={(e) => setFilterSource(e.target.value as any)}
                     >
@@ -96,7 +96,7 @@ export default function EcommerceOrdersPage() {
                 </div>
             </div>
 
-            <div className="bg-white border rounded-xl shadow-sm flex-1 overflow-hidden flex flex-col">
+            <div className="bg-white border border-slate-200 rounded-xl shadow-sm flex-1 overflow-hidden flex flex-col">
                 <div className="overflow-auto flex-1">
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold sticky top-0 z-10">

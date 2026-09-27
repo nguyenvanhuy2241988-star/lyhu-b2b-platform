@@ -218,7 +218,7 @@ export default function EventDetailPage() {
                     )}
                 </div>
 
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent pt-32 pb-8 px-6 md:px-10 flex items-end z-10 pointer-events-none">
+                <div className="absolute inset-x-0 bottom-0 bg-slate-950/80 pt-32 pb-8 px-6 md:px-10 flex items-end z-10 pointer-events-none">
                     <div className="w-full text-white relative pointer-events-auto">
                         {/* Status Badge */}
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm font-medium mb-4 border border-white/10">
@@ -269,7 +269,7 @@ export default function EventDetailPage() {
                             onClick={() => setActiveTab('overview')}
                             className={cn(
                                 "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
-                                activeTab === 'overview' ? "border-teal-600 text-teal-600" : "border-transparent text-slate-500 hover:text-slate-700"
+                                activeTab === 'overview' ? "border-[#00AFA9] text-[#00AFA9]" : "border-transparent text-slate-500 hover:text-slate-700"
                             )}
                         >
                             Tổng quan
@@ -278,7 +278,7 @@ export default function EventDetailPage() {
                             onClick={() => setActiveTab('participants')}
                             className={cn(
                                 "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
-                                activeTab === 'participants' ? "border-teal-600 text-teal-600" : "border-transparent text-slate-500 hover:text-slate-700"
+                                activeTab === 'participants' ? "border-[#00AFA9] text-[#00AFA9]" : "border-transparent text-slate-500 hover:text-slate-700"
                             )}
                         >
                             Người tham gia ({participants.length})
@@ -288,7 +288,7 @@ export default function EventDetailPage() {
                                 onClick={() => setActiveTab('budget')}
                                 className={cn(
                                     "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
-                                    activeTab === 'budget' ? "border-teal-600 text-teal-600" : "border-transparent text-slate-500 hover:text-slate-700"
+                                    activeTab === 'budget' ? "border-[#00AFA9] text-[#00AFA9]" : "border-transparent text-slate-500 hover:text-slate-700"
                                 )}
                             >
                                 Ngân sách
@@ -305,7 +305,7 @@ export default function EventDetailPage() {
                                         <button
                                             onClick={saveDescription}
                                             disabled={saving}
-                                            className="text-sm px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition disabled:opacity-50"
+                                            className="text-sm px-3 py-1.5 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] transition disabled:opacity-50"
                                         >
                                             {saving ? 'Đang lưu...' : 'Lưu nội dung'}
                                         </button>
@@ -323,7 +323,7 @@ export default function EventDetailPage() {
                             {!isAdminOrHr && (
                                 <section className="pt-6 border-t border-slate-100">
                                     <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                        <Users className="w-5 h-5 text-teal-600" />
+                                        <Users className="w-5 h-5 text-[#00AFA9]" />
                                         Trạng thái tham gia
                                     </h3>
 
@@ -355,7 +355,7 @@ export default function EventDetailPage() {
                                             </div>
                                             <button
                                                 onClick={() => handleJoin('going')}
-                                                className="text-sm text-teal-600 hover:underline self-start ml-1"
+                                                className="text-sm text-[#00AFA9] hover:underline self-start ml-1"
                                             >
                                                 Đổi ý? Đăng ký tham gia lại
                                             </button>
@@ -364,7 +364,7 @@ export default function EventDetailPage() {
                                         <div className="flex gap-4">
                                             <button
                                                 onClick={() => handleJoin('going')}
-                                                className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium flex items-center gap-2 shadow-lg shadow-blue-200"
+                                                className="px-6 py-2.5 bg-[#00AFA9] text-white rounded-xl hover:bg-[#009690] transition font-medium flex items-center gap-2 shadow-sm"
                                             >
                                                 <CheckCircle className="w-4 h-4" />
                                                 Chắc chắn tham gia
@@ -393,7 +393,7 @@ export default function EventDetailPage() {
                                     participants.map((p) => (
                                         <div key={p.id} className="py-3 flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs uppercase">
+                                                <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center text-[#00AFA9] font-bold text-xs uppercase">
                                                     {p.profiles?.full_name?.charAt(0) || "U"}
                                                 </div>
                                                 <div>
@@ -469,7 +469,7 @@ export default function EventDetailPage() {
                         <h3 className="font-semibold mb-4 text-slate-900">Thông tin nhanh</h3>
                         <div className="space-y-4">
                             <div className="flex items-start gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                                <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center text-[#00AFA9] shrink-0">
                                     <Calendar className="w-4 h-4" />
                                 </div>
                                 <div>

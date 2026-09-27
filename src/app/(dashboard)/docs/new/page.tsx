@@ -97,7 +97,7 @@ export default function CreateDocPage() {
                         <input
                             type="text"
                             required
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                             placeholder="Nhập tiêu đề tài liệu..."
                             value={title}
                             onChange={e => setTitle(e.target.value)}
@@ -108,7 +108,7 @@ export default function CreateDocPage() {
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Danh mục</label>
                             <select
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                 value={catId}
                                 onChange={e => setCatId(e.target.value)}
                             >
@@ -122,7 +122,7 @@ export default function CreateDocPage() {
                             <label className="block text-sm font-medium text-slate-700 mb-1">Tags (cách nhau dấu phẩy)</label>
                             <input
                                 type="text"
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                 placeholder="HDSD, Quy trình, Sale..."
                                 value={tags}
                                 onChange={e => setTags(e.target.value)}
@@ -133,7 +133,7 @@ export default function CreateDocPage() {
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Nội dung</label>
                         <textarea
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[200px] font-mono text-sm"
+                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] min-h-[200px] font-mono text-sm"
                             placeholder="Hỗ trợ Markdown cơ bản..."
                             value={content}
                             onChange={e => setContent(e.target.value)}
@@ -199,7 +199,7 @@ export default function CreateDocPage() {
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">Trạng thái</label>
                             <select
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                 value={status}
                                 onChange={e => setStatus(e.target.value as DocStatus)}
                             >
@@ -237,7 +237,7 @@ export default function CreateDocPage() {
                             {files.map((file, idx) => (
                                 <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
                                     <div className="flex items-center gap-3">
-                                        <FileText className="w-4 h-4 text-blue-500" />
+                                        <FileText className="w-4 h-4 text-[#00AFA9]" />
                                         <span className="text-sm text-slate-700 truncate max-w-[200px]">{file.name}</span>
                                         <span className="text-xs text-slate-400">({(file.size / 1024).toFixed(1)} KB)</span>
                                     </div>
@@ -255,7 +255,7 @@ export default function CreateDocPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="sticky bottom-4 z-10 flex justify-end gap-3 bg-white p-4 border border-slate-200 rounded-xl shadow-lg">
+                <div className="sticky bottom-4 z-10 flex justify-end gap-3 bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
                     <Link
                         href="/docs"
                         className="px-6 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition"
@@ -265,7 +265,7 @@ export default function CreateDocPage() {
                     <button
                         type="submit"
                         disabled={submitting}
-                        className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                        className="flex items-center gap-2 px-6 py-2 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] transition disabled:opacity-50 shadow-sm"
                     >
                         {submitting ? 'Đang lưu...' : (
                             <>

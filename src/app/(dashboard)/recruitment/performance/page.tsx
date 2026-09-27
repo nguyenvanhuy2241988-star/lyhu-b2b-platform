@@ -65,7 +65,7 @@ export default function RecruitmentPerformancePage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <TrendingUp className="w-6 h-6 text-primary-600" />
+                        <TrendingUp className="w-6 h-6 text-[#00AFA9]" />
                         Hiệu quả Tuyển dụng (Social KPI)
                     </h1>
                     <p className="text-slate-500 text-sm mt-1">Theo dõi Traffic và Chuyển đổi từ nguồn Social Media</p>
@@ -74,13 +74,13 @@ export default function RecruitmentPerformancePage() {
                 <div className="flex bg-white rounded-lg border border-slate-200 p-1">
                     <button
                         onClick={() => setTimeRange("all")}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${timeRange === 'all' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${timeRange === 'all' ? 'bg-[#00AFA9] text-white' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Tất cả
                     </button>
                     <button
                         onClick={() => setTimeRange("month")}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${timeRange === 'month' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${timeRange === 'month' ? 'bg-[#00AFA9] text-white' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Tháng này
                     </button>
@@ -89,9 +89,9 @@ export default function RecruitmentPerformancePage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-6 rounded-xl border border-primary-100 shadow-sm">
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-primary-50 text-primary-600 rounded-lg">
+                        <div className="p-2 bg-teal-50 text-[#00AFA9] rounded-lg">
                             <MousePointer className="w-5 h-5" />
                         </div>
                         <h3 className="text-sm font-medium text-slate-500">Tổng Traffic (Clicks)</h3>
@@ -100,18 +100,18 @@ export default function RecruitmentPerformancePage() {
                     <div className="text-xs text-green-600 mt-1">Lượt truy cập từ link seeding</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl border border-purple-100 shadow-sm">
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
+                        <div className="p-2 bg-teal-50 text-[#00AFA9] rounded-lg">
                             <Users className="w-5 h-5" />
                         </div>
                         <h3 className="text-sm font-medium text-slate-500">Tổng Ứng viên (Leads)</h3>
                     </div>
                     <div className="text-3xl font-bold text-slate-900">{totalLeads.toLocaleString()}</div>
-                    <div className="text-xs text-purple-600 mt-1">Đơn ứng tuyển hợp lệ</div>
+                    <div className="text-xs text-[#00AFA9] mt-1">Đơn ứng tuyển hợp lệ</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl border border-orange-100 shadow-sm">
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 bg-orange-50 text-orange-600 rounded-lg">
                             <Target className="w-5 h-5" />
@@ -131,7 +131,7 @@ export default function RecruitmentPerformancePage() {
 
                 {isLoading ? (
                     <div className="p-12 flex justify-center">
-                        <Loader2 className="w-8 h-8 text-slate-300 animate-spin" />
+                        <Loader2 className="w-8 h-8 text-[#00AFA9] animate-spin" />
                     </div>
                 ) : stats.length === 0 ? (
                     <div className="p-12 text-center text-slate-500">
@@ -167,10 +167,10 @@ export default function RecruitmentPerformancePage() {
                                         </td>
                                         <td className="px-6 py-3 text-right text-slate-600 font-mono">{s.total_links}</td>
                                         <td className="px-6 py-3 text-right">
-                                            <span className="font-bold text-primary-600">{s.total_clicks.toLocaleString()}</span>
+                                            <span className="font-bold text-slate-700">{s.total_clicks.toLocaleString()}</span>
                                         </td>
                                         <td className="px-6 py-3 text-right">
-                                            <span className="font-bold text-purple-600">{s.total_leads.toLocaleString()}</span>
+                                            <span className="font-bold text-[#00AFA9]">{s.total_leads.toLocaleString()}</span>
                                         </td>
                                         <td className="px-6 py-3 text-right">
                                             <span className={`font-bold ${s.conversion_rate > 1 ? 'text-green-600' : 'text-slate-500'}`}>
@@ -212,11 +212,11 @@ export default function RecruitmentPerformancePage() {
                                         </div>
                                         <div>
                                             <div className="text-[10px] text-slate-500 uppercase font-semibold mb-1">Clicks</div>
-                                            <div className="font-bold text-sm text-primary-600">{s.total_clicks.toLocaleString()}</div>
+                                            <div className="font-bold text-sm text-slate-700">{s.total_clicks.toLocaleString()}</div>
                                         </div>
                                         <div>
                                             <div className="text-[10px] text-slate-500 uppercase font-semibold mb-1">Leads</div>
-                                            <div className="font-bold text-sm text-purple-600">{s.total_leads.toLocaleString()}</div>
+                                            <div className="font-bold text-sm text-[#00AFA9]">{s.total_leads.toLocaleString()}</div>
                                         </div>
                                         <div>
                                             <div className="text-[10px] text-slate-500 uppercase font-semibold mb-1">Tỷ lệ</div>

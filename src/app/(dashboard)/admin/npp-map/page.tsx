@@ -405,7 +405,7 @@ export default function NppMapPage() {
 
                     {/* Details Card */}
                     <div className={`
-                        bg-white shadow-2xl lg:shadow-sm border-t lg:border border-slate-200 transition-transform duration-300
+                        bg-white lg:shadow-sm border-t lg:border border-slate-200 transition-transform duration-300
                         fixed lg:relative inset-x-0 bottom-0 z-[60] lg:z-auto rounded-t-3xl lg:rounded-xl p-5
                         max-h-[85vh] lg:max-h-none overflow-y-auto lg:min-h-[320px]
                         ${selectedProvince ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'}
@@ -608,7 +608,7 @@ export default function NppMapPage() {
             {/* Tooltip Overlay */}
             <div 
                 ref={tooltipRef}
-                className={`hidden lg:block fixed z-50 pointer-events-none bg-white rounded-xl shadow-2xl border border-slate-200 w-80 overflow-hidden transition-opacity duration-200 ${
+                className={`hidden lg:block fixed z-50 pointer-events-none bg-white rounded-xl border border-slate-200 w-80 overflow-hidden transition-opacity duration-200 ${
                     hoveredProvince && !selectedProvince ? 'opacity-100' : 'opacity-0'
                 }`}
                 style={{ left: -999, top: -999, pointerEvents: 'none' }}

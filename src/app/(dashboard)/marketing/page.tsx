@@ -87,8 +87,8 @@ export default function MarketingDashboard() {
             label: "Ngân sách (Tháng)",
             value: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(stats.budgetUsed),
             icon: TrendingUp,
-            color: "text-purple-600",
-            bg: "bg-purple-50",
+            color: "text-[#00AFA9]",
+            bg: "bg-teal-50",
             link: "/marketing/campaigns"
         },
     ];

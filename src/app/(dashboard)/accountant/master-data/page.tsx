@@ -609,7 +609,7 @@ export default function AccountantMasterDataPage() {
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         {c.misa_code ? (
-                                                            <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 text-xs font-mono font-bold">
+                                                            <span className="px-2 py-0.5 rounded bg-teal-50 text-[#00AFA9] text-xs font-mono font-bold">
                                                                 {c.misa_code}
                                                             </span>
                                                         ) : (
@@ -684,7 +684,7 @@ export default function AccountantMasterDataPage() {
                                                 <div className="flex items-center gap-2 text-xs">
                                                     <span className="text-slate-500">Mã MISA:</span>
                                                     {c.misa_code ? (
-                                                        <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 font-mono font-bold">
+                                                        <span className="px-2 py-0.5 rounded bg-teal-50 text-[#00AFA9] font-mono font-bold">
                                                             {c.misa_code}
                                                         </span>
                                                     ) : (
@@ -714,7 +714,7 @@ export default function AccountantMasterDataPage() {
             {
                 editingItem && (
                     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm w-full max-w-md overflow-hidden">
                             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                                 <h3 className="font-bold text-slate-900">Thiết lập Mã MISA</h3>
                                 <button onClick={() => setEditingItem(null)} className="p-1 hover:bg-slate-200 rounded-lg">
@@ -761,7 +761,7 @@ export default function AccountantMasterDataPage() {
 
                                         {/* MISA Products Dropdown */}
                                         {showMisaDropdown && editingItem.type === "product" && misaItems.length > 0 && (
-                                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-sm max-h-48 overflow-y-auto">
                                                 {isSyncing ? (
                                                     <div className="p-3 text-center text-sm text-slate-400">
                                                         <Loader2 className="w-4 h-4 animate-spin inline mr-2" />Đang tải...
@@ -823,7 +823,7 @@ export default function AccountantMasterDataPage() {
             {/* Import Modal */}
             {showImportModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm w-full max-w-2xl max-h-[80vh] flex flex-col">
                         {/* Header */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                             <div className="flex items-center gap-3">

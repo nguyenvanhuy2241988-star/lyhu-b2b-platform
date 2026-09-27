@@ -292,7 +292,7 @@ export default function AdminMediaReportsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                        <Camera className="w-5 h-5 text-pink-500" />
+                        <Camera className="w-5 h-5 text-[#00AFA9]" />
                         Báo cáo Media (Ảnh/Video)
                     </h1>
                     <p className="text-sm text-slate-500 mt-1">Tổng hợp hiệu suất nhân viên quay dựng</p>
@@ -301,7 +301,7 @@ export default function AdminMediaReportsPage() {
                     <div className="flex bg-slate-100 p-0.5 rounded-lg">
                         {(["today", "week", "month", "year", "custom"] as Period[]).map(opt => (
                             <button key={opt} onClick={() => setPeriod(opt)}
-                                className={`px-2.5 py-1.5 text-[11px] font-medium rounded transition-colors ${period === opt ? "bg-white text-pink-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+                                className={`px-2.5 py-1.5 text-[11px] font-medium rounded transition-colors ${period === opt ? "bg-white text-[#00AFA9] shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
                                 {periodLabels[opt]}
                             </button>
                         ))}
@@ -349,7 +349,7 @@ export default function AdminMediaReportsPage() {
                 </div>
                 <div className="bg-white p-5 rounded-xl border border-slate-200">
                     <div className="flex items-center gap-2 mb-3">
-                        <div className="p-2 bg-purple-50 rounded-lg"><FolderOpen className="w-4 h-4 text-purple-600" /></div>
+                        <div className="p-2 bg-teal-50 rounded-lg"><FolderOpen className="w-4 h-4 text-[#00AFA9]" /></div>
                         <span className="text-xs font-medium text-slate-500">Media đã upload</span>
                     </div>
                     <p className="text-2xl font-bold text-slate-900">{totalAssets}</p>
@@ -360,7 +360,7 @@ export default function AdminMediaReportsPage() {
             {/* Project Status Breakdown */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
                 <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-pink-500" /> Phân bố trạng thái dự án
+                    <BarChart3 className="w-4 h-4 text-[#00AFA9]" /> Phân bố trạng thái dự án
                 </h3>
                 <div className="flex items-end gap-3 h-32">
                     {projectStatusCounts.map(item => {
@@ -386,7 +386,7 @@ export default function AdminMediaReportsPage() {
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-200">
                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <Users className="w-4 h-4 text-pink-500" /> Hiệu suất theo nhân viên
+                        <Users className="w-4 h-4 text-[#00AFA9]" /> Hiệu suất theo nhân viên
                     </h3>
                 </div>
                 {userReports.length === 0 ? (
@@ -425,11 +425,11 @@ export default function AdminMediaReportsPage() {
                                             <span className="px-2 py-0.5 text-xs font-medium bg-green-50 text-green-700 rounded">{u.projectsCompleted}</span>
                                         </td>
                                         <td className="p-3 text-center">
-                                            <span className="px-2 py-0.5 text-xs font-medium bg-purple-50 text-purple-700 rounded">{u.assetsUploaded}</span>
+                                            <span className="px-2 py-0.5 text-xs font-medium bg-teal-50 text-[#00AFA9] rounded">{u.assetsUploaded}</span>
                                         </td>
                                         <td className="p-3 text-center">
                                             <button onClick={() => openUserDetail(u)}
-                                                className="p-1.5 text-slate-400 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition-colors">
+                                                className="p-1.5 text-slate-400 hover:text-[#00AFA9] hover:bg-teal-50 rounded-lg transition-colors">
                                                 <Eye className="w-4 h-4" />
                                             </button>
                                         </td>
@@ -444,7 +444,7 @@ export default function AdminMediaReportsPage() {
             {/* Drill-down Modal */}
             {selectedUser && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl w-full max-w-3xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+                    <div className="bg-white rounded-xl w-full max-w-3xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
                         <div className="p-5 border-b border-slate-200 flex items-center justify-between">
                             <div>
                                 <h2 className="text-lg font-bold text-slate-900">{selectedUser.fullName}</h2>
@@ -458,7 +458,7 @@ export default function AdminMediaReportsPage() {
 
                         {detailLoading ? (
                             <div className="flex items-center justify-center py-16">
-                                <div className="w-8 h-8 border-3 border-pink-200 border-t-pink-600 rounded-full animate-spin" />
+                                <div className="w-8 h-8 border-3 border-teal-200 border-t-[#00AFA9] rounded-full animate-spin" />
                             </div>
                         ) : (
                             <div className="flex-1 overflow-y-auto p-5 space-y-6">

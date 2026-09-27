@@ -410,7 +410,7 @@ export default function UsersPage() {
                 : new Date(label).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
 
             return (
-                <div className="bg-white p-3 border border-slate-200 shadow-xl rounded-xl text-xs z-50">
+                <div className="bg-white p-3 border border-slate-200 rounded-xl text-xs z-50">
                     <p className="font-bold text-slate-800 mb-1">{dateStr}</p>
                     <div className="flex items-center gap-2 mb-1">
                         <div className="w-2 h-2 rounded-full bg-blue-500"></div>
@@ -672,7 +672,7 @@ export default function UsersPage() {
             {/* Detail Modal */}
             {isDetailOpen && viewingUser && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in">
-                    <div className="bg-white rounded-none sm:rounded-xl shadow-xl w-full max-w-5xl overflow-hidden animate-in zoom-in-95 h-full sm:h-[90vh] flex flex-col">
+                    <div className="bg-white rounded-none sm:rounded-xl border border-slate-200 w-full max-w-5xl overflow-hidden animate-in zoom-in-95 h-full sm:h-[90vh] flex flex-col">
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <div>
                                 <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
@@ -716,8 +716,8 @@ export default function UsersPage() {
                                             <p className="text-blue-600 text-xs font-medium uppercase">Hôm nay</p>
                                             <p className="text-2xl font-bold text-slate-800 mt-1">{formatDuration(viewingUser.online_seconds)}</p>
                                         </div>
-                                        <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-                                            <p className="text-indigo-600 text-xs font-medium uppercase">Trung bình / ngày</p>
+                                        <div className="bg-teal-50 p-4 rounded-lg border border-teal-100">
+                                            <p className="text-[#00AFA9] text-xs font-medium uppercase">Trung bình / ngày</p>
                                             <p className="text-2xl font-bold text-slate-800 mt-1">{formatDuration(avgDaily)}</p>
                                             <p className="text-[10px] text-slate-400">Trong thời gian đã chọn</p>
                                         </div>
@@ -907,7 +907,7 @@ export default function UsersPage() {
             {
                 isModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in">
-                        <div className="bg-white rounded-none sm:rounded-xl shadow-xl w-full h-full sm:h-auto sm:max-w-md overflow-hidden animate-in zoom-in-95 flex flex-col">
+                        <div className="bg-white rounded-none sm:rounded-xl border border-slate-200 w-full h-full sm:h-auto sm:max-w-md overflow-hidden animate-in zoom-in-95 flex flex-col">
                             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
                                 <h3 className="font-bold text-lg text-slate-800">
                                     {editingUser ? "Chỉnh sửa nhân sự" : "Thêm nhân sự mới"}
@@ -1104,7 +1104,7 @@ export default function UsersPage() {
             {/* Quick Password Reset Modal */}
             {isResetPasswordOpen && resetPasswordUser && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95">
+                    <div className="bg-white rounded-xl border border-slate-200 w-full max-w-sm overflow-hidden animate-in zoom-in-95">
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-amber-50">
                             <div className="flex items-center gap-2">
                                 <KeyRound className="w-5 h-5 text-amber-600" />

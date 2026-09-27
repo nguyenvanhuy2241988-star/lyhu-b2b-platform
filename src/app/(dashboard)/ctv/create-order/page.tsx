@@ -215,7 +215,7 @@ export default function CreateOrderPage() {
             <div className="bg-white p-6 rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 1 ? "bg-primary-500 text-white" : "bg-slate-100 text-slate-400"}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 1 ? "bg-[#00AFA9] text-white" : "bg-slate-100 text-slate-400"}`}>
                             {currentStep > 1 ? <CheckCircle className="w-5 h-5" /> : "1"}
                         </div>
                         <div>
@@ -227,7 +227,7 @@ export default function CreateOrderPage() {
                     <div className="hidden sm:block w-12 h-0.5 bg-slate-200"></div>
 
                     <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 2 ? "bg-primary-500 text-white" : "bg-slate-100 text-slate-400"}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 2 ? "bg-[#00AFA9] text-white" : "bg-slate-100 text-slate-400"}`}>
                             {currentStep > 2 ? <CheckCircle className="w-5 h-5" /> : "2"}
                         </div>
                         <div>
@@ -239,7 +239,7 @@ export default function CreateOrderPage() {
                     <div className="hidden sm:block w-12 h-0.5 bg-slate-200"></div>
 
                     <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 3 && orderItems.length > 0 ? "bg-primary-500 text-white" : "bg-slate-100 text-slate-400"}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 3 && orderItems.length > 0 ? "bg-[#00AFA9] text-white" : "bg-slate-100 text-slate-400"}`}>
                             3
                         </div>
                         <div>
@@ -255,7 +255,7 @@ export default function CreateOrderPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <button
                         onClick={() => handleSelectMode("SELF_SHIP")}
-                        className="bg-white p-6 rounded-xl border border-slate-200 hover:border-primary-500 hover:shadow-md transition-all text-left group"
+                        className="bg-white p-6 rounded-xl border border-slate-200 hover:border-[#00AFA9] transition-all text-left group"
                     >
                         <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
                             <Package className="w-6 h-6 text-blue-600" />
@@ -278,10 +278,10 @@ export default function CreateOrderPage() {
 
                     <button
                         onClick={() => handleSelectMode("LYHU_SHIP")}
-                        className="bg-white p-6 rounded-xl border border-slate-200 hover:border-primary-500 hover:shadow-md transition-all text-left group"
+                        className="bg-white p-6 rounded-xl border border-slate-200 hover:border-[#00AFA9] transition-all text-left group"
                     >
-                        <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-200 transition-colors">
-                            <Truck className="w-6 h-6 text-purple-600" />
+                        <div className="w-12 h-12 bg-teal-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-teal-100 transition-colors">
+                            <Truck className="w-6 h-6 text-[#00AFA9]" />
                         </div>
                         <h3 className="text-lg font-bold text-slate-900 mb-2">Để LYHU giao cho khách</h3>
                         <p className="text-sm text-slate-600 mb-4">
@@ -315,7 +315,7 @@ export default function CreateOrderPage() {
                                         name="name"
                                         value={receiverInfo.name}
                                         onChange={handleReceiverInfoChange}
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                         placeholder="VD: Tạp hóa Minh Anh"
                                     />
                                 </div>
@@ -326,7 +326,7 @@ export default function CreateOrderPage() {
                                         name="phone"
                                         value={receiverInfo.phone}
                                         onChange={handleReceiverInfoChange}
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                         placeholder="VD: 0901234567"
                                     />
                                 </div>
@@ -337,7 +337,7 @@ export default function CreateOrderPage() {
                                         name="address"
                                         value={receiverInfo.address}
                                         onChange={handleReceiverInfoChange}
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                         placeholder="VD: 123 Nguyễn Trãi, Thanh Xuân, Hà Nội"
                                     />
                                 </div>
@@ -347,7 +347,7 @@ export default function CreateOrderPage() {
                                         name="notes"
                                         value={receiverInfo.notes}
                                         onChange={handleReceiverInfoChange}
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                         rows={2}
                                         placeholder="VD: Giao giờ hành chính"
                                     />
@@ -356,7 +356,7 @@ export default function CreateOrderPage() {
                             <div className="mt-4 flex justify-end">
                                 <button
                                     onClick={handleConfirmReceiver}
-                                    className="px-6 py-2 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-colors"
+                                    className="px-6 py-2 bg-[#00AFA9] text-white rounded-lg font-medium hover:bg-[#009690] transition-colors"
                                 >
                                     Tiếp tục chọn sản phẩm
                                 </button>
@@ -399,7 +399,7 @@ export default function CreateOrderPage() {
                                 return (
                                     <div
                                         key={product.id}
-                                        className={`p-4 border rounded-lg ${inOrder ? "border-primary-500 bg-primary-50" : "border-slate-200"}`}
+                                        className={`p-4 border rounded-lg ${inOrder ? "border-[#00AFA9] bg-teal-50" : "border-slate-200"}`}
                                     >
                                         <h4 className="font-medium text-slate-900 text-sm mb-2 line-clamp-2 min-h-[2.5rem]">
                                             {product.name}
@@ -427,7 +427,7 @@ export default function CreateOrderPage() {
                                         <button
                                             onClick={() => handleAddProduct(product)}
                                             className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors ${inOrder
-                                                ? "bg-primary-600 text-white hover:bg-primary-700"
+                                                ? "bg-[#00AFA9] text-white hover:bg-[#009690]"
                                                 : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                                                 }`}
                                         >
@@ -522,7 +522,7 @@ export default function CreateOrderPage() {
                                     </button>
                                     <button
                                         onClick={handleCreateOrder}
-                                        className="flex-1 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                                        className="flex-1 px-6 py-3 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
                                     >
                                         <ShoppingCart className="w-5 h-5" />
                                         Tạo đơn hàng

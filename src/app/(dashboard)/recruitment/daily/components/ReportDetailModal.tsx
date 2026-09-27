@@ -16,7 +16,7 @@ export default function ReportDetailModal({ isOpen, onClose, report }: ReportDet
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
             <div
-                className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 transform transition-all"
+                className="bg-white rounded-xl border border-slate-200 w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 transform transition-all"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -60,7 +60,7 @@ export default function ReportDetailModal({ isOpen, onClose, report }: ReportDet
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                                <FileText className="w-4 h-4 text-teal-600" />
+                                <FileText className="w-4 h-4 text-[#00AFA9]" />
                                 Công việc khác (Ngoài đăng tuyển)
                             </h3>
                             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 min-h-[80px] text-sm text-slate-700 whitespace-pre-wrap">
@@ -100,10 +100,10 @@ export default function ReportDetailModal({ isOpen, onClose, report }: ReportDet
                         </div>
                         <div className="space-y-2">
                             <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                                <Megaphone className="w-4 h-4 text-primary-500" />
+                                <Megaphone className="w-4 h-4 text-[#00AFA9]" />
                                 Đề xuất / Cần hỗ trợ
                             </h3>
-                            <div className="bg-primary-50 p-3 rounded-lg border border-primary-100 min-h-[60px] text-sm text-primary-800 whitespace-pre-wrap">
+                            <div className="bg-teal-50/50 p-3 rounded-lg border border-[#00AFA9]/20 min-h-[60px] text-sm text-slate-800 whitespace-pre-wrap">
                                 {report.request_support || "Không có đề xuất."}
                             </div>
                         </div>
@@ -111,10 +111,10 @@ export default function ReportDetailModal({ isOpen, onClose, report }: ReportDet
 
                     <div className="space-y-2">
                         <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-purple-600" />
+                            <Calendar className="w-4 h-4 text-[#00AFA9]" />
                             Kế hoạch ngày mai
                         </h3>
-                        <div className="bg-purple-50 p-3 rounded-lg border border-purple-100 min-h-[60px] text-sm text-purple-800 whitespace-pre-wrap">
+                        <div className="bg-teal-50/50 p-3 rounded-lg border border-[#00AFA9]/20 min-h-[60px] text-sm text-slate-800 whitespace-pre-wrap">
                             {report.plan_next_day || "Chưa có kế hoạch."}
                         </div>
                     </div>

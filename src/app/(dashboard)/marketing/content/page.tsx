@@ -443,7 +443,7 @@ export default function MarketingContentPage() {
             {/* Simple Connect Modal using User Token */}
             {isConnectOpen && (
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden p-6 space-y-4">
+                    <div className="bg-white rounded-lg border border-slate-200 shadow-sm w-full max-w-md overflow-hidden p-6 space-y-4">
                         <h3 className="text-lg font-bold">Kết nối Facebook</h3>
 
                         {!foundPages.length ? (
@@ -499,7 +499,7 @@ export default function MarketingContentPage() {
             {/* Create Post Modal */}
             {showCreatePost && (
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                    <div className="bg-white rounded-lg border border-slate-200 shadow-sm w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                         <div className="flex justify-between items-center p-6 border-b">
                             <h3 className="text-lg font-semibold">{newPost.id ? 'Chỉnh sửa bài viết' : 'Tạo bài viết mới'}</h3>
                             <button onClick={() => setShowCreatePost(false)} className="text-slate-500 hover:text-slate-700">

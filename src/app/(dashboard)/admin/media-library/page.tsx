@@ -174,7 +174,7 @@ export default function AdminMediaLibraryPage() {
 
     return (
         <div className="space-y-4">
-            {toast && (<div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm flex items-center gap-2"><Check className="w-4 h-4" /> {toast}</div>)}
+            {toast && (<div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"><Check className="w-4 h-4" /> {toast}</div>)}
 
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div><h1 className="text-xl font-bold text-slate-900">Thư viện Media (Admin)</h1>
@@ -211,8 +211,8 @@ export default function AdminMediaLibraryPage() {
 
             {showNewFolder && (<div className="bg-white border border-slate-200 rounded-lg p-3 flex items-center gap-3">
                 <FolderPlus className="w-5 h-5 text-amber-500" />
-                <input autoFocus className="flex-1 text-sm outline-none border-b border-slate-200 pb-1 focus:border-pink-400" placeholder="Tên thư mục..." value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") createFolder(); if (e.key === "Escape") setShowNewFolder(false); }} />
-                <button onClick={createFolder} disabled={creatingFolder || !newFolderName.trim()} className="px-3 py-1 bg-pink-600 text-white text-xs font-medium rounded-lg disabled:opacity-50">{creatingFolder ? "Đang tạo..." : "Tạo"}</button>
+                <input autoFocus className="flex-1 text-sm outline-none border-b border-slate-200 pb-1 focus:border-[#00AFA9]" placeholder="Tên thư mục..." value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") createFolder(); if (e.key === "Escape") setShowNewFolder(false); }} />
+                <button onClick={createFolder} disabled={creatingFolder || !newFolderName.trim()} className="px-3 py-1 bg-[#00AFA9] hover:bg-[#009690] text-white text-xs font-medium rounded-lg disabled:opacity-50">{creatingFolder ? "Đang tạo..." : "Tạo"}</button>
                 <button onClick={() => { setShowNewFolder(false); setNewFolderName(""); }} className="px-3 py-1 bg-slate-100 text-slate-600 text-xs rounded-lg hover:bg-slate-200">Hủy</button>
             </div>)}
 
@@ -224,10 +224,10 @@ export default function AdminMediaLibraryPage() {
 
             <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex-1 min-w-[200px] relative"><Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-pink-200" placeholder="Tìm kiếm..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+                    <input className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9]" placeholder="Tìm kiếm..." value={search} onChange={e => setSearch(e.target.value)} /></div>
                 {selectMode && (<button onClick={selectAll} className="flex items-center gap-1 px-3 py-2 bg-slate-100 text-slate-600 text-xs rounded-lg hover:bg-slate-200"><CheckSquare className="w-3.5 h-3.5" /> {selectedIds.size === filteredSorted.length ? "Bỏ chọn" : "Chọn tất cả"}</button>)}
                 <div className="flex items-center gap-1 text-xs"><ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
-                    {(["name", "size", "createdTime"] as SortField[]).map(f => (<button key={f} onClick={() => toggleSort(f)} className={`px-2 py-1 rounded ${sortField === f ? "bg-pink-100 text-pink-600 font-medium" : "text-slate-500 hover:bg-slate-100"}`}>{f === "name" ? "Tên" : f === "size" ? "Size" : "Ngày"} {sortField === f && (sortDir === "asc" ? "↑" : "↓")}</button>))}</div>
+                    {(["name", "size", "createdTime"] as SortField[]).map(f => (<button key={f} onClick={() => toggleSort(f)} className={`px-2 py-1 rounded ${sortField === f ? "bg-teal-50 text-[#00AFA9] font-medium" : "text-slate-500 hover:bg-slate-100"}`}>{f === "name" ? "Tên" : f === "size" ? "Size" : "Ngày"} {sortField === f && (sortDir === "asc" ? "↑" : "↓")}</button>))}</div>
                 <div className="flex bg-slate-100 p-0.5 rounded-lg"><button onClick={() => setViewMode("grid")} className={`p-1.5 rounded ${viewMode === "grid" ? "bg-white shadow-sm" : "text-slate-400"}`}><Grid className="w-4 h-4" /></button>
                     <button onClick={() => setViewMode("list")} className={`p-1.5 rounded ${viewMode === "list" ? "bg-white shadow-sm" : "text-slate-400"}`}><List className="w-4 h-4" /></button></div>
             </div>
@@ -289,7 +289,7 @@ export default function AdminMediaLibraryPage() {
 
             {/* Preview Modal */}
             {previewItem && (<div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setPreviewItem(null)}>
-                <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+                <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-slate-200" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center justify-between p-4 border-b border-slate-100">
                         <div><h3 className="font-medium text-slate-800 truncate max-w-[400px]">{previewItem.name}</h3><p className="text-xs text-slate-400 mt-0.5">{formatSize(previewItem.size)}</p></div>
                         <div className="flex items-center gap-1">
@@ -305,26 +305,26 @@ export default function AdminMediaLibraryPage() {
 
             {/* Rename Modal */}
             {renameItem && (<div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setRenameItem(null)}>
-                <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+                <div className="bg-white rounded-xl w-full max-w-md p-6 border border-slate-200" onClick={e => e.stopPropagation()}>
                     <h3 className="text-lg font-bold text-slate-800 mb-4">Đổi tên</h3>
-                    <input autoFocus className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-pink-200 mb-4" value={renameName} onChange={e => setRenameName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") doRename(); if (e.key === "Escape") setRenameItem(null); }} />
+                    <input autoFocus className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#00AFA9] mb-4" value={renameName} onChange={e => setRenameName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") doRename(); if (e.key === "Escape") setRenameItem(null); }} />
                     <div className="flex justify-end gap-2"><button onClick={() => setRenameItem(null)} className="px-4 py-2 bg-slate-100 text-slate-600 text-sm rounded-lg hover:bg-slate-200">Hủy</button>
-                    <button onClick={doRename} disabled={!renameName.trim()} className="px-4 py-2 bg-pink-600 text-white text-sm rounded-lg hover:bg-pink-700 disabled:opacity-50">Lưu</button></div>
+                    <button onClick={doRename} disabled={!renameName.trim()} className="px-4 py-2 bg-[#00AFA9] text-white text-sm rounded-lg hover:bg-[#009690] disabled:opacity-50">Lưu</button></div>
                 </div></div>)}
 
             {/* Move Modal */}
             {moveItems.length > 0 && (<div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setMoveItems([])}>
-                <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+                <div className="bg-white rounded-xl w-full max-w-md p-6 border border-slate-200" onClick={e => e.stopPropagation()}>
                     <h3 className="text-lg font-bold text-slate-800 mb-2">Di chuyển {moveItems.length} mục</h3>
                     <p className="text-xs text-slate-400 mb-4">Chọn thư mục đích:</p>
                     {loadingMoveFolders ? (<div className="py-8 text-center text-sm text-slate-400">Đang tải...</div>
                     ) : (<div className="max-h-60 overflow-y-auto space-y-1 mb-4">
-                        <button onClick={() => setMoveTarget(rootFolderId)} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left ${moveTarget === rootFolderId ? "bg-pink-50 text-pink-600 border border-pink-200" : "hover:bg-slate-50"}`}><Home className="w-4 h-4 text-amber-400" /> LYHU Media (Gốc)</button>
+                        <button onClick={() => setMoveTarget(rootFolderId)} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left ${moveTarget === rootFolderId ? "bg-teal-50 text-[#00AFA9] border border-[#00AFA9]" : "hover:bg-slate-50"}`}><Home className="w-4 h-4 text-amber-400" /> LYHU Media (Gốc)</button>
                         {moveFolders.filter(f => !moveItems.find(mi => mi.id === f.id)).map(f => (
-                            <button key={f.id} onClick={() => setMoveTarget(f.id)} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left ${moveTarget === f.id ? "bg-pink-50 text-pink-600 border border-pink-200" : "hover:bg-slate-50"}`}><Folder className="w-4 h-4 text-amber-400" /> {f.name}</button>
+                            <button key={f.id} onClick={() => setMoveTarget(f.id)} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left ${moveTarget === f.id ? "bg-teal-50 text-[#00AFA9] border border-[#00AFA9]" : "hover:bg-slate-50"}`}><Folder className="w-4 h-4 text-amber-400" /> {f.name}</button>
                         ))}</div>)}
                     <div className="flex justify-end gap-2"><button onClick={() => setMoveItems([])} className="px-4 py-2 bg-slate-100 text-slate-600 text-sm rounded-lg hover:bg-slate-200">Hủy</button>
-                    <button onClick={doMove} disabled={!moveTarget} className="px-4 py-2 bg-pink-600 text-white text-sm rounded-lg hover:bg-pink-700 disabled:opacity-50">Di chuyển</button></div>
+                    <button onClick={doMove} disabled={!moveTarget} className="px-4 py-2 bg-[#00AFA9] text-white text-sm rounded-lg hover:bg-[#009690] disabled:opacity-50">Di chuyển</button></div>
                 </div></div>)}
         </div>
     );

@@ -236,7 +236,7 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
 
                     {/* FAQ Schema builder */}
                     <div className="bg-white p-6 rounded-xl border border-slate-200 space-y-4">
-                        <div className="flex items-start gap-2 text-indigo-600 mb-2">
+                        <div className="flex items-start gap-2 text-[#00AFA9] mb-2">
                             <Sparkles className="w-5 h-5 shrink-0 mt-0.5" />
                             <div>
                                 <h3 className="font-semibold">Hỏi đáp (FAQ Schema)</h3>
@@ -259,7 +259,7 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
                             ))}
                         </div>
 
-                        <div className="bg-indigo-50/50 p-4 rounded-lg border border-indigo-100 space-y-3 mt-4">
+                        <div className="bg-teal-50/50 p-4 rounded-lg border border-teal-200 space-y-3 mt-4">
                             <input
                                 type="text"
                                 placeholder="Câu hỏi..."
@@ -275,7 +275,7 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
                             />
                             <button
                                 onClick={addFaq}
-                                className="px-3 py-1.5 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700"
+                                className="px-3 py-1.5 bg-[#00AFA9] text-white rounded text-sm font-medium hover:bg-[#009690] transition-colors"
                             >
                                 Thêm FAQ
                             </button>

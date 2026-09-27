@@ -126,23 +126,23 @@ export default function TelesalesDailyReportPage() {
         }));
     };
 
-    if (!effectiveUserId) return <div className="p-10 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600" /></div>;
+    if (!effectiveUserId) return <div className="p-10 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-[#00AFA9]" /></div>;
 
     return (
         <div className="p-6 max-w-5xl mx-auto space-y-6">
             {/* Admin Back Navigation */}
             {targetUserProfile && (
-                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                <div className="bg-teal-50 border border-teal-200 p-4 rounded-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
                     <div className="flex items-center gap-3">
                         <button onClick={() => router.back()} className="p-2 hover:bg-white rounded-full transition-colors">
-                            <ArrowLeft className="w-5 h-5 text-blue-700" />
+                            <ArrowLeft className="w-5 h-5 text-[#00AFA9]" />
                         </button>
                         <div>
-                            <p className="text-xs text-blue-600 font-semibold uppercase">Đang xem báo cáo của:</p>
-                            <h2 className="text-lg font-bold text-blue-900">{targetUserProfile.full_name} ({targetUserProfile.email})</h2>
+                            <p className="text-xs text-[#00AFA9] font-semibold uppercase">Đang xem báo cáo của:</p>
+                            <h2 className="text-lg font-bold text-slate-900">{targetUserProfile.full_name} ({targetUserProfile.email})</h2>
                         </div>
                     </div>
-                    <div className="text-sm text-blue-800 bg-white/50 px-3 py-1 rounded">
+                    <div className="text-sm text-[#00AFA9] bg-white/50 px-3 py-1 rounded">
                         Chế độ Admin
                     </div>
                 </div>
@@ -174,7 +174,7 @@ export default function TelesalesDailyReportPage() {
                     {/* KPI Metrics Input Section */}
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                         <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                            <span className="w-2 h-6 bg-blue-500 rounded-full"></span>
+                            <span className="w-2 h-6 bg-[#00AFA9] rounded-full"></span>
                             Chỉ số KPI Hôm nay
                         </h2>
 
@@ -211,7 +211,7 @@ export default function TelesalesDailyReportPage() {
                                 </label>
                                 <input
                                     type="number"
-                                    className="w-full p-2 border border-transparent bg-blue-50/50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
+                                    className="w-full p-2 border border-transparent bg-slate-50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
                                     value={formData.fb_group_posts || 0}
                                     readOnly
                                 />
@@ -222,7 +222,7 @@ export default function TelesalesDailyReportPage() {
                                 </label>
                                 <input
                                     type="number"
-                                    className="w-full p-2 border border-transparent bg-blue-50/50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
+                                    className="w-full p-2 border border-transparent bg-slate-50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
                                     value={formData.fb_comments || 0}
                                     readOnly
                                 />
@@ -233,7 +233,7 @@ export default function TelesalesDailyReportPage() {
                                 </label>
                                 <input
                                     type="number"
-                                    className="w-full p-2 border border-transparent bg-blue-50/50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
+                                    className="w-full p-2 border border-transparent bg-slate-50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
                                     value={formData.fb_friends || 0}
                                     readOnly
                                 />
@@ -244,7 +244,7 @@ export default function TelesalesDailyReportPage() {
                                 </label>
                                 <input
                                     type="number"
-                                    className="w-full p-2 border border-transparent bg-blue-50/50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
+                                    className="w-full p-2 border border-transparent bg-slate-50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
                                     value={formData.fb_personal_posts || 0}
                                     readOnly
                                 />
@@ -255,7 +255,7 @@ export default function TelesalesDailyReportPage() {
                                 </label>
                                 <input
                                     type="number"
-                                    className="w-full p-2 border border-transparent bg-blue-50/50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
+                                    className="w-full p-2 border border-transparent bg-slate-50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
                                     value={formData.zalo_posts || 0}
                                     readOnly
                                 />
@@ -308,7 +308,7 @@ export default function TelesalesDailyReportPage() {
                                     Kế hoạch ngày mai <span className="text-red-500">*</span>
                                 </label>
                                 <textarea
-                                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px]"
+                                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none min-h-[80px]"
                                     placeholder="Mục tiêu số cuộc gọi ngày mai, số đơn chốt..."
                                     value={formData.plan_next_day || ""}
                                     onChange={e => handleChange('plan_next_day', e.target.value)}
@@ -322,7 +322,7 @@ export default function TelesalesDailyReportPage() {
                         <button
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 flex items-center gap-2 transition-all shadow-lg shadow-blue-500/30"
+                            className="bg-[#00AFA9] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#009690] flex items-center gap-2 transition-all shadow-sm"
                         >
                             {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                             Lưu Báo Cáo
@@ -342,7 +342,7 @@ export default function TelesalesDailyReportPage() {
                                     <div
                                         key={h.report_date}
                                         onClick={() => setDate(h.report_date!)}
-                                        className={`p-3 rounded-lg border cursor-pointer hover:bg-slate-50 transition ${h.report_date === date ? 'border-blue-500 bg-blue-50' : 'border-slate-100'}`}
+                                        className={`p-3 rounded-lg border cursor-pointer hover:bg-slate-50 transition ${h.report_date === date ? 'border-[#00AFA9] bg-teal-50' : 'border-slate-100'}`}
                                     >
                                         <div className="flex justify-between items-center mb-1">
                                             <span className="text-sm font-medium text-slate-900">{format(new Date(h.report_date!), 'dd/MM/yyyy')}</span>

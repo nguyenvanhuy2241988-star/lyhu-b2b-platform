@@ -34,7 +34,7 @@ export default function MediaScriptsList() {
             draft: { c: 'bg-slate-100 text-slate-700', t: 'Nháp' },
             approved: { c: 'bg-green-100 text-green-700', t: 'Đã duyệt' },
             shooting: { c: 'bg-blue-100 text-blue-700', t: 'Đang quay' },
-            completed: { c: 'bg-purple-100 text-purple-700', t: 'Hoàn thành' },
+            completed: { c: 'bg-teal-50 text-[#00AFA9]', t: 'Hoàn thành' },
             cancelled: { c: 'bg-red-100 text-red-700', t: 'Đã huỷ' }
         };
         const conf = _map[status] || _map['draft'];
@@ -45,12 +45,12 @@ export default function MediaScriptsList() {
         <div className="p-6 max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 border-l-4 border-teal-500 pl-3">Kịch bản Media</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 border-l-4 border-[#00AFA9] pl-3">Kịch bản Media</h1>
                     <p className="text-sm text-gray-500 mt-1 pl-4">Quản lý và soạn thảo kịch bản quay dựng tự động với AI</p>
                 </div>
                 <button 
                     onClick={() => router.push('/media/scripts/new')}
-                    className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg shadow flex items-center transition-all"
+                    className="px-4 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white font-medium rounded-lg shadow-sm flex items-center transition-all"
                 >
                     <Plus className="w-5 h-5 mr-1" /> Tạo Kịch bản mới
                 </button>
@@ -63,7 +63,7 @@ export default function MediaScriptsList() {
                         <input 
                             type="text" 
                             placeholder="Tìm kiếm kịch bản nhanh..." 
-                            className="w-full pl-9 pr-4 py-2 text-sm border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                         />
                     </div>
                 </div>
@@ -116,7 +116,7 @@ export default function MediaScriptsList() {
                                     <td className="px-6 py-4 text-right space-x-2">
                                         <button 
                                             onClick={() => router.push(`/media/scripts/${s.id}`)}
-                                            className="p-1.5 text-teal-600 hover:bg-teal-50 bg-teal-50/50 rounded inline-flex transition-colors"
+                                            className="p-1.5 text-[#00AFA9] hover:bg-teal-50 bg-teal-50/50 rounded inline-flex transition-colors"
                                             title="Sửa / Xem chi tiết"
                                         >
                                             <PenTool className="w-4 h-4" />

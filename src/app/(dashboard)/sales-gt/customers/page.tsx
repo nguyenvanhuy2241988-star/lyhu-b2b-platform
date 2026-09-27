@@ -152,8 +152,8 @@ export default function GTCustomersPage() {
     const maxDistrictCount = Math.max(...districtCounts.map(d => d.count), 1);
     const maxTypeCount = Math.max(...typeCounts.map(t => t.count), 1);
 
-    const districtColors = ['bg-teal-500', 'bg-blue-500', 'bg-emerald-500', 'bg-indigo-500', 'bg-cyan-500', 'bg-violet-500', 'bg-green-500', 'bg-sky-500'];
-    const typeColors = ['bg-green-500', 'bg-purple-500', 'bg-blue-500', 'bg-orange-500', 'bg-pink-500'];
+    const districtColors = ['bg-[#00AFA9]', 'bg-blue-500', 'bg-emerald-500', 'bg-teal-600', 'bg-cyan-500', 'bg-slate-500', 'bg-green-500', 'bg-sky-500'];
+    const typeColors = ['bg-[#00AFA9]', 'bg-teal-600', 'bg-blue-500', 'bg-orange-500', 'bg-slate-500'];
 
     if (isLoading && outlets.length === 0) {
         return (
@@ -181,7 +181,7 @@ export default function GTCustomersPage() {
                     </div>
                     <button
                         onClick={() => router.push('/sales-gt/outlets')}
-                        className="flex items-center gap-2 bg-[#00AFA9] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#009893] transition-colors"
+                        className="flex items-center gap-2 bg-[#00AFA9] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#009690] transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         <span className="hidden sm:inline">Thêm điểm bán</span>
@@ -265,7 +265,7 @@ export default function GTCustomersPage() {
                     <div className="text-sm text-slate-500">Tạp hóa</div>
                 </div>
                 <div className="bg-white p-4 rounded-xl border">
-                    <div className="text-2xl font-bold text-purple-600">{outlets.filter(c => c.outlet_type === 'mini_mart').length}</div>
+                    <div className="text-2xl font-bold text-[#00AFA9]">{outlets.filter(c => c.outlet_type === 'mini_mart').length}</div>
                     <div className="text-sm text-slate-500">Mini mart</div>
                 </div>
                 <div className="bg-white p-4 rounded-xl border">
@@ -341,7 +341,7 @@ export default function GTCustomersPage() {
                     {/* Phân loại KH */}
                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                         <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                            <Tag className="w-4 h-4 text-violet-500" /> Phân loại điểm bán
+                            <Tag className="w-4 h-4 text-[#00AFA9]" /> Phân loại điểm bán
                         </h3>
                         {typeCounts.filter(t => t.count > 0).length === 0 ? (
                             <p className="text-xs text-slate-400 py-4 text-center">Chưa có dữ liệu</p>
@@ -416,10 +416,10 @@ export default function GTCustomersPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${outlet.outlet_type === 'tap_hoa' ? 'bg-green-100 text-green-700' :
-                                            outlet.outlet_type === 'mini_mart' ? 'bg-purple-100 text-purple-700' :
+                                            outlet.outlet_type === 'mini_mart' ? 'bg-teal-50 text-[#00AFA9]' :
                                                 outlet.outlet_type === 'npp' ? 'bg-orange-100 text-orange-700' :
                                                     outlet.outlet_type === 'dai_ly' ? 'bg-blue-100 text-blue-700' :
-                                                        outlet.outlet_type === 'sieu_thi' ? 'bg-pink-100 text-pink-700' :
+                                                        outlet.outlet_type === 'sieu_thi' ? 'bg-slate-100 text-slate-700' :
                                                             'bg-slate-100 text-slate-600'
                                             }`}>
                                             {OUTLET_TYPES.find(t => t.value === outlet.outlet_type)?.label || outlet.outlet_type || 'Khác'}
@@ -488,10 +488,10 @@ export default function GTCustomersPage() {
                                         <h4 className="font-medium text-slate-900 text-sm">{outlet.name}</h4>
                                         <div className="flex items-center gap-2 mt-1">
                                             <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${outlet.outlet_type === 'tap_hoa' ? 'bg-green-100 text-green-700' :
-                                                outlet.outlet_type === 'mini_mart' ? 'bg-purple-100 text-purple-700' :
+                                                outlet.outlet_type === 'mini_mart' ? 'bg-teal-50 text-[#00AFA9]' :
                                                     outlet.outlet_type === 'npp' ? 'bg-orange-100 text-orange-700' :
                                                         outlet.outlet_type === 'dai_ly' ? 'bg-blue-100 text-blue-700' :
-                                                            outlet.outlet_type === 'sieu_thi' ? 'bg-pink-100 text-pink-700' :
+                                                            outlet.outlet_type === 'sieu_thi' ? 'bg-slate-100 text-slate-700' :
                                                                 'bg-slate-100 text-slate-600'
                                                 }`}>
                                                 {OUTLET_TYPES.find(t => t.value === outlet.outlet_type)?.label || outlet.outlet_type || 'Khác'}
@@ -536,7 +536,7 @@ export default function GTCustomersPage() {
                             <div className="mt-4 flex gap-2 pl-13 ml-13">
                                 <button
                                     onClick={() => router.push(`/sales-gt/create-order?outletId=${outlet.id}`)}
-                                    className="flex-1 bg-[#00AFA9] text-white py-1.5 rounded-lg text-xs font-semibold hover:bg-[#009893] transition-colors flex items-center justify-center gap-1.5"
+                                    className="flex-1 bg-[#00AFA9] text-white py-1.5 rounded-lg text-xs font-semibold hover:bg-[#009690] transition-colors flex items-center justify-center gap-1.5"
                                 >
                                     <Plus className="w-3.5 h-3.5" /> Tạo đơn
                                 </button>

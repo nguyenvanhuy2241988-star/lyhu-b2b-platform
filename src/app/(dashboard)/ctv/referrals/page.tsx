@@ -71,8 +71,8 @@ export default function CTVReferralsPage() {
                 value: formatPrice(summary.activationBonusTotal),
                 subLabel: `${formatPrice(ACTIVATION_BONUS)}/CTV`,
                 icon: Gift,
-                color: "text-purple-600",
-                bg: "bg-purple-50",
+                color: "text-[#00AFA9]",
+                bg: "bg-teal-50",
             },
             {
                 label: "Thưởng doanh số tuyến dưới",
@@ -95,7 +95,7 @@ export default function CTVReferralsPage() {
             </div>
 
             {/* Referral Code Card */}
-            <div className="bg-[#00AFA9] rounded-xl p-6 text-white border border-[#009b95]">
+            <div className="bg-[#00AFA9] rounded-xl p-6 text-white border border-[#009690]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <p className="text-teal-100 text-sm mb-1">Mã giới thiệu của bạn</p>

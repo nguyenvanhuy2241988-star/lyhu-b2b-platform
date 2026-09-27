@@ -130,23 +130,23 @@ export default function DailyReportPage() {
         }));
     };
 
-    if (!effectiveUserId) return <div className="p-10 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-teal-600" /></div>;
+    if (!effectiveUserId) return <div className="p-10 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-[#00AFA9]" /></div>;
 
     return (
         <div className="p-6 max-w-5xl mx-auto space-y-6">
             {/* Admin Back Navigation */}
             {targetUserProfile && (
-                <div className="bg-primary-50 border border-primary-200 p-4 rounded-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                <div className="bg-teal-50 border border-[#00AFA9]/30 p-4 rounded-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
                     <div className="flex items-center gap-3">
                         <button onClick={() => router.back()} className="p-2 hover:bg-white rounded-full transition-colors">
-                            <ArrowLeft className="w-5 h-5 text-primary-700" />
+                            <ArrowLeft className="w-5 h-5 text-[#00AFA9]" />
                         </button>
                         <div>
-                            <p className="text-xs text-primary-600 font-semibold uppercase">Đang xem báo cáo của:</p>
-                            <h2 className="text-lg font-bold text-primary-900">{targetUserProfile.full_name} ({targetUserProfile.email})</h2>
+                            <p className="text-xs text-[#00AFA9] font-semibold uppercase">Đang xem báo cáo của:</p>
+                            <h2 className="text-lg font-bold text-slate-900">{targetUserProfile.full_name} ({targetUserProfile.email})</h2>
                         </div>
                     </div>
-                    <div className="text-sm text-primary-800 bg-white/50 px-3 py-1 rounded">
+                    <div className="text-sm text-[#00AFA9] bg-white px-3 py-1 rounded border border-[#00AFA9]/20 font-medium">
                         Chế độ Admin
                     </div>
                 </div>
@@ -253,25 +253,25 @@ export default function DailyReportPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
-                                    <span className="text-purple-600 font-semibold">Phản hồi của Ứng viên / Thị trường</span>
-                                </label>
-                                <textarea
-                                    className="w-full p-3 border border-purple-200 bg-purple-50/30 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none min-h-[100px] text-purple-900"
-                                    placeholder="Ví dụ: Ứng viên chê lương cứng thấp, Thắc mắc về việc xoay ca, Có chế độ cơm trưa không?..."
-                                    value={formData.candidate_feedback || ""}
-                                    onChange={e => handleChange('candidate_feedback', e.target.value)}
-                                />
+                                     <span className="text-[#00AFA9] font-semibold">Phản hồi của Ứng viên / Thị trường</span>
+                                 </label>
+                                 <textarea
+                                     className="w-full p-3 border border-slate-200 bg-teal-50/30 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none min-h-[100px] text-slate-800"
+                                     placeholder="Ví dụ: Ứng viên chê lương cứng thấp, Thắc mắc về việc xoay ca, Có chế độ cơm trưa không?..."
+                                     value={formData.candidate_feedback || ""}
+                                     onChange={e => handleChange('candidate_feedback', e.target.value)}
+                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Kế hoạch ngày mai <span className="text-red-500">*</span>
-                                </label>
-                                <textarea
-                                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none min-h-[80px]"
-                                    placeholder="Ví dụ: Đăng 10 bài nhóm X, Phỏng vấn 2 ứng viên..."
-                                    value={formData.plan_next_day || ""}
-                                    onChange={e => handleChange('plan_next_day', e.target.value)}
-                                />
+                                     Kế hoạch ngày mai <span className="text-red-500">*</span>
+                                 </label>
+                                 <textarea
+                                     className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none min-h-[80px]"
+                                     placeholder="Ví dụ: Đăng 10 bài nhóm X, Phỏng vấn 2 ứng viên..."
+                                     value={formData.plan_next_day || ""}
+                                     onChange={e => handleChange('plan_next_day', e.target.value)}
+                                 />
                             </div>
                         </div>
                     </div>
@@ -281,7 +281,7 @@ export default function DailyReportPage() {
                         <button
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 flex items-center gap-2 transition-all shadow-lg shadow-primary-500/30"
+                            className="bg-[#00AFA9] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#009690] flex items-center gap-2 transition-all"
                         >
                             {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                             Lưu Báo Cáo
@@ -301,7 +301,7 @@ export default function DailyReportPage() {
                                     <div
                                         key={h.date}
                                         onClick={() => setDate(h.date)}
-                                        className={`p-3 rounded-lg border cursor-pointer hover:bg-slate-50 transition ${h.date === date ? 'border-primary-500 bg-primary-50' : 'border-slate-100'}`}
+                                        className={`p-3 rounded-lg border cursor-pointer hover:bg-slate-50 transition ${h.date === date ? 'border-[#00AFA9] bg-teal-50/50' : 'border-slate-100'}`}
                                     >
                                         <div className="flex justify-between items-center mb-1">
                                             <span className="text-sm font-medium text-slate-900">{format(new Date(h.date), 'dd/MM/yyyy')}</span>

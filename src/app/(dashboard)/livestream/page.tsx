@@ -8,7 +8,7 @@ export default function LivestreamDashboard() {
         { label: "Đang xem Live", value: "1,204", icon: Eye, color: "text-red-600", bg: "bg-red-50" },
         { label: "Đơn chốt (Live)", value: "85", icon: ShoppingBag, color: "text-green-600", bg: "bg-green-50" },
         { label: "Phiên Live hôm nay", value: "2", icon: Video, color: "text-blue-600", bg: "bg-blue-50" },
-        { label: "Khách tương tác", value: "350", icon: Users, color: "text-purple-600", bg: "bg-purple-50" },
+        { label: "Khách tương tác", value: "350", icon: Users, color: "text-[#00AFA9]", bg: "bg-teal-50" },
     ];
 
     return (
@@ -18,7 +18,7 @@ export default function LivestreamDashboard() {
                     <h1 className="text-3xl font-bold text-slate-800">Livestream Dashboard</h1>
                     <p className="text-slate-500 mt-2">Tổng quan hoạt động bán hàng trực tiếp</p>
                 </div>
-                <Link href="/livestream/live" className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-200 flex items-center gap-2 animate-pulse">
+                <Link href="/livestream/live" className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-sm flex items-center gap-2 animate-pulse">
                     <Video className="w-5 h-5" />
                     BẮT ĐẦU LIVE NGAY
                 </Link>

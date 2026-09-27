@@ -301,15 +301,15 @@ export default function FbGroupsPage() {
 
             {/* Bulk Action Bar */}
             {showBulkBar && (
-                <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 mb-4 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
-                    <span className="text-sm font-medium text-indigo-700">
+                <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 mb-4 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
+                    <span className="text-sm font-medium text-[#00AFA9]">
                         <CheckSquare className="w-4 h-4 inline mr-1" />
                         Đã chọn {selectedIds.size} nhóm
                     </span>
                     <select
                         value={bulkCategory}
                         onChange={(e) => setBulkCategory(e.target.value)}
-                        className="px-3 py-1.5 text-sm border border-indigo-200 rounded-lg bg-white"
+                        className="px-3 py-1.5 text-sm border border-teal-200 rounded-lg bg-white"
                     >
                         <option value="">Chọn phân loại...</option>
                         {FB_GROUP_CATEGORIES.map(c => (
@@ -319,7 +319,7 @@ export default function FbGroupsPage() {
                     <button
                         onClick={handleBulkCategory}
                         disabled={!bulkCategory}
-                        className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium"
+                        className="px-3 py-1.5 text-sm bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] disabled:opacity-50 font-medium transition-colors"
                     >
                         Gán phân loại
                     </button>

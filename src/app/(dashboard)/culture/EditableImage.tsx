@@ -56,7 +56,7 @@ export default function EditableImage({ id, label = "Hình ảnh", className = "
 
     return (
         <div 
-            className={`relative overflow-hidden cursor-pointer flex items-center justify-center group ${finalClasses} ${hover ? 'ring-2 ring-teal-500' : 'ring-1 ring-slate-300 border-dashed border-2'}`}
+            className={`relative overflow-hidden cursor-pointer flex items-center justify-center group ${finalClasses} ${hover ? 'ring-2 ring-[#00AFA9]' : 'ring-1 ring-slate-300 border-dashed border-2'}`}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
             onClick={(e) => {
@@ -79,7 +79,7 @@ export default function EditableImage({ id, label = "Hình ảnh", className = "
             </div>
 
             {/* Float Settings Panel */}
-            <div className="settings-panel absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur shadow-2xl border border-slate-200 rounded-xl p-2 z-20 flex gap-4 text-xs font-medium text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap scale-90 sm:scale-100 origin-bottom" onClick={(e) => e.stopPropagation()}>
+            <div className="settings-panel absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur border border-slate-200 rounded-xl p-2 z-20 flex gap-4 text-xs font-medium text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap scale-90 sm:scale-100 origin-bottom" onClick={(e) => e.stopPropagation()}>
                 
                 {/* Size Controls */}
                 <div className="flex bg-slate-100 rounded-lg p-0.5 shadow-inner">
@@ -87,7 +87,7 @@ export default function EditableImage({ id, label = "Hình ảnh", className = "
                         <div 
                             key={s} 
                             onClick={() => updateContent(`${id}_size`, s === 'default' ? null : s)}
-                            className={`px-3 py-1.5 cursor-pointer rounded-md transition-colors ${size === s || (s === 'default' && !size) ? 'bg-white shadow relative text-teal-700 font-bold' : 'hover:bg-slate-200 text-slate-500'}`}
+                            className={`px-3 py-1.5 cursor-pointer rounded-md transition-colors ${size === s || (s === 'default' && !size) ? 'bg-white shadow relative text-[#00AFA9] font-bold' : 'hover:bg-slate-200 text-slate-500'}`}
                         >
                             {s === 'full' ? '100%' : (s === 'default' ? 'MĐ' : s.toUpperCase())}
                         </div>
@@ -108,7 +108,7 @@ export default function EditableImage({ id, label = "Hình ảnh", className = "
                             key={s.v} 
                             title={s.title}
                             onClick={() => updateContent(`${id}_shape`, s.v === 'default' ? null : s.v)}
-                            className={`px-2 py-1.5 cursor-pointer rounded-md transition-colors flex items-center justify-center ${shape === s.v || (s.v === 'default' && !shape) ? 'bg-white shadow relative text-teal-700 font-bold' : 'hover:bg-slate-200 text-slate-500'}`}
+                            className={`px-2 py-1.5 cursor-pointer rounded-md transition-colors flex items-center justify-center ${shape === s.v || (s.v === 'default' && !shape) ? 'bg-white shadow relative text-[#00AFA9] font-bold' : 'hover:bg-slate-200 text-slate-500'}`}
                         >
                             {s.icon ? <s.icon className="w-4 h-4" /> : 'MĐ'}
                         </div>
@@ -119,7 +119,7 @@ export default function EditableImage({ id, label = "Hình ảnh", className = "
                 <div className="flex bg-slate-100 rounded-lg p-0.5 shadow-inner">
                     <div 
                         onClick={() => updateContent(`${id}_sharp`, !sharp)}
-                        className={`px-3 py-1.5 cursor-pointer rounded-md transition-colors ${sharp ? 'bg-indigo-600 shadow text-white font-bold' : 'hover:bg-slate-200 text-slate-600'}`}
+                        className={`px-3 py-1.5 cursor-pointer rounded-md transition-colors ${sharp ? 'bg-[#00AFA9] shadow text-white font-bold' : 'hover:bg-slate-200 text-slate-600'}`}
                         title="Tắt bo góc (Sắc nét)"
                     >
                         # Góc Vuông

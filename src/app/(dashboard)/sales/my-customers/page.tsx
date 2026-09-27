@@ -74,7 +74,7 @@ export default function MyCustomersPage() {
                         <select
                             value={selectedType}
                             onChange={(e) => setSelectedType(e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent"
                         >
                             {CUSTOMER_TYPES.map((type) => (
                                 <option key={type} value={type}>
@@ -88,7 +88,7 @@ export default function MyCustomersPage() {
                         <select
                             value={selectedArea}
                             onChange={(e) => setSelectedArea(e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent"
                         >
                             {AREAS.map((area) => (
                                 <option key={area} value={area}>
@@ -143,7 +143,7 @@ export default function MyCustomersPage() {
                                         <td className="px-6 py-4">
                                             <span
                                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${customer.type === "NPP"
-                                                    ? "bg-purple-100 text-purple-700"
+                                                    ? "bg-teal-50 text-[#00AFA9]"
                                                     : customer.type === "Đại lý"
                                                         ? "bg-blue-100 text-blue-700"
                                                         : customer.type === "Mini mart"
@@ -171,7 +171,7 @@ export default function MyCustomersPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-right">
-                                                <div className="flex items-center justify-end gap-1 text-primary-600 font-semibold">
+                                                <div className="flex items-center justify-end gap-1 text-[#00AFA9] font-semibold">
                                                     <DollarSign className="w-4 h-4" />
                                                     <span>{formatPrice(orderData.lastOrderTotal)}</span>
                                                 </div>

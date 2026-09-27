@@ -80,7 +80,7 @@ const LeaderboardWidget = ({ gamePrefix, gameName }: LeaderboardWidgetProps) => 
             <div className="flex border-b border-slate-100 overflow-x-auto">
                 <button
                     onClick={() => setDifficulty('easy')}
-                    className={`flex-1 py-2 px-2 text-[10px] sm:text-xs font-bold whitespace-nowrap ${difficulty === 'easy' ? 'text-teal-600 border-b-2 border-teal-500 bg-teal-50' : 'text-slate-400 hover:bg-slate-50'}`}
+                    className={`flex-1 py-2 px-2 text-[10px] sm:text-xs font-bold whitespace-nowrap ${difficulty === 'easy' ? 'text-[#00AFA9] border-b-2 border-[#00AFA9] bg-teal-50' : 'text-slate-400 hover:bg-slate-50'}`}
                 >
                     DỄ
                 </button>
@@ -100,7 +100,7 @@ const LeaderboardWidget = ({ gamePrefix, gameName }: LeaderboardWidgetProps) => 
                 {gamePrefix === 'caro' && (
                     <button
                         onClick={() => setDifficulty('pvp')}
-                        className={`flex-1 py-2 px-2 text-[10px] sm:text-xs font-bold whitespace-nowrap ${difficulty === 'pvp' ? 'text-indigo-600 border-b-2 border-indigo-500 bg-indigo-50' : 'text-slate-400 hover:bg-slate-50'}`}
+                        className={`flex-1 py-2 px-2 text-[10px] sm:text-xs font-bold whitespace-nowrap ${difficulty === 'pvp' ? 'text-[#00AFA9] border-b-2 border-[#00AFA9] bg-teal-50' : 'text-slate-400 hover:bg-slate-50'}`}
                     >
                         THÁCH ĐẤU
                     </button>
@@ -139,7 +139,7 @@ export default function EntertainmentPage() {
             <div className="mb-8 flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <Gamepad2 className="w-8 h-8 text-teal-600" /> Góc Giải Trí
+                        <Gamepad2 className="w-8 h-8 text-[#00AFA9]" /> Góc Giải Trí
                     </h1>
                     <p className="text-slate-500 mt-1">Nơi xả stress và gắn kết đồng đội!</p>
                 </div>
@@ -150,7 +150,7 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('wheel')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'wheel'
-                        ? "border-teal-600 text-teal-700"
+                        ? "border-[#00AFA9] text-[#00AFA9]"
                         : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
@@ -161,7 +161,7 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('bird')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'bird'
-                        ? "border-teal-600 text-teal-700"
+                        ? "border-[#00AFA9] text-[#00AFA9]"
                         : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
@@ -172,7 +172,7 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('typing')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'typing'
-                        ? "border-teal-600 text-teal-700"
+                        ? "border-[#00AFA9] text-[#00AFA9]"
                         : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
@@ -183,7 +183,7 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('caro')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'caro'
-                        ? "border-teal-600 text-teal-700"
+                        ? "border-[#00AFA9] text-[#00AFA9]"
                         : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
@@ -194,7 +194,7 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('quiz')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'quiz'
-                        ? "border-teal-600 text-teal-700"
+                        ? "border-[#00AFA9] text-[#00AFA9]"
                         : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
@@ -205,7 +205,7 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('store')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'store'
-                        ? "border-emerald-600 text-emerald-700"
+                        ? "border-[#00AFA9] text-[#00AFA9]"
                         : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
@@ -281,7 +281,7 @@ export default function EntertainmentPage() {
                 {activeTab === 'store' && (
                     <div className="animate-in fade-in duration-300">
                         <div className="text-center mb-6">
-                            <h2 className="text-xl font-bold mb-2 text-teal-700">Cửa Hàng Đổi Quà</h2>
+                            <h2 className="text-xl font-bold mb-2 text-[#00AFA9]">Cửa Hàng Đổi Quà</h2>
                             <p className="text-slate-500 text-sm">Dùng điểm tích lũy để đổi những phần quà hấp dẫn!</p>
                         </div>
                         <RewardStore currentUser={user} />

@@ -19,8 +19,8 @@ const ICON_MAP: Record<string, LucideIcon> = {
 const COLOR_PALETTE = [
     { color: "text-blue-600", bg: "bg-blue-50", bar: "bg-blue-500" },
     { color: "text-teal-600", bg: "bg-teal-50", bar: "bg-teal-500" },
-    { color: "text-indigo-600", bg: "bg-indigo-50", bar: "bg-indigo-500" },
-    { color: "text-purple-600", bg: "bg-purple-50", bar: "bg-purple-500" },
+    { color: "text-[#00AFA9]", bg: "bg-teal-50", bar: "bg-[#00AFA9]" },
+    { color: "text-sky-600", bg: "bg-sky-50", bar: "bg-sky-500" },
     { color: "text-emerald-600", bg: "bg-emerald-50", bar: "bg-emerald-500" },
     { color: "text-orange-600", bg: "bg-orange-50", bar: "bg-orange-500" },
     { color: "text-rose-600", bg: "bg-rose-50", bar: "bg-rose-500" },
@@ -276,14 +276,14 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
         <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6 relative">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-blue-600" />
+                    <TrendingUp className="w-5 h-5 text-[#00AFA9]" />
                     {userId === 'ALL' ? 'Tiến độ Target Toàn Bộ Team' : 'Tiến độ Thực hiện Target KPI'}
                 </h2>
                 <div className="flex gap-2">
                     {userId !== 'ALL' && (
                         <button
                             onClick={() => router.push(`/telesales/daily?date=${date}&userId=${userId}`)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold bg-teal-50 text-[#00AFA9] hover:bg-teal-100 rounded-lg transition-colors border border-teal-200"
                             title="Trang Báo cáo Chi tiết"
                         >
                             <PlusCircle className="w-4 h-4" />
@@ -350,10 +350,10 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
             {/* Settings Modal - Dynamic from metric definitions */}
             {showSettings && isAdmin && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-white rounded-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         <div className="p-4 border-b flex justify-between items-center bg-slate-50">
                             <div className="flex items-center gap-2">
-                                <Settings className="w-5 h-5 text-blue-600" />
+                                <Settings className="w-5 h-5 text-[#00AFA9]" />
                                 <h3 className="font-bold text-slate-800">Cấu hình Mục tiêu tháng (KPI)</h3>
                             </div>
                             <button onClick={() => setShowSettings(false)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors">
@@ -375,7 +375,7 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
                                                 <input
                                                     type="number"
                                                     min="0"
-                                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-[#00AFA9] focus:ring-1 focus:ring-[#00AFA9] outline-none"
                                                     value={editTargets[m.key] || 0}
                                                     onChange={(e) => setEditTargets(prev => ({ ...prev, [m.key]: parseInt(e.target.value) || 0 }))}
                                                     placeholder="Target/tháng"
@@ -385,7 +385,7 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
                                             {m.description && <p className="text-[10px] text-slate-400 mt-1 truncate">{m.description}</p>}
                                         </div>
                                         {m.data_source === 'auto' && (
-                                            <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full shrink-0">Tự động</span>
+                                             <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full shrink-0">Tự động</span>
                                         )}
                                     </div>
                                 );
@@ -401,7 +401,7 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
                             <button
                                 onClick={handleSaveSettings}
                                 disabled={savingSettings}
-                                className="px-6 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm hover:shadow-md transition-all flex items-center gap-2"
+                                className="px-6 py-2 text-sm font-semibold bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] shadow-sm transition-all flex items-center gap-2"
                             >
                                 {savingSettings ? "Đang lưu..." : <><Save className="w-4 h-4" /> Lưu cấu hình</>}
                             </button>

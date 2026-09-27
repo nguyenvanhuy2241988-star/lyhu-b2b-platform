@@ -107,7 +107,7 @@ export default function MediaRulesPage() {
                     <ChevronLeft className="w-4 h-4" /> Quay lại
                 </button>
                 {isAdmin && !isEditing && (
-                    <button onClick={openEdit} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-pink-600 hover:bg-pink-700 rounded-lg transition-colors">
+                    <button onClick={openEdit} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#00AFA9] hover:bg-[#009690] rounded-lg transition-colors">
                         <Pencil className="w-3.5 h-3.5" /> Chỉnh sửa chính sách
                     </button>
                 )}
@@ -227,10 +227,10 @@ export default function MediaRulesPage() {
             {/* Edit Modal - Admin only */}
             {isEditing && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-lg w-full max-w-2xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                    <div className="bg-white rounded-lg w-full max-w-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
                         <div className="p-5 border-b border-slate-200 flex justify-between items-center">
                             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                <Settings className="w-5 h-5 text-pink-500" /> Chỉnh sửa Chính sách Media
+                                <Settings className="w-5 h-5 text-[#00AFA9]" /> Chỉnh sửa Chính sách Media
                             </h2>
                             <button onClick={() => setIsEditing(false)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400">
                                 <Plus className="w-5 h-5 rotate-45" />
@@ -273,7 +273,7 @@ export default function MediaRulesPage() {
                                     </div>
                                 ))}
                                 <button onClick={() => setEditPolicy({ ...editPolicy, allowances: [...editPolicy.allowances, { name: "", amount: "" }] })}
-                                    className="text-xs text-pink-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm phụ cấp</button>
+                                    className="text-xs text-[#00AFA9] flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm phụ cấp</button>
                             </div>
                             <div className="space-y-3">
                                 <h3 className="text-xs font-bold text-slate-500 uppercase">Hệ thống thưởng</h3>
@@ -290,7 +290,7 @@ export default function MediaRulesPage() {
                                     </div>
                                 ))}
                                 <button onClick={() => setEditPolicy({ ...editPolicy, bonuses: [...editPolicy.bonuses, { title: "", amount: "", desc: "" }] })}
-                                    className="text-xs text-pink-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm mục thưởng</button>
+                                    className="text-xs text-[#00AFA9] flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm mục thưởng</button>
                             </div>
                             <div className="space-y-3">
                                 <h3 className="text-xs font-bold text-slate-500 uppercase">Chế tài</h3>
@@ -307,7 +307,7 @@ export default function MediaRulesPage() {
                                     </div>
                                 ))}
                                 <button onClick={() => setEditPolicy({ ...editPolicy, penalties: [...editPolicy.penalties, { name: "", desc: "", fine: "" }] })}
-                                    className="text-xs text-pink-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm chế tài</button>
+                                    className="text-xs text-[#00AFA9] flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm chế tài</button>
                             </div>
                             <div className="space-y-3">
                                 <h3 className="text-xs font-bold text-slate-500 uppercase">Ghi chú thưởng</h3>
@@ -319,7 +319,7 @@ export default function MediaRulesPage() {
                         <div className="p-4 border-t border-slate-200 flex justify-end gap-3">
                             <button onClick={() => setIsEditing(false)} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100">Hủy</button>
                             <button onClick={handleSave} disabled={isSaving}
-                                className="px-5 py-2 rounded-lg text-sm font-medium bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-50 flex items-center gap-2">
+                                className="px-5 py-2 rounded-lg text-sm font-medium bg-[#00AFA9] text-white hover:bg-[#009690] disabled:opacity-50 flex items-center gap-2">
                                 {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <SaveIcon className="w-4 h-4" />}
                                 Lưu chính sách
                             </button>

@@ -19,7 +19,7 @@ const formatDate = (dateString: string) => {
 const STATUS_CONFIG = {
     NEW: { label: "Mới", color: "bg-blue-100 text-blue-700" },
     CONTACTED: { label: "Đã liên hệ", color: "bg-yellow-100 text-yellow-700" },
-    IN_PROGRESS: { label: "Đang chốt", color: "bg-purple-100 text-purple-700" },
+    IN_PROGRESS: { label: "Đang chốt", color: "bg-teal-50 text-[#00AFA9]" },
     WON: { label: "Đã ký", color: "bg-green-100 text-green-700" },
     LOST: { label: "Mất", color: "bg-red-100 text-red-700" },
 };
@@ -102,7 +102,7 @@ export default function MyLeadsPage() {
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-slate-200">
                     <p className="text-sm text-slate-600">Đang chốt</p>
-                    <p className="text-2xl font-bold text-purple-600 mt-1">{stats.inProgress}</p>
+                    <p className="text-2xl font-bold text-[#00AFA9] mt-1">{stats.inProgress}</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-slate-200">
                     <p className="text-sm text-slate-600">Đã ký</p>
@@ -129,7 +129,7 @@ export default function MyLeadsPage() {
                                     key={option.value}
                                     onClick={() => setSelectedStatus(option.value)}
                                     className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${selectedStatus === option.value
-                                        ? "bg-primary-500 text-white"
+                                        ? "bg-[#00AFA9] text-white"
                                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                         }`}
                                 >
@@ -143,7 +143,7 @@ export default function MyLeadsPage() {
                         <select
                             value={selectedArea}
                             onChange={(e) => setSelectedArea(e.target.value)}
-                            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                         >
                             {AREAS.map((area) => (
                                 <option key={area} value={area}>
@@ -211,13 +211,13 @@ export default function MyLeadsPage() {
                                         <td className="px-6 py-4">
                                             <span
                                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lead.type === "NPP"
-                                                    ? "bg-purple-100 text-purple-700"
+                                                    ? "bg-teal-50 text-[#00AFA9]"
                                                     : lead.type === "Đại lý"
                                                         ? "bg-blue-100 text-blue-700"
                                                         : lead.type === "Mini mart"
                                                             ? "bg-green-100 text-green-700"
                                                             : lead.type === "Siêu thị"
-                                                                ? "bg-indigo-100 text-indigo-700"
+                                                                ? "bg-teal-100 text-teal-800"
                                                                 : "bg-orange-100 text-orange-700"
                                                     }`}
                                             >
@@ -226,7 +226,7 @@ export default function MyLeadsPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-1 text-slate-900 font-medium">
-                                                <DollarSign className="w-4 h-4 text-primary-600" />
+                                                <DollarSign className="w-4 h-4 text-[#00AFA9]" />
                                                 <span className="text-sm">{formatPrice(lead.estimatedRevenue)}</span>
                                             </div>
                                         </td>
@@ -241,7 +241,7 @@ export default function MyLeadsPage() {
                                                     const updated = updateSalesLeadStatus(lead.id, status);
                                                     setLeads(updated);
                                                 }}
-                                                className="px-2.5 py-0.5 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-primary-500 bg-blue-100 text-blue-700"
+                                                className="px-2.5 py-0.5 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-[#00AFA9] bg-blue-100 text-blue-700"
                                             >
                                                 <option value="NEW">Mới</option>
                                                 <option value="CONTACTED">Đã liên hệ</option>

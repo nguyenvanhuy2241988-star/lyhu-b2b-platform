@@ -282,7 +282,7 @@ export default function GTOrdersPage() {
                                                         ) : null}
                                                         {order.totalWeightKg && order.totalWeightKg > 0 ? (
                                                             <span className="inline-flex items-center gap-1 text-slate-600">
-                                                                <Scale className="w-3 h-3 text-purple-500" /> {order.totalWeightKg} kg
+                                                                <Scale className="w-3 h-3 text-slate-500" /> {order.totalWeightKg} kg
                                                             </span>
                                                         ) : null}
                                                         {order.shippingFee && order.shippingFee > 0 ? (

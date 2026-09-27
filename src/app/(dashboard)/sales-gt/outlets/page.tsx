@@ -128,7 +128,7 @@ export default function OutletsPage() {
                 </div>
                 <button
                     onClick={() => setShowAddForm(true)}
-                    className="flex items-center gap-2 bg-[#00AFA9] hover:bg-[#009b95] text-white px-4 py-2.5 rounded-xl transition-colors text-xs sm:text-sm font-bold shadow-sm"
+                    className="flex items-center gap-2 bg-[#00AFA9] hover:bg-[#009690] text-white px-4 py-2.5 rounded-xl transition-colors text-xs sm:text-sm font-bold shadow-sm"
                 >
                     <Plus className="w-4 h-4" /> Thêm điểm bán mới
                 </button>
@@ -224,7 +224,7 @@ export default function OutletsPage() {
                                         <td className="px-4 py-3.5 text-right">
                                             <Link
                                                 href={`/sales-gt/create-order?outlet=${outlet.id}`}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#00AFA9] hover:bg-[#009b95] text-white text-xs font-bold rounded-xl transition-colors"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#00AFA9] hover:bg-[#009690] text-white text-xs font-bold rounded-xl transition-colors"
                                             >
                                                 <ShoppingCart className="w-3.5 h-3.5" /> Lên đơn
                                             </Link>
@@ -284,7 +284,7 @@ export default function OutletsPage() {
                                     </a>
                                     <Link
                                         href={`/sales-gt/create-order?outlet=${outlet.id}`}
-                                        className="flex-[1.5] py-2 px-3 bg-[#00AFA9] hover:bg-[#009b95] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                                        className="flex-[1.5] py-2 px-3 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
                                     >
                                         <ShoppingCart className="w-3.5 h-3.5" /> Lên đơn ngay
                                     </Link>
@@ -298,7 +298,7 @@ export default function OutletsPage() {
             {/* Add Outlet Modal */}
             {showAddForm && (
                 <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-3 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[92vh] overflow-y-auto border border-slate-200">
+                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto border border-slate-200">
                         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100">
                             <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
                                 <Store className="w-5 h-5 text-[#00AFA9]" />
@@ -356,7 +356,7 @@ export default function OutletsPage() {
                             </div>
                             <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
                                 <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Hủy</button>
-                                <button type="submit" disabled={saving} className="px-5 py-2 text-xs font-bold bg-[#00AFA9] text-white rounded-xl hover:bg-[#009b95] disabled:opacity-50 transition-colors">
+                                <button type="submit" disabled={saving} className="px-5 py-2 text-xs font-bold bg-[#00AFA9] text-white rounded-xl hover:bg-[#009690] disabled:opacity-50 transition-colors">
                                     {saving ? "Đang lưu..." : "Xác nhận thêm"}
                                 </button>
                             </div>

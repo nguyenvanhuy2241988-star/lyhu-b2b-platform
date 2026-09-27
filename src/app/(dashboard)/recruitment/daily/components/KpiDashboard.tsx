@@ -84,16 +84,16 @@ export function countLogsForMetric(metricKey: string, metricLabel: string, logs:
 
 // Color palette for KPI cards
 const COLORS = [
-    { text: "text-primary-600", bg: "bg-primary-50", bar: "bg-primary-500" },
-    { text: "text-indigo-600", bg: "bg-indigo-50", bar: "bg-indigo-500" },
-    { text: "text-teal-600", bg: "bg-teal-50", bar: "bg-teal-500" },
+    { text: "text-[#00AFA9]", bg: "bg-teal-50", bar: "bg-[#00AFA9]" },
+    { text: "text-blue-600", bg: "bg-blue-50", bar: "bg-blue-500" },
+    { text: "text-[#00AFA9]", bg: "bg-teal-50", bar: "bg-[#00AFA9]" },
     { text: "text-emerald-600", bg: "bg-emerald-50", bar: "bg-emerald-500" },
-    { text: "text-purple-600", bg: "bg-purple-50", bar: "bg-purple-500" },
+    { text: "text-cyan-600", bg: "bg-cyan-50", bar: "bg-cyan-500" },
     { text: "text-rose-600", bg: "bg-rose-50", bar: "bg-rose-500" },
     { text: "text-amber-600", bg: "bg-amber-50", bar: "bg-amber-500" },
     { text: "text-cyan-600", bg: "bg-cyan-50", bar: "bg-cyan-500" },
     { text: "text-orange-600", bg: "bg-orange-50", bar: "bg-orange-500" },
-    { text: "text-pink-600", bg: "bg-pink-50", bar: "bg-pink-500" },
+    { text: "text-[#00AFA9]", bg: "bg-teal-50", bar: "bg-[#00AFA9]" },
     { text: "text-slate-600", bg: "bg-slate-100", bar: "bg-slate-500" },
 ];
 
@@ -242,7 +242,7 @@ export default function KpiDashboard({ date, userId, compact }: KpiDashboardProp
         <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6 relative">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-teal-600" />
+                    <TrendingUp className="w-5 h-5 text-[#00AFA9]" />
                     Tiến độ công việc
                 </h2>
             </div>

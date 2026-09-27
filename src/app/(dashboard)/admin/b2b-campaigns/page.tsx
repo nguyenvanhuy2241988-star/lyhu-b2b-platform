@@ -492,7 +492,7 @@ export default function B2bCampaignsPage() {
                                                         {newPromo.targetProducts.length === 0 ? '-- Chọn sản phẩm / thùng --' : `Đã chọn ${newPromo.targetProducts.length} mặt hàng`}
                                                         <span>▼</span>
                                                     </div>
-                                                    <div className="absolute top-full left-0 w-full bg-white border shadow-lg rounded-b z-20 hidden group-hover:block max-h-48 overflow-y-auto">
+                                                    <div className="absolute top-full left-0 w-full bg-white border border-slate-200 rounded-b z-20 hidden group-hover:block max-h-48 overflow-y-auto">
                                                         {products.map(p => (
                                                             <label key={p.id} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm">
                                                                 <input 
@@ -633,7 +633,7 @@ export default function B2bCampaignsPage() {
                                                             {newFsItem.productIds.length === 0 ? '-- Chọn nhiều SP --' : `Đã chọn ${newFsItem.productIds.length} SP`}
                                                             <span>▼</span>
                                                         </div>
-                                                        <div className="absolute top-full left-0 w-full bg-white border shadow-lg rounded-b z-20 hidden group-hover:block max-h-48 overflow-y-auto">
+                                                        <div className="absolute top-full left-0 w-full bg-white border border-slate-200 rounded-b z-20 hidden group-hover:block max-h-48 overflow-y-auto">
                                                             {products.map(p => (
                                                                 <label key={p.id} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm">
                                                                     <input 

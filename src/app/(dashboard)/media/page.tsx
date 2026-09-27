@@ -114,8 +114,8 @@ export default function MediaDashboard() {
             value: stats.totalAssets.toString(),
             sub: "Ảnh & Video",
             icon: FolderOpen,
-            color: "text-purple-600",
-            bg: "bg-purple-50",
+            color: "text-[#00AFA9]",
+            bg: "bg-teal-50",
         },
     ];
 
@@ -173,7 +173,7 @@ export default function MediaDashboard() {
                     <h3 className="text-lg font-semibold text-slate-900">
                         📋 Brief cần xử lý
                     </h3>
-                    <Link href="/media/briefs" className="text-sm text-pink-600 hover:text-pink-700 font-medium">
+                    <Link href="/media/briefs" className="text-sm text-[#00AFA9] hover:text-[#009690] font-medium">
                         Xem tất cả →
                     </Link>
                 </div>
@@ -230,9 +230,9 @@ export default function MediaDashboard() {
                         <p className="text-xs text-slate-500">Xem yêu cầu chụp/quay</p>
                     </div>
                 </Link>
-                <Link href="/media/library" className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-purple-200 transition-all group flex items-center gap-4">
-                    <div className="p-3 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
-                        <FolderOpen className="w-5 h-5 text-purple-600" />
+                <Link href="/media/library" className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-[#00AFA9] transition-all group flex items-center gap-4">
+                    <div className="p-3 bg-teal-50 rounded-lg group-hover:bg-teal-100 transition-colors">
+                        <FolderOpen className="w-5 h-5 text-[#00AFA9]" />
                     </div>
                     <div>
                         <h4 className="font-semibold text-slate-900 text-sm">Thư viện Media</h4>
@@ -248,9 +248,9 @@ export default function MediaDashboard() {
                         <p className="text-xs text-slate-500">Quản lý tiến độ dự án</p>
                     </div>
                 </Link>
-                <Link href="/media/equipment" className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-teal-200 transition-all group flex items-center gap-4">
+                <Link href="/media/equipment" className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-[#00AFA9] transition-all group flex items-center gap-4">
                     <div className="p-3 bg-teal-50 rounded-lg group-hover:bg-teal-100 transition-colors">
-                        <Wrench className="w-5 h-5 text-teal-600" />
+                        <Wrench className="w-5 h-5 text-[#00AFA9]" />
                     </div>
                     <div>
                         <h4 className="font-semibold text-slate-900 text-sm">Thiết bị</h4>

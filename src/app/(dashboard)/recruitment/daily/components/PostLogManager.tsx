@@ -178,7 +178,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                    <span className="w-2 h-6 bg-teal-600 rounded-full"></span>
+                    <span className="w-2 h-6 bg-[#00AFA9] rounded-full"></span>
                     Minh chứng ({logs.length})
                 </h2>
                 {!readOnly && (
@@ -187,7 +187,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                             handleCancel(); // Reset any edit state
                             setShowForm(!showForm);
                         }}
-                        className="text-sm px-3 py-1.5 bg-teal-50 text-teal-600 rounded-lg hover:bg-teal-100 font-medium flex items-center gap-1 transition-colors"
+                        className="text-sm px-3 py-1.5 bg-teal-50 text-[#00AFA9] rounded-lg hover:bg-teal-100 font-medium flex items-center gap-1 transition-colors"
                     >
                         <Plus className="w-4 h-4" /> Thêm mới
                     </button>
@@ -201,7 +201,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                 ) : logs.length === 0 ? (
                     <div className="text-center py-6 border border-dashed border-slate-200 rounded-lg bg-slate-50">
                         <p className="text-slate-500 text-sm">Chưa có bài đăng nào hôm nay.</p>
-                        {showForm && <p className="text-xs text-teal-600 mt-1">Điền thông tin bên dưới để thêm.</p>}
+                        {showForm && <p className="text-xs text-[#00AFA9] mt-1">Điền thông tin bên dưới để thêm.</p>}
                     </div>
                 ) : (
                     logs.map((log) => (
@@ -223,9 +223,9 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                                     <span className={cn(
                                         "text-xs px-2 py-0.5 rounded-full font-medium capitalize flex items-center gap-1",
                                         log.activity_type === 'comment' ? "bg-orange-100 text-orange-700" :
-                                            log.activity_type === 'share' ? "bg-pink-100 text-pink-700" :
-                                                log.activity_type === 'friend' ? "bg-purple-100 text-purple-700" :
-                                                    "bg-primary-100 text-primary-700"
+                                            log.activity_type === 'share' ? "bg-blue-100 text-blue-700" :
+                                                log.activity_type === 'friend' ? "bg-teal-100 text-teal-800" :
+                                                    "bg-teal-50 text-[#00AFA9]"
                                     )}>
                                         {log.activity_type === 'comment' && <MessageSquare className="w-3 h-3" />}
                                         {log.activity_type === 'share' && <Share2 className="w-3 h-3" />}
@@ -234,7 +234,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                                     </span>
                                     <span className={cn(
                                         "text-xs px-2 py-0.5 rounded-full font-medium capitalize",
-                                        log.platform.includes('facebook') ? "bg-primary-100 text-primary-700" :
+                                        log.platform.includes('facebook') ? "bg-blue-50 text-blue-700" :
                                             log.platform === 'threads' ? "bg-black/5 text-black" : "bg-slate-100 text-slate-700"
                                     )}>
                                         {log.platform.replace('_', ' ')}
@@ -245,11 +245,11 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                                 </div>
                                 <div className="space-y-1">
                                     {log.group_link && (
-                                        <a href={log.group_link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-slate-500 hover:text-teal-600 truncate">
+                                        <a href={log.group_link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-slate-500 hover:text-[#00AFA9] truncate">
                                             <LinkIcon className="w-3 h-3" /> Link nhóm: {log.group_link}
                                         </a>
                                     )}
-                                    <a href={log.post_link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-primary-600 hover:underline font-medium truncate">
+                                    <a href={log.post_link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-[#00AFA9] hover:underline font-medium truncate">
                                         <ExternalLink className="w-3 h-3" /> {log.activity_type === 'friend' ? 'Xem Profile' : 'Xem bài viết trực tiếp'}
                                     </a>
                                     {log.group_note && (
@@ -265,7 +265,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all self-center">
                                     <button
                                         onClick={() => handleEdit(log)}
-                                        className="p-2 text-slate-400 hover:text-primary-600"
+                                        className="p-2 text-slate-400 hover:text-[#00AFA9]"
                                         title="Sửa"
                                     >
                                         <Pencil className="w-4 h-4" />
@@ -286,7 +286,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
 
             {/* Add/Edit Form */}
             {showForm && !readOnly && (
-                <div className="bg-slate-50 p-4 rounded-lg border border-teal-100 animate-in fade-in slide-in-from-top-2">
+                <div className="bg-slate-50 p-4 rounded-lg border border-[#00AFA9]/30 animate-in fade-in slide-in-from-top-2">
                     <h3 className="text-sm font-bold text-slate-800 mb-3">
                         {editingLogId ? "Chỉnh sửa minh chứng" : "Thêm minh chứng mới"}
                     </h3>
@@ -392,7 +392,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                         </button>
                         <button
                             onClick={handleSaveLog}
-                            className="px-4 py-1.5 text-xs font-medium bg-teal-600 text-white rounded-md hover:bg-teal-700 shadow-sm"
+                            className="px-4 py-1.5 text-xs font-medium bg-[#00AFA9] text-white rounded-md hover:bg-[#009690] transition-colors"
                         >
                             {editingLogId ? "Cập nhật" : "Lưu minh chứng"}
                         </button>

@@ -42,7 +42,7 @@ const STATUS_CONFIG: Record<string, any> = {
     delivering: {
         label: "Đang giao hàng",
         icon: Truck,
-        color: "bg-indigo-100 text-indigo-700",
+        color: "bg-teal-50 text-[#00AFA9]",
     },
     delivered: {
         label: "Đã giao",
@@ -178,7 +178,7 @@ export default function TelesalesOrdersPage() {
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                     <button
                         onClick={() => router.push('/telesales/create-order')}
-                        className="hidden lg:flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
+                        className="hidden lg:flex items-center gap-2 bg-[#00AFA9] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#009690] transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Tạo đơn hàng</span>
@@ -263,7 +263,7 @@ export default function TelesalesOrdersPage() {
                                                 <div className="flex items-center justify-end gap-2">
                                                     <button
                                                         onClick={() => setChatOrder({ id: order.id, readableId: String(order.readableId || order.id.slice(0, 8)) })}
-                                                        className="relative text-slate-400 hover:text-primary-600 transition-colors bg-slate-50 hover:bg-primary-50 p-2 rounded-lg"
+                                                        className="relative text-slate-400 hover:text-[#00AFA9] transition-colors bg-slate-50 hover:bg-teal-50 p-2 rounded-lg"
                                                         title="Chat"
                                                     >
                                                         <MessageCircle className="w-4 h-4" />
@@ -273,7 +273,7 @@ export default function TelesalesOrdersPage() {
                                                     </button>
                                                     <button
                                                         onClick={() => setSelectedOrder(order)}
-                                                        className="text-slate-400 hover:text-indigo-600 transition-colors bg-slate-50 hover:bg-slate-100 p-2 rounded-lg"
+                                                        className="text-slate-400 hover:text-[#00AFA9] transition-colors bg-slate-50 hover:bg-teal-50 p-2 rounded-lg"
                                                         title="Xem chi tiết"
                                                     >
                                                         <Eye className="w-4 h-4" />
@@ -334,7 +334,7 @@ export default function TelesalesOrdersPage() {
                                                         ) : null}
                                                         {order.totalWeightKg && order.totalWeightKg > 0 ? (
                                                             <span className="inline-flex items-center gap-1 text-slate-600">
-                                                                <Scale className="w-3 h-3 text-purple-500" />
+                                                                <Scale className="w-3 h-3 text-slate-500" />
                                                                 {order.totalWeightKg} kg
                                                             </span>
                                                         ) : null}
@@ -397,7 +397,7 @@ export default function TelesalesOrdersPage() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Package className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                                        <span className="font-bold text-primary-600 text-base">{formatPrice(order.totalAmount)}</span>
+                                        <span className="font-bold text-[#00AFA9] text-base">{formatPrice(order.totalAmount)}</span>
                                     </div>
                                 </div>
 
@@ -439,7 +439,7 @@ export default function TelesalesOrdersPage() {
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => setChatOrder({ id: order.id, readableId: String(order.readableId || order.id.slice(0, 8)) })}
-                                        className="relative flex-1 flex items-center justify-center gap-1.5 bg-primary-50 text-primary-700 hover:bg-primary-100 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                        className="relative flex-1 flex items-center justify-center gap-1.5 bg-teal-50 text-[#00AFA9] hover:bg-teal-100 py-2.5 rounded-lg text-sm font-semibold transition-colors"
                                     >
                                         <MessageCircle className="w-4 h-4" />
                                         Chat
@@ -502,7 +502,7 @@ export default function TelesalesOrdersPage() {
             {/* Mobile Floating Action Button (FAB) for Create Order */}
             <button
                 onClick={() => router.push('/telesales/create-order')}
-                className="fixed lg:hidden bottom-[150px] right-4 z-[45] w-14 h-14 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-lg shadow-primary-600/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+                className="fixed lg:hidden bottom-[150px] right-4 z-[45] w-14 h-14 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-full border border-slate-200 flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
                 aria-label="Tạo đơn hàng mới"
             >
                 <Plus className="w-6 h-6" />

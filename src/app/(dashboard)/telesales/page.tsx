@@ -231,8 +231,8 @@ export default function TelesalesDashboard() {
             value: formatPrice(kpiStats?.total_revenue || 0),
             change: "Doanh thu chốt được",
             icon: TrendingUp,
-            color: "text-purple-600",
-            bg: "bg-purple-50",
+            color: "text-[#00AFA9]",
+            bg: "bg-teal-50",
         },
         {
             label: "Deal thắng",
@@ -417,7 +417,7 @@ export default function TelesalesDashboard() {
                     {/* 3. Career Roadmap (Lộ trình Thăng tiến) */}
                     <div className="bg-white p-6 rounded-xl border border-slate-200">
                         <div className="flex items-center justify-between mb-4">
-                            <div className="p-2.5 bg-purple-50 rounded-lg text-purple-600">
+                            <div className="p-2.5 bg-teal-50 rounded-lg text-[#00AFA9]">
                                 <Crown className="w-5 h-5" />
                             </div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cấp bậc của bạn</span>
@@ -429,7 +429,7 @@ export default function TelesalesDashboard() {
                             </div>
                             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-purple-500 rounded-full shadow-sm transition-all duration-1000"
+                                    className="h-full bg-[#00AFA9] rounded-full transition-all duration-1000"
                                     style={{ width: `${Math.min(progressToNext, 100)}%` }}
                                 />
                             </div>
@@ -458,7 +458,7 @@ export default function TelesalesDashboard() {
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
                     <div className="p-6 border-b border-slate-200 flex justify-between items-center">
                         <h3 className="text-lg font-semibold text-slate-900">Lead ưu tiên</h3>
-                        <Link href="/telesales/leads-queue" className="text-sm text-[#00AFA9] hover:text-[#009b95] font-semibold flex items-center gap-1 transition-colors">
+                        <Link href="/telesales/leads-queue" className="text-sm text-[#00AFA9] hover:text-[#009690] font-semibold flex items-center gap-1 transition-colors">
                             Xem tất cả <ArrowRight className="w-4 h-4" />
                         </Link>
                     </div>
@@ -510,7 +510,7 @@ export default function TelesalesDashboard() {
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
                     <div className="p-6 border-b border-slate-200 flex justify-between items-center">
                         <h3 className="text-lg font-semibold text-slate-900">Đơn mới nhất</h3>
-                        <Link href="/telesales/orders" className="text-sm text-[#00AFA9] hover:text-[#009b95] font-semibold flex items-center gap-1 transition-colors">
+                        <Link href="/telesales/orders" className="text-sm text-[#00AFA9] hover:text-[#009690] font-semibold flex items-center gap-1 transition-colors">
                             Xem tất cả <ArrowRight className="w-4 h-4" />
                         </Link>
                     </div>

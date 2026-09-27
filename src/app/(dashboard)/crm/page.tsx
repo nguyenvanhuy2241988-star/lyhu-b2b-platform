@@ -297,7 +297,7 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
                 {deal.tags && deal.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-2">
                         {deal.tags.map((tag, i) => (
-                            <span key={i} className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded text-[10px] font-medium">
+                            <span key={i} className="px-1.5 py-0.5 bg-teal-50 text-[#00AFA9] border border-teal-200 rounded text-[10px] font-medium">
                                 {tag}
                             </span>
                         ))}
@@ -351,7 +351,7 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
                         </button>
                         <button
                             onClick={(e) => { e.stopPropagation(); onViewDetails(deal.id); }}
-                            className="p-1 hover:bg-purple-100 rounded text-slate-400 hover:text-purple-600"
+                            className="p-1 hover:bg-teal-50 rounded text-slate-400 hover:text-[#00AFA9]"
                             title="Xem chi tiết"
                         >
                             <Eye className="w-3.5 h-3.5" />
@@ -1463,7 +1463,7 @@ export default function CRMPage() {
                     <div className="text-xs text-slate-500">Thua</div>
                 </div>
                 <div className="bg-white p-3 rounded-xl border border-slate-200 col-span-2 sm:col-span-1">
-                    <div className="text-2xl font-bold text-purple-600">{conversionRate}%</div>
+                    <div className="text-2xl font-bold text-[#00AFA9]">{conversionRate}%</div>
                     <div className="text-xs text-slate-500">Tỷ lệ thắng</div>
                 </div>
             </div>
@@ -1520,7 +1520,7 @@ export default function CRMPage() {
                         <option value="sieu_thi">Siêu thị</option>
                     </select>
 
-                    <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="px-3 py-2 border border-indigo-100 rounded-lg text-sm bg-indigo-50 text-indigo-700 font-medium">
+                    <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="px-3 py-2 border border-teal-100 rounded-lg text-sm bg-teal-50 text-teal-700 font-medium">
                         <option value="all">Nguồn khách hàng</option>
                         <option value="COMPANY">Công ty cấp</option>
                         <option value="SELF_FOUND">Tự tìm kiếm</option>

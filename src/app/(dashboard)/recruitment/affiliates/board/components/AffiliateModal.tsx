@@ -161,7 +161,7 @@ export function AffiliateModal({ isOpen, onClose, partner, onSaved }: any) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
           <h2 className="text-xl font-semibold text-slate-800">
             {partner ? 'Chỉnh sửa Đối tác' : 'Thêm Đối tác Mới'}
@@ -180,7 +180,7 @@ export function AffiliateModal({ isOpen, onClose, partner, onSaved }: any) {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" 
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none" 
                 placeholder="Ví dụ: Kênh Của Bạn..."
               />
             </div>
@@ -190,7 +190,7 @@ export function AffiliateModal({ isOpen, onClose, partner, onSaved }: any) {
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none"
               >
                 <option value="CTV">Cộng tác viên (CTV)</option>
                 <option value="KOL">KOL (Người nổi tiếng)</option>
@@ -206,7 +206,7 @@ export function AffiliateModal({ isOpen, onClose, partner, onSaved }: any) {
                 name="platform"
                 value={formData.platform}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none"
               >
                 {PLATFORMS.map(p => (
                   <option key={p} value={p}>{p}</option>
@@ -235,7 +235,7 @@ export function AffiliateModal({ isOpen, onClose, partner, onSaved }: any) {
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-medium text-slate-700">Zalo</label>
                 <label className="flex items-center space-x-1 text-xs cursor-pointer">
-                  <input type="checkbox" checked={usePhoneForZalo} onChange={handleUsePhoneForZalo} className="rounded text-emerald-600 focus:ring-emerald-500" />
+                  <input type="checkbox" checked={usePhoneForZalo} onChange={handleUsePhoneForZalo} className="rounded text-[#00AFA9] focus:ring-[#00AFA9]" />
                   <span className="text-slate-500">Dùng SĐT</span>
                 </label>
               </div>
@@ -260,7 +260,7 @@ export function AffiliateModal({ isOpen, onClose, partner, onSaved }: any) {
                     type="checkbox" 
                     checked={formData.collaboration_types.includes(type.id)}
                     onChange={() => handleCheckboxChange(type.id)}
-                    className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+                    className="rounded text-[#00AFA9] focus:ring-[#00AFA9] w-4 h-4"
                   />
                   <span className="text-slate-700">{type.label}</span>
                 </label>
@@ -298,7 +298,7 @@ export function AffiliateModal({ isOpen, onClose, partner, onSaved }: any) {
               </div>
             )}
 
-            <label className="border-2 border-dashed border-emerald-200 hover:border-emerald-400 hover:bg-emerald-50 transition-colors cursor-pointer rounded-lg p-6 flex flex-col items-center justify-center text-emerald-600 bg-emerald-50/50">
+            <label className="border-2 border-dashed border-[#00AFA9]/30 hover:border-[#00AFA9] hover:bg-teal-50 transition-colors cursor-pointer rounded-lg p-6 flex flex-col items-center justify-center text-[#00AFA9] bg-teal-50/50">
               {uploading ? <Loader2 className="w-6 h-6 mb-2 animate-spin" /> : <Upload className="w-6 h-6 mb-2" />}
               <span className="text-sm font-medium">{uploading ? 'Đang tải lên...' : 'Bấm để tải ảnh lên'}</span>
               <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={uploading} />
@@ -309,7 +309,7 @@ export function AffiliateModal({ isOpen, onClose, partner, onSaved }: any) {
 
         <div className="flex justify-end space-x-3 p-6 border-t bg-slate-50 sticky bottom-0">
           <button onClick={onClose} disabled={loading || uploading} className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50">Hủy</button>
-          <button onClick={handleSave} disabled={loading || uploading} className="flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+          <button onClick={handleSave} disabled={loading || uploading} className="flex items-center px-4 py-2 text-sm font-medium text-white bg-[#00AFA9] rounded-lg hover:bg-[#009690] disabled:opacity-50 transition-colors">
             <Save className="w-4 h-4 mr-2" />
             {loading ? 'Đang lưu...' : 'Lưu Hồ Sơ'}
           </button>

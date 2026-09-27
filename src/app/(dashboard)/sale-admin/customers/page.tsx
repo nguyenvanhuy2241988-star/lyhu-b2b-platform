@@ -337,7 +337,7 @@ export default function SaleAdminCustomersPage() {
             {/* Edit Modal */}
             {editingCustomer && (
                 <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                    <div className="bg-white rounded-xl border border-slate-200 w-full max-w-md overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                             <h3 className="font-bold text-slate-900">Chỉnh sửa khách hàng</h3>
                             <button onClick={() => setEditingCustomer(null)} className="p-1 hover:bg-slate-200 rounded-lg">
@@ -408,7 +408,7 @@ export default function SaleAdminCustomersPage() {
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="flex-1 px-4 py-2 bg-[#00AFA9] text-white rounded-lg font-medium hover:bg-[#009690] disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     Lưu thay đổi

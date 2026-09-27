@@ -90,7 +90,7 @@ function CategoryFormModal({ category, onSave, onClose, saving }: {
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200" onClick={e => e.stopPropagation()}>
                 <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between">
                     <h2 className="text-lg font-bold text-slate-900">{isEdit ? "Sửa loại hình" : "Thêm loại hình"}</h2>
                     <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"><X className="w-5 h-5" /></button>
@@ -148,7 +148,7 @@ function CategoryFormModal({ category, onSave, onClose, saving }: {
                 <div className="border-t border-slate-100 px-6 py-4 flex justify-end gap-3">
                     <button onClick={onClose} className="px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg border border-slate-200">Hủy</button>
                     <button onClick={() => { if (!form.label.trim() || !form.key.trim()) return alert("Vui lòng nhập tên và key"); onSave(form); }} disabled={saving}
-                        className="px-5 py-2.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg disabled:opacity-50 flex items-center gap-2">
+                        className="px-5 py-2.5 text-sm font-medium text-white bg-[#00AFA9] hover:bg-[#009690] rounded-lg disabled:opacity-50 flex items-center gap-2">
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         {isEdit ? "Lưu" : "Thêm"}
                     </button>
@@ -189,7 +189,7 @@ function ChainFormModal({ chain, categories, onSave, onClose, saving }: {
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200" onClick={e => e.stopPropagation()}>
                 <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
                     <h2 className="text-lg font-bold text-slate-900">{isEdit ? "Chỉnh sửa chuỗi" : "Thêm chuỗi mới"}</h2>
                     <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"><X className="w-5 h-5" /></button>
@@ -274,7 +274,7 @@ function ChainFormModal({ chain, categories, onSave, onClose, saving }: {
                 <div className="sticky bottom-0 bg-white border-t border-slate-100 px-6 py-4 flex justify-end gap-3 rounded-b-2xl">
                     <button onClick={onClose} className="px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg border border-slate-200">Hủy</button>
                     <button onClick={handleSave} disabled={saving}
-                        className="px-5 py-2.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg disabled:opacity-50 flex items-center gap-2 shadow-sm">
+                        className="px-5 py-2.5 text-sm font-medium text-white bg-[#00AFA9] hover:bg-[#009690] rounded-lg disabled:opacity-50 flex items-center gap-2">
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         {isEdit ? "Lưu thay đổi" : "Thêm chuỗi"}
                     </button>
@@ -467,7 +467,7 @@ export default function RetailChainsPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <Store className="w-7 h-7 text-teal-600" />
+                        <Store className="w-7 h-7 text-[#00AFA9]" />
                         Chuỗi bán lẻ FMCG Toàn quốc
                     </h1>
                     <p className="text-sm text-slate-500 mt-1">Hệ thống chuỗi bán lẻ hàng tiêu dùng nhanh tại Việt Nam</p>
@@ -476,12 +476,12 @@ export default function RetailChainsPage() {
                     <div className="flex items-center gap-2">
                         {isAdmin && (
                             <button onClick={() => setShowCatManager(!showCatManager)}
-                                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium border transition-colors ${showCatManager ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
+                                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium border transition-colors ${showCatManager ? 'bg-teal-50 text-[#00AFA9] border-teal-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
                                 <Settings2 className="w-4 h-4" /> Loại hình
                             </button>
                         )}
                         <button onClick={() => setFormChain({ ...EMPTY_FORM, category: categories[0]?.key || 'supermarket' })}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 shadow-sm transition-colors">
+                            className="flex items-center gap-2 px-4 py-2.5 bg-[#00AFA9] text-white rounded-lg text-sm font-medium hover:bg-[#009690] transition-colors">
                             <Plus className="w-4 h-4" /> Thêm chuỗi
                         </button>
                     </div>
@@ -490,11 +490,11 @@ export default function RetailChainsPage() {
 
             {/* Category Manager (Admin) */}
             {showCatManager && isAdmin && (
-                <div className="bg-white rounded-xl border border-indigo-200 shadow-sm overflow-hidden">
-                    <div className="px-5 py-3 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-indigo-800 flex items-center gap-2"><Palette className="w-4 h-4" /> Quản lý loại hình</h3>
+                <div className="bg-white rounded-xl border border-teal-200 overflow-hidden">
+                    <div className="px-5 py-3 bg-teal-50 border-b border-teal-100 flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-[#00AFA9] flex items-center gap-2"><Palette className="w-4 h-4" /> Quản lý loại hình</h3>
                         <button onClick={() => setCatForm({ key: '', label: '', icon_name: 'Store', color: 'text-slate-600', bg: 'bg-slate-50 border-slate-200', sort_order: categories.length + 1 })}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700">
+                            className="flex items-center gap-1 px-3 py-1.5 bg-[#00AFA9] text-white rounded-lg text-xs font-medium hover:bg-[#009690]">
                             <Plus className="w-3 h-3" /> Thêm
                         </button>
                     </div>
@@ -781,7 +781,7 @@ export default function RetailChainsPage() {
                 const pct = detailChain.total_outlets > 0 ? Math.round(((detailChain.entered_outlets || 0) / detailChain.total_outlets) * 100) : 0;
                 return (
                     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setDetailChain(null)}>
-                        <div className="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto border border-slate-200" onClick={e => e.stopPropagation()}>
                             <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
                                 <div>
                                     <h2 className="text-lg font-bold text-slate-900">{detailChain.name}</h2>
@@ -888,7 +888,7 @@ export default function RetailChainsPage() {
             {/* Delete Confirmations */}
             {deleteConfirm && (
                 <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
-                    <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-2xl max-w-sm w-full p-6 border border-slate-200" onClick={e => e.stopPropagation()}>
                         <div className="w-12 h-12 mx-auto mb-4 bg-red-50 rounded-full flex items-center justify-center"><Trash2 className="w-6 h-6 text-red-500" /></div>
                         <h3 className="text-lg font-bold text-slate-900 text-center mb-2">Xác nhận xóa chuỗi</h3>
                         <p className="text-sm text-slate-500 text-center mb-6">Bạn có chắc muốn xóa <strong>{chains.find(c => c.id === deleteConfirm)?.name}</strong>?</p>
@@ -901,7 +901,7 @@ export default function RetailChainsPage() {
             )}
             {catDeleteConfirm && (
                 <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4" onClick={() => setCatDeleteConfirm(null)}>
-                    <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-2xl max-w-sm w-full p-6 border border-slate-200" onClick={e => e.stopPropagation()}>
                         <div className="w-12 h-12 mx-auto mb-4 bg-red-50 rounded-full flex items-center justify-center"><Trash2 className="w-6 h-6 text-red-500" /></div>
                         <h3 className="text-lg font-bold text-slate-900 text-center mb-2">Xác nhận xóa loại hình</h3>
                         <p className="text-sm text-slate-500 text-center mb-6">Các chuỗi thuộc loại hình này sẽ không bị xóa nhưng sẽ không hiển thị đúng nhóm.</p>

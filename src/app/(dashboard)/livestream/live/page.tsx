@@ -95,7 +95,7 @@ export default function LiveConsolePage() {
                     <div className="text-lg">
                         Tổng tiền: <span className="font-bold text-red-600 text-2xl">{cart.reduce((a, b) => a + b.price, 0).toLocaleString()} đ</span>
                     </div>
-                    <button className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-200 transition">
+                    <button className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-sm transition">
                         CHỐT ĐƠN (Enter)
                     </button>
                 </div>

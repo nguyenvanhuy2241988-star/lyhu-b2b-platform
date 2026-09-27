@@ -338,10 +338,10 @@ export default function AnalyticsDashboard() {
                         </div>
                     ) : seoLoading && !seoData ? (
                         <div className="flex items-center justify-center py-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-300"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00AFA9]"></div>
                         </div>
                     ) : !seoData?.hasData ? (
-                        <div className="bg-white/5 border border-white/10 p-6 rounded-xl text-indigo-200 text-sm text-center">
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-xl text-slate-300 text-sm text-center">
                             Google đang xử lý dữ liệu cho website của bạn. Vui lòng quay lại sau 1-3 ngày.
                         </div>
                     ) : (
@@ -354,8 +354,8 @@ export default function AnalyticsDashboard() {
                                     </div>
                                 </div>
                                 <div className="text-3xl font-black text-white mb-1">{seoData?.clicks?.toLocaleString() || 0}</div>
-                                <div className="text-sm text-indigo-200 font-medium">Lượt nhấp (Clicks)</div>
-                                <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
+                                <div className="text-sm text-slate-300 font-medium">Lượt nhấp (Clicks)</div>
+                                <div className="text-xs text-slate-400 mt-3 flex items-center gap-1">
                                     Từ kết quả tìm kiếm Google
                                 </div>
                             </div>
@@ -368,8 +368,8 @@ export default function AnalyticsDashboard() {
                                     </div>
                                 </div>
                                 <div className="text-3xl font-black text-white mb-1">{seoData?.impressions?.toLocaleString() || 0}</div>
-                                <div className="text-sm text-indigo-200 font-medium">Lượt hiển thị</div>
-                                <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
+                                <div className="text-sm text-slate-300 font-medium">Lượt hiển thị</div>
+                                <div className="text-xs text-slate-400 mt-3 flex items-center gap-1">
                                     Số lần xuất hiện trên Google
                                 </div>
                             </div>
@@ -382,10 +382,10 @@ export default function AnalyticsDashboard() {
                                     </div>
                                 </div>
                                 <div className="text-3xl font-black text-white mb-1">
-                                    {seoData?.ctr?.toFixed(2)}<span className="text-lg text-indigo-300 font-medium">%</span>
+                                    {seoData?.ctr?.toFixed(2)}<span className="text-lg text-slate-400 font-medium">%</span>
                                 </div>
-                                <div className="text-sm text-indigo-200 font-medium">Tỷ lệ nhấp (CTR)</div>
-                                <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
+                                <div className="text-sm text-slate-300 font-medium">Tỷ lệ nhấp (CTR)</div>
+                                <div className="text-xs text-slate-400 mt-3 flex items-center gap-1">
                                     Lượt nhấp / Lượt hiển thị
                                 </div>
                             </div>
@@ -398,8 +398,8 @@ export default function AnalyticsDashboard() {
                                     </div>
                                 </div>
                                 <div className="text-3xl font-black text-white mb-1">{seoData?.position?.toFixed(1) || '-'}</div>
-                                <div className="text-sm text-indigo-200 font-medium">Vị trí trung bình</div>
-                                <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
+                                <div className="text-sm text-slate-300 font-medium">Vị trí trung bình</div>
+                                <div className="text-xs text-slate-400 mt-3 flex items-center gap-1">
                                     Thứ hạng trên Google
                                 </div>
                             </div>
@@ -555,7 +555,7 @@ export default function AnalyticsDashboard() {
 
                     <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                         <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                            <Monitor className="w-5 h-5 text-indigo-500" />
+                            <Monitor className="w-5 h-5 text-[#00AFA9]" />
                             Hệ điều hành
                         </h3>
                         <div className="space-y-4">
@@ -573,7 +573,7 @@ export default function AnalyticsDashboard() {
 
                     <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                         <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                            <Globe className="w-5 h-5 text-pink-500" />
+                            <Globe className="w-5 h-5 text-[#00AFA9]" />
                             Trình duyệt
                         </h3>
                         <div className="space-y-4">
@@ -643,7 +643,7 @@ export default function AnalyticsDashboard() {
                 {/* Top Cities */}
                 <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                     <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                        <Globe className="w-5 h-5 text-violet-500" />
+                        <Globe className="w-5 h-5 text-[#00AFA9]" />
                         Chi tiết Thành phố
                     </h3>
                     <div className="space-y-3 max-h-[350px] overflow-y-auto">
@@ -682,7 +682,7 @@ export default function AnalyticsDashboard() {
             {/* Recent Visitors Table */}
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mt-6">
                 <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-indigo-500" />
+                    <Users className="w-5 h-5 text-[#00AFA9]" />
                     Chi tiết khách truy cập gần đây
                 </h3>
                 <div className="overflow-x-auto">

@@ -10,7 +10,7 @@ const STATUS_COLUMNS = [
     { key: "planned", label: "Kế hoạch", color: "bg-slate-500", border: "border-slate-500" },
     { key: "shooting", label: "Chụp/Quay", color: "bg-amber-500", border: "border-amber-500" },
     { key: "editing", label: "Dựng/Chỉnh", color: "bg-blue-500", border: "border-blue-500" },
-    { key: "review", label: "Review", color: "bg-purple-500", border: "border-purple-500" },
+    { key: "review", label: "Review", color: "bg-[#00AFA9]", border: "border-[#00AFA9]" },
     { key: "completed", label: "Hoàn thành", color: "bg-green-500", border: "border-green-500" },
 ];
 
@@ -149,7 +149,7 @@ export default function AdminMediaProjectsPage() {
                 </div>
                 <button
                     onClick={() => openModalForNew("planned")}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition font-medium text-sm"
+                    className="bg-[#00AFA9] text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-[#009690] transition font-medium text-sm"
                 >
                     <Plus className="w-4 h-4" />
                     Tạo & Giao Dự án

@@ -164,7 +164,7 @@ export default function ChatPage() {
         return (
             <div className="h-[calc(100vh-8rem)] bg-white rounded-lg shadow-sm border border-slate-200 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+                    <div className="animate-spin w-8 h-8 border-4 border-[#00AFA9] border-t-transparent rounded-full"></div>
                     <p className="text-sm text-slate-500 animate-pulse">Đang kết nối bảo mật...</p>
                 </div>
             </div>
@@ -178,7 +178,7 @@ export default function ChatPage() {
                     <p className="text-slate-600 mb-4">Bạn chưa đăng nhập hoặc phiên làm việc đã hết hạn.</p>
                     <button
                         onClick={() => window.location.href = '/login'}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium"
+                        className="bg-[#00AFA9] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#009690] shadow-sm transition-colors"
                     >
                         Đăng nhập ngay
                     </button>
@@ -196,7 +196,7 @@ export default function ChatPage() {
                         onClick={() => setChatMode('internal')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                             chatMode === 'internal'
-                                ? 'bg-blue-600 text-white shadow-sm'
+                                ? 'bg-[#00AFA9] text-white shadow-sm'
                                 : 'text-slate-600 hover:bg-slate-100'
                         }`}
                     >
@@ -207,7 +207,7 @@ export default function ChatPage() {
                         onClick={() => setChatMode('b2b')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                             chatMode === 'b2b'
-                                ? 'bg-teal-600 text-white shadow-sm'
+                                ? 'bg-[#00AFA9] text-white shadow-sm'
                                 : 'text-slate-600 hover:bg-slate-100'
                         }`}
                     >
@@ -240,7 +240,7 @@ export default function ChatPage() {
             {/* Create Group Modal */}
             {showCreateGroup && (
                 <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center">
-                    <div className="bg-white rounded-lg shadow-xl w-96 max-h-[80vh] flex flex-col">
+                    <div className="bg-white rounded-lg border border-slate-200 shadow-sm w-96 max-h-[80vh] flex flex-col">
                         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                             <h3 className="font-bold text-slate-800">Tạo nhóm chat mới</h3>
                             <button onClick={() => setShowCreateGroup(false)}><X className="w-5 h-5 text-slate-400 hover:text-slate-600" /></button>
@@ -250,7 +250,7 @@ export default function ChatPage() {
                             <input
                                 value={groupName}
                                 onChange={(e) => setGroupName(e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-200 rounded text-sm mb-4 focus:outline-none focus:border-blue-500"
+                                className="w-full px-3 py-2 border border-slate-200 rounded text-sm mb-4 focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                 placeholder="Nhập tên nhóm..."
                             />
 
@@ -259,8 +259,8 @@ export default function ChatPage() {
                                 {users.filter(u => u.id !== currentUser?.id).map(u => {
                                     const isSelected = selectedUsers.includes(u.id);
                                     return (
-                                        <div key={u.id} onClick={() => toggleUserSelection(u.id)} className={`flex items-center gap-2 p-2 rounded cursor-pointer border ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:bg-slate-50'}`}>
-                                            <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-slate-300 bg-white'}`}>
+                                        <div key={u.id} onClick={() => toggleUserSelection(u.id)} className={`flex items-center gap-2 p-2 rounded cursor-pointer border ${isSelected ? 'border-[#00AFA9] bg-teal-50' : 'border-transparent hover:bg-slate-50'}`}>
+                                            <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-[#00AFA9] border-[#00AFA9]' : 'border-slate-300 bg-white'}`}>
                                                 {isSelected && <Check className="w-3 h-3 text-white" />}
                                             </div>
                                             <div className="w-6 h-6 rounded bg-slate-200 flex items-center justify-center text-[10px] uppercase font-bold text-slate-600">{u.email?.charAt(0)}</div>
@@ -275,7 +275,7 @@ export default function ChatPage() {
                             <button
                                 onClick={handleCreateGroup}
                                 disabled={!groupName.trim() || selectedUsers.length === 0}
-                                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-3 py-1.5 text-sm bg-[#00AFA9] text-white rounded hover:bg-[#009690] shadow-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 Tạo nhóm
                             </button>

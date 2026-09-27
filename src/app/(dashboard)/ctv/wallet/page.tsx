@@ -68,9 +68,9 @@ export default function CTVWalletPage() {
             value: formatPrice(wallet?.totalPaid || 0),
             sub: "Đã thanh toán",
             icon: CreditCard,
-            color: "text-purple-600",
-            bg: "bg-purple-50",
-            borderColor: "border-purple-200",
+            color: "text-[#00AFA9]",
+            bg: "bg-teal-50",
+            borderColor: "border-teal-200",
         },
         {
             label: "Đang chờ xử lý",
@@ -157,11 +157,11 @@ export default function CTVWalletPage() {
                             </p>
                         </div>
                     </div>
-                    <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-primary-600 transition-colors" />
+                    <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-[#00AFA9] transition-colors" />
                 </button>
                 <a
                     href="/ctv/earnings"
-                    className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all group flex items-center justify-between"
+                    className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-[#00AFA9] transition-all group flex items-center justify-between"
                 >
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
@@ -172,7 +172,7 @@ export default function CTVWalletPage() {
                             <p className="text-sm text-slate-600">Hoa hồng theo tháng</p>
                         </div>
                     </div>
-                    <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-primary-600 transition-colors" />
+                    <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-[#00AFA9] transition-colors" />
                 </a>
             </div>
             {/* Transaction History */}
@@ -244,7 +244,7 @@ export default function CTVWalletPage() {
             {/* Request Payout Modal */}
             {showRequestModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-white rounded-xl border border-slate-200 max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-bold text-slate-900">Yêu cầu rút tiền</h3>
                             <button
@@ -271,7 +271,7 @@ export default function CTVWalletPage() {
                                     alert("Tính năng đang phát triển: Gửi yêu cầu thành công!");
                                     setShowRequestModal(false);
                                 }}
-                                className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors"
+                                className="w-full py-3 bg-[#00AFA9] hover:bg-[#009690] text-white font-bold rounded-lg transition-colors"
                             >
                                 Xác nhận rút tất cả
                             </button>

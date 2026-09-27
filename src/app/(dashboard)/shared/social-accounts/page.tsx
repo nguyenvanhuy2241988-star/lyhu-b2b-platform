@@ -176,7 +176,7 @@ export default function SocialAccountsPage() {
                 {role === 'admin' && (
                     <button
                         onClick={handleOpenCreate}
-                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                        className="flex items-center gap-2 bg-[#00AFA9] text-white px-4 py-2 rounded-lg hover:bg-[#009690] font-medium transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
                         Thêm tài khoản
@@ -191,13 +191,13 @@ export default function SocialAccountsPage() {
                         <input
                             type="text"
                             placeholder="Tìm kiếm theo tên hiển thị, ID đăng nhập..."
-                            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <select
-                        className="border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white min-w-[200px]"
+                        className="border border-slate-300 rounded-lg px-4 py-2 focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none bg-white min-w-[200px]"
                         value={filterPlatform}
                         onChange={e => setFilterPlatform(e.target.value)}
                     >
@@ -271,7 +271,7 @@ export default function SocialAccountsPage() {
                                             {role === 'admin' && (
                                                 <td className="px-6 py-4">
                                                     {assignee ? (
-                                                        <span className="text-blue-600 font-medium">{assignee.full_name || assignee.email}</span>
+                                                        <span className="text-[#00AFA9] font-medium">{assignee.full_name || assignee.email}</span>
                                                     ) : (
                                                         <span className="text-slate-400 italic">Chưa giao</span>
                                                     )}
@@ -291,7 +291,7 @@ export default function SocialAccountsPage() {
                                                 <td className="px-6 py-4 text-right space-x-2">
                                                     <button
                                                         onClick={() => handleOpenEdit(account)}
-                                                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                        className="p-1.5 text-[#00AFA9] hover:bg-teal-50 rounded transition-colors"
                                                         title="Chỉnh sửa"
                                                     >
                                                         <Pencil className="w-4 h-4" />
@@ -317,7 +317,7 @@ export default function SocialAccountsPage() {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl my-8">
+                    <div className="bg-white rounded-xl border border-slate-200 w-full max-w-2xl my-8">
                         <div className="flex items-center justify-between p-6 border-b border-slate-100">
                             <h2 className="text-lg font-bold text-slate-800">
                                 {editingAccount ? "Chỉnh sửa tài khoản" : "Thêm tài khoản mới"}
@@ -336,7 +336,7 @@ export default function SocialAccountsPage() {
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Nền tảng</label>
                                     <select
                                         required
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none bg-white"
                                         value={formData.platform}
                                         onChange={e => setFormData({ ...formData, platform: e.target.value })}
                                     >
@@ -347,7 +347,7 @@ export default function SocialAccountsPage() {
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Tên hiển thị (Tên Kênh/Page)</label>
                                     <input
                                         required
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none"
                                         placeholder="vd: LYHU Official"
                                         value={formData.account_name}
                                         onChange={e => setFormData({ ...formData, account_name: e.target.value })}
@@ -359,7 +359,7 @@ export default function SocialAccountsPage() {
                                 <label className="block text-sm font-medium text-slate-700 mb-1">ID Đăng nhập (SĐT, Email, Username)</label>
                                 <input
                                     required
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none font-mono"
                                     placeholder="vd: 0987654321"
                                     value={formData.login_id}
                                     onChange={e => setFormData({ ...formData, login_id: e.target.value })}
@@ -371,7 +371,7 @@ export default function SocialAccountsPage() {
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
                                     <input
                                         type="text"
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none font-mono text-sm"
                                         placeholder="Mật khẩu đăng nhập"
                                         value={formData.password || ""}
                                         onChange={e => setFormData({ ...formData, password: e.target.value })}
@@ -381,7 +381,7 @@ export default function SocialAccountsPage() {
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu sao lưu (Mã 2FA...)</label>
                                     <input
                                         type="text"
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none font-mono text-sm"
                                         placeholder="Khóa dự phòng, mã 2FA"
                                         value={formData.backup_password || ""}
                                         onChange={e => setFormData({ ...formData, backup_password: e.target.value })}
@@ -393,7 +393,7 @@ export default function SocialAccountsPage() {
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">SĐT/Email Khôi phục</label>
                                     <input
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none text-sm"
                                         placeholder="Email hoặc SĐT khi mất pass"
                                         value={formData.recovery_info || ""}
                                         onChange={e => setFormData({ ...formData, recovery_info: e.target.value })}
@@ -402,7 +402,7 @@ export default function SocialAccountsPage() {
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Trạng thái</label>
                                     <select
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none bg-white"
                                         value={formData.status}
                                         onChange={e => setFormData({ ...formData, status: e.target.value })}
                                     >
@@ -416,7 +416,7 @@ export default function SocialAccountsPage() {
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Giao cho nhân viên sử dụng</label>
                                 <select
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none bg-white"
                                     value={formData.assigned_to || ""}
                                     onChange={e => setFormData({ ...formData, assigned_to: e.target.value })}
                                 >
@@ -430,7 +430,7 @@ export default function SocialAccountsPage() {
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Ghi chú</label>
                                 <textarea
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px] text-sm"
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none min-h-[80px] text-sm"
                                     placeholder="Ghi chú thêm về tài khoản này..."
                                     value={formData.notes || ""}
                                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
@@ -448,7 +448,7 @@ export default function SocialAccountsPage() {
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 transition-colors"
+                                    className="flex items-center gap-2 bg-[#00AFA9] text-white px-6 py-2 rounded-lg hover:bg-[#009690] font-medium disabled:opacity-50 transition-colors shadow-sm"
                                 >
                                     {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                                     {isSaving ? "Đang lưu..." : "Lưu tài khoản"}

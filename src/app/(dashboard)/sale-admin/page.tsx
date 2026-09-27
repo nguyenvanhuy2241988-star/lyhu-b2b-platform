@@ -235,7 +235,7 @@ function DateRangePicker({
 
             {/* Dropdown */}
             {open && (
-                <div className="absolute right-0 top-full mt-2 z-50 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 top-full mt-2 z-50 bg-white rounded-2xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
                     <div className="flex">
                         {/* LEFT: Presets + Drill */}
                         <div className="w-[170px] border-r border-slate-100 py-2 bg-slate-50/50 shrink-0">
@@ -974,7 +974,7 @@ export default function SaleAdminDashboard() {
 
             {/* New order toast notification */}
             {newOrderToast && (
-                <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-right-4 duration-300">
+                <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl border border-slate-700 flex items-center gap-3 animate-in slide-in-from-right-4 duration-300">
                     <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center shrink-0">
                         <ShoppingCart className="w-4 h-4" />
                     </div>

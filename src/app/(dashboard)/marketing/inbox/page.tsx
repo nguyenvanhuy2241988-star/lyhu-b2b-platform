@@ -790,7 +790,7 @@ export default function SocialInboxPage() {
                                             <Smile className="w-5 h-5" />
                                         </button>
                                         {showEmojiPicker && (
-                                            <div className="absolute bottom-10 left-0 bg-white border rounded-xl shadow-lg p-3 grid grid-cols-8 gap-1 z-50 w-[280px]">
+                                            <div className="absolute bottom-10 left-0 bg-white border border-slate-200 rounded-xl shadow-sm p-3 grid grid-cols-8 gap-1 z-50 w-[280px]">
                                                 {['👍', '❤️', '😂', '😍', '🙏', '🎉', '🔥', '✨', '👏', '😊', '🙌', '💪', '👌', '🌟', '😉', '😜', '🤣', '😘', '😇', '🥰', '🥳', '🤩', '🤔', '😱', '💯', '✔️', '❌', '⚠️', '📦', '📱', '💻', '☎️'].map(e => (
                                                     <button key={e} onClick={() => insertEmoji(e)} className="text-xl hover:bg-slate-100 rounded p-1 transition-colors">{e}</button>
                                                 ))}
