@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useParams, useRouter } from 'next/navigation';
-import { ChevronLeft, Save, Sparkles, Loader2 } from 'lucide-react';
+import { ChevronLeft, Save, Sparkles, Loader2, Mic } from 'lucide-react';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { useToast } from '@/components/ui/toast';
 
@@ -149,14 +149,25 @@ export default function ScriptEditor() {
                         className="text-2xl font-bold border-none bg-transparent focus:ring-0 p-0 placeholder-gray-300 w-[500px]"
                     />
                 </div>
-                <button 
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="px-6 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white font-medium rounded-lg flex items-center transition-colors disabled:opacity-50"
-                >
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                    Lưu kịch bản
-                </button>
+                <div className="flex items-center gap-3">
+                    <button 
+                        type="button"
+                        onClick={() => router.push('/media/voice-studio')}
+                        className="px-4 py-2 bg-teal-50 hover:bg-teal-100 text-[#00AFA9] font-medium rounded-lg flex items-center transition-colors border border-teal-200"
+                        title="Mở Studio Lồng tiếng AI để chuyển lời thoại thành voice"
+                    >
+                        <Mic className="w-4 h-4 mr-1.5" />
+                        Lồng tiếng AI
+                    </button>
+                    <button 
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="px-6 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white font-medium rounded-lg flex items-center transition-colors disabled:opacity-50"
+                    >
+                        {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                        Lưu kịch bản
+                    </button>
+                </div>
             </div>
 
             <div className="flex gap-6 h-full min-h-0">

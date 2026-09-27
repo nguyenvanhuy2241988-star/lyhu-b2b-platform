@@ -46,6 +46,7 @@ import {
     Heart,
     Bot,
     Store,          // Retail Chains
+    Mic,            // Voice Studio
 } from "lucide-react";
 import { MODULES } from '@/modules/registry';
 
@@ -187,6 +188,7 @@ export const NAV_ITEMS = {
         { label: "Trung tâm BOT Tự động", href: "/shared/bot-center", icon: Bot },
         { label: "Video Ngắn 9:16", href: "/admin/short-videos", icon: Video },
         { label: "Kịch bản Media", href: "/media/scripts", icon: FileInput },
+        { label: "Lồng tiếng AI (Voice)", href: "/media/voice-studio", icon: Mic },
         { label: "Tin tức & Blog", href: "/marketing/blog", icon: BookOpen },
         { label: "Chủ đề AI", href: "/marketing/ai-topics", icon: Sparkles },
         { label: "Tự động viết bài (AI)", href: "/marketing/ai-blog", icon: Sparkles },
@@ -323,6 +325,7 @@ export const NAV_ITEMS = {
         { label: "Chủ đề AI", href: "/marketing/ai-topics", icon: Sparkles },
         { label: "Tự động viết bài (AI)", href: "/marketing/ai-blog", icon: Sparkles },
         { label: "Kịch bản Media", href: "/media/scripts", icon: FileInput },
+        { label: "Lồng tiếng AI (Voice)", href: "/media/voice-studio", icon: Mic },
         { label: "Quét Data", href: "/marketing/scraper", icon: Globe },
         { label: "Nhóm FB đăng bài", href: "/marketing/fb-groups", icon: Globe },
         { label: "Nhóm FB Việc Làm", href: "/marketing/fb-job-groups", icon: Briefcase },
@@ -363,6 +366,7 @@ export const NAV_ITEMS = {
         { label: "Tổng quan", href: "/media", icon: LayoutDashboard },
         { label: "Brief / Yêu cầu", href: "/media/briefs", icon: FileInput },
         { label: "Kịch bản Media", href: "/media/scripts", icon: FileInput },
+        { label: "Lồng tiếng AI (Voice)", href: "/media/voice-studio", icon: Mic },
         { label: "Thư viện Media", href: "/media/library", icon: FolderOpen },
         { label: "Dự án", href: "/media/projects", icon: ClipboardList },
         { label: "Thiết bị", href: "/media/equipment", icon: Wrench },
