@@ -16,8 +16,10 @@ function HRLayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const { posters, themeColor } = useHRLayout();
 
+    const isAdminOrHr = role === ROLES.ADMIN || role === ROLES.RECRUITER || role === 'hr';
+
     const HR_NAV = [
-        { label: "Hồ sơ Nhân sự", href: "/hr/directory", icon: Users },
+        ...(isAdminOrHr ? [{ label: "Hồ sơ Nhân sự", href: "/hr/directory", icon: Users }] : []),
         { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
         { label: "Văn hóa & Quỹ", href: "/hr/culture", icon: Gift },
     ];

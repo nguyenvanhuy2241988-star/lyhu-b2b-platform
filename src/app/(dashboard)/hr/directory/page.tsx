@@ -1,26 +1,37 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { getDepartments, getHRProfiles, Department, HRProfile, updateHRProfile } from '@/lib/hrStore';
-import { Search, MapPin, Calendar, Briefcase, Mail, Phone, Filter, GraduationCap, Heart, Facebook, FileText, User as UserIcon, X } from 'lucide-react';
+import { Search, MapPin, Calendar, Briefcase, Mail, Phone, Filter, GraduationCap, Heart, Facebook, FileText, User as UserIcon, X, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { ROLES } from '@/lib/constants';
 
 export default function HRDirectoryPage() {
+    const router = useRouter();
+    const { role } = useAuth();
+    const isAdminOrHr = role === ROLES.ADMIN || role === ROLES.RECRUITER || role === 'hr';
+
     const [departments, setDepartments] = useState<Department[]>([]);
     const [profiles, setProfiles] = useState<HRProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDept, setSelectedDept] = useState<string>('all');
-    const { role } = useAuth();
 
     // Modals
     const [editingProfile, setEditingProfile] = useState<HRProfile | null>(null);
     const [viewingProfile, setViewingProfile] = useState<HRProfile | null>(null);
 
     useEffect(() => {
-        loadData();
-    }, []);
+        if (role && !isAdminOrHr) {
+            router.replace('/hr/scheduling');
+            return;
+        }
+        if (isAdminOrHr) {
+            loadData();
+        }
+    }, [role, isAdminOrHr, router]);
 
     const loadData = async () => {
         try {
@@ -55,6 +66,16 @@ export default function HRDirectoryPage() {
         const matchDept = selectedDept === 'all' || p.department_id === selectedDept;
         return matchSearch && matchDept;
     });
+
+    if (role && !isAdminOrHr) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center p-6 text-slate-500 gap-3">
+                <ShieldAlert className="w-10 h-10 text-amber-500" />
+                <p className="text-sm font-medium text-slate-700">Bạn không có quyền truy cập mục Hồ sơ Nhân sự.</p>
+                <p className="text-xs text-slate-400">Đang chuyển hướng về trang Xếp lịch làm việc...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="h-full flex flex-col">
