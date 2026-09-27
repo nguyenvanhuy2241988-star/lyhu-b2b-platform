@@ -7,7 +7,7 @@ import {
     Loader2, Award, Star, Trophy, PartyPopper, ChevronRight,
     Crown, Medal, Flame, CheckCircle2, Clock, Calendar,
     PlusCircle, Filter, RefreshCw, ExternalLink, AlertCircle,
-    ListTodo, FileText, Target, Sparkles, PhoneCall
+    ListTodo, FileText, Target, Sparkles, PhoneCall, HelpCircle
 } from "lucide-react";
 import { getMyTasks, TelesalesTask } from "@/lib/telesalesTasksStore";
 import { fetchSalesLeads, SalesLead } from "@/lib/salesLeads";
@@ -63,29 +63,23 @@ const formatTimeAgo = (dateString: string) => {
 // Target KPI constants for Telesales
 const MONTHLY_REVENUE_TARGET = 50000000; // 50M VND
 const DAILY_CALLS_TARGET = 30; // 30 calls/day
-const MONTHLY_WON_TARGET = 10; // 10 deals/month
 
 export default function TelesalesDashboard() {
     const { user, session, isLoading: authIsLoading } = useAuth();
     const supabase = useMemo(() => createClient(), []);
 
-    // View Mode: "personal" (Cá nhân) vs "team" (Toàn đội)
-    const [viewMode, setViewMode] = useState<"personal" | "team">("personal");
-
-    // State for data
+    // State for personal data
     const [tasks, setTasks] = useState<TelesalesTask[]>([]);
     const [leads, setLeads] = useState<SalesLead[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    // KPI & Funnel State
+    // KPI & Funnel State (Personal only - security & role separation)
     const [kpiStats, setKpiStats] = useState<KPISummary | null>(null);
-    const [teamKpiStats, setTeamKpiStats] = useState<KPISummary | null>(null);
     const [funnelData, setFunnelData] = useState<FunnelStage[]>([]);
-    const [teamFunnelData, setTeamFunnelData] = useState<FunnelStage[]>([]);
 
-    // Engagement state
+    // Engagement state (Team motivation)
     const [bondingFund, setBondingFund] = useState<BondingFund | null>(null);
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [userAchievements, setUserAchievements] = useState<any[]>([]);
@@ -154,7 +148,7 @@ export default function TelesalesDashboard() {
         setCurrentDate(newDate);
     };
 
-    // Load all data
+    // Load personal data
     const loadAll = useCallback(async (silent = false) => {
         if (!silent) setIsLoading(true);
         else setIsRefreshing(true);
@@ -163,15 +157,12 @@ export default function TelesalesDashboard() {
             const token = session?.access_token;
             const { start: globalStart, end: globalEnd } = getDateRange();
 
-            // Fetch both personal & team metrics in parallel for instant toggle
             const [
                 taskRows,
                 leadRows,
                 orderRows,
                 personalKpi,
                 personalFunnel,
-                teamKpi,
-                teamFunnel,
                 fundData,
                 leaderboardData,
                 achievementsData,
@@ -183,15 +174,12 @@ export default function TelesalesDashboard() {
                     toDate: globalEnd.toISOString()
                 }),
                 fetchOrders(token, {
-                    // If viewing team, fetch all; if personal, filter by user
-                    userId: viewMode === "personal" ? user?.id : undefined,
+                    userId: user?.id,
                     startDate: globalStart.toISOString(),
                     endDate: globalEnd.toISOString()
                 }),
                 fetchKPIStats(globalStart, globalEnd, user?.id, token),
                 fetchSalesFunnel(globalStart, globalEnd, user?.id, token),
-                fetchKPIStats(globalStart, globalEnd, undefined, token), // Team stats
-                fetchSalesFunnel(globalStart, globalEnd, undefined, token), // Team funnel
                 fetchBondingFund(token),
                 getLeaderboard(globalStart, globalEnd, token),
                 fetchUserAchievements(user?.id || "", token),
@@ -202,9 +190,7 @@ export default function TelesalesDashboard() {
             setLeads(Array.isArray(leadRows) ? leadRows : []);
             setOrders(Array.isArray(orderRows) ? orderRows : []);
             setKpiStats(personalKpi);
-            setTeamKpiStats(teamKpi);
             setFunnelData(personalFunnel || []);
-            setTeamFunnelData(teamFunnel || []);
             setBondingFund(fundData);
             setLeaderboard(leaderboardData || []);
             setUserAchievements(achievementsData || []);
@@ -215,7 +201,7 @@ export default function TelesalesDashboard() {
             setIsLoading(false);
             setIsRefreshing(false);
         }
-    }, [user, session, getDateRange, viewMode]);
+    }, [user, session, getDateRange]);
 
     useEffect(() => {
         if (!user && !authIsLoading) {
@@ -227,17 +213,8 @@ export default function TelesalesDashboard() {
         }
     }, [user, authIsLoading, loadAll]);
 
-    // Active KPI metrics based on current viewMode
+    // Active KPI metrics
     const activeKpi = useMemo(() => {
-        if (viewMode === "team") {
-            return teamKpiStats || {
-                total_revenue: 0,
-                total_deals_won: 0,
-                total_calls: 0,
-                total_deals_new: 0,
-                avg_call_duration: 0
-            };
-        }
         return kpiStats || {
             total_revenue: 0,
             total_deals_won: 0,
@@ -245,15 +222,7 @@ export default function TelesalesDashboard() {
             total_deals_new: 0,
             avg_call_duration: 0
         };
-    }, [viewMode, kpiStats, teamKpiStats]);
-
-    // Active Funnel based on current viewMode
-    const activeFunnel = useMemo(() => {
-        if (viewMode === "team" || funnelData.length === 0) {
-            if (teamFunnelData.length > 0) return teamFunnelData;
-        }
-        return funnelData;
-    }, [viewMode, funnelData, teamFunnelData]);
+    }, [kpiStats]);
 
     // Progress Calculations
     const revenueProgress = Math.min(Math.round(((activeKpi.total_revenue || 0) / MONTHLY_REVENUE_TARGET) * 100), 100);
@@ -280,7 +249,7 @@ export default function TelesalesDashboard() {
     if (isLoading) {
         return (
             <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
-                <div className="bg-slate-100 h-24 rounded-2xl animate-pulse" />
+                <div className="bg-slate-100 h-20 rounded-2xl animate-pulse" />
                 <StatsSkeleton />
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 h-64 animate-pulse" />
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -294,9 +263,9 @@ export default function TelesalesDashboard() {
     return (
         <div className="space-y-6 max-w-[1600px] mx-auto pb-12 animate-in fade-in duration-300">
             {/* ============================================================ */}
-            {/* 1. HEADER & CONTROLS (VIEW MODE & TIME FILTER)              */}
+            {/* 1. HEADER (PERSONAL DESK FOCUS & SECURITY)                  */}
             {/* ============================================================ */}
-            <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
                         <span className="flex h-2 w-2 relative">
@@ -304,49 +273,23 @@ export default function TelesalesDashboard() {
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00AFA9]"></span>
                         </span>
                         <span className="text-xs font-semibold uppercase tracking-wider text-[#00AFA9]">
-                            Telesales Calling Desk • Sẵn sàng gọi điện
+                            Bàn làm việc Telesales cá nhân • Sẵn sàng gọi điện
                         </span>
                     </div>
                     <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                         Tổng quan Telesales
                     </h1>
                     <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                        Theo dõi chỉ tiêu doanh số, số lượng cuộc gọi và tiến độ xử lý khách hàng tiềm năng
+                        Theo dõi chỉ tiêu doanh số cá nhân, tiến độ cuộc gọi và khách hàng phụ trách
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
-                    {/* View Mode Toggle: Personal vs Team */}
-                    <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-semibold">
-                        <button
-                            onClick={() => setViewMode("personal")}
-                            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                                viewMode === "personal"
-                                    ? "bg-white text-[#00AFA9] font-bold shadow-sm"
-                                    : "text-slate-600 hover:text-slate-900"
-                            }`}
-                        >
-                            <Users className="w-3.5 h-3.5" />
-                            <span>Cá nhân</span>
-                        </button>
-                        <button
-                            onClick={() => setViewMode("team")}
-                            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                                viewMode === "team"
-                                    ? "bg-white text-[#00AFA9] font-bold shadow-sm"
-                                    : "text-slate-600 hover:text-slate-900"
-                            }`}
-                        >
-                            <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                            <span>Toàn đội Telesales</span>
-                        </button>
-                    </div>
-
+                <div className="flex items-center gap-2.5">
                     {/* Time Filter Pills */}
                     <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-semibold">
                         <button
                             onClick={() => { setTimeFilter("today"); setCurrentDate(new Date()); }}
-                            className={`px-2.5 py-1.5 rounded-lg transition-all ${
+                            className={`px-3 py-1.5 rounded-lg transition-all ${
                                 timeFilter === "today"
                                     ? "bg-white text-[#00AFA9] font-bold shadow-sm"
                                     : "text-slate-600 hover:text-slate-900"
@@ -356,7 +299,7 @@ export default function TelesalesDashboard() {
                         </button>
                         <button
                             onClick={() => { setTimeFilter("week"); setCurrentDate(new Date()); }}
-                            className={`px-2.5 py-1.5 rounded-lg transition-all ${
+                            className={`px-3 py-1.5 rounded-lg transition-all ${
                                 timeFilter === "week"
                                     ? "bg-white text-[#00AFA9] font-bold shadow-sm"
                                     : "text-slate-600 hover:text-slate-900"
@@ -366,7 +309,7 @@ export default function TelesalesDashboard() {
                         </button>
                         <button
                             onClick={() => { setTimeFilter("month"); setCurrentDate(new Date()); }}
-                            className={`px-2.5 py-1.5 rounded-lg transition-all ${
+                            className={`px-3 py-1.5 rounded-lg transition-all ${
                                 timeFilter === "month"
                                     ? "bg-white text-[#00AFA9] font-bold shadow-sm"
                                     : "text-slate-600 hover:text-slate-900"
@@ -389,12 +332,12 @@ export default function TelesalesDashboard() {
             </div>
 
             {/* ============================================================ */}
-            {/* 2. DAILY INSPIRATION & ONBOARDING PROMPT                     */}
+            {/* 2. DAILY INSPIRATION & FAST ACTION BAR                       */}
             {/* ============================================================ */}
-            <div className="bg-teal-50/70 p-4 rounded-2xl border border-teal-100/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="bg-teal-50/70 p-4 rounded-2xl border border-teal-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-teal-200/80 flex items-center justify-center shrink-0 text-[#00AFA9] shadow-sm">
-                        <Sparkles className="w-5 h-5 text-[#00AFA9]" />
+                    <div className="w-9 h-9 rounded-xl bg-white border border-teal-200/80 flex items-center justify-center shrink-0 text-[#00AFA9] shadow-sm">
+                        <Sparkles className="w-4 h-4 text-[#00AFA9]" />
                     </div>
                     <div className="min-w-0">
                         <p className="text-[11px] font-bold text-[#00AFA9] uppercase tracking-wider">
@@ -418,7 +361,7 @@ export default function TelesalesDashboard() {
             </div>
 
             {/* ============================================================ */}
-            {/* 3. 4 KEY KPI SCORECARDS (WITH TARGET & PROGRESS BAR)        */}
+            {/* 3. 4 KEY KPI SCORECARDS (TARGET TRACKER)                    */}
             {/* ============================================================ */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* 1. Doanh số chốt được */}
@@ -426,7 +369,7 @@ export default function TelesalesDashboard() {
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                {viewMode === "personal" ? "Doanh số của tôi" : "Doanh số toàn đội"}
+                                Doanh số của tôi
                             </span>
                             <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center text-[#00AFA9]">
                                 <TrendingUp className="w-5 h-5" />
@@ -436,9 +379,7 @@ export default function TelesalesDashboard() {
                             {formatPrice(activeKpi.total_revenue || 0)}
                         </h3>
                         <p className="text-xs text-slate-500 mt-1">
-                            {viewMode === "personal"
-                                ? `Chỉ tiêu tháng: ${formatPrice(MONTHLY_REVENUE_TARGET)}`
-                                : "Tổng doanh thu toàn đội Telesales đã chốt"}
+                            Chỉ tiêu tháng: {formatPrice(MONTHLY_REVENUE_TARGET)}
                         </p>
                     </div>
 
@@ -517,7 +458,7 @@ export default function TelesalesDashboard() {
                             {activeKpi.total_deals_new || 0}
                         </h3>
                         <p className="text-xs text-slate-500 mt-1">
-                            Được phân bổ trong khoảng thời gian này
+                            Khách hàng được phân bổ trong kỳ này
                         </p>
                     </div>
 
@@ -534,19 +475,17 @@ export default function TelesalesDashboard() {
             </div>
 
             {/* ============================================================ */}
-            {/* 4. SALES FUNNEL & PERFORMANCE CONVERSION                    */}
+            {/* 4. SALES FUNNEL & PERFORMANCE CONVERSION (STABLE LAYOUT)    */}
             {/* ============================================================ */}
             <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
                     <div>
                         <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
                             <Target className="w-5 h-5 text-[#00AFA9]" />
-                            Phễu Chuyển Đổi Bán Hàng (Telesales Sales Funnel)
+                            Phễu Chuyển Đổi Bán Hàng Cá Nhân
                         </h3>
                         <p className="text-xs text-slate-500">
-                            {viewMode === "personal"
-                                ? "Tiến trình chuyển dịch khách hàng từ Data mới đến Chốt đơn của bạn"
-                                : "Phễu chuyển đổi tổng thể của toàn bộ đội ngũ Telesales LYHU"}
+                            Tiến trình chuyển dịch khách hàng từ Data mới đến Chốt đơn thành công của bạn
                         </p>
                     </div>
 
@@ -566,31 +505,31 @@ export default function TelesalesDashboard() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                     {/* Left: Summary Metrics */}
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                            <span className="text-xs text-slate-500 uppercase font-bold">Khách hàng tiếp nhận</span>
+                            <span className="text-[11px] text-slate-500 uppercase font-bold tracking-wider">Khách hàng tiếp nhận</span>
                             <div className="flex items-baseline gap-2 mt-1">
-                                <span className="text-3xl font-black text-slate-900">{activeKpi.total_deals_new || 0}</span>
+                                <span className="text-2xl font-black text-slate-900">{activeKpi.total_deals_new || 0}</span>
                                 <span className="text-xs text-slate-500">tiềm năng</span>
                             </div>
                             <p className="text-[11px] text-slate-400 mt-1">Data phân bổ từ marketing & web</p>
                         </div>
 
                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                            <span className="text-xs text-slate-500 uppercase font-bold">Tỉ lệ chốt thành công</span>
+                            <span className="text-[11px] text-slate-500 uppercase font-bold tracking-wider">Tỉ lệ chốt thành công</span>
                             <div className="flex items-baseline gap-2 mt-1">
-                                <span className="text-3xl font-black text-[#00AFA9]">{winRate}%</span>
+                                <span className="text-2xl font-black text-[#00AFA9]">{winRate}%</span>
                                 <span className="text-xs text-emerald-600 font-semibold">{activeKpi.total_deals_won || 0} đơn ký</span>
                             </div>
                             <p className="text-[11px] text-slate-400 mt-1">Tỷ lệ đơn hàng thành công trên tổng data</p>
                         </div>
 
                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                            <span className="text-xs text-slate-500 uppercase font-bold">Giá trị chốt trung bình</span>
+                            <span className="text-[11px] text-slate-500 uppercase font-bold tracking-wider">Giá trị chốt trung bình</span>
                             <div className="flex items-baseline gap-2 mt-1">
-                                <span className="text-xl sm:text-2xl font-black text-slate-900">
+                                <span className="text-lg sm:text-xl font-black text-slate-900">
                                     {activeKpi.total_deals_won > 0
                                         ? formatPrice(Math.round(activeKpi.total_revenue / activeKpi.total_deals_won))
                                         : "0 đ"}
@@ -600,31 +539,31 @@ export default function TelesalesDashboard() {
                         </div>
                     </div>
 
-                    {/* Right: Funnel Chart */}
-                    <div className="lg:col-span-2 min-h-[300px] flex flex-col justify-center">
-                        {activeFunnel.length > 0 ? (
-                            <SalesFunnelChart data={activeFunnel} />
+                    {/* Right: Funnel Progress Stages (No SVG Overflow Bugs) */}
+                    <div className="lg:col-span-2 bg-slate-50/50 p-4 sm:p-5 rounded-xl border border-slate-100">
+                        {funnelData.length > 0 ? (
+                            <SalesFunnelChart data={funnelData} />
                         ) : (
-                            <div className="h-full border border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center text-center">
-                                <div className="w-12 h-12 rounded-full bg-teal-50 text-[#00AFA9] flex items-center justify-center mb-3">
-                                    <Target className="w-6 h-6" />
+                            <div className="py-6 flex flex-col items-center justify-center text-center">
+                                <div className="w-10 h-10 rounded-full bg-teal-50 text-[#00AFA9] flex items-center justify-center mb-2.5">
+                                    <Target className="w-5 h-5" />
                                 </div>
-                                <h4 className="text-sm font-bold text-slate-800">Chưa có dữ liệu phễu cá nhân trong kỳ này</h4>
-                                <p className="text-xs text-slate-500 max-w-sm mt-1">
-                                    Bạn hãy nhận thêm data từ Hàng Đợi hoặc bấm xem "Toàn đội Telesales" ở góc trên để theo dõi phễu chung của toàn công ty.
+                                <h4 className="text-sm font-bold text-slate-800">Chưa có deal nào trong phễu cá nhân</h4>
+                                <p className="text-xs text-slate-500 max-w-sm mt-1 mb-4">
+                                    Nhận data từ Hàng Đợi hoặc bắt đầu cuộc gọi chào hàng để đưa khách hàng vào các nấc phễu
                                 </p>
-                                <div className="flex items-center gap-2 mt-4">
-                                    <button
-                                        onClick={() => setViewMode("team")}
-                                        className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold transition-colors"
-                                    >
-                                        Xem Phễu Toàn Đội
-                                    </button>
+                                <div className="flex items-center gap-2">
                                     <Link
                                         href="/telesales/leads-queue"
-                                        className="px-3.5 py-1.5 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-lg text-xs font-bold transition-colors"
+                                        className="px-4 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-lg text-xs font-bold transition-colors shadow-sm"
                                     >
-                                        Nhận Data Mới
+                                        Nhận Data Mới từ Hàng Đợi
+                                    </Link>
+                                    <Link
+                                        href="/crm"
+                                        className="px-3.5 py-2 bg-white border border-slate-200 text-slate-700 hover:text-[#00AFA9] rounded-lg text-xs font-bold transition-colors"
+                                    >
+                                        Mở Pipeline CRM
                                     </Link>
                                 </div>
                             </div>
@@ -808,11 +747,9 @@ export default function TelesalesDashboard() {
                         <div>
                             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                                 <ShoppingBag className="w-4 h-4 text-[#00AFA9]" />
-                                Đơn hàng mới nhất
+                                Đơn hàng mới nhất của bạn
                             </h3>
-                            <p className="text-xs text-slate-500">
-                                {viewMode === "personal" ? "Các đơn bạn đã chốt thành công" : "Các đơn mới chốt của toàn đội Telesales"}
-                            </p>
+                            <p className="text-xs text-slate-500">Các đơn bạn đã chốt thành công</p>
                         </div>
                         <Link
                             href="/telesales/orders"
@@ -872,7 +809,7 @@ export default function TelesalesDashboard() {
                                         <td colSpan={4} className="px-6 py-10 text-center text-slate-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <ShoppingBag className="w-8 h-8 text-slate-300 mb-2" />
-                                                <p className="text-xs font-semibold text-slate-700">Chưa có đơn hàng nào trong kỳ này</p>
+                                                <p className="text-xs font-semibold text-slate-700">Bạn chưa có đơn hàng nào trong kỳ này</p>
                                                 <p className="text-[11px] text-slate-400 mt-0.5 mb-3">Tạo đơn hàng mới ngay khi chốt cuộc gọi thành công</p>
                                                 <Link
                                                     href="/telesales/create-order"
