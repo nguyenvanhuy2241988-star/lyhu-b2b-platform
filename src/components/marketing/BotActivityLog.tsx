@@ -54,7 +54,7 @@ export default function BotActivityLog({ userId }: { userId?: string }) {
     }, [logs]);
 
     return (
-        <div className="bg-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-700 flex flex-col h-[400px]">
+        <div className="bg-slate-900 rounded-xl overflow-hidden border border-slate-700 shadow-sm flex flex-col h-[400px]">
             {/* Header */}
             <div className="bg-slate-800 p-3 flex items-center justify-between border-b border-slate-700">
                 <div className="flex items-center gap-2">
@@ -83,10 +83,10 @@ export default function BotActivityLog({ userId }: { userId?: string }) {
                         </span>
 
                         <div className="flex-1 break-words">
-                            {log.action_type === 'defense' && <span className="text-purple-400 font-bold mr-2">[DEFENSE]</span>}
+                            {log.action_type === 'defense' && <span className="text-[#00AFA9] font-bold mr-2">[DEFENSE]</span>}
                             {log.action_type === 'search' && <span className="text-blue-400 font-bold mr-2">[SEARCH]</span>}
                             {log.action_type === 'invite' && <span className="text-green-400 font-bold mr-2">[INVITE]</span>}
-                            {log.action_type === 'AI_OPTIMIZATION' && <span className="text-pink-400 font-bold mr-2">[AI OPTIMIZE]</span>}
+                            {log.action_type === 'AI_OPTIMIZATION' && <span className="text-[#00AFA9] font-bold mr-2">[AI OPTIMIZE]</span>}
 
                             <span className={
                                 log.status === 'error' ? 'text-red-400' :
@@ -103,7 +103,7 @@ export default function BotActivityLog({ userId }: { userId?: string }) {
                                     href={log.details.profile_url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="ml-2 px-2 py-0.5 bg-blue-900 border border-blue-700 text-blue-300 rounded hover:bg-blue-800 transition-colors text-[10px] inline-flex items-center gap-1"
+                                    className="ml-2 px-2 py-0.5 bg-teal-950 border border-teal-800 text-teal-300 rounded hover:bg-teal-900 transition-colors text-[10px] inline-flex items-center gap-1"
                                 >
                                     ↗ Xem Profile
                                 </a>

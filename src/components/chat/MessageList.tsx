@@ -157,7 +157,7 @@ const MessageList = React.memo(forwardRef<MessageListRef, MessageListProps>(({
                     components={{
                         Header: () => isLoadingMore ? (
                             <div className="flex justify-center py-2">
-                                <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                                <div className="animate-spin w-5 h-5 border-2 border-[#00AFA9] border-t-transparent rounded-full"></div>
                             </div>
                         ) : null
                     }}
@@ -168,7 +168,7 @@ const MessageList = React.memo(forwardRef<MessageListRef, MessageListProps>(({
             {showScrollBottom && (
                 <button
                     onClick={() => virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end', behavior: 'smooth' })}
-                    className="absolute bottom-12 right-4 z-20 bg-primary-500 text-white p-2 rounded-full shadow-lg hover:bg-primary-600 transition-transform hover:scale-105 animate-in fade-in zoom-in"
+                    className="absolute bottom-12 right-4 z-20 bg-[#00AFA9] text-white p-2 rounded-full border border-teal-600 hover:bg-[#009690] transition-transform hover:scale-105 animate-in fade-in zoom-in"
                 >
                     <div className="rotate-180"><div className="rotate-180"><Reply className="w-5 h-5 rotate-180" /></div></div>
                     <span className="text-xs font-bold absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white">↓</span>

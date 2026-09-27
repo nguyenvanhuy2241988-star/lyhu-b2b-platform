@@ -149,7 +149,7 @@ export const RewardManagementTab = () => {
                 <h3 className="text-lg font-semibold">Quản Lý Kho Quà</h3>
                 <button
                     onClick={() => handleOpenModal()}
-                    className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm shadow-sm"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] font-medium text-sm shadow-sm"
                 >
                     <Plus className="w-4 h-4" /> Thêm Quà Mới
                 </button>
@@ -186,9 +186,9 @@ export const RewardManagementTab = () => {
                                 <td className="px-4 py-3 font-bold text-yellow-600">{item.cost.toLocaleString()}</td>
                                 <td className="px-4 py-3">{item.stock}</td>
                                 <td className="px-4 py-3">
-                                    <button onClick={() => toggleStatus(item)} className="text-slate-400 hover:text-teal-600">
+                                    <button onClick={() => toggleStatus(item)} className="text-slate-400 hover:text-[#00AFA9]">
                                         {item.is_active ?
-                                            <span className="flex items-center gap-1 text-teal-600 text-xs font-bold bg-teal-50 px-2 py-1 rounded">Active</span> :
+                                            <span className="flex items-center gap-1 text-[#00AFA9] text-xs font-bold bg-teal-50 px-2 py-1 rounded">Active</span> :
                                             <span className="flex items-center gap-1 text-slate-500 text-xs font-bold bg-slate-100 px-2 py-1 rounded">Hidden</span>
                                         }
                                     </button>
@@ -211,7 +211,7 @@ export const RewardManagementTab = () => {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-in zoom-in duration-200">
+                    <div className="bg-white rounded-xl border border-slate-200 w-full max-w-md animate-in zoom-in duration-200">
                         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-xl">
                             <h3 className="font-bold text-slate-800">{editingItem ? 'Sửa Quà' : 'Thêm Quà Mới'}</h3>
                             <button onClick={handleCloseModal}><X className="w-5 h-5 text-slate-400 hover:text-slate-600" /></button>
@@ -219,29 +219,29 @@ export const RewardManagementTab = () => {
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Tên vật phẩm</label>
-                                <input required type="text" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                                <input required type="text" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Mô tả</label>
-                                <textarea className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" rows={2}
+                                <textarea className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none" rows={2}
                                     value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Giá (Điểm)</label>
-                                    <input required type="number" min="0" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                                    <input required type="number" min="0" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                         value={formData.cost} onChange={e => setFormData({ ...formData, cost: Number(e.target.value) })} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Tồn kho</label>
-                                    <input required type="number" min="0" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                                    <input required type="number" min="0" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                         value={formData.stock} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Loại icon (Mã)</label>
-                                <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+                                <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     value={formData.image_url || 'Gift'} onChange={e => setFormData({ ...formData, image_url: e.target.value })}>
                                     <option value="Gift">Gift (Hộp quà)</option>
                                     <option value="Smartphone">Smartphone</option>
@@ -253,13 +253,13 @@ export const RewardManagementTab = () => {
                             </div>
                             <div className="flex items-center gap-2 pt-2">
                                 <label className="text-sm font-medium text-slate-700">Hiển thị trên cửa hàng?</label>
-                                <input type="checkbox" className="w-4 h-4 text-teal-600 rounded"
+                                <input type="checkbox" className="w-4 h-4 text-[#00AFA9] rounded"
                                     checked={formData.is_active} onChange={e => setFormData({ ...formData, is_active: e.target.checked })} />
                             </div>
 
                             <div className="pt-4 flex gap-3">
                                 <button type="button" onClick={handleCloseModal} className="flex-1 py-2.5 border border-slate-300 rounded-lg font-medium hover:bg-slate-50">Hủy</button>
-                                <button type="submit" className="flex-1 py-2.5 bg-teal-600 text-white rounded-lg font-bold hover:bg-teal-700">Lưu</button>
+                                <button type="submit" className="flex-1 py-2.5 bg-[#00AFA9] text-white rounded-lg font-bold hover:bg-[#009690]">Lưu</button>
                             </div>
                         </form>
                     </div>

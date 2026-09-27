@@ -17,7 +17,7 @@ interface FilesListProps {
 }
 
 const getFileIcon = (mimeType: string) => {
-    if (mimeType.startsWith('image/')) return <ImageIcon className="w-5 h-5 text-purple-500" />;
+    if (mimeType.startsWith('image/')) return <ImageIcon className="w-5 h-5 text-[#00AFA9]" />;
     if (mimeType.includes('pdf')) return <FileText className="w-5 h-5 text-red-500" />;
     if (mimeType.includes('sheet') || mimeType.includes('excel')) return <FileSpreadsheet className="w-5 h-5 text-green-500" />;
     if (mimeType.includes('word') || mimeType.includes('document')) return <FileText className="w-5 h-5 text-blue-500" />;
@@ -70,7 +70,7 @@ export function FilesList({ files, loading, selectedFileId, selectedFileIds = ne
                                     if (selectedFileIds.has(file.id) && selectedFileIds.size > 1) {
                                         const crt = document.createElement("div");
                                         crt.innerHTML = `Đang di chuyển ${selectedFileIds.size} file`;
-                                        crt.style.backgroundColor = "#2563eb";
+                                        crt.style.backgroundColor = "#00AFA9";
                                         crt.style.color = "white";
                                         crt.style.padding = "4px 12px";
                                         crt.style.borderRadius = "8px";
@@ -83,7 +83,7 @@ export function FilesList({ files, loading, selectedFileId, selectedFileIds = ne
                                 }}
                                 className={cn(
                                     "border-b border-slate-100 last:border-none hover:bg-slate-50 transition-colors cursor-pointer select-none",
-                                    isSelected ? "bg-blue-50 hover:bg-blue-50" : ""
+                                    isSelected ? "bg-teal-50 hover:bg-teal-50" : ""
                                 )}
                                 onClick={(e) => {
                                     if (e.ctrlKey || e.metaKey) {

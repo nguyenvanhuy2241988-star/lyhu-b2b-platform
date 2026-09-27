@@ -144,7 +144,7 @@ export function AffiliateReportsTab() {
                 </div>
                 
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
-                    <div className="p-2 bg-indigo-50 rounded-full mb-3 text-indigo-600">
+                    <div className="p-2 bg-teal-50 rounded-full mb-3 text-[#00AFA9]">
                         <MousePointerClick size={20} />
                     </div>
                     <div className="text-sm font-medium text-slate-500 mb-1">Lượt Click Link</div>

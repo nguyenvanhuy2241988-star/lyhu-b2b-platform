@@ -254,9 +254,9 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-purple-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-indigo-600" />
+                    <TrendingUp className="w-5 h-5 text-[#00AFA9]" />
                     <h2 className="font-bold text-slate-800">Chương trình Tiếp thị Liên kết (Affiliate)</h2>
                 </div>
                 <div className="flex gap-4 items-center">
@@ -270,7 +270,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                         </div>
                     )}
                     <div className="h-4 w-px bg-slate-300"></div>
-                    <div className="text-sm text-indigo-700 font-medium">Mã: <span className="font-mono bg-indigo-100 px-2 py-0.5 rounded">{profile.affiliate_code}</span></div>
+                    <div className="text-sm text-[#00AFA9] font-medium">Mã: <span className="font-mono bg-teal-50 text-[#00AFA9] px-2 py-0.5 rounded border border-teal-100">{profile.affiliate_code}</span></div>
                 </div>
             </div>
 
@@ -278,19 +278,19 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
             <div className="flex border-b border-slate-200 px-6">
                 <button
                     onClick={() => setActiveTab('overview')}
-                    className={`py-3 px-4 font-semibold text-sm border-b-2 transition-colors ${activeTab === 'overview' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                    className={`py-3 px-4 font-semibold text-sm border-b-2 transition-colors ${activeTab === 'overview' ? 'border-[#00AFA9] text-[#00AFA9]' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                 >
                     Tổng quan
                 </button>
                 <button
                     onClick={() => setActiveTab('payment')}
-                    className={`py-3 px-4 font-semibold text-sm border-b-2 transition-colors ${activeTab === 'payment' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                    className={`py-3 px-4 font-semibold text-sm border-b-2 transition-colors ${activeTab === 'payment' ? 'border-[#00AFA9] text-[#00AFA9]' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                 >
                     Thông tin & Rút tiền
                 </button>
                 <button
                     onClick={() => setActiveTab('history')}
-                    className={`py-3 px-4 font-semibold text-sm border-b-2 transition-colors ${activeTab === 'history' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                    className={`py-3 px-4 font-semibold text-sm border-b-2 transition-colors ${activeTab === 'history' ? 'border-[#00AFA9] text-[#00AFA9]' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                 >
                     Lịch sử rút tiền
                 </button>
@@ -331,16 +331,16 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
 
                         {/* Tạo Link */}
                         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
-                            <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><LinkIcon size={16} className="text-indigo-600"/> Tạo Link chia sẻ</h3>
+                            <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><LinkIcon size={16} className="text-[#00AFA9]"/> Tạo Link chia sẻ</h3>
                             <div className="flex flex-col md:flex-row gap-2 mb-3">
                                 <input 
                                     type="text" 
                                     placeholder="Dán link sản phẩm bạn muốn bán vào đây..." 
-                                    className="flex-1 text-sm border border-slate-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="flex-1 text-sm border border-slate-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                     value={targetUrl}
                                     onChange={(e: any) => setTargetUrl(e.target.value)}
                                 />
-                                <button onClick={handleGenerate} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap">
+                                <button onClick={handleGenerate} className="bg-[#00AFA9] hover:bg-[#009690] text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap">
                                     Tạo Link
                                 </button>
                             </div>
@@ -350,7 +350,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                                     <div className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-slate-600">
                                         {generatedUrl}
                                     </div>
-                                    <button onClick={copyToClipboard} className="text-slate-500 hover:text-indigo-600 bg-white border border-slate-200 p-1.5 rounded shrink-0 transition-colors" title="Copy Link">
+                                    <button onClick={copyToClipboard} className="text-slate-500 hover:text-[#00AFA9] bg-white border border-slate-200 p-1.5 rounded shrink-0 transition-colors" title="Copy Link">
                                         <Copy size={16} />
                                     </button>
                                 </div>
@@ -386,7 +386,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                                                     <td className="p-3 text-right">
                                                         <button 
                                                             onClick={() => copyProductLink(p.id)}
-                                                            className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-2 py-1.5 rounded-md text-xs font-medium transition-colors"
+                                                            className="inline-flex items-center gap-1 bg-teal-50 text-[#00AFA9] hover:bg-teal-100 px-2 py-1.5 rounded-md text-xs font-medium transition-colors"
                                                         >
                                                             <LinkIcon size={12} />
                                                             Lấy Link
@@ -458,7 +458,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                         {/* Cập nhật thông tin ngân hàng */}
                         <div>
                             <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                <CreditCard size={18} className="text-indigo-600" />
+                                <CreditCard size={18} className="text-[#00AFA9]" />
                                 Thông tin tài khoản ngân hàng
                             </h3>
                             <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
@@ -466,7 +466,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">Tên ngân hàng (VD: Vietcombank, MB Bank)</label>
                                     <input 
                                         type="text" 
-                                        className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                         value={bankName}
                                         onChange={e => setBankName(e.target.value)}
                                         placeholder="Tên ngân hàng chi nhánh..."
@@ -476,7 +476,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">Tên chủ tài khoản</label>
                                     <input 
                                         type="text" 
-                                        className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                         value={accountName}
                                         onChange={e => setAccountName(e.target.value.toUpperCase())}
                                         placeholder="NGUYEN VAN A"
@@ -486,7 +486,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">Số tài khoản</label>
                                     <input 
                                         type="text" 
-                                        className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                         value={accountNumber}
                                         onChange={e => setAccountNumber(e.target.value)}
                                         placeholder="Số tài khoản..."
@@ -495,7 +495,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                                 <button 
                                     onClick={handleSaveBankInfo}
                                     disabled={isSavingBank}
-                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                    className="w-full bg-[#00AFA9] hover:bg-[#009690] text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
                                 >
                                     {isSavingBank && <Loader2 size={16} className="animate-spin" />}
                                     Lưu thông tin

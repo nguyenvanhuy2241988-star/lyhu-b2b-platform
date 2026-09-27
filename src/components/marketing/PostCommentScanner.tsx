@@ -214,14 +214,14 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
 
     return (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-600">
+                <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-[#00AFA9]">
                     <div>
                         <h2 className="text-lg font-bold text-white flex items-center gap-2">
                             🎯 Quét Comment Bài Viết
                         </h2>
-                        <p className="text-blue-100 text-xs mt-0.5">Lọc số tham gia MiniGame, sự kiện, chương trình</p>
+                        <p className="text-teal-100 text-xs mt-0.5">Lọc số tham gia MiniGame, sự kiện, chương trình</p>
                     </div>
                     <button onClick={onClose} className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition">
                         <X className="w-5 h-5" />
@@ -236,7 +236,7 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                             <label className="text-xs font-medium text-slate-600">Chọn bài viết *</label>
                             <button
                                 onClick={() => setUseManual(!useManual)}
-                                className="text-xs text-blue-600 hover:underline"
+                                className="text-xs text-[#00AFA9] hover:underline"
                             >
                                 {useManual ? '← Chọn từ danh sách' : 'Nhập Post ID thủ công →'}
                             </button>
@@ -247,17 +247,17 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                                 value={manualPostId}
                                 onChange={e => setManualPostId(e.target.value)}
                                 placeholder="Nhập Post ID số (VD: 1199280844074453_940050756811891)"
-                                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                             />
                         ) : loadingPosts ? (
                             <div className="flex items-center gap-2 text-sm text-slate-400 py-2">
-                                <Loader2 className="w-4 h-4 animate-spin" /> Đang tải bài viết...
+                                <Loader2 className="w-4 h-4 animate-spin text-[#00AFA9]" /> Đang tải bài viết...
                             </div>
                         ) : posts.length > 0 ? (
                             <select
                                 value={selectedPostId}
                                 onChange={e => setSelectedPostId(e.target.value)}
-                                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9] bg-white"
                             >
                                 {posts.map(p => {
                                     const date = new Date(p.created_time).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
@@ -282,7 +282,7 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                                 type="datetime-local"
                                 value={deadline}
                                 onChange={e => applyDeadline(e.target.value)}
-                                className="w-full px-2 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-2 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                             />
                         </div>
                         <div>
@@ -292,7 +292,7 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                                 value={targetNumber}
                                 onChange={e => setTargetNumber(e.target.value.replace(/\D/g, ''))}
                                 placeholder="VD: 368"
-                                className="w-full px-2 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-2 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                             />
                         </div>
                         <div>
@@ -300,7 +300,7 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                             <select
                                 value={digitCount}
                                 onChange={e => setDigitCount(Number(e.target.value))}
-                                className="w-full px-2 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-2 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                             >
                                 <option value={2}>2 chữ số</option>
                                 <option value={3}>3 chữ số</option>
@@ -315,7 +315,7 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                         <button
                             onClick={handleScan}
                             disabled={loading || (!selectedPostId && !manualPostId.trim())}
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center gap-2 bg-[#00AFA9] hover:bg-[#009690] text-white px-5 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                         >
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                             {loading ? 'Đang quét...' : 'Quét Comment'}
@@ -324,7 +324,7 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                         {filtered.length > 0 && (
                             <button
                                 onClick={downloadCSV}
-                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
                             >
                                 <Download className="w-4 h-4" />
                                 Tải CSV ({displayData.length})
@@ -334,7 +334,7 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                         {totalScanned > 0 && (
                             <div className="flex items-center gap-4 text-xs text-slate-500 ml-auto">
                                 <span>📄 Tổng: <strong className="text-slate-700">{totalScanned}</strong></span>
-                                <span>🔢 Có số: <strong className="text-blue-700">{comments.length}</strong></span>
+                                <span>🔢 Có số: <strong className="text-[#00AFA9]">{comments.length}</strong></span>
                                 <span>✅ Hợp lệ: <strong className="text-emerald-700">{filtered.length}</strong></span>
                             </div>
                         )}
@@ -399,13 +399,13 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                                                 </td>
                                             )}
                                             <td className="px-4 py-2.5 text-center">
-                                                <a href={`https://facebook.com/${c.id}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 transition" title="Xem comment trên Facebook">
+                                                <a href={`https://facebook.com/${c.id}`} target="_blank" rel="noopener noreferrer" className="text-[#00AFA9] hover:text-[#009690] transition" title="Xem comment trên Facebook">
                                                     <ExternalLink className="w-3.5 h-3.5 inline" />
                                                 </a>
                                             </td>
                                             <td className="px-4 py-2.5 text-center">
                                                 <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold ${
-                                                    isWinner ? 'bg-yellow-200 text-yellow-800' : 'bg-blue-100 text-blue-700'
+                                                    isWinner ? 'bg-yellow-200 text-yellow-800' : 'bg-teal-50 text-[#00AFA9]'
                                                 }`}>
                                                     {c.number}
                                                 </span>
@@ -440,7 +440,7 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
 
                 {/* Top Winners Summary */}
                 {targetNumber && ranking.length > 0 && (
-                    <div className="px-6 py-3 border-t border-slate-200 bg-gradient-to-r from-yellow-50 to-amber-50">
+                    <div className="px-6 py-3 border-t border-slate-200 bg-amber-50">
                         <div className="flex items-center gap-2 mb-2">
                             <Trophy className="w-4 h-4 text-amber-600" />
                             <span className="text-sm font-bold text-slate-800">Top 3 gần số {targetNumber} nhất:</span>
@@ -452,10 +452,10 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                                 return (
                                     <div key={c.id} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-amber-200 text-sm">
                                         <span>{medals[i]}</span>
-                                        <a href={`https://facebook.com/${c.id}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                                        <a href={`https://facebook.com/${c.id}`} target="_blank" rel="noopener noreferrer" className="text-[#00AFA9] hover:underline">
                                             <ExternalLink className="w-3 h-3 inline mr-1" />Xem
                                         </a>
-                                        <span className="text-blue-600 font-bold">{c.number}</span>
+                                        <span className="text-[#00AFA9] font-bold">{c.number}</span>
                                         <span className="text-xs text-slate-400">(lệch {diff})</span>
                                     </div>
                                 );

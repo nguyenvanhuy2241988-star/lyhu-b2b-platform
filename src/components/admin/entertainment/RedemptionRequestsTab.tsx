@@ -106,7 +106,7 @@ export const RedemptionRequestsTab = () => {
                                         </td>
                                         <td className="px-4 py-3 font-medium text-slate-700">
                                             <div className="flex items-center gap-2">
-                                                <Gift className="w-4 h-4 text-pink-500" />
+                                                <Gift className="w-4 h-4 text-[#00AFA9]" />
                                                 {req.reward?.name || 'Unknown Item'}
                                             </div>
                                         </td>

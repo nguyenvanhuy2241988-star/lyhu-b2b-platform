@@ -205,8 +205,8 @@ export const CaroOnlineGame = ({ currentUser, roomId, onExit }: CaroOnlineGamePr
         <div className="flex flex-col items-center animate-in fade-in">
             {/* Header / StatusBar */}
             <div className="flex items-center justify-between w-full max-w-3xl mb-4 px-4">
-                <div className={`flex items-center gap-3 px-4 py-2 rounded-xl border-2 transition-all ${isMyTurn ? 'border-teal-500 bg-teal-50 shadow-md transform scale-105' : 'border-transparent opacity-60'}`}>
-                    <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center font-black text-teal-600 border border-teal-200">
+                <div className={`flex items-center gap-3 px-4 py-2 rounded-xl border-2 transition-all ${isMyTurn ? 'border-[#00AFA9] bg-teal-50 shadow-sm transform scale-105' : 'border-transparent opacity-60'}`}>
+                    <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center font-black text-[#00AFA9] border border-teal-100">
                         {currentUser?.full_name?.charAt(0)}
                     </div>
                     <div>
@@ -233,13 +233,13 @@ export const CaroOnlineGame = ({ currentUser, roomId, onExit }: CaroOnlineGamePr
 
             {/* Status Message */}
             {roomState.status === 'WAITING' && (
-                <div className="mb-6 px-6 py-3 bg-indigo-50 text-indigo-700 rounded-full flex items-center gap-2 animate-pulse font-bold">
+                <div className="mb-6 px-6 py-3 bg-teal-50 text-[#00AFA9] rounded-full flex items-center gap-2 animate-pulse font-bold">
                     <User className="w-5 h-5" /> Đang chờ đối thủ tham gia...
                 </div>
             )}
 
             {/* Board */}
-            <div className="bg-[#f0d9b5] p-2 rounded shadow-xl border-4 border-[#b58863] overflow-hidden relative">
+            <div className="bg-[#f0d9b5] p-2 rounded border-4 border-[#b58863] overflow-hidden relative">
                 {/* Board Overlay if Waiting */}
                 {roomState.status === 'WAITING' && (
                     <div className="absolute inset-0 bg-black/10 z-10 flex items-center justify-center backdrop-blur-[1px]">
@@ -267,7 +267,7 @@ export const CaroOnlineGame = ({ currentUser, roomId, onExit }: CaroOnlineGamePr
                                     // Disable if not playing, not my turn, or taken
                                     disabled={cell !== null || !!winner || roomState.status !== 'PLAYING' || !isMyTurn}
                                 >
-                                    {cell === 'X' && <span className="text-teal-600 drop-shadow-sm">X</span>}
+                                    {cell === 'X' && <span className="text-[#00AFA9] drop-shadow-sm">X</span>}
                                     {cell === 'O' && <span className="text-red-500 drop-shadow-sm">O</span>}
                                 </button>
                             );
@@ -279,7 +279,7 @@ export const CaroOnlineGame = ({ currentUser, roomId, onExit }: CaroOnlineGamePr
             {/* Game Over Modal */}
             {winner && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full transform scale-110">
+                    <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center max-w-sm w-full transform scale-110">
                         {winner === mySymbol ? (
                             <>
                                 <Trophy className="w-20 h-20 text-yellow-400 mx-auto mb-4 animate-bounce" />
@@ -298,7 +298,7 @@ export const CaroOnlineGame = ({ currentUser, roomId, onExit }: CaroOnlineGamePr
 
                         <button
                             onClick={onExit}
-                            className="w-full py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-all flex items-center justify-center gap-2"
+                            className="w-full py-3 bg-[#00AFA9] text-white rounded-xl font-bold hover:bg-[#009690] transition-all flex items-center justify-center gap-2"
                         >
                             <LogOut className="w-5 h-5" /> Rời phòng
                         </button>

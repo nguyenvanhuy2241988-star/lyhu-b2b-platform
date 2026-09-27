@@ -99,12 +99,12 @@ export default function DealProducts({ dealId, items, onItemsChange }: DealProdu
         <div className="bg-white rounded-xl border shadow-sm p-4">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                    <Package className="w-5 h-5 text-indigo-600" />
+                    <Package className="w-5 h-5 text-[#00AFA9]" />
                     Sản phẩm ({items.length})
                 </h3>
                 <button
                     onClick={() => setIsAdding(!isAdding)}
-                    className="text-sm text-indigo-600 font-medium hover:underline flex items-center gap-1"
+                    className="text-sm text-[#00AFA9] font-medium hover:underline flex items-center gap-1"
                 >
                     <Plus className="w-4 h-4" />
                     Thêm sản phẩm
@@ -113,13 +113,13 @@ export default function DealProducts({ dealId, items, onItemsChange }: DealProdu
 
             {/* Add Product Area */}
             {isAdding && (
-                <div className="mb-4 p-4 bg-slate-50 rounded-lg border border-indigo-100">
+                <div className="mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
                     <div className="relative mb-3">
                         <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                         <input
                             type="text"
                             placeholder="Tìm tên hoặc SKU sản phẩm..."
-                            className="w-full pl-9 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full pl-9 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             autoFocus
@@ -150,7 +150,7 @@ export default function DealProducts({ dealId, items, onItemsChange }: DealProdu
                                         {inList ? (
                                             <span className="text-xs font-semibold text-green-600">Đã chọn</span>
                                         ) : (
-                                            <Plus className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+                                            <Plus className="w-4 h-4 text-slate-400 group-hover:text-[#00AFA9]" />
                                         )}
                                     </button>
                                 );
@@ -211,7 +211,7 @@ export default function DealProducts({ dealId, items, onItemsChange }: DealProdu
 
                     <div className="pt-3 border-t flex items-center justify-between">
                         <span className="text-sm font-medium text-slate-600">Tổng giá trị:</span>
-                        <span className="text-lg font-bold text-indigo-600">{formatPrice(totalValue)}</span>
+                        <span className="text-lg font-bold text-[#00AFA9]">{formatPrice(totalValue)}</span>
                     </div>
                 </div>
             )}

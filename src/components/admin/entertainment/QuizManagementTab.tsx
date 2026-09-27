@@ -131,11 +131,11 @@ export const QuizManagementTab = () => {
         <div className="space-y-6 animate-in fade-in">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <HelpCircle className="w-5 h-5 text-indigo-500" /> Quản Lý Đuổi Hình Bắt Chữ
+                    <HelpCircle className="w-5 h-5 text-[#00AFA9]" /> Quản Lý Đuổi Hình Bắt Chữ
                 </h3>
                 <button
                     onClick={() => handleOpenModal()}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm shadow-sm"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] font-medium text-sm shadow-sm"
                 >
                     <Plus className="w-4 h-4" /> Thêm Câu Hỏi
                 </button>
@@ -174,7 +174,7 @@ export const QuizManagementTab = () => {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-in zoom-in duration-200 h-[90vh] flex flex-col">
+                    <div className="bg-white rounded-xl border border-slate-200 w-full max-w-lg animate-in zoom-in duration-200 h-[90vh] flex flex-col">
                         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-xl shrink-0">
                             <h3 className="font-bold text-slate-800">{editingItem ? 'Sửa Câu Hỏi' : 'Thêm Câu Hỏi'}</h3>
                             <button onClick={() => setIsModalOpen(false)}><X className="w-5 h-5 text-slate-400 hover:text-slate-600" /></button>
@@ -182,36 +182,36 @@ export const QuizManagementTab = () => {
                         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Câu hỏi</label>
-                                <input required type="text" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                <input required type="text" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     value={formData.question} onChange={e => setFormData({ ...formData, question: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Link Ảnh (URL)</label>
-                                <input type="text" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                <input type="text" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     value={formData.image_url || ''} onChange={e => setFormData({ ...formData, image_url: e.target.value })} />
                                 {formData.image_url && <img src={formData.image_url} alt="preview" className="h-20 w-auto mt-2 rounded border border-slate-200" />}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Đáp án đúng</label>
-                                <input required type="text" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                <input required type="text" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none"
                                     value={formData.correct_answer} onChange={e => setFormData({ ...formData, correct_answer: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Các lựa chọn (JSON Array)</label>
-                                <textarea required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-xs" rows={3}
+                                <textarea required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none font-mono text-xs" rows={3}
                                     value={formData.options as string} onChange={e => setFormData({ ...formData, options: e.target.value })}
                                     placeholder='["Đáp án A", "Đáp án B", "Đáp án C", "Đáp án D"]' />
                                 <p className="text-[10px] text-slate-400 mt-1">Nhập đúng định dạng JSON Array. Ví dụ: ["Cam", "Táo", "Xoài", "Mận"]</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Giải thích (Hiện sau khi trả lời)</label>
-                                <textarea className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" rows={2}
+                                <textarea className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none" rows={2}
                                     value={formData.explanation || ''} onChange={e => setFormData({ ...formData, explanation: e.target.value })} />
                             </div>
                         </form>
                         <div className="p-4 border-t border-slate-100 flex gap-3 shrink-0 bg-white rounded-b-xl">
                             <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 border border-slate-300 rounded-lg font-medium hover:bg-slate-50">Hủy</button>
-                            <button onClick={handleSubmit} className="flex-1 py-2.5 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700">Lưu</button>
+                            <button onClick={handleSubmit} className="flex-1 py-2.5 bg-[#00AFA9] text-white rounded-lg font-bold hover:bg-[#009690]">Lưu</button>
                         </div>
                     </div>
                 </div>

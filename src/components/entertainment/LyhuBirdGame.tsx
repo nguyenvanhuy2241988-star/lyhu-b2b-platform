@@ -278,7 +278,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
                     ref={canvasRef}
                     width={400}
                     height={500}
-                    className="border-4 border-slate-800 rounded-lg shadow-xl bg-teal-200"
+                    className="border-4 border-slate-800 rounded-lg bg-teal-200"
                 />
 
                 {/* MENU SCREEN */}
@@ -289,7 +289,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
                         <div className="flex gap-2">
                             <button
                                 onClick={(e) => { e.stopPropagation(); setDifficulty('EASY'); setGameState('START'); }}
-                                className="px-5 py-3 bg-teal-500 hover:bg-teal-600 rounded-xl font-bold transition-transform hover:scale-105"
+                                className="px-5 py-3 bg-[#00AFA9] hover:bg-[#009690] rounded-xl font-bold transition-transform hover:scale-105"
                             >
                                 DỄ
                             </button>
@@ -340,7 +340,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
                         <div className="flex gap-3">
                             <button
                                 onClick={(e) => { e.stopPropagation(); resetGame(); }}
-                                className="flex items-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-full font-bold shadow-lg transition-transform hover:scale-105"
+                                className="flex items-center gap-2 px-6 py-3 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-full font-bold transition-transform hover:scale-105"
                             >
                                 <RotateCcw className="w-5 h-5" /> Chơi Lại
                             </button>

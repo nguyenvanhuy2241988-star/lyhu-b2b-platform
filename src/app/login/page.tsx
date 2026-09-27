@@ -141,14 +141,14 @@ function LoginPageContent() {
                                     priority
                                 />
                             ) : (
-                                <div className="h-12 w-12 rounded-full bg-primary-500 text-white grid place-items-center font-bold text-xl">
+                                <div className="h-12 w-12 rounded-full bg-[#00AFA9] text-white grid place-items-center font-bold text-xl">
                                     LY
                                 </div>
                             )}
                         </div>
                         <div>
                             <div className="font-bold text-xl text-slate-800 leading-6">LYHU B2B Platform</div>
-                            <div className="text-[12px] font-medium text-primary-600 uppercase tracking-wider mt-0.5">
+                            <div className="text-[12px] font-medium text-[#00AFA9] uppercase tracking-wider mt-0.5">
                                 KẾT NỐI CHÂN THÀNH • HỢP TÁC BỀN VỮNG
                             </div>
                         </div>
@@ -184,7 +184,7 @@ function LoginPageContent() {
                         <div>
                             <label className="block text-sm font-medium mb-1">Email</label>
                             <input
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary-200"
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="you@company.com"
@@ -196,7 +196,7 @@ function LoginPageContent() {
                             <label className="block text-sm font-medium mb-1">Mật khẩu</label>
                             <input
                                 type="password"
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary-200"
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
@@ -207,7 +207,7 @@ function LoginPageContent() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full rounded-xl bg-primary-600 text-white py-3 font-bold shadow-lg shadow-primary-100 hover:bg-primary-700 hover:shadow-primary-200 transition-all active:scale-[0.98] disabled:opacity-60"
+                            className="w-full rounded-xl bg-[#00AFA9] text-white py-3 font-bold hover:bg-[#009690] transition-all active:scale-[0.98] disabled:opacity-60"
                         >
                             {loading ? "ĐANG XỬ LÝ..." : "ĐĂNG NHẬP"}
                         </button>

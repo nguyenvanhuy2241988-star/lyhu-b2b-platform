@@ -201,7 +201,7 @@ export const TaskEditModal = ({
 
     return (
         <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-xl border border-slate-200 max-w-lg w-full animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-100 flex-shrink-0">
                     <h3 className="font-semibold text-lg text-slate-900">Chi tiết công việc</h3>
@@ -218,7 +218,7 @@ export const TaskEditModal = ({
                         <input
                             type="text"
                             required
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] font-medium"
                             value={formData.title}
                             onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
                         />
@@ -229,7 +229,7 @@ export const TaskEditModal = ({
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Trạng thái</label>
                             <select
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white"
                                 value={formData.status}
                                 onChange={e => setFormData(prev => ({ ...prev, status: e.target.value as TaskStatus }))}
                             >
@@ -247,7 +247,7 @@ export const TaskEditModal = ({
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Độ ưu tiên</label>
                             <select
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white"
                                 value={formData.priority}
                                 onChange={e => setFormData(prev => ({ ...prev, priority: e.target.value as TaskPriority }))}
                             >
@@ -264,7 +264,7 @@ export const TaskEditModal = ({
                         <label className="block text-sm font-medium text-slate-700 mb-1">Hạn hoàn thành</label>
                         <input
                             type="date"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                             value={formData.dueDate}
                             onChange={e => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
                         />
@@ -282,7 +282,7 @@ export const TaskEditModal = ({
                                     <label key={p.id} className="flex items-center gap-2 text-sm p-1 hover:bg-white rounded cursor-pointer transition-colors">
                                         <input
                                             type="checkbox"
-                                            className="w-4 h-4 rounded text-primary-600 focus:ring-primary-500"
+                                            className="w-4 h-4 rounded text-[#00AFA9] focus:ring-[#00AFA9]"
                                             checked={formData.assigneeIds.includes(p.id) || formData.assignedTo === p.id}
                                             onChange={(e) => {
                                                 const checked = e.target.checked;
@@ -323,7 +323,7 @@ export const TaskEditModal = ({
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Mô tả / Ghi chú</label>
                         <textarea
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[100px]"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] min-h-[100px]"
                             placeholder="Chi tiết công việc..."
                             value={formData.description}
                             onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
@@ -375,7 +375,7 @@ export const TaskEditModal = ({
                                             <label className="block text-sm font-medium text-slate-700 mb-1">Tên khách hàng</label>
                                             <input
                                                 type="text"
-                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                                 value={formData.customerName}
                                                 onChange={e => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
                                             />
@@ -384,7 +384,7 @@ export const TaskEditModal = ({
                                             <label className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại</label>
                                             <input
                                                 type="text"
-                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                                 value={formData.phone}
                                                 onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                                             />
@@ -490,7 +490,7 @@ export const TaskEditModal = ({
                         </button>
                         <button
                             onClick={handleSubmit}
-                            className="px-6 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm transition-all hover:shadow-md"
+                            className="px-6 py-2 text-sm font-medium text-white bg-[#00AFA9] hover:bg-[#009690] rounded-lg shadow-sm transition-all"
                         >
                             Lưu thay đổi
                         </button>

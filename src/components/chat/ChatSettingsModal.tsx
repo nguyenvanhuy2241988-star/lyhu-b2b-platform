@@ -99,7 +99,7 @@ export function ChatSettingsModal({ conversation, currentUser, users, onClose }:
 
     return (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-xl border border-slate-200 w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
                     <h3 className="font-bold text-lg text-slate-800">Cài đặt nhóm</h3>
@@ -118,14 +118,14 @@ export function ChatSettingsModal({ conversation, currentUser, users, onClose }:
                                     <input
                                         value={newName}
                                         onChange={(e) => setNewName(e.target.value)}
-                                        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                                        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-[#00AFA9]"
                                         placeholder="Nhập tên nhóm..."
                                         autoFocus
                                     />
                                     <button
                                         onClick={handleRename}
                                         disabled={isLoading || !newName.trim()}
-                                        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                        className="p-2 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] disabled:opacity-50"
                                     >
                                         <Check className="w-4 h-4" />
                                     </button>
@@ -139,7 +139,7 @@ export function ChatSettingsModal({ conversation, currentUser, users, onClose }:
                             ) : (
                                 <div className="flex-1 flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
                                     <span className="font-medium text-slate-800">{conversation.name || "Chưa đặt tên"}</span>
-                                    <button onClick={() => setIsRenaming(true)} className="text-blue-600 hover:text-blue-800">
+                                    <button onClick={() => setIsRenaming(true)} className="text-[#00AFA9] hover:text-[#009690]">
                                         <Edit2 className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -152,7 +152,7 @@ export function ChatSettingsModal({ conversation, currentUser, users, onClose }:
                         <div className="flex justify-between items-center mb-2">
                             <label className="block text-xs font-bold text-slate-500 uppercase">Thành viên ({conversation.internal_participants?.length || 0})</label>
                             {!isAdding && (
-                                <button onClick={() => setIsAdding(true)} className="flex items-center gap-1 text-xs text-blue-600 font-medium hover:underline">
+                                <button onClick={() => setIsAdding(true)} className="flex items-center gap-1 text-xs text-[#00AFA9] font-medium hover:underline">
                                     <UserPlus className="w-3 h-3" /> Thêm
                                 </button>
                             )}
@@ -160,7 +160,7 @@ export function ChatSettingsModal({ conversation, currentUser, users, onClose }:
 
                         {/* Add Member UI */}
                         {isAdding && (
-                            <div className="mb-4 p-3 bg-blue-50/50 border border-blue-100 rounded-lg animate-in slide-in-from-top-2">
+                            <div className="mb-4 p-3 bg-teal-50/50 border border-teal-100 rounded-lg animate-in slide-in-from-top-2">
                                 <div className="flex gap-2 mb-2">
                                     <input
                                         value={searchUser}
@@ -177,9 +177,9 @@ export function ChatSettingsModal({ conversation, currentUser, users, onClose }:
                                         <div
                                             key={u.id}
                                             onClick={() => toggleSelectUser(u.id)}
-                                            className={`flex items-center gap-2 p-2 rounded cursor-pointer ${selectedToAdd.includes(u.id) ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-50'}`}
+                                            className={`flex items-center gap-2 p-2 rounded cursor-pointer ${selectedToAdd.includes(u.id) ? 'bg-teal-50 text-[#00AFA9]' : 'hover:bg-slate-50'}`}
                                         >
-                                            <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedToAdd.includes(u.id) ? 'bg-blue-500 border-blue-500' : 'border-slate-300'}`}>
+                                            <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedToAdd.includes(u.id) ? 'bg-[#00AFA9] border-[#00AFA9]' : 'border-slate-300'}`}>
                                                 {selectedToAdd.includes(u.id) && <Check className="w-3 h-3 text-white" />}
                                             </div>
                                             <span className="text-xs font-medium">{u.full_name || u.email}</span>
@@ -189,7 +189,7 @@ export function ChatSettingsModal({ conversation, currentUser, users, onClose }:
                                 <button
                                     onClick={handleAddMembers}
                                     disabled={selectedToAdd.length === 0 || isLoading}
-                                    className="w-full py-1.5 bg-blue-600 text-white text-sm rounded font-medium hover:bg-blue-700 disabled:opacity-50"
+                                    className="w-full py-1.5 bg-[#00AFA9] text-white text-sm rounded font-medium hover:bg-[#009690] disabled:opacity-50"
                                 >
                                     Thêm {selectedToAdd.length} thành viên
                                 </button>

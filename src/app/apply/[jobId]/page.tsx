@@ -29,8 +29,8 @@ type CompanySettings = {
 
 // LYHU Brand Colors
 const BRAND = {
-    teal: '#0d9488',      // primary-600 (teal-600)
-    tealDark: '#0f766e',  // primary-700
+    teal: '#00AFA9',      // LYHU flat teal
+    tealDark: '#009690',  // LYHU teal hover
     tealLight: '#ccfbf1',  // teal-100
     tealBg: '#f0fdfa',    // teal-50
 };
@@ -327,7 +327,7 @@ export default function ApplyPage() {
                                 )}
 
                                 {!showFullCompanyInfo && (
-                                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent" />
+                                    <div className="absolute inset-x-0 bottom-0 h-16 bg-white/90" />
                                 )}
                             </div>
 
@@ -363,7 +363,7 @@ export default function ApplyPage() {
                                     <input
                                         type="text"
                                         required
-                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-teal-500 outline-none text-sm text-slate-900 placeholder:text-slate-400"
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#00AFA9] focus:ring-1 focus:ring-[#00AFA9] outline-none text-sm text-slate-900 placeholder:text-slate-400"
                                         placeholder="Ví dụ: Nguyễn Văn A"
                                         value={formData.full_name}
                                         onChange={e => setFormData({ ...formData, full_name: e.target.value })}
@@ -377,7 +377,7 @@ export default function ApplyPage() {
                                         type="tel"
                                         required
                                         pattern="[0-9]{10,11}"
-                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-teal-500 outline-none text-sm text-slate-900 placeholder:text-slate-400"
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#00AFA9] focus:ring-1 focus:ring-[#00AFA9] outline-none text-sm text-slate-900 placeholder:text-slate-400"
                                         placeholder="Ví dụ: 0912..."
                                         value={formData.phone}
                                         onChange={e => setFormData({ ...formData, phone: e.target.value })}
@@ -389,7 +389,7 @@ export default function ApplyPage() {
                                     <label className="text-xs font-semibold text-slate-600">Email (nếu có)</label>
                                     <input
                                         type="email"
-                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-teal-500 outline-none text-sm text-slate-900 placeholder:text-slate-400"
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-[#00AFA9] focus:ring-1 focus:ring-[#00AFA9] outline-none text-sm text-slate-900 placeholder:text-slate-400"
                                         placeholder="email@example.com"
                                         value={formData.email}
                                         onChange={e => setFormData({ ...formData, email: e.target.value })}
@@ -400,7 +400,7 @@ export default function ApplyPage() {
                                 <div className="space-y-1">
                                     <label className="text-xs font-semibold text-slate-600">CV đính kèm (PDF/Ảnh)</label>
                                     <div
-                                        className={`border-2 border-dashed rounded-lg p-5 text-center relative ${selectedFile ? 'border-teal-400 bg-teal-50/30' : 'border-slate-200 hover:border-slate-300'}`}
+                                        className={`border-2 border-dashed rounded-lg p-5 text-center relative ${selectedFile ? 'border-[#00AFA9] bg-teal-50/30' : 'border-slate-200 hover:border-slate-300'}`}
                                     >
                                         <input
                                             type="file"
@@ -492,7 +492,7 @@ export default function ApplyPage() {
                     <img
                         src={company.culture_images[lightboxIndex]}
                         alt={`Preview ${lightboxIndex + 1}`}
-                        className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                        className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg border border-slate-700"
                         onClick={(e) => e.stopPropagation()}
                     />
 

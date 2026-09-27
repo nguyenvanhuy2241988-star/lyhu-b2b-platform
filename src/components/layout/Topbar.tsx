@@ -90,7 +90,7 @@ export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps
 
                     {/* Dropdown Menu */}
                     {isProfileOpen && (
-                        <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 py-2.5 z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                        <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl py-2.5 z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                             <div className="px-4 py-3 border-b border-slate-50 mb-1">
                                 <p className="text-sm font-bold text-slate-900 truncate">{userName}</p>
                                 <p className="text-xs text-slate-500 truncate mt-0.5">{userEmail}</p>

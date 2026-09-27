@@ -71,9 +71,9 @@ export default function B2bCodesManager() {
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mt-6">
-            <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-indigo-50/50">
+            <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-teal-50/50">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex flex-col items-center justify-center text-indigo-600">
+                    <div className="w-10 h-10 bg-[#00AFA9]/10 rounded-lg flex flex-col items-center justify-center text-[#00AFA9]">
                         <KeyRound className="w-5 h-5" />
                     </div>
                     <div>
@@ -86,7 +86,7 @@ export default function B2bCodesManager() {
                     <div className="relative">
                         <input 
                             type="text" 
-                            className="pl-3 pr-10 py-2 border border-slate-300 rounded-lg text-sm w-48 uppercase font-bold text-indigo-600 focus:ring-2 focus:ring-indigo-500" 
+                            className="pl-3 pr-10 py-2 border border-slate-300 rounded-lg text-sm w-48 uppercase font-bold text-[#00AFA9] focus:ring-2 focus:ring-[#00AFA9]" 
                             placeholder="Mã: VIP-HANOI..."
                             value={newCode}
                             onChange={e => setNewCode(e.target.value.toUpperCase())}
@@ -94,7 +94,7 @@ export default function B2bCodesManager() {
                     </div>
                     <button 
                         onClick={handleCreateCode}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors"
+                        className="bg-[#00AFA9] hover:bg-[#009690] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors"
                     >
                         <Plus className="w-4 h-4"/> Tạo mã
                     </button>
@@ -122,7 +122,7 @@ export default function B2bCodesManager() {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
                                             <span className="font-bold text-slate-800 tracking-wider bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">{c.code}</span>
-                                            <button onClick={() => copyToClipboard(c.code)} className="text-slate-400 hover:text-indigo-600 transition-colors">
+                                            <button onClick={() => copyToClipboard(c.code)} className="text-slate-400 hover:text-[#00AFA9] transition-colors">
                                                 <Copy className="w-4 h-4" />
                                             </button>
                                         </div>

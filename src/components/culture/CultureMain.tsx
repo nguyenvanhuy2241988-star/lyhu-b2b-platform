@@ -71,7 +71,7 @@ export default function CultureMain({ activeTab }: { activeTab: string }) {
                                                 ref={provided.innerRef}
                                                 {...provided.draggableProps}
                                                 className={`relative group rounded-3xl transition-all ${
-                                                    snapshot.isDragging ? 'shadow-xl ring-2 ring-teal-500 z-50 bg-white' : ''
+                                                    snapshot.isDragging ? 'border border-[#00AFA9] ring-2 ring-[#00AFA9] z-50 bg-white' : ''
                                                 }`}
                                             >
                                                 {/* DND Drag Handle */}
@@ -108,15 +108,15 @@ export default function CultureMain({ activeTab }: { activeTab: string }) {
                 {isEditMode && (
                     <div className="mt-12 p-8 border-2 border-dashed border-slate-300 rounded-3xl bg-slate-50 flex flex-col items-center justify-center text-center">
                         <div className="w-12 h-12 bg-white rounded-full shadow-sm border border-slate-200 flex items-center justify-center mb-4">
-                            <Plus className="w-6 h-6 text-teal-600" />
+                            <Plus className="w-6 h-6 text-[#00AFA9]" />
                         </div>
                         <h4 className="font-bold text-slate-800 text-lg mb-2">Thêm Mảng Tổ Chức Trực Quan</h4>
                         <p className="text-slate-500 text-sm mb-6 max-w-sm">Chọn một loại bố cục mẫu dưới đây để nhúng thả thêm nội dung mới vào bộ cẩm nang.</p>
                         <div className="flex flex-wrap gap-3 justify-center">
-                            <button onClick={() => addBlock('HERO_BANNER')} className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:border-teal-400 hover:text-teal-700 transition">Banner Tiêu Đề Cỡ Lớn</button>
-                            <button onClick={() => addBlock('SPLIT_TEXT')} className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:border-teal-400 hover:text-teal-700 transition">Khối Text & Ảnh Song Song</button>
-                            <button onClick={() => addBlock('GRID_NUMBERS')} className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:border-teal-400 hover:text-teal-700 transition">Lưới Block Gắn Icon To</button>
-                            <button onClick={() => addBlock('QUOTE')} className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:border-teal-400 hover:text-teal-700 transition">Câu Trích Dẫn Bay Bổng</button>
+                            <button onClick={() => addBlock('HERO_BANNER')} className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:border-[#00AFA9] hover:text-[#00AFA9] transition">Banner Tiêu Đề Cỡ Lớn</button>
+                            <button onClick={() => addBlock('SPLIT_TEXT')} className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:border-[#00AFA9] hover:text-[#00AFA9] transition">Khối Text & Ảnh Song Song</button>
+                            <button onClick={() => addBlock('GRID_NUMBERS')} className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:border-[#00AFA9] hover:text-[#00AFA9] transition">Lưới Block Gắn Icon To</button>
+                            <button onClick={() => addBlock('QUOTE')} className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:border-[#00AFA9] hover:text-[#00AFA9] transition">Câu Trích Dẫn Bay Bổng</button>
                         </div>
                     </div>
                 )}

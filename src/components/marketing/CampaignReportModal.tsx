@@ -218,10 +218,10 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                     </button>
                     <div>
                         <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                            <BarChart3 className="w-6 h-6 text-indigo-600" />
+                            <BarChart3 className="w-6 h-6 text-[#00AFA9]" />
                             Phân tích Chuyên sâu (Deep Analytics)
                         </h2>
-                        <p className="text-sm text-slate-500 font-medium">Chiến dịch: <span className="text-indigo-600">{campaignName}</span> | ID: {campaignId}</p>
+                        <p className="text-sm text-slate-500 font-medium">Chiến dịch: <span className="text-[#00AFA9]">{campaignName}</span> | ID: {campaignId}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -230,7 +230,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                         Khoảng thời gian:
                     </label>
                     <select 
-                        className="border border-slate-300 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none bg-white min-w-[150px]"
+                        className="border border-slate-300 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-[#00AFA9] outline-none bg-white min-w-[150px]"
                         value={datePreset}
                         onChange={(e: any) => setDatePreset(e.target.value)}
                     >
@@ -249,7 +249,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
             <div className="flex-1 overflow-auto p-6">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center h-full">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00AFA9] mb-4"></div>
                         <p className="text-slate-500 text-lg font-medium">Đang kéo số liệu & phân tích tệp khách hàng...</p>
                     </div>
                 ) : (
@@ -261,7 +261,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
                                 <div className="px-5 py-4 border-b border-slate-100 bg-slate-50">
                                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                        <ImageIcon className="w-5 h-5 text-indigo-500" />
+                                        <ImageIcon className="w-5 h-5 text-[#00AFA9]" />
                                         Mẫu Quảng Cáo (Creative)
                                     </h3>
                                 </div>
@@ -270,9 +270,9 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                                         <div className="relative mb-4">
                                             <img src={adImageUrl} alt="Ad Creative" className="w-full h-48 object-cover rounded-lg border border-slate-200 shadow-sm" />
                                             {isVideo && (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
-                                                    <PlayCircle className="w-12 h-12 text-white opacity-90 shadow-sm" />
-                                                </div>
+                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
+                                                     <PlayCircle className="w-12 h-12 text-white opacity-90 shadow-sm" />
+                                                 </div>
                                             )}
                                         </div>
                                     ) : (
@@ -291,7 +291,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
                                 <div className="px-5 py-4 border-b border-slate-100 bg-slate-50">
                                     <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                        <Target className="w-5 h-5 text-indigo-500" />
+                                        <Target className="w-5 h-5 text-[#00AFA9]" />
                                         Nhắm Mục Tiêu (Targeting)
                                     </h3>
                                 </div>
@@ -311,7 +311,7 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3">
-                                        <div className="p-2 bg-purple-50 rounded-lg text-purple-600"><Users className="w-5 h-5" /></div>
+                                        <div className="p-2 bg-teal-50 rounded-lg text-[#00AFA9]"><Users className="w-5 h-5" /></div>
                                         <div>
                                             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Độ tuổi</p>
                                             <p className="text-sm font-medium text-slate-800 mt-1">{ageMin} - {ageMax} tuổi</p>
@@ -333,37 +333,37 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                             </div>
 
                             {/* COL 3: Main KPIs */}
-                            <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-xl shadow-lg overflow-hidden flex flex-col text-white">
+                            <div className="bg-[#00AFA9] rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col text-white">
                                 <div className="px-5 py-4 border-b border-white/10 bg-black/10">
                                     <h3 className="font-bold flex items-center gap-2">
-                                        <DollarSign className="w-5 h-5 text-indigo-200" />
+                                        <DollarSign className="w-5 h-5 text-teal-100" />
                                         Chỉ Số Hiệu Quả (KPIs)
                                     </h3>
                                 </div>
                                 <div className="p-4 flex-1 grid grid-cols-2 md:grid-cols-3 gap-3">
                                     <div className="bg-black/20 rounded-lg p-3">
-                                        <p className="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold mb-1 truncate">Số tiền tiêu</p>
+                                        <p className="text-[11px] text-teal-100 uppercase tracking-wider font-semibold mb-1 truncate">Số tiền tiêu</p>
                                         <p className="text-lg font-bold">{insights ? formatCurrency(insights.spend) : "0 ₫"}</p>
                                     </div>
                                     <div className="bg-black/20 rounded-lg p-3">
-                                        <p className="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold mb-1 truncate">Số Kết quả</p>
+                                        <p className="text-[11px] text-teal-100 uppercase tracking-wider font-semibold mb-1 truncate">Số Kết quả</p>
                                         <p className="text-lg font-bold text-yellow-300">{new Intl.NumberFormat('vi-VN').format(resultCount)}</p>
                                     </div>
                                     <div className="bg-black/20 rounded-lg p-3">
-                                        <p className="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold mb-1 truncate">Giá / KQ (CPR)</p>
+                                        <p className="text-[11px] text-teal-100 uppercase tracking-wider font-semibold mb-1 truncate">Giá / KQ (CPR)</p>
                                         <p className="text-lg font-bold text-emerald-300">{cpr}</p>
                                     </div>
                                     <div className="bg-black/20 rounded-lg p-3">
-                                        <p className="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold mb-1 truncate">Tiếp cận (Reach)</p>
+                                        <p className="text-[11px] text-teal-100 uppercase tracking-wider font-semibold mb-1 truncate">Tiếp cận (Reach)</p>
                                         <p className="text-lg font-bold">{new Intl.NumberFormat('vi-VN').format(reach)}</p>
                                     </div>
                                     <div className="bg-black/20 rounded-lg p-3">
-                                        <p className="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold mb-1 truncate">Tần suất</p>
+                                        <p className="text-[11px] text-teal-100 uppercase tracking-wider font-semibold mb-1 truncate">Tần suất</p>
                                         <p className="text-lg font-bold">{Number(frequency).toFixed(2)}</p>
                                     </div>
                                     <div className="bg-black/20 rounded-lg p-3">
-                                        <p className="text-[11px] text-indigo-200 uppercase tracking-wider font-semibold mb-1 truncate">Clicks (CTR)</p>
-                                        <p className="text-lg font-bold">{insights ? new Intl.NumberFormat('vi-VN').format(insights.clicks) : 0} <span className="text-xs font-normal text-indigo-200">({insights?.ctr || 0}%)</span></p>
+                                        <p className="text-[11px] text-teal-100 uppercase tracking-wider font-semibold mb-1 truncate">Clicks (CTR)</p>
+                                        <p className="text-lg font-bold">{insights ? new Intl.NumberFormat('vi-VN').format(insights.clicks) : 0} <span className="text-xs font-normal text-teal-100">({insights?.ctr || 0}%)</span></p>
                                     </div>
                                 </div>
                             </div>
@@ -374,13 +374,13 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                             <div className="bg-slate-900 px-6 py-4 flex justify-between items-center">
                                 <h4 className="text-lg font-bold text-white flex items-center gap-2">
-                                    <Bot className="w-6 h-6 text-indigo-400" />
+                                    <Bot className="w-6 h-6 text-[#00AFA9]" />
                                     Hệ Thống Phân Tích & Cố Vấn Bằng AI
                                 </h4>
                                 <button 
                                     onClick={handleAiAnalyze}
                                     disabled={isAnalyzing || !insights}
-                                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 hover:scale-105 active:scale-95"
+                                    className="px-6 py-2.5 bg-[#00AFA9] hover:bg-[#009690] text-white font-semibold rounded-lg shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 hover:scale-105 active:scale-95"
                                 >
                                     {isAnalyzing ? "AI Đang xử lý..." : "Khởi động AI Phân Tích"}
                                 </button>
@@ -389,29 +389,29 @@ export function CampaignReportModal({ campaignId, campaignName, accessToken, onC
                             <div className="p-6 bg-slate-50 min-h-[150px]">
                                 {aiAnalysis ? (
                                     <div className="flex flex-col gap-4">
-                                        <div className="bg-white rounded-xl p-6 shadow-sm border border-indigo-100">
-                                            <article className="prose prose-indigo max-w-none text-slate-800 prose-p:leading-relaxed prose-li:my-1 prose-headings:text-indigo-900">
+                                        <div className="bg-white rounded-xl p-6 shadow-sm border border-teal-100">
+                                            <article className="prose prose-teal max-w-none text-slate-800 prose-p:leading-relaxed prose-li:my-1 prose-headings:text-teal-900">
                                                 <ReactMarkdown>{cleanAiAdvice}</ReactMarkdown>
                                             </article>
                                         </div>
                                         
                                         {suggestedKeywords.length > 0 && (
-                                            <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-5 mt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                            <div className="bg-teal-50 border border-teal-200 rounded-xl p-5 mt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
                                                 <div className="flex-1">
-                                                    <h5 className="font-bold text-indigo-900 flex items-center gap-2 mb-2">
-                                                        <Target className="w-5 h-5" /> Tối ưu Targeting Nhanh
+                                                    <h5 className="font-bold text-teal-900 flex items-center gap-2 mb-2">
+                                                        <Target className="w-5 h-5 text-[#00AFA9]" /> Tối ưu Targeting Nhanh
                                                     </h5>
-                                                    <p className="text-sm text-indigo-700 mb-3">AI đã tìm ra {suggestedKeywords.length} từ khóa B2B tiềm năng. Bạn có muốn áp dụng chúng trực tiếp vào chiến dịch không?</p>
+                                                    <p className="text-sm text-teal-700 mb-3">AI đã tìm ra {suggestedKeywords.length} từ khóa B2B tiềm năng. Bạn có muốn áp dụng chúng trực tiếp vào chiến dịch không?</p>
                                                     <div className="flex flex-wrap gap-2">
                                                         {suggestedKeywords.map((kw: string, i: number) => (
-                                                            <span key={i} className="px-3 py-1 bg-white text-indigo-600 font-semibold text-xs rounded-full border border-indigo-200 shadow-sm">{kw}</span>
+                                                            <span key={i} className="px-3 py-1 bg-white text-[#00AFA9] font-semibold text-xs rounded-full border border-teal-200 shadow-sm">{kw}</span>
                                                         ))}
                                                     </div>
                                                 </div>
                                                 <button 
                                                     onClick={applyTargeting}
                                                     disabled={isApplyingTargeting || !adSet?.id}
-                                                    className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-md transition-all whitespace-nowrap disabled:opacity-50 active:scale-95 flex items-center gap-2"
+                                                    className="px-5 py-3 bg-[#00AFA9] hover:bg-[#009690] text-white font-bold rounded-lg shadow-sm transition-all whitespace-nowrap disabled:opacity-50 active:scale-95 flex items-center gap-2"
                                                 >
                                                     {isApplyingTargeting ? "Đang cập nhật FB..." : "Áp dụng tự động lên Facebook"}
                                                 </button>

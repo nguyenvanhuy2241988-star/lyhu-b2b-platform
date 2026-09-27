@@ -112,16 +112,16 @@ const roles = [
         description: "Chụp ảnh & Quay dựng video",
         href: "/login?role=media_creator",
         icon: Camera,
-        color: "text-pink-600",
-        bg: "bg-pink-50",
+        color: "text-[#00AFA9]",
+        bg: "bg-teal-50",
     },
     {
         title: "CTV",
         description: "Quản lý lead và khách tiềm năng",
         href: "/login?role=ctv",
         icon: UserPlus,
-        color: "text-purple-600",
-        bg: "bg-purple-50",
+        color: "text-[#00AFA9]",
+        bg: "bg-teal-50",
     },
 
     // 4. Nhóm Logistics
@@ -140,8 +140,8 @@ const roles = [
         description: "Đặt hàng và quản lý đơn hàng",
         href: "/login?role=customer",
         icon: Users,
-        color: "text-primary-600",
-        bg: "bg-primary-50",
+        color: "text-[#00AFA9]",
+        bg: "bg-teal-50",
     },
 ];
 
@@ -181,7 +181,7 @@ export default function Home() {
         return (
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-md w-full text-center">
-                    <div className="w-16 h-16 bg-primary-50 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-16 h-16 bg-teal-50 text-[#00AFA9] rounded-full flex items-center justify-center mx-auto mb-4">
                         <ShieldCheck className="w-8 h-8" />
                     </div>
                     <h2 className="text-xl font-bold text-slate-800 mb-2">Cổng Nội Bộ LYHU</h2>
@@ -193,13 +193,13 @@ export default function Home() {
                             value={passcode}
                             onChange={(e) => setPasscode(e.target.value)}
                             placeholder="Nhập mã bảo mật..."
-                            className={`w-full px-4 py-3 rounded-xl border ${error ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 focus:ring-primary-500'} focus:outline-none focus:ring-2 mb-4 text-center tracking-widest font-mono text-lg`}
+                            className={`w-full px-4 py-3 rounded-xl border ${error ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 focus:ring-[#00AFA9]'} focus:outline-none focus:ring-2 mb-4 text-center tracking-widest font-mono text-lg`}
                             autoFocus
                         />
                         {error && <p className="text-red-500 text-sm mb-4">Mã bảo mật không chính xác!</p>}
                         <button
                             type="submit"
-                            className="w-full bg-primary-600 text-white font-bold py-3 rounded-xl hover:bg-primary-700 transition-colors"
+                            className="w-full bg-[#00AFA9] text-white font-bold py-3 rounded-xl hover:bg-[#009690] transition-colors"
                         >
                             Xác Nhận
                         </button>
@@ -228,14 +228,14 @@ export default function Home() {
                                 priority
                             />
                         ) : (
-                            <h1 className="text-6xl sm:text-7xl font-bold text-primary-600 mb-2">LYHU</h1>
+                            <h1 className="text-6xl sm:text-7xl font-bold text-[#00AFA9] mb-2">LYHU</h1>
                         )}
                     </div>
                     
-                    <div className="h-[1px] w-64 sm:w-[32rem] bg-gradient-to-r from-transparent via-primary-300 to-transparent mb-8"></div>
+                    <div className="h-[1px] w-64 sm:w-[32rem] bg-slate-200 mb-8"></div>
                     
                     <h2 className="text-lg sm:text-2xl text-slate-800 font-bold tracking-wide mb-3">
-                        KẾT NỐI CHÂN THÀNH <span className="text-primary-500 mx-1">•</span> HỢP TÁC BỀN VỮNG
+                        KẾT NỐI CHÂN THÀNH <span className="text-[#00AFA9] mx-1">•</span> HỢP TÁC BỀN VỮNG
                     </h2>
                     <p className="text-sm sm:text-base text-slate-500">
                         Giải pháp quản trị kênh phân phối GT/MT hàng đầu
@@ -250,7 +250,7 @@ export default function Home() {
                             <Link
                                 key={role.title}
                                 href={role.href}
-                                className="group bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all duration-200 cursor-pointer relative z-10 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="group bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-[#00AFA9] transition-all duration-200 cursor-pointer relative z-10 focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                             >
                                 <div className={`w-12 h-12 rounded-lg ${role.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                                     <Icon className={`w-6 h-6 ${role.color}`} />

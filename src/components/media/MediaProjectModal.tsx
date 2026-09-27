@@ -149,7 +149,7 @@ export default function MediaProjectModal({ isOpen, onClose, onSuccess, currentU
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 <div className="px-6 py-4 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
                     <h2 className="text-xl font-bold text-slate-800">
                         {project ? "📝 Chỉnh sửa Dự án" : "✨ Tạo Dự án Kế hoạch mới"}
@@ -170,7 +170,7 @@ export default function MediaProjectModal({ isOpen, onClose, onSuccess, currentU
                                 value={formData.title}
                                 onChange={e => setFormData({ ...formData, title: e.target.value })}
                                 placeholder="Vd: TVC Giới thiệu Sản phẩm mới, Concept Tết 2026..."
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none transition-all placeholder:text-slate-400"
                             />
                         </div>
 
@@ -181,7 +181,7 @@ export default function MediaProjectModal({ isOpen, onClose, onSuccess, currentU
                                 value={formData.description}
                                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                                 placeholder="Ghi chú các yêu cầu chi tiết về kịch bản, ánh sáng, góc máy..."
-                                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm resize-none"
+                                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none transition-all text-sm resize-none"
                             />
                         </div>
 
@@ -193,7 +193,7 @@ export default function MediaProjectModal({ isOpen, onClose, onSuccess, currentU
                                 <select
                                     value={formData.brief_id}
                                     onChange={e => setFormData({ ...formData, brief_id: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none text-sm bg-white"
                                 >
                                     <option value="">-- Không liên kết (Tự tạo riêng) --</option>
                                     {briefs.map(b => (
@@ -215,7 +215,7 @@ export default function MediaProjectModal({ isOpen, onClose, onSuccess, currentU
                                     <select
                                         value={formData.assigned_to}
                                         onChange={e => setFormData({ ...formData, assigned_to: e.target.value })}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none text-sm bg-white"
                                     >
                                         <option value="">-- Chưa giao --</option>
                                         {mediaUsers.map(u => (
@@ -232,7 +232,7 @@ export default function MediaProjectModal({ isOpen, onClose, onSuccess, currentU
                                 <select
                                     value={formData.media_type}
                                     onChange={e => setFormData({ ...formData, media_type: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none text-sm bg-white"
                                 >
                                     <option value="photo">Chỉ chụp Ảnh (Photo)</option>
                                     <option value="video">Quay Video</option>
@@ -248,7 +248,7 @@ export default function MediaProjectModal({ isOpen, onClose, onSuccess, currentU
                                     type="date"
                                     value={formData.deadline}
                                     onChange={e => setFormData({ ...formData, deadline: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm outline-none"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9] text-sm outline-none"
                                 />
                             </div>
 

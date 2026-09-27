@@ -353,7 +353,7 @@ export default function LeadDistributionSettings() {
                                 key={p}
                                 onClick={() => setPage(p)}
                                 className={`min-w-[28px] py-1 text-xs rounded border transition ${p === page
-                                    ? 'bg-blue-600 text-white border-blue-600 font-bold'
+                                    ? 'bg-[#00AFA9] text-white border-[#00AFA9] font-bold'
                                     : 'border-slate-300 hover:bg-white text-slate-600'
                                     }`}
                             >{p + 1}</button>
@@ -434,7 +434,7 @@ export default function LeadDistributionSettings() {
     if (loading) {
         return (
             <div className="flex justify-center items-center p-12">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-[#00AFA9]" />
             </div>
         );
     }
@@ -444,7 +444,7 @@ export default function LeadDistributionSettings() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-[#00AFA9] flex items-center justify-center">
                         <Zap className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -453,13 +453,13 @@ export default function LeadDistributionSettings() {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button onClick={loadData} className="p-2 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100 transition-colors">
+                    <button onClick={loadData} className="p-2 text-slate-400 hover:text-[#00AFA9] rounded-lg hover:bg-slate-100 transition-colors">
                         <RefreshCw className="w-4 h-4" />
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 bg-[#00AFA9] hover:bg-[#009690] text-white px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
                     >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : savedRecently ? <Check className="w-4 h-4" /> : null}
                         {savedRecently ? 'Đã lưu!' : 'Lưu cài đặt'}
@@ -476,7 +476,7 @@ export default function LeadDistributionSettings() {
                             onClick={() => { setDateFilterMode(mode); setLeadsPage(0); }}
                             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                                 dateFilterMode === mode
-                                    ? 'bg-white shadow text-blue-600 ring-1 ring-blue-200'
+                                    ? 'bg-white shadow-sm text-[#00AFA9] ring-1 ring-[#00AFA9]/30 font-semibold'
                                     : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
                             }`}
                         >
@@ -492,7 +492,7 @@ export default function LeadDistributionSettings() {
                                 type="date"
                                 value={customFrom}
                                 onChange={(e) => { setCustomFrom(e.target.value); setLeadsPage(0); }}
-                                className="px-2 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                className="px-2 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                             />
                         </div>
                         <span className="text-slate-400">→</span>
@@ -502,7 +502,7 @@ export default function LeadDistributionSettings() {
                                 type="date"
                                 value={customTo}
                                 onChange={(e) => { setCustomTo(e.target.value); setLeadsPage(0); }}
-                                className="px-2 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                className="px-2 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                             />
                         </div>
                     </div>
@@ -526,8 +526,8 @@ export default function LeadDistributionSettings() {
                     </span>
                 </div>
 
-                <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                    <span className="text-xs font-medium uppercase text-blue-600">{DATE_FILTER_LABELS[dateFilterMode]}</span>
+                <div className="p-4 rounded-xl bg-teal-50 border border-teal-100">
+                    <span className="text-xs font-medium uppercase text-[#00AFA9]">{DATE_FILTER_LABELS[dateFilterMode]}</span>
                     <p className="text-2xl font-bold text-slate-800 mt-1">{totalLeads}</p>
                     <p className="text-[10px] text-slate-400">data mới</p>
                 </div>
@@ -549,7 +549,7 @@ export default function LeadDistributionSettings() {
             <div className="bg-white rounded-xl border border-slate-200 p-5">
                 <h4 className="font-bold text-slate-800 mb-4 flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4 text-purple-600" />
+                        <MessageSquare className="w-4 h-4 text-[#00AFA9]" />
                         Hiệu quả Chatbot & AI Follow-up
                     </span>
                     <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-1 rounded">Dữ liệu: {DATE_FILTER_LABELS[dateFilterMode]}</span>
@@ -567,10 +567,10 @@ export default function LeadDistributionSettings() {
                         <p className="text-xl font-bold text-emerald-700 mt-1">{chatStats.hasPhone - chatStats.phoneAfterAi}</p>
                         <p className="text-[10px] text-emerald-600/70">Không cần AI nhắc ({chatStats.totalConv ? Math.round(((chatStats.hasPhone - chatStats.phoneAfterAi) / chatStats.totalConv) * 100) : 0}%)</p>
                     </div>
-                    <div className="p-3 rounded-lg border border-purple-100 bg-purple-50/30">
-                        <span className="text-[11px] font-medium uppercase text-purple-600">🤖 AI Đã Xử Lý</span>
-                        <p className="text-xl font-bold text-purple-700 mt-1">{chatStats.aiFollowed}</p>
-                        <p className="text-[10px] text-purple-600/70">Khách cần Follow-up</p>
+                    <div className="p-3 rounded-lg border border-teal-100 bg-teal-50/30">
+                        <span className="text-[11px] font-medium uppercase text-[#00AFA9]">🤖 AI Đã Xử Lý</span>
+                        <p className="text-xl font-bold text-teal-800 mt-1">{chatStats.aiFollowed}</p>
+                        <p className="text-[10px] text-teal-700">Khách cần Follow-up</p>
                     </div>
                     <div className="p-3 rounded-lg border border-teal-100 bg-teal-50">
                         <span className="text-[11px] font-medium uppercase text-teal-600">🏆 Chốt nhờ AI</span>
@@ -584,7 +584,7 @@ export default function LeadDistributionSettings() {
                     <span className="text-[11px] font-medium uppercase text-slate-500 mb-3 block">Chi tiết Funnel (Nhắn sau bao lần thì để lại số)</span>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div className="bg-white p-3 rounded shadow-sm border border-slate-100">
-                            <span className="text-xs font-semibold text-purple-600 flex items-center gap-1">⏱️ Lần 1 (Sau 1h)</span>
+                            <span className="text-xs font-semibold text-[#00AFA9] flex items-center gap-1">⏱️ Lần 1 (Sau 1h)</span>
                             <div className="mt-2 flex justify-between items-end">
                                 <div>
                                     <p className="text-[10px] text-slate-400 mb-0.5">Đã nhắc</p>
@@ -598,7 +598,7 @@ export default function LeadDistributionSettings() {
                         </div>
 
                         <div className="bg-white p-3 rounded shadow-sm border border-slate-100">
-                            <span className="text-xs font-semibold text-purple-600 flex items-center gap-1">⏱️ Lần 2 (Sau 6h)</span>
+                            <span className="text-xs font-semibold text-[#00AFA9] flex items-center gap-1">⏱️ Lần 2 (Sau 6h)</span>
                             <div className="mt-2 flex justify-between items-end">
                                 <div>
                                     <p className="text-[10px] text-slate-400 mb-0.5">Đã nhắc</p>
@@ -612,7 +612,7 @@ export default function LeadDistributionSettings() {
                         </div>
 
                         <div className="bg-white p-3 rounded shadow-sm border border-slate-100">
-                            <span className="text-xs font-semibold text-purple-600 flex items-center gap-1">⏱️ Lần 3 (Sau 18h)</span>
+                            <span className="text-xs font-semibold text-[#00AFA9] flex items-center gap-1">⏱️ Lần 3 (Sau 18h)</span>
                             <div className="mt-2 flex justify-between items-end">
                                 <div>
                                     <p className="text-[10px] text-slate-400 mb-0.5">Đã nhắc</p>
@@ -632,19 +632,19 @@ export default function LeadDistributionSettings() {
             {/* Settings */}
             <div className="bg-white rounded-xl border border-slate-200 p-5">
                 <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <Users className="w-4 h-4 text-blue-600" />
+                    <Users className="w-4 h-4 text-[#00AFA9]" />
                     Chọn nhân sự nhận Data
                 </h4>
 
                 <div className="flex gap-3 mb-4">
-                    <button onClick={selectAll} className="text-xs text-blue-600 hover:underline">Chọn tất cả</button>
+                    <button onClick={selectAll} className="text-xs text-[#00AFA9] hover:underline">Chọn tất cả</button>
                     <button onClick={deselectAll} className="text-xs text-slate-400 hover:underline">Bỏ chọn tất cả</button>
                     <label className="flex items-center gap-2 ml-auto cursor-pointer">
                         <input
                             type="checkbox"
                             checked={config.only_online}
                             onChange={(e) => setConfig(prev => ({ ...prev, only_online: e.target.checked }))}
-                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                            className="rounded border-slate-300 text-[#00AFA9] focus:ring-[#00AFA9]"
                         />
                         <span className="text-xs text-slate-600">Chỉ chia khi online</span>
                     </label>
@@ -682,7 +682,7 @@ export default function LeadDistributionSettings() {
                                     ? <span className="ml-2 text-emerald-700">✅ Đã trong danh sách</span>
                                     : <button 
                                         onClick={() => setCompanyIpInput(prev => prev ? `${prev}, ${myIp}` : myIp)}
-                                        className="ml-2 text-blue-600 hover:underline cursor-pointer"
+                                        className="ml-2 text-[#00AFA9] hover:underline cursor-pointer"
                                       >+ Thêm IP này</button>
                                 }
                             </p>
@@ -698,11 +698,11 @@ export default function LeadDistributionSettings() {
                                 key={user.id}
                                 onClick={() => toggleUser(user.id)}
                                 className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${isSelected
-                                    ? 'border-blue-200 bg-blue-50 ring-1 ring-blue-200'
+                                    ? 'border-teal-200 bg-teal-50 ring-1 ring-[#00AFA9]/30'
                                     : 'border-slate-100 bg-white hover:border-slate-200'
                                     }`}
                             >
-                                <input type="checkbox" checked={isSelected} readOnly className="rounded border-slate-300 text-blue-600 pointer-events-none" />
+                                <input type="checkbox" checked={isSelected} readOnly className="rounded border-slate-300 text-[#00AFA9] pointer-events-none" />
                                 <div className="flex-1 min-w-0">
                                     <div className="text-sm font-medium text-slate-800 truncate">{user.full_name || user.email}</div>
                                     <div className="text-[10px] text-slate-400">{user.role}</div>
@@ -720,7 +720,7 @@ export default function LeadDistributionSettings() {
                                             return (
                                                 <span className={`inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
                                                     isCompanyIp
-                                                        ? 'bg-blue-100 text-blue-700'
+                                                        ? 'bg-teal-100 text-teal-800'
                                                         : 'bg-orange-100 text-orange-600'
                                                 }`}>
                                                     {isCompanyIp
@@ -775,7 +775,7 @@ export default function LeadDistributionSettings() {
                                     <span className="text-xs text-slate-600 w-28 truncate font-medium">{s.name}</span>
                                     <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
                                         <div
-                                            className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-end px-2 transition-all duration-500"
+                                            className="h-full bg-[#00AFA9] rounded-full flex items-center justify-end px-2 transition-all duration-500"
                                             style={{ width: `${Math.max((s.count / maxCount) * 100, s.count > 0 ? 8 : 0)}%` }}
                                         >
                                             {s.count > 0 && <span className="text-[10px] text-white font-bold">{s.count}</span>}
@@ -798,7 +798,7 @@ export default function LeadDistributionSettings() {
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                     <h4 className="font-bold text-slate-800 flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-blue-600" />
+                        <Phone className="w-4 h-4 text-[#00AFA9]" />
                         Data có SĐT ({totalLeads})
                     </h4>
                     <div className="flex items-center gap-3 text-xs">
@@ -821,12 +821,12 @@ export default function LeadDistributionSettings() {
                         placeholder="🔍 Tìm theo tên, SĐT..."
                         value={leadsSearch}
                         onChange={(e) => setLeadsSearch(e.target.value)}
-                        className="flex-1 px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        className="flex-1 px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                     />
                     <select
                         value={leadsStatusFilter}
                         onChange={(e) => { setLeadsStatusFilter(e.target.value); setLeadsPage(0); }}
-                        className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#00AFA9]"
                     >
                         <option value="all">Tất cả trạng thái</option>
                         <option value="pending">🟡 Đang chờ</option>
@@ -896,12 +896,12 @@ export default function LeadDistributionSettings() {
                                                     const type = conv?.customer_type;
                                                     return (
                                                         <>
-                                                            {type && <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 mr-1">{type}</span>}
+                                                            {type && <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium bg-teal-100 text-teal-800 mr-1">{type}</span>}
                                                             {products.slice(0, 2).map((p: string) => (
                                                                 <span key={p} className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-700 mr-1 mb-0.5">{p}</span>
                                                             ))}
                                                             {tags.slice(0, 2).map((t: string) => (
-                                                                <span key={t} className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 mr-1 mb-0.5">{t}</span>
+                                                                <span key={t} className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium bg-teal-50 text-[#00AFA9] mr-1 mb-0.5">{t}</span>
                                                             ))}
                                                             {(products.length + tags.length) === 0 && !type && <span className="text-xs text-slate-300">—</span>}
                                                         </>
@@ -955,17 +955,17 @@ export default function LeadDistributionSettings() {
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                     <h4 className="font-bold text-slate-800 flex items-center gap-2">
-                        <Bell className="w-4 h-4 text-purple-600" />
+                        <Bell className="w-4 h-4 text-[#00AFA9]" />
                         AI Follow-up — Nhắn lại xin SĐT ({totalFollowups})
                     </h4>
                     <div className="flex items-center gap-3 text-xs">
-                        <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 font-medium">
+                        <span className="px-2 py-1 rounded-full bg-teal-50 text-[#00AFA9] font-medium">
                             ⏳ {followupPending} đang chờ nhắn
                         </span>
                         <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-500 font-medium">
                             ✅ {followupDone} đã nhắn 3 lần
                         </span>
-                        <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-600 font-medium">
+                        <span className="px-2 py-1 rounded-full bg-teal-50 text-[#00AFA9] font-medium">
                             🔄 Cron mỗi 2h (trong 24h)
                         </span>
                     </div>
@@ -978,7 +978,7 @@ export default function LeadDistributionSettings() {
                         placeholder="🔍 Tìm theo tên khách..."
                         value={followupsSearch}
                         onChange={(e) => setFollowupsSearch(e.target.value)}
-                        className="w-full max-w-sm px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full max-w-sm px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                     />
                 </div>
 
@@ -1009,13 +1009,13 @@ export default function LeadDistributionSettings() {
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-1">
                                                     {[0, 1, 2].map(i => (
-                                                        <div key={i} className={`w-3 h-3 rounded-full ${i < count ? 'bg-purple-500' : 'bg-slate-200'}`} />
+                                                        <div key={i} className={`w-3 h-3 rounded-full ${i < count ? 'bg-[#00AFA9]' : 'bg-slate-200'}`} />
                                                     ))}
                                                     <span className="text-xs text-slate-500 ml-1">{count}/3</span>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${count >= 3 ? 'bg-slate-100 text-slate-500' : count > 0 ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${count >= 3 ? 'bg-slate-100 text-slate-500' : count > 0 ? 'bg-teal-50 text-[#00AFA9]' : 'bg-amber-100 text-amber-700'
                                                     }`}>
                                                     {tierLabels[Math.min(count, 3)]}
                                                 </span>

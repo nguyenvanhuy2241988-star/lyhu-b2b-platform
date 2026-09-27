@@ -20,7 +20,7 @@ interface TrashModalProps {
 }
 
 const getFileIcon = (mimeType: string) => {
-    if (mimeType.startsWith('image/')) return <ImageIcon className="w-5 h-5 text-purple-500" />;
+    if (mimeType.startsWith('image/')) return <ImageIcon className="w-5 h-5 text-[#00AFA9]" />;
     if (mimeType.includes('pdf')) return <FileText className="w-5 h-5 text-red-500" />;
     if (mimeType.includes('sheet') || mimeType.includes('excel')) return <FileSpreadsheet className="w-5 h-5 text-green-500" />;
     if (mimeType.includes('word') || mimeType.includes('document')) return <FileText className="w-5 h-5 text-blue-500" />;
@@ -107,7 +107,7 @@ export function TrashModal({ onClose, onRestored }: TrashModalProps) {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl flex flex-col max-h-full overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-4xl flex flex-col max-h-full overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 shrink-0">
                     <div className="flex items-center gap-3 text-slate-800">
@@ -152,7 +152,7 @@ export function TrashModal({ onClose, onRestored }: TrashModalProps) {
                                     {folders.map(folder => (
                                         <tr key={folder.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                                             <td className="py-3 px-4 text-center">
-                                                <Folder className="w-5 h-5 text-blue-500 mx-auto" />
+                                                <Folder className="w-5 h-5 text-[#00AFA9] mx-auto" />
                                             </td>
                                             <td className="py-3 px-4 font-medium text-slate-700 truncate max-w-[200px]" title={folder.name}>
                                                 {folder.name}
@@ -166,7 +166,7 @@ export function TrashModal({ onClose, onRestored }: TrashModalProps) {
                                                         title="Khôi phục"
                                                         onClick={() => handleRestoreFolder(folder.id)}
                                                         disabled={!!actionLoading}
-                                                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition disabled:opacity-50"
+                                                        className="p-1.5 text-[#00AFA9] hover:bg-teal-50 rounded transition disabled:opacity-50"
                                                     >
                                                         {actionLoading === `restore-folder-${folder.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
                                                     </button>
@@ -201,7 +201,7 @@ export function TrashModal({ onClose, onRestored }: TrashModalProps) {
                                                         title="Khôi phục"
                                                         onClick={() => handleRestoreFile(file.id)}
                                                         disabled={!!actionLoading}
-                                                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition disabled:opacity-50"
+                                                        className="p-1.5 text-[#00AFA9] hover:bg-teal-50 rounded transition disabled:opacity-50"
                                                     >
                                                         {actionLoading === `restore-file-${file.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
                                                     </button>

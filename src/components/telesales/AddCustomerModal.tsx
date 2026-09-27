@@ -279,7 +279,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col">
+            <div className="bg-white rounded-xl border border-slate-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col">
                 <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50/50 sticky top-0 z-10 backdrop-blur-md">
                     <div>
                         <h2 className="text-xl font-bold text-slate-800">
@@ -299,7 +299,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                         {/* Column 1: Store Info */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2 pb-2 border-b">
-                                <Building className="w-4 h-4 text-indigo-600" />
+                                <Building className="w-4 h-4 text-[#00AFA9]" />
                                 Thông tin Cửa hàng
                             </h3>
 
@@ -308,7 +308,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                 <input
                                     value={formData.name}
                                     onChange={(e) => handleChange('name', e.target.value)}
-                                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none ${errors.name ? 'border-red-500' : 'border-slate-300'}`}
+                                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none ${errors.name ? 'border-red-500' : 'border-slate-300'}`}
                                     placeholder="Ví dụ: Tạp hóa Cô Ba"
                                 />
                                 {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
@@ -319,7 +319,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                 <input
                                     value={formData.tax_code}
                                     onChange={(e) => handleChange('tax_code', e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none"
                                 />
                             </div>
 
@@ -328,7 +328,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                 <select
                                     value={formData.type}
                                     onChange={(e) => handleChange('type', e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none bg-white"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none bg-white"
                                 >
                                     {CUSTOMER_TYPES.map(t => (
                                         <option key={t.value} value={t.value}>{t.label}</option>
@@ -342,7 +342,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                     value={formData.notes}
                                     onChange={(e) => handleChange('notes', e.target.value)}
                                     rows={4}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none resize-none"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none resize-none"
                                 />
                             </div>
                         </div>
@@ -350,7 +350,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                         {/* Column 2: Contact Info */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2 pb-2 border-b">
-                                <User className="w-4 h-4 text-indigo-600" />
+                                <User className="w-4 h-4 text-[#00AFA9]" />
                                 Liên hệ & Địa chỉ
                             </h3>
 
@@ -359,7 +359,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                 <input
                                     value={formData.contact_person}
                                     onChange={(e) => handleChange('contact_person', e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none"
                                 />
                             </div>
 
@@ -369,21 +369,21 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                     <input
                                         value={formData.phone}
                                         onChange={(e) => handleChange('phone', e.target.value)}
-                                        className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none ${errors.phone ? 'border-red-500' : 'border-slate-300'}`}
+                                        className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none ${errors.phone ? 'border-red-500' : 'border-slate-300'}`}
                                     />
                                     {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
                                 </div>
                                 <div className="space-y-1.5 relative">
                                     <label className="text-sm font-medium text-slate-700 flex justify-between">
                                         Zalo
-                                        <button onClick={copyPhoneToZalo} type="button" className="text-indigo-600 text-xs hover:underline flex items-center gap-1">
+                                        <button onClick={copyPhoneToZalo} type="button" className="text-[#00AFA9] text-xs hover:underline flex items-center gap-1">
                                             <Copy className="w-3 h-3" /> Copy
                                         </button>
                                     </label>
                                     <input
                                         value={formData.zalo}
                                         onChange={(e) => handleChange('zalo', e.target.value)}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none"
                                     />
                                 </div>
                             </div>
@@ -393,7 +393,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                 <select
                                     value={formData.province}
                                     onChange={(e) => onProvinceChange(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none bg-white"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none bg-white"
                                 >
                                     <option value="">-- Chọn Tỉnh/Thành --</option>
                                     {PROVINCES.map(p => (
@@ -409,7 +409,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                         value={formData.ward}
                                         onChange={(e) => handleChange('ward', e.target.value)}
                                         disabled={!formData.province || loadingWards}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none bg-white disabled:bg-slate-100"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none bg-white disabled:bg-slate-100"
                                     >
                                         <option value="">-- Chọn Phường/Xã --</option>
                                         {wards.map(w => (
@@ -425,7 +425,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                 <input
                                     value={formData.address}
                                     onChange={(e) => handleChange('address', e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none"
                                     placeholder="Số 123..."
                                 />
                             </div>
@@ -446,7 +446,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                         <select
                                             value={legacyP}
                                             onChange={(e) => onLegacyProvinceChange(e.target.value)}
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none bg-white"
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none bg-white"
                                         >
                                             <option value="">-- Chọn Tỉnh/Thành cũ --</option>
                                             {legacyProvinces.map(p => (
@@ -463,7 +463,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                                     value={legacyD}
                                                     onChange={(e) => onLegacyDistrictChange(e.target.value)}
                                                     disabled={!legacyP || loadingLegacyDistricts}
-                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none bg-white disabled:bg-slate-100"
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none bg-white disabled:bg-slate-100"
                                                 >
                                                     <option value="">-- Chọn Quận/Huyện cũ --</option>
                                                     {legacyDistricts.map(d => (
@@ -481,7 +481,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                                     value={legacyW}
                                                     onChange={(e) => onLegacyWardChange(e.target.value)}
                                                     disabled={!legacyD || loadingLegacyWards}
-                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none bg-white disabled:bg-slate-100"
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none bg-white disabled:bg-slate-100"
                                                 >
                                                     <option value="">-- Chọn Phường/Xã cũ --</option>
                                                     {legacyWards.map(w => (
@@ -510,7 +510,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                     <button
                         onClick={handleSubmit}
                         disabled={isSaving}
-                        className="px-6 py-2.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm shadow-indigo-200 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="px-6 py-2.5 bg-[#00AFA9] text-white hover:bg-[#009690] rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         {initialData ? "Lưu thay đổi" : "Thêm khách hàng"}

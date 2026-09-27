@@ -44,7 +44,7 @@ export function MessageReaction({ message, currentUserId }: MessageReactionProps
                         key={emoji}
                         onClick={() => handleReaction(emoji)}
                         className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs transition-colors border ${isReacted
-                                ? 'bg-blue-100 border-blue-200 text-blue-600'
+                                ? 'bg-teal-50 border-[#00AFA9] text-[#00AFA9]'
                                 : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                             }`}
                         title={isReacted ? "Nhấn để bỏ cảm xúc" : "Nhấn để thêm cảm xúc"}
@@ -65,12 +65,12 @@ export function MessageReaction({ message, currentUserId }: MessageReactionProps
 
             {/* Emoji Picker */}
             {showPicker && (
-                <div className="absolute bottom-full left-0 mb-2 z-50 bg-white border border-slate-200 shadow-xl rounded-full px-2 py-1 flex items-center gap-1 animate-in zoom-in-50 duration-200">
+                <div className="absolute bottom-full left-0 mb-2 z-50 bg-white border border-slate-200 rounded-full px-2 py-1 flex items-center gap-1 animate-in zoom-in-50 duration-200">
                     {PRESET_REACTIONS.map(emoji => (
                         <button
                             key={emoji}
                             onClick={() => handleReaction(emoji)}
-                            className={`p-1.5 hover:bg-slate-100 rounded-full text-lg transition-transform hover:scale-125 ${userReactions.includes(emoji) ? 'bg-blue-50' : ''}`}
+                            className={`p-1.5 hover:bg-slate-100 rounded-full text-lg transition-transform hover:scale-125 ${userReactions.includes(emoji) ? 'bg-teal-50' : ''}`}
                         >
                             {emoji}
                         </button>

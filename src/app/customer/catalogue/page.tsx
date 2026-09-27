@@ -229,7 +229,7 @@ export default function CataloguePage() {
                 {totalCartItems > 0 && (
                     <Link
                         href="/customer/cart"
-                        className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00AFA9] text-white text-sm font-semibold hover:bg-[#009893] transition-colors"
+                        className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00AFA9] text-white text-sm font-semibold hover:bg-[#009690] transition-colors"
                     >
                         <ShoppingCart className="w-4 h-4" />
                         <span>{totalCartItems} sản phẩm trong giỏ</span>
@@ -359,7 +359,7 @@ export default function CataloguePage() {
                                         isJustAdded
                                             ? "bg-[#8EC63F] text-slate-900"
                                             : inCart > 0
-                                            ? "bg-[#00AFA9] text-white hover:bg-[#009893]"
+                                            ? "bg-[#00AFA9] text-white hover:bg-[#009690]"
                                             : "bg-slate-100 text-slate-800 hover:bg-[#00AFA9] hover:text-white"
                                     }`}
                                 >
@@ -392,7 +392,7 @@ export default function CataloguePage() {
 
             {/* Mobile Sticky Bottom Cart Bar */}
             {totalCartItems > 0 && (
-                <div className="sm:hidden fixed bottom-16 left-3 right-3 z-40 bg-slate-900 text-white p-3 rounded-2xl shadow-xl flex items-center justify-between border border-slate-800">
+                <div className="sm:hidden fixed bottom-16 left-3 right-3 z-40 bg-slate-900 text-white p-3 rounded-2xl flex items-center justify-between border border-slate-800">
                     <div className="flex items-center gap-2.5">
                         <div className="w-9 h-9 rounded-xl bg-[#00AFA9] flex items-center justify-center font-bold text-xs text-white">
                             {totalCartItems}
@@ -405,7 +405,7 @@ export default function CataloguePage() {
 
                     <Link
                         href="/customer/cart"
-                        className="flex items-center gap-1.5 px-3.5 py-2 bg-[#00AFA9] text-white rounded-xl text-xs font-bold hover:bg-[#009893] transition-colors"
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-[#00AFA9] text-white rounded-xl text-xs font-bold hover:bg-[#009690] transition-colors"
                     >
                         <span>Đặt hàng</span>
                         <ArrowRight className="w-3.5 h-3.5" />

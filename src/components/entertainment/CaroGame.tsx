@@ -534,7 +534,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
     if (gameState === 'MENU') {
         return (
             <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-slate-200 shadow-sm min-h-[400px]">
-                <Grid3X3 className="w-20 h-20 text-teal-600 mb-6" />
+                <Grid3X3 className="w-20 h-20 text-[#00AFA9] mb-6" />
                 <h2 className="text-2xl font-black text-slate-800 mb-8">CHỌN CHẾ ĐỘ CHƠI</h2>
 
                 <div className="flex flex-col gap-6">
@@ -544,21 +544,21 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
                         <div className="flex gap-4">
                             <button
                                 onClick={() => startGame('EASY')}
-                                className="flex flex-col items-center gap-2 p-4 bg-teal-50 border-2 border-teal-100 rounded-xl hover:border-teal-500 hover:shadow-lg transition-all w-28"
+                                className="flex flex-col items-center gap-2 p-4 bg-teal-50 border-2 border-teal-100 rounded-xl hover:border-[#00AFA9] transition-all w-28"
                             >
-                                <Bot className="w-8 h-8 text-teal-600" />
+                                <Bot className="w-8 h-8 text-[#00AFA9]" />
                                 <span className="font-bold text-teal-900">Dễ</span>
                             </button>
                             <button
                                 onClick={() => startGame('MEDIUM')}
-                                className="flex flex-col items-center gap-2 p-4 bg-blue-50 border-2 border-blue-100 rounded-xl hover:border-blue-500 hover:shadow-lg transition-all w-28"
+                                className="flex flex-col items-center gap-2 p-4 bg-blue-50 border-2 border-blue-100 rounded-xl hover:border-blue-500 transition-all w-28"
                             >
                                 <Bot className="w-8 h-8 text-blue-600" />
                                 <span className="font-bold text-blue-900">Vừa</span>
                             </button>
                             <button
                                 onClick={() => startGame('HARD')}
-                                className="flex flex-col items-center gap-2 p-4 bg-red-50 border-2 border-red-100 rounded-xl hover:border-red-500 hover:shadow-lg transition-all w-28"
+                                className="flex flex-col items-center gap-2 p-4 bg-red-50 border-2 border-red-100 rounded-xl hover:border-red-500 transition-all w-28"
                             >
                                 <Bot className="w-8 h-8 text-red-600" />
                                 <span className="font-bold text-red-900">Khó</span>
@@ -572,7 +572,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
                     <div className="flex flex-col items-center">
                         <button
                             onClick={handleEnterLobby}
-                            className="flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white rounded-xl font-black text-lg hover:bg-indigo-700 hover:scale-105 transition-all shadow-xl shadow-indigo-200 w-full justify-center"
+                            className="flex items-center gap-3 px-8 py-4 bg-[#00AFA9] text-white rounded-xl font-black text-lg hover:bg-[#009690] hover:scale-105 transition-all w-full justify-center"
                         >
                             <Globe className="w-6 h-6 animate-pulse" />
                             THÁCH ĐẤU ONLINE (PvP)
@@ -588,8 +588,8 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
         <div className="flex flex-col items-center">
             {/* Header */}
             <div className="flex items-center gap-8 mb-4">
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-colors ${isXNext ? 'bg-teal-100 border-teal-500' : 'border-transparent opacity-50'}`}>
-                    <User className="w-5 h-5 text-teal-600" />
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-colors ${isXNext ? 'bg-teal-50 border-[#00AFA9]' : 'border-transparent opacity-50'}`}>
+                    <User className="w-5 h-5 text-[#00AFA9]" />
                     <span className="font-bold text-teal-900">Bạn (X)</span>
                 </div>
                 <div className="text-xl font-bold text-slate-300">VS</div>
@@ -603,7 +603,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
             <button onClick={returnToMenu} className="mb-4 text-xs text-slate-400 hover:text-slate-600 underline">Quay lại chọn cấp độ</button>
 
             {/* Board */}
-            <div className="bg-[#f0d9b5] p-2 rounded shadow-xl border-4 border-[#b58863] overflow-hidden">
+            <div className="bg-[#f0d9b5] p-2 rounded border-4 border-[#b58863] overflow-hidden">
                 <div
                     className="grid bg-[#b58863]"
                     style={{ gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)` }}
@@ -620,7 +620,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
                                     onClick={() => handleCellClick(rIdx, cIdx)}
                                     disabled={cell !== null || !!winner}
                                 >
-                                    {cell === 'X' && <span className="text-teal-600">X</span>}
+                                    {cell === 'X' && <span className="text-[#00AFA9]">X</span>}
                                     {cell === 'O' && <span className="text-red-500">O</span>}
                                 </button>
                             );
@@ -632,7 +632,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
             {/* Game Over Overlay */}
             {winner && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center animate-in fade-in">
-                    <div className="bg-white p-6 rounded-2xl shadow-2xl text-center transform scale-110">
+                    <div className="bg-white p-6 rounded-2xl border border-slate-200 text-center transform scale-110">
                         <Trophy className={`w-16 h-16 mx-auto mb-2 ${winner === 'X' ? 'text-yellow-500' : 'text-slate-400'}`} />
                         <h2 className="text-3xl font-black mb-2 text-slate-800">
                             {winner === 'X' ? 'BẠN THẮNG!' : winner === 'O' ? 'MÁY THẮNG!' : 'HÒA!'}
@@ -640,7 +640,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
                         <div className="flex gap-4 justify-center mt-6">
                             <button
                                 onClick={() => startGame(difficulty)}
-                                className="flex items-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-full font-bold transition-all"
+                                className="flex items-center gap-2 px-6 py-3 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-full font-bold transition-all"
                             >
                                 <RotateCcw className="w-5 h-5" /> Chơi lại
                             </button>

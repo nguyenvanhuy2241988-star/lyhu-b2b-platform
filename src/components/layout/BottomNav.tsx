@@ -112,7 +112,7 @@ export default function BottomNav({ role }: BottomNavProps) {
                         className="fixed inset-0 bg-slate-900/40 z-40 lg:hidden transition-opacity" 
                         onClick={() => setIsMenuOpen(false)}
                     />
-                    <div className="fixed bottom-[60px] left-0 w-full bg-white z-40 lg:hidden rounded-t-2xl shadow-xl border-t border-slate-200 flex flex-col max-h-[75vh] animate-in slide-in-from-bottom-8 duration-200">
+                    <div className="fixed bottom-[60px] left-0 w-full bg-white z-40 lg:hidden rounded-t-2xl border-t border-slate-200 flex flex-col max-h-[75vh] animate-in slide-in-from-bottom-8 duration-200">
                         
                         <div className="px-5 py-4 shrink-0 flex justify-between items-center border-b border-slate-100">
                             <h3 className="font-semibold text-base text-slate-800">Menu chức năng</h3>

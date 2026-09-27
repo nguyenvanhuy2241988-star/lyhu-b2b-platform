@@ -40,7 +40,7 @@ export default function BlockRenderer({ block }: { block: any }) {
                     <p className="text-slate-500 font-bold uppercase tracking-widest text-sm mb-4">
                         <EditableText id={`${baseId}_sub`} defaultText={block.config?.subtitle || "Phụ đề nhỏ màu xám (xóa nếu không cần)"} />
                     </p>
-                    <div className="h-1 w-16 rounded bg-teal-500" />
+                    <div className="h-1 w-16 rounded bg-[#00AFA9]" />
                     <p className="text-slate-600 text-lg leading-relaxed pt-2">
                         <EditableText id={`${baseId}_desc_1`} multiline defaultText={block.config?.desc1 || "Đoạn văn bản giải thích cốt lõi số 1..."} />
                     </p>
@@ -59,7 +59,7 @@ export default function BlockRenderer({ block }: { block: any }) {
                 <h2 className="text-3xl font-black text-slate-800 mb-2 uppercase tracking-tight">
                     <EditableText id={`${baseId}_grid_title`} defaultText={block.config?.title || "Tiêu đề lớn hệ sinh thái lưới"} />
                 </h2>
-                <div className="h-1 w-16 rounded bg-teal-500 mb-10 mt-4" />
+                <div className="h-1 w-16 rounded bg-[#00AFA9] mb-10 mt-4" />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
                     {items.map((_: any, idx: number) => (
@@ -84,12 +84,12 @@ export default function BlockRenderer({ block }: { block: any }) {
 
     if (block.type === 'QUOTE') {
         return (
-            <div className="mt-8 bg-slate-900 text-white p-8 md:p-12 rounded-3xl relative overflow-hidden shadow-lg border border-slate-800">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-300/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
+            <div className="mt-8 bg-slate-900 text-white p-8 md:p-12 rounded-3xl relative overflow-hidden border border-slate-800">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[#00AFA9]/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#00AFA9]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
                 
                 <div className="relative z-10 text-xl md:text-2xl tracking-wide font-light leading-relaxed italic text-center px-4 md:px-12">
-                    <p className="text-teal-300 font-medium">
+                    <p className="text-[#00AFA9] font-medium">
                         " <EditableText id={`${baseId}_quote_tex`} multiline defaultText={block.config?.text || "Ghi một câu nói đầy cảm hứng của tỷ phú hay của lãnh đạo bạn vào đây. Dấu ngoặc kép đã được đặt tự động."} /> "
                     </p>
                 </div>

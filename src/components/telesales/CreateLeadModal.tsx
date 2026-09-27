@@ -70,7 +70,7 @@ export const CreateLeadModal = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-xl border border-slate-200 w-full max-w-md" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between p-4 border-b">
                     <h3 className="font-semibold text-slate-900">
                         {isEditMode ? "Sửa Lead" : "Tạo Lead mới"}
@@ -87,7 +87,7 @@ export const CreateLeadModal = ({
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                             placeholder="VD: Gọi chào hàng NPP ABC"
                         />
                     </div>
@@ -99,7 +99,7 @@ export const CreateLeadModal = ({
                                 type="text"
                                 value={customerName}
                                 onChange={(e) => setCustomerName(e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                 placeholder="Anh Nam"
                             />
                         </div>
@@ -109,7 +109,7 @@ export const CreateLeadModal = ({
                                 type="tel"
                                 value={phone}
                                 onChange={(e) => setPhone(e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                 placeholder="0901234567"
                             />
                         </div>
@@ -121,7 +121,7 @@ export const CreateLeadModal = ({
                             type="text"
                             value={company}
                             onChange={(e) => setCompany(e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                             placeholder="VD: Tạp hóa ABC"
                         />
                     </div>
@@ -132,7 +132,7 @@ export const CreateLeadModal = ({
                             <select
                                 value={priority}
                                 onChange={(e) => setPriority(e.target.value as LeadPriority)}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                             >
                                 <option value="low">Thấp</option>
                                 <option value="normal">Bình thường</option>
@@ -146,7 +146,7 @@ export const CreateLeadModal = ({
                                 type="date"
                                 value={dueDate}
                                 onChange={(e) => setDueDate(e.target.value)}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                             />
                         </div>
                     </div>
@@ -157,7 +157,7 @@ export const CreateLeadModal = ({
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
                             rows={3}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] resize-none"
                             placeholder="Ghi chú về lead..."
                         />
                     </div>
@@ -183,7 +183,7 @@ export const CreateLeadModal = ({
                         </button>
                         <button
                             onClick={handleSave}
-                            className="px-6 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg flex items-center gap-2"
+                            className="px-6 py-2 text-sm font-medium text-white bg-[#00AFA9] hover:bg-[#009690] rounded-lg flex items-center gap-2"
                         >
                             <Save className="w-4 h-4" /> Lưu
                         </button>

@@ -55,10 +55,10 @@ export default function AutoCampaignGenerator({ isOpen, onClose, onSuccess }: Au
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl flex flex-col">
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-2xl">
+            <div className="bg-white rounded-2xl w-full max-w-2xl border border-slate-200 shadow-sm flex flex-col">
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-teal-50 rounded-t-2xl">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-600 rounded-lg text-white shadow-sm">
+                        <div className="p-2 bg-[#00AFA9] rounded-lg text-white shadow-sm">
                             <Sparkles className="w-6 h-6" />
                         </div>
                         <div>
@@ -74,21 +74,21 @@ export default function AutoCampaignGenerator({ isOpen, onClose, onSuccess }: Au
                 <div className="p-6 space-y-5">
                     <div>
                         <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
-                            <Target className="w-4 h-4 text-blue-500" />
+                            <Target className="w-4 h-4 text-[#00AFA9]" />
                             Mục Tiêu Chiến Dịch
                         </label>
                         <textarea
                             value={goal}
                             onChange={(e) => setGoal(e.target.value)}
                             placeholder="VD: Cần bán lô sỉ 500 áo thun phông rộng mùa hè..."
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all h-24"
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#00AFA9] focus:ring-2 focus:ring-[#00AFA9]/20 outline-none transition-all h-24"
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-5">
                         <div>
                             <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
-                                <DollarSign className="w-4 h-4 text-green-500" />
+                                <DollarSign className="w-4 h-4 text-emerald-500" />
                                 Ngân Sách / Ngày
                             </label>
                             <input
@@ -96,12 +96,12 @@ export default function AutoCampaignGenerator({ isOpen, onClose, onSuccess }: Au
                                 value={budget}
                                 onChange={(e) => setBudget(e.target.value)}
                                 placeholder="VD: 1.000.000đ"
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#00AFA9] focus:ring-2 focus:ring-[#00AFA9]/20 outline-none transition-all"
                             />
                         </div>
                         <div>
                             <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
-                                <Users className="w-4 h-4 text-purple-500" />
+                                <Users className="w-4 h-4 text-[#00AFA9]" />
                                 Khách Hàng Mục Tiêu
                             </label>
                             <input
@@ -109,13 +109,13 @@ export default function AutoCampaignGenerator({ isOpen, onClose, onSuccess }: Au
                                 value={audience}
                                 onChange={(e) => setAudience(e.target.value)}
                                 placeholder="VD: Sinh viên bán online, đại lý thời trang..."
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#00AFA9] focus:ring-2 focus:ring-[#00AFA9]/20 outline-none transition-all"
                             />
                         </div>
                     </div>
 
-                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex gap-3 text-sm text-blue-800">
-                        <ImageIcon className="w-5 h-5 shrink-0 text-blue-600" />
+                    <div className="bg-teal-50 p-4 rounded-xl border border-teal-100 flex gap-3 text-sm text-teal-900">
+                        <ImageIcon className="w-5 h-5 shrink-0 text-[#00AFA9]" />
                         <p>
                             <strong>Hệ thống tự động:</strong> AI sẽ tự động truy cập Kho Media (bot_contents) của bạn để lấy hình ảnh phù hợp nhất với mục tiêu này, sau đó tự viết 3 mẫu Content và đẩy lên thành 3 Bản Nháp (Draft) trên Facebook.
                         </p>
@@ -129,7 +129,7 @@ export default function AutoCampaignGenerator({ isOpen, onClose, onSuccess }: Au
                     <button 
                         onClick={handleGenerate}
                         disabled={isGenerating}
-                        className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm"
+                        className="px-6 py-2.5 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm"
                     >
                         {isGenerating ? (
                             <>

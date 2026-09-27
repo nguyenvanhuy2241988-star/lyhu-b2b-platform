@@ -46,11 +46,11 @@ export function FolderInspector({ folder, readOnly = false, onUpdate, onClose }:
     };
 
     return (
-        <div className="h-full flex flex-col bg-white border-l border-slate-200 w-80 lg:w-96 shadow-xl relative z-10">
+        <div className="h-full flex flex-col bg-white border-l border-slate-200 w-80 lg:w-96 relative z-10">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/50">
                 <div className="flex items-center gap-2 overflow-hidden">
-                    <Folder className="w-5 h-5 text-blue-500 shrink-0" />
+                    <Folder className="w-5 h-5 text-[#00AFA9] shrink-0" />
                     <h3 className="font-semibold text-slate-800 truncate" title={folder.name}>
                         {folder.name}
                     </h3>
@@ -90,13 +90,13 @@ export function FolderInspector({ folder, readOnly = false, onUpdate, onClose }:
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
                         <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                            <Info className="w-4 h-4 text-blue-500" />
+                            <Info className="w-4 h-4 text-[#00AFA9]" />
                             Hướng dẫn & Quy định
                         </h4>
                         {!editing && !readOnly && (
                             <button
                                 onClick={() => setEditing(true)}
-                                className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium px-2 py-1 hover:bg-blue-50 rounded"
+                                className="text-xs flex items-center gap-1 text-[#00AFA9] hover:text-[#009690] font-medium px-2 py-1 hover:bg-teal-50 rounded"
                             >
                                 <Edit3 className="w-3 h-3" /> Sửa
                             </button>
@@ -106,7 +106,7 @@ export function FolderInspector({ folder, readOnly = false, onUpdate, onClose }:
                     {editing ? (
                         <div className="space-y-2">
                             <textarea
-                                className="w-full h-64 p-3 border border-slate-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                                className="w-full h-64 p-3 border border-slate-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-[#00AFA9] focus:border-transparent outline-none resize-none"
                                 value={guidance}
                                 onChange={e => setGuidance(e.target.value)}
                                 placeholder="Nhập hướng dẫn (Markdown)..."
@@ -125,7 +125,7 @@ export function FolderInspector({ folder, readOnly = false, onUpdate, onClose }:
                                 </button>
                                 <button
                                     onClick={handleSave}
-                                    className="px-3 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded flex items-center gap-1"
+                                    className="px-3 py-1.5 text-sm bg-[#00AFA9] text-white hover:bg-[#009690] rounded flex items-center gap-1"
                                     disabled={saving}
                                 >
                                     {saving ? 'Lưu...' : <><Save className="w-3 h-3" /> Lưu</>}

@@ -185,7 +185,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
             `}</style>
             
             {/* Control Header */}
-            <div className="handover-controls bg-slate-900 text-white p-4 shadow-xl flex items-center justify-between shrink-0 relative z-10">
+            <div className="handover-controls bg-slate-900 text-white p-4 border-b border-slate-800 flex items-center justify-between shrink-0 relative z-10">
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-teal-400 font-bold px-4 py-1.5 bg-teal-950/50 border border-teal-800 rounded-lg">
                         <FileText className="w-4 h-4" /> BIÊN BẢN BÀN GIAO THIẾT BỊ
@@ -193,7 +193,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                 </div>
                 <div className="flex items-center gap-2">
                     <button onClick={handlePrint}
-                        className="flex items-center gap-2 px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-xl transition-colors">
+                        className="flex items-center gap-2 px-5 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white text-sm font-bold rounded-xl transition-colors">
                         <Printer className="w-4 h-4" /> In
                     </button>
                     <button onClick={handleExportPDF}
@@ -209,13 +209,13 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
 
             <div className="flex flex-1 overflow-hidden pb-[100px] sm:pb-0 handover-print-wrapper">
                 {/* SETTINGS SIDEBAR */}
-                <div className="handover-controls w-[300px] sm:w-[350px] md:w-[450px] bg-white border-r border-slate-200 p-6 overflow-y-auto shrink-0 shadow-lg z-10">
-                    <h3 className="font-bold text-slate-800 mb-6 uppercase text-sm tracking-wide border-b border-teal-500 pb-2 inline-block">Cấu hình biên bản</h3>
+                <div className="handover-controls w-[300px] sm:w-[350px] md:w-[450px] bg-white border-r border-slate-200 p-6 overflow-y-auto shrink-0 z-10">
+                    <h3 className="font-bold text-slate-800 mb-6 uppercase text-sm tracking-wide border-b border-[#00AFA9] pb-2 inline-block">Cấu hình biên bản</h3>
                     
                     <div className="space-y-8">
                         {/* Company Info */}
                         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <h4 className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 bg-teal-500 rounded-full" /> THÔNG TIN CÔNG TY</h4>
+                            <h4 className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 bg-[#00AFA9] rounded-full" /> THÔNG TIN CÔNG TY</h4>
                             <div className="space-y-3">
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-700 mb-1">Tên công ty</label>
@@ -273,13 +273,13 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
 
                         {/* Receiver Info */}
                         <div className="bg-teal-50/50 p-4 rounded-xl border border-teal-200">
-                            <h4 className="text-xs font-bold text-teal-700 mb-3 uppercase tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 bg-teal-600 rounded-full" /> BÊN NHẬN (NGƯỜI MƯỢN)</h4>
+                            <h4 className="text-xs font-bold text-teal-700 mb-3 uppercase tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 bg-[#00AFA9] rounded-full" /> BÊN NHẬN (NGƯỜI MƯỢN)</h4>
                             <div className="space-y-3">
                                 <div className="relative">
                                     <label className="block text-xs font-semibold text-teal-900 mb-1">Họ và tên *</label>
                                     <input
                                         type="text"
-                                        className="w-full px-3 py-2 border border-teal-300 rounded-md text-sm focus:ring-2 focus:ring-teal-500 font-bold bg-white shadow-sm placeholder:font-normal placeholder:text-slate-400"
+                                        className="w-full px-3 py-2 border border-teal-300 rounded-md text-sm focus:ring-2 focus:ring-[#00AFA9] font-bold bg-white shadow-sm placeholder:font-normal placeholder:text-slate-400"
                                         placeholder="Gõ tên để tìm trên hệ thống..."
                                         value={receiverInfo.name}
                                         onChange={(e) => {
@@ -290,7 +290,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                                         onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                                     />
                                     {showDropdown && profileList.length > 0 && (
-                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto">
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg z-50 max-h-48 overflow-y-auto">
                                             {profileList.filter(p => (p.full_name || '').toLowerCase().includes(receiverInfo.name.toLowerCase())).map(p => (
                                                 <div key={p.id} 
                                                     className="px-3 py-2 text-sm text-slate-700 hover:bg-teal-50 cursor-pointer border-b border-slate-50 last:border-0"
@@ -341,7 +341,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                             <h4 className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full" /> ĐIỀU KHOẢN (AI Auto Parse Định Dạng)</h4>
                             <p className="text-[10px] text-slate-400 mb-2 italic">Mẹo: Bắt đầu dòng bằng "Điều 1." máy sẽ tự IN ĐẬM. Bắt đầu bằng "1.1." máy sẽ căn lề tạo điểm nhấn.</p>
                             <textarea
-                                className="w-full px-3 py-2 border border-slate-300 bg-white rounded-lg text-[13px] font-mono text-slate-700 focus:ring-2 focus:ring-teal-500 min-h-[300px] shadow-inner leading-relaxed"
+                                className="w-full px-3 py-2 border border-slate-300 bg-white rounded-lg text-[13px] font-mono text-slate-700 focus:ring-2 focus:ring-[#00AFA9] min-h-[300px] shadow-inner leading-relaxed"
                                 value={terms}
                                 onChange={(e) => setTerms(e.target.value)}
                             />
@@ -352,7 +352,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                 {/* PREVIEW PANEL */}
                 <div className="handover-print-wrapper flex-1 overflow-y-auto bg-slate-200 p-4 sm:p-8">
                     <div ref={printRef}
-                        className="handover-print-page bg-white w-full max-w-[800px] mx-auto min-h-[1100px] rounded-sm shadow-2xl flex flex-col relative"
+                        className="handover-print-page bg-white w-full max-w-[800px] mx-auto min-h-[1100px] rounded-sm border border-slate-200 flex flex-col relative"
                         style={{ fontFamily: "'Times New Roman', Times, serif", color: '#000' }}>
                         
                         {/* HEADER */}

@@ -65,8 +65,8 @@ export default function CampaignRunModal({ isOpen, onClose, campaignId, campaign
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-[2px] animate-in fade-in duration-200 p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 text-white relative">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="bg-[#00AFA9] px-6 py-5 text-white relative">
                     <button onClick={onClose} className="absolute right-4 top-4 text-white/70 hover:text-white transition-colors">
                         <X className="w-5 h-5" />
                     </button>
@@ -74,7 +74,7 @@ export default function CampaignRunModal({ isOpen, onClose, campaignId, campaign
                         <PlayCircle className="w-6 h-6 text-white" />
                     </div>
                     <h3 className="font-bold text-lg mb-1">Kích Nổ Chiến Dịch</h3>
-                    <p className="text-blue-100 text-sm truncate">{campaignName}</p>
+                    <p className="text-teal-100 text-sm truncate">{campaignName}</p>
                 </div>
 
                 <div className="p-6 bg-slate-50">
@@ -85,7 +85,7 @@ export default function CampaignRunModal({ isOpen, onClose, campaignId, campaign
                     <select 
                         value={selectedProfileId}
                         onChange={(e) => setSelectedProfileId(e.target.value)}
-                        className="w-full text-slate-800 p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none mb-6 font-semibold"
+                        className="w-full text-slate-800 p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#00AFA9] focus:border-[#00AFA9] outline-none mb-6 font-semibold"
                     >
                         <option value="" disabled>-- Chọn Nhân dạng để Thả Bot --</option>
                         <option value="default">🌐 Profile Ẩn danh Mặc định (Tạm thời)</option>
@@ -97,7 +97,7 @@ export default function CampaignRunModal({ isOpen, onClose, campaignId, campaign
                     <button
                         onClick={handleRun}
                         disabled={isTriggering || !selectedProfileId}
-                        className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex justify-center items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-blue-600/20"
+                        className="w-full py-3.5 bg-[#00AFA9] hover:bg-[#009690] text-white font-bold rounded-xl flex justify-center items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                     >
                         {isTriggering ? (
                             "Đang bơm vào Hàng đợi..."

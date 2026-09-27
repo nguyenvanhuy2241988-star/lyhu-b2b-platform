@@ -141,7 +141,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/50">
                     <h3 className="font-semibold text-slate-900">Thêm việc mới</h3>
@@ -169,7 +169,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                         <div>
                             <label className="block text-xs font-medium text-slate-600 mb-1">Độ ưu tiên</label>
                             <select
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                 value={priority}
                                 onChange={e => setPriority(e.target.value)}
                             >
@@ -182,7 +182,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                         <div>
                             <label className="block text-xs font-medium text-slate-600 mb-1">Cột</label>
                             <select
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                 value={status}
                                 onChange={e => setStatus(e.target.value)}
                             >
@@ -200,7 +200,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                         <div className="flex-1 min-w-[200px]">
                             <input
                                 type="date"
-                                className={`w-full px-3 py-1.5 border rounded-lg text-sm transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium ${dueDate ? 'bg-white border-primary-200 text-primary-700' : 'bg-slate-50 border-dashed border-slate-300 text-slate-400'}`}
+                                className={`w-full px-3 py-1.5 border rounded-lg text-sm transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#00AFA9] font-medium ${dueDate ? 'bg-white border-[#00AFA9] text-[#00AFA9]' : 'bg-slate-50 border-dashed border-slate-300 text-slate-400'}`}
                                 value={dueDate}
                                 onChange={(e) => setDueDate(e.target.value)}
                                 title="Thời gian hoàn thành"
@@ -222,7 +222,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                                 {assigneeIds.length === 0 && <span className="text-[10px] text-slate-400 italic">Chọn bên dưới...</span>}
                             </div>
                             <select
-                                className="w-full bg-transparent border-none text-[11px] font-medium focus:ring-0 p-0 text-primary-600 outline-none cursor-pointer"
+                                className="w-full bg-transparent border-none text-[11px] font-medium focus:ring-0 p-0 text-[#00AFA9] outline-none cursor-pointer"
                                 value=""
                                 onChange={(e) => {
                                     const val = e.target.value;
@@ -259,7 +259,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                         <textarea
                             placeholder="Ghi chú thêm..."
                             rows={3}
-                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] resize-none"
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
                         />
@@ -270,7 +270,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                         <div className="flex flex-wrap gap-2">
                             {attachments.map((att, idx) => (
                                 <div key={idx} className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-md text-xs border border-slate-200 max-w-full">
-                                    {att.type === 'image' && <ImageIcon className="w-3 h-3 text-purple-500" />}
+                                    {att.type === 'image' && <ImageIcon className="w-3 h-3 text-[#00AFA9]" />}
                                     {att.type === 'file' && <FileText className="w-3 h-3 text-blue-500" />}
                                     {att.type === 'link' && <LinkIcon className="w-3 h-3 text-green-500" />}
                                     <span className="truncate max-w-[150px]">{att.name}</span>
@@ -289,16 +289,16 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                     <div className="flex items-center gap-2 relative">
                         <button
                             onClick={() => setIsAttachOpen(!isAttachOpen)}
-                            className="flex items-center gap-1.5 text-sm text-primary-600 font-medium hover:bg-primary-50 px-3 py-1.5 rounded-lg transition-colors"
+                            className="flex items-center gap-1.5 text-sm text-[#00AFA9] font-medium hover:bg-teal-50 px-3 py-1.5 rounded-lg transition-colors"
                         >
                             <Paperclip className="w-4 h-4" />
                             Đính kèm
                         </button>
 
                         {isAttachOpen && (
-                            <div className="absolute left-0 top-full mt-2 bg-white rounded-lg shadow-xl border border-slate-200 p-2 z-10 w-64 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-100">
+                            <div className="absolute left-0 top-full mt-2 bg-white rounded-lg border border-slate-200 p-2 z-10 w-64 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-100">
                                 <label className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 rounded cursor-pointer text-sm text-slate-700">
-                                    <ImageIcon className="w-4 h-4 text-purple-500" />
+                                    <ImageIcon className="w-4 h-4 text-[#00AFA9]" />
                                     <span>Tải ảnh lên</span>
                                     <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                                 </label>
@@ -312,14 +312,14 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                                     <input
                                         type="text"
                                         placeholder="Dán liên kết..."
-                                        className="w-full px-2 py-1 text-sm border border-slate-200 rounded mb-1 focus:outline-none focus:border-primary-500"
+                                        className="w-full px-2 py-1 text-sm border border-slate-200 rounded mb-1 focus:outline-none focus:border-[#00AFA9]"
                                         value={linkInput}
                                         onChange={(e) => setLinkInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAddLink()}
                                     />
                                     <button
                                         onClick={handleAddLink}
-                                        className="w-full text-xs bg-primary-600 text-white rounded py-1 hover:bg-primary-700"
+                                        className="w-full text-xs bg-[#00AFA9] text-white rounded py-1 hover:bg-[#009690]"
                                     >
                                         Thêm Link
                                     </button>
@@ -339,7 +339,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                     </button>
                     <button
                         onClick={handleSave}
-                        className="px-6 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-sm transition-all hover:shadow-md"
+                        className="px-6 py-2 text-sm font-medium text-white bg-[#00AFA9] hover:bg-[#009690] rounded-lg shadow-sm transition-all"
                     >
                         Tạo công việc
                     </button>

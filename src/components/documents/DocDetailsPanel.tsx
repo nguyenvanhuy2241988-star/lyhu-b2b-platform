@@ -124,7 +124,7 @@ export function DocDetailsPanel({ file, isAdmin, onClose, onUpdate }: DocDetails
 
     return (
         <>
-            <div className="h-full flex flex-col bg-white border-l border-slate-200 w-80 lg:w-[450px] shadow-xl relative z-10 transition-transform">
+            <div className="h-full flex flex-col bg-white border-l border-slate-200 w-80 lg:w-[450px] relative z-10 transition-transform">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-white sticky top-0 z-20">
                     <h3 className="font-semibold text-slate-800">Chi tiết Tài liệu</h3>
@@ -214,23 +214,23 @@ export function DocDetailsPanel({ file, isAdmin, onClose, onUpdate }: DocDetails
                     </div>
 
                     {/* --- CONTENT / CAPTIONS SECTION --- */}
-                    <div className="border border-indigo-100 bg-indigo-50/50 rounded-xl p-4 space-y-3">
+                    <div className="border border-teal-100 bg-teal-50/50 rounded-xl p-4 space-y-3">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-bold text-indigo-900 flex items-center gap-2">
-                                <MessageSquare className="w-4 h-4 text-indigo-600" />
+                            <h4 className="text-sm font-bold text-teal-900 flex items-center gap-2">
+                                <MessageSquare className="w-4 h-4 text-[#00AFA9]" />
                                 Nội dung bài đăng ({captions.length})
                             </h4>
                             {isEditingContent ? (
                                 <button
                                     onClick={handleSaveContent}
-                                    className="text-xs flex items-center gap-1 bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700"
+                                    className="text-xs flex items-center gap-1 bg-[#00AFA9] text-white px-2 py-1 rounded hover:bg-[#009690]"
                                 >
                                     <Save className="w-3 h-3" /> Lưu
                                 </button>
                             ) : (
                                 <button
                                     onClick={handleAddCaption}
-                                    className="text-xs flex items-center gap-1 text-indigo-600 hover:text-indigo-800 px-2 py-1 rounded hover:bg-indigo-100"
+                                    className="text-xs flex items-center gap-1 text-[#00AFA9] hover:text-[#009690] px-2 py-1 rounded hover:bg-teal-100"
                                 >
                                     <Plus className="w-3 h-3" /> Thêm mẫu
                                 </button>
@@ -251,7 +251,7 @@ export function DocDetailsPanel({ file, isAdmin, onClose, onUpdate }: DocDetails
                                                 handleUpdateCaption(idx, e.target.value);
                                                 setIsEditingContent(true);
                                             }}
-                                            className="w-full text-sm p-3 rounded-lg border border-indigo-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 min-h-[80px]"
+                                            className="w-full text-sm p-3 rounded-lg border border-slate-200 focus:border-[#00AFA9] focus:ring-1 focus:ring-[#00AFA9] min-h-[80px]"
                                             placeholder={`Mẫu nội dung #${idx + 1}...`}
                                         />
                                         <button
@@ -270,7 +270,7 @@ export function DocDetailsPanel({ file, isAdmin, onClose, onUpdate }: DocDetails
                             {captions.length > 0 && (
                                 <button
                                     onClick={handleAddCaption}
-                                    className="w-full py-2 border border-dashed border-indigo-300 text-indigo-500 hover:bg-indigo-50 rounded-lg text-xs font-medium flex items-center justify-center gap-1"
+                                    className="w-full py-2 border border-dashed border-[#00AFA9]/40 text-[#00AFA9] hover:bg-teal-50 rounded-lg text-xs font-medium flex items-center justify-center gap-1"
                                 >
                                     <Plus className="w-3 h-3" /> Thêm biến thể mới
                                 </button>
@@ -282,7 +282,7 @@ export function DocDetailsPanel({ file, isAdmin, onClose, onUpdate }: DocDetails
                     <div className="flex flex-col gap-3 pt-2">
                         <button
                             onClick={() => setShowPreview(true)}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-sm"
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] transition text-sm font-medium shadow-sm"
                         >
                             <Eye className="w-4 h-4" /> Xem trước File
                         </button>

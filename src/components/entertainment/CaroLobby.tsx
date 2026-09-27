@@ -110,7 +110,7 @@ export const CaroLobby = ({ currentUser, onJoinRoom, onCreateRoom }: CaroLobbyPr
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                 <div>
                     <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
-                        <Users className="w-8 h-8 text-indigo-600" /> SẢNH THÁCH ĐẤU
+                        <Users className="w-8 h-8 text-[#00AFA9]" /> SẢNH THÁCH ĐẤU
                     </h2>
                     <p className="text-slate-500">Tìm đối thủ và so tài Caro đỉnh cao!</p>
                 </div>
@@ -120,7 +120,7 @@ export const CaroLobby = ({ currentUser, onJoinRoom, onCreateRoom }: CaroLobbyPr
                     </button>
                     <button
                         onClick={handleCreate}
-                        className="flex items-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 shadow-lg hover:shadow-teal-200 transition-all"
+                        className="flex items-center gap-2 px-6 py-3 bg-[#00AFA9] text-white rounded-xl font-bold hover:bg-[#009690] transition-all"
                     >
                         <Plus className="w-5 h-5" /> TẠO PHÒNG
                     </button>
@@ -130,13 +130,13 @@ export const CaroLobby = ({ currentUser, onJoinRoom, onCreateRoom }: CaroLobbyPr
             {/* Room List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {rooms.map(room => (
-                    <div key={room.id} className="border border-slate-200 rounded-xl p-5 hover:border-teal-500 hover:shadow-md transition-all bg-slate-50 group relative overflow-hidden">
+                    <div key={room.id} className="border border-slate-200 rounded-xl p-5 hover:border-[#00AFA9] hover:shadow-md transition-all bg-slate-50 group relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                             <Users className="w-20 h-20" />
                         </div>
 
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg border-2 border-white shadow-sm">
+                            <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center text-[#00AFA9] font-bold text-lg border-2 border-white shadow-sm">
                                 {room.player1?.full_name?.charAt(0) || 'U'}
                             </div>
                             <div>
@@ -151,7 +151,7 @@ export const CaroLobby = ({ currentUser, onJoinRoom, onCreateRoom }: CaroLobbyPr
                             </span>
                             <button
                                 onClick={() => handleJoin(room)}
-                                className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 shadow-sm"
+                                className="px-4 py-2 bg-[#00AFA9] text-white text-sm font-bold rounded-lg hover:bg-[#009690] shadow-sm"
                             >
                                 THAM CHIẾN
                             </button>
@@ -165,7 +165,7 @@ export const CaroLobby = ({ currentUser, onJoinRoom, onCreateRoom }: CaroLobbyPr
                             <Users className="w-8 h-8 opacity-20" />
                         </div>
                         <p>Chưa có phòng nào đang chờ.</p>
-                        <button onClick={handleCreate} className="mt-2 text-teal-600 font-bold hover:underline">Tạo phòng ngay</button>
+                        <button onClick={handleCreate} className="mt-2 text-[#00AFA9] font-bold hover:underline">Tạo phòng ngay</button>
                     </div>
                 )}
             </div>

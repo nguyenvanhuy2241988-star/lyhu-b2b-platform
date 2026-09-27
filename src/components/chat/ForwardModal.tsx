@@ -111,7 +111,7 @@ export function ForwardModal({ isOpen, onClose, message, users, currentUser }: F
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-xl border border-slate-200 w-full max-w-md flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                     <h3 className="font-semibold text-lg">Chuyển tiếp tin nhắn</h3>
@@ -129,7 +129,7 @@ export function ForwardModal({ isOpen, onClose, message, users, currentUser }: F
                             placeholder="Tìm kiếm người hoặc nhóm..."
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 text-slate-900 placeholder:text-slate-500"
+                            className="w-full pl-9 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 text-slate-900 placeholder:text-slate-500"
                             autoFocus
                         />
                     </div>
@@ -145,7 +145,7 @@ export function ForwardModal({ isOpen, onClose, message, users, currentUser }: F
                             <button
                                 key={c.id}
                                 onClick={() => toggleSelection(c.id)}
-                                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
+                                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${isSelected ? 'bg-teal-50' : 'hover:bg-slate-50'}`}
                             >
                                 <div className="relative">
                                     <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden shrink-0">
@@ -165,7 +165,7 @@ export function ForwardModal({ isOpen, onClose, message, users, currentUser }: F
                                         )}
                                     </div>
                                     {isSelected && (
-                                        <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-0.5 border-2 border-white">
+                                        <div className="absolute -bottom-1 -right-1 bg-[#00AFA9] text-white rounded-full p-0.5 border-2 border-white">
                                             <Check className="w-3 h-3" />
                                         </div>
                                     )}
@@ -198,7 +198,7 @@ export function ForwardModal({ isOpen, onClose, message, users, currentUser }: F
                             <button
                                 key={u.id}
                                 onClick={() => toggleSelection(selectionId)}
-                                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
+                                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${isSelected ? 'bg-teal-50' : 'hover:bg-slate-50'}`}
                             >
                                 <div className="relative">
                                     <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden shrink-0">
@@ -207,7 +207,7 @@ export function ForwardModal({ isOpen, onClose, message, users, currentUser }: F
                                         </div>
                                     </div>
                                     {isSelected && (
-                                        <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-0.5 border-2 border-white">
+                                        <div className="absolute -bottom-1 -right-1 bg-[#00AFA9] text-white rounded-full p-0.5 border-2 border-white">
                                             <Check className="w-3 h-3" />
                                         </div>
                                     )}
@@ -237,7 +237,7 @@ export function ForwardModal({ isOpen, onClose, message, users, currentUser }: F
                     <button
                         onClick={handleSend}
                         disabled={selectedIds.length === 0 || sending}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-sm shadow-sm hover:shadow-md active:scale-95"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-sm active:scale-95"
                     >
                         {sending ? (
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

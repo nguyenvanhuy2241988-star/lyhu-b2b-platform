@@ -110,11 +110,11 @@ export const TypingManagementTab = () => {
         <div className="space-y-6 animate-in fade-in">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Keyboard className="w-5 h-5 text-indigo-500" /> Quản Lý Đua Gõ
+                    <Keyboard className="w-5 h-5 text-[#00AFA9]" /> Quản Lý Đua Gõ
                 </h3>
                 <button
                     onClick={() => handleOpenModal()}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm shadow-sm"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] font-medium text-sm shadow-sm"
                 >
                     <Plus className="w-4 h-4" /> Thêm Văn Bản
                 </button>
@@ -159,7 +159,7 @@ export const TypingManagementTab = () => {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-in zoom-in duration-200">
+                    <div className="bg-white rounded-xl border border-slate-200 w-full max-w-lg animate-in zoom-in duration-200">
                         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-xl">
                             <h3 className="font-bold text-slate-800">{editingItem ? 'Sửa Văn Bản' : 'Thêm Văn Bản'}</h3>
                             <button onClick={() => setIsModalOpen(false)}><X className="w-5 h-5 text-slate-400 hover:text-slate-600" /></button>
@@ -167,13 +167,13 @@ export const TypingManagementTab = () => {
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Nội dung văn bản</label>
-                                <textarea required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-32"
+                                <textarea required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none h-32"
                                     value={formData.content} onChange={e => setFormData({ ...formData, content: e.target.value })} />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Danh mục</label>
-                                    <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                    <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none bg-white"
                                         value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}>
                                         <option value="General">General (Chung)</option>
                                         <option value="Quotes">Quotes (Danh ngôn)</option>
@@ -182,7 +182,7 @@ export const TypingManagementTab = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Độ khó</label>
-                                    <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                    <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#00AFA9] outline-none bg-white"
                                         value={formData.difficulty} onChange={e => setFormData({ ...formData, difficulty: e.target.value })}>
                                         <option value="Easy">Easy (Dễ)</option>
                                         <option value="Medium">Medium (Vừa)</option>
@@ -192,7 +192,7 @@ export const TypingManagementTab = () => {
                             </div>
                             <div className="pt-4 flex gap-3">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 border border-slate-300 rounded-lg font-medium hover:bg-slate-50">Hủy</button>
-                                <button type="submit" className="flex-1 py-2.5 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700">Lưu</button>
+                                <button type="submit" className="flex-1 py-2.5 bg-[#00AFA9] text-white rounded-lg font-bold hover:bg-[#009690]">Lưu</button>
                             </div>
                         </form>
                     </div>

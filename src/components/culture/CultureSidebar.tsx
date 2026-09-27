@@ -77,7 +77,7 @@ export default function CultureSidebar({ activeTab, setActiveTab }: { activeTab:
         <div className="w-72 shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col h-full z-10 hidden md:flex">
             <div className="p-6 border-b border-slate-200 bg-white shrink-0 flex justify-between items-center">
                 <div className="flex items-center gap-2.5 text-slate-800 font-bold uppercase tracking-widest text-[13px]">
-                    <Sparkles className="w-5 h-5 text-teal-600" />
+                    <Sparkles className="w-5 h-5 text-[#00AFA9]" />
                     <span>Cẩm Nang Hạt Nhân</span>
                 </div>
             </div>
@@ -110,7 +110,7 @@ export default function CultureSidebar({ activeTab, setActiveTab }: { activeTab:
                                                         isActive 
                                                         ? "bg-white text-slate-900 border border-slate-200 shadow-sm font-semibold" 
                                                         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent"
-                                                    } ${snapshot.isDragging ? 'shadow-lg ring-2 ring-teal-500 z-50 bg-white' : ''}`}
+                                                    } ${snapshot.isDragging ? 'border border-[#00AFA9] ring-2 ring-[#00AFA9] z-50 bg-white' : ''}`}
                                                     onClick={() => !isEditing && setActiveTab(tab.id)}
                                                 >
                                                     {/* Drag Handle */}
@@ -125,7 +125,7 @@ export default function CultureSidebar({ activeTab, setActiveTab }: { activeTab:
                                                     )}
 
                                                     <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
-                                                        {renderIcon(tab.icon, "w-4 h-4 shrink-0 transition-colors", { color: isActive ? '#04ACA9' : '#94a3b8' })}
+                                                        {renderIcon(tab.icon, "w-4 h-4 shrink-0 transition-colors", { color: isActive ? '#00AFA9' : '#94a3b8' })}
                                                         
                                                         {isEditing ? (
                                                             <div className="flex-1 flex gap-1 items-center" onClick={e => e.stopPropagation()}>
@@ -134,7 +134,7 @@ export default function CultureSidebar({ activeTab, setActiveTab }: { activeTab:
                                                                     value={editLabel}
                                                                     onChange={e => setEditLabel(e.target.value)}
                                                                     onKeyDown={e => e.key === 'Enter' && saveEdit(tab.id)}
-                                                                    className="w-full bg-slate-50 border border-slate-300 rounded px-2 py-0.5 text-sm text-slate-900 outline-none focus:ring-1 focus:ring-teal-500"
+                                                                    className="w-full bg-slate-50 border border-slate-300 rounded px-2 py-0.5 text-sm text-slate-900 outline-none focus:ring-1 focus:ring-[#00AFA9]"
                                                                 />
                                                                 <Check className="w-4 h-4 text-emerald-600 cursor-pointer shrink-0" onClick={() => saveEdit(tab.id)} />
                                                             </div>
@@ -146,7 +146,7 @@ export default function CultureSidebar({ activeTab, setActiveTab }: { activeTab:
                                                     {/* Action Buttons for Edit Mode */}
                                                     {isEditMode && !isEditing && (
                                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                                            <Edit2 className="w-3.5 h-3.5 text-slate-400 hover:text-teal-600" onClick={(e) => { e.stopPropagation(); startEdit(tab.id, tab.label); }} />
+                                                            <Edit2 className="w-3.5 h-3.5 text-slate-400 hover:text-[#00AFA9]" onClick={(e) => { e.stopPropagation(); startEdit(tab.id, tab.label); }} />
                                                             {tabs.length > 1 && (
                                                                 <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-600 ml-1" onClick={(e) => { e.stopPropagation(); removeTab(tab.id); }} />
                                                             )}
@@ -154,7 +154,7 @@ export default function CultureSidebar({ activeTab, setActiveTab }: { activeTab:
                                                     )}
 
                                                     {!isEditMode && (
-                                                        <Icons.ArrowRight className={`w-4 h-4 transition-all shrink-0 ${isActive ? 'opacity-100' : 'opacity-0 -translate-x-2'}`} style={{ color: isActive ? '#04ACA9' : '' }} />
+                                                        <Icons.ArrowRight className={`w-4 h-4 transition-all shrink-0 ${isActive ? 'opacity-100' : 'opacity-0 -translate-x-2'}`} style={{ color: isActive ? '#00AFA9' : '' }} />
                                                     )}
                                                 </div>
                                             )}
@@ -170,7 +170,7 @@ export default function CultureSidebar({ activeTab, setActiveTab }: { activeTab:
                 {isEditMode && (
                     <div 
                         onClick={addTab}
-                        className="mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed border-slate-300 text-slate-500 hover:text-teal-600 hover:bg-teal-50 hover:border-teal-200 cursor-pointer transition-colors"
+                        className="mt-4 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed border-slate-300 text-slate-500 hover:text-[#00AFA9] hover:bg-teal-50 hover:border-[#00AFA9] cursor-pointer transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         <span className="text-sm font-medium">Tạo Tab Mới</span>

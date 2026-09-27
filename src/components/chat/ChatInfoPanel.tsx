@@ -58,7 +58,7 @@ export function ChatInfoPanel({ conversation, onClose, users, currentUserId, onD
     }, [conversation?.id, isGroup]);
 
     return (
-        <div className="absolute inset-0 md:static md:w-80 md:inset-auto z-30 bg-white border-l border-slate-200 flex flex-col shadow-xl animate-in slide-in-from-right duration-300">
+        <div className="absolute inset-0 md:static md:w-80 md:inset-auto z-30 bg-white border-l border-slate-200 flex flex-col animate-in slide-in-from-right duration-300">
             {/* Header */}
             <div className="h-16 px-4 border-b border-slate-200 flex items-center justify-between shrink-0">
                 <h3 className="font-bold text-slate-800">Thông tin hội thoại</h3>
@@ -102,7 +102,7 @@ export function ChatInfoPanel({ conversation, onClose, users, currentUserId, onD
                 {isGroup && (
                     <button
                         onClick={() => setActiveTab('members')}
-                        className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${activeTab === 'members' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-slate-500 hover:text-slate-800'}`}
+                        className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${activeTab === 'members' ? 'text-[#00AFA9] border-b-2 border-[#00AFA9]' : 'text-slate-500 hover:text-slate-800'}`}
                     >
                         <Users className="w-4 h-4" />
                         {members.length}
@@ -110,14 +110,14 @@ export function ChatInfoPanel({ conversation, onClose, users, currentUserId, onD
                 )}
                 <button
                     onClick={() => setActiveTab('images')}
-                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${activeTab === 'images' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${activeTab === 'images' ? 'text-[#00AFA9] border-b-2 border-[#00AFA9]' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                     <ImageIcon className="w-4 h-4" />
                     {images.length}
                 </button>
                 <button
                     onClick={() => setActiveTab('files')}
-                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${activeTab === 'files' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${activeTab === 'files' ? 'text-[#00AFA9] border-b-2 border-[#00AFA9]' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                     <FileText className="w-4 h-4" />
                     {files.length}
@@ -159,7 +159,7 @@ export function ChatInfoPanel({ conversation, onClose, users, currentUserId, onD
                     </div>
                 ) : loading ? (
                     <div className="flex justify-center py-8">
-                        <div className="animate-spin w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full"></div>
+                        <div className="animate-spin w-6 h-6 border-2 border-[#00AFA9] border-t-transparent rounded-full"></div>
                     </div>
                 ) : activeTab === 'images' ? (
                     images.length > 0 ? (
@@ -176,7 +176,7 @@ export function ChatInfoPanel({ conversation, onClose, users, currentUserId, onD
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                                         <button
                                             onClick={() => window.open(img.attachment_url, '_blank')}
-                                            className="p-1.5 bg-white/90 rounded-full text-slate-700 hover:text-primary-600 shadow-sm"
+                                            className="p-1.5 bg-white/90 rounded-full text-slate-700 hover:text-[#00AFA9] shadow-sm"
                                         >
                                             <Download className="w-4 h-4" />
                                         </button>

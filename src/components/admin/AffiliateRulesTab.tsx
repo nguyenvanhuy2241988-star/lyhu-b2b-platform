@@ -146,7 +146,7 @@ export function AffiliateRulesTab() {
                                         {r.brand ? (
                                             <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">Nhãn hiệu: {r.brand}</span>
                                         ) : r.product_id ? (
-                                            <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-medium">Sản phẩm cụ thể</span>
+                                            <span className="bg-teal-50 text-[#00AFA9] px-2 py-1 rounded text-xs font-medium">Sản phẩm cụ thể</span>
                                         ) : (
                                             <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-medium">Toàn hệ thống (Mặc định)</span>
                                         )}
@@ -179,7 +179,7 @@ export function AffiliateRulesTab() {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+                    <div className="bg-white rounded-xl border border-slate-200 w-full max-w-md p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold">Thêm Quy tắc Hoa hồng</h2>
                             <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">

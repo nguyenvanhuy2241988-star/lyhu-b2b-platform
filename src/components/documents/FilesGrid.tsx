@@ -17,7 +17,7 @@ interface FilesGridProps {
 }
 
 const getFileIcon = (mimeType: string) => {
-    if (mimeType.startsWith('image/')) return <ImageIcon className="w-8 h-8 text-purple-500" />;
+    if (mimeType.startsWith('image/')) return <ImageIcon className="w-8 h-8 text-[#00AFA9]" />;
     if (mimeType.includes('pdf')) return <FileText className="w-8 h-8 text-red-500" />;
     if (mimeType.includes('sheet') || mimeType.includes('excel')) return <FileSpreadsheet className="w-8 h-8 text-green-500" />;
     if (mimeType.includes('word') || mimeType.includes('document')) return <FileText className="w-8 h-8 text-blue-500" />;
@@ -116,7 +116,7 @@ export function FilesGrid({ files, loading, selectedFileId, selectedFileIds = ne
                             if (selectedFileIds.has(file.id) && selectedFileIds.size > 1) {
                                 const crt = document.createElement("div");
                                 crt.innerHTML = `Đang di chuyển ${selectedFileIds.size} file`;
-                                crt.style.backgroundColor = "#2563eb";
+                                crt.style.backgroundColor = "#00AFA9";
                                 crt.style.color = "white";
                                 crt.style.padding = "4px 12px";
                                 crt.style.borderRadius = "8px";
@@ -128,10 +128,10 @@ export function FilesGrid({ files, loading, selectedFileId, selectedFileIds = ne
                             }
                         }}
                         className={cn(
-                            "group relative flex flex-col items-center p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md select-none",
+                            "group relative flex flex-col items-center p-3 rounded-xl border transition-all cursor-pointer select-none",
                             isSelected
-                                ? "bg-blue-50 border-blue-200 ring-2 ring-blue-500/50"
-                                : "bg-white border-slate-200 hover:border-blue-200"
+                                ? "bg-teal-50 border-[#00AFA9] ring-2 ring-[#00AFA9]/50"
+                                : "bg-white border-slate-200 hover:border-[#00AFA9]"
                         )}
                         onClick={(e) => {
                             if (e.ctrlKey || e.metaKey) {
@@ -172,7 +172,7 @@ export function FilesGrid({ files, loading, selectedFileId, selectedFileIds = ne
 
                             {/* Custom Tooltip on Hover for long names */}
                             {file.title && file.title.length > 20 && (
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[200px] bg-slate-800 text-white text-xs rounded py-1.5 px-2.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none break-words whitespace-normal text-center shadow-lg">
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[200px] bg-slate-800 text-white text-xs rounded py-1.5 px-2.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none break-words whitespace-normal text-center">
                                     {file.title}
                                     <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
                                 </div>

@@ -111,7 +111,7 @@ export function TagSelector({ entityId, entityType, currentTags = [], onTagsChan
                 <button
                     onClick={() => setOpenPicker(!openPicker)}
                     disabled={actionLoading}
-                    className="text-xs text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded transition disabled:opacity-50"
+                    className="text-xs text-[#00AFA9] hover:text-[#009690] bg-teal-50 px-2 py-1 rounded transition disabled:opacity-50"
                 >
                     {openPicker ? 'Đóng' : 'Thêm nhãn'}
                 </button>
@@ -150,7 +150,7 @@ export function TagSelector({ entityId, entityType, currentTags = [], onTagsChan
                                 autoFocus
                                 type="text"
                                 placeholder="Tên nhãn mới..."
-                                className="w-full text-sm px-2 py-1.5 border border-slate-300 rounded focus:border-blue-500 focus:outline-none"
+                                className="w-full text-sm px-2 py-1.5 border border-slate-300 rounded focus:border-[#00AFA9] focus:outline-none"
                                 value={newTagName}
                                 onChange={e => setNewTagName(e.target.value)}
                                 disabled={actionLoading}
@@ -168,7 +168,7 @@ export function TagSelector({ entityId, entityType, currentTags = [], onTagsChan
                             </div>
                             <div className="flex gap-2">
                                 <button
-                                    className="flex-1 bg-blue-600 text-white text-xs font-medium py-1.5 rounded hover:bg-blue-700 disabled:opacity-50"
+                                    className="flex-1 bg-[#00AFA9] text-white text-xs font-medium py-1.5 rounded hover:bg-[#009690] disabled:opacity-50"
                                     onClick={handleCreateTag}
                                     disabled={!newTagName.trim() || actionLoading}
                                 >
@@ -198,7 +198,7 @@ export function TagSelector({ entityId, entityType, currentTags = [], onTagsChan
                                                 key={tag.id}
                                                 onClick={() => handleToggleTag(tag)}
                                                 disabled={actionLoading}
-                                                className={`flex items-center justify-between w-full text-left px-2 py-1.5 text-xs rounded transition-colors ${isSelected ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-200 text-slate-700'}`}
+                                                className={`flex items-center justify-between w-full text-left px-2 py-1.5 text-xs rounded transition-colors ${isSelected ? 'bg-teal-50 text-[#00AFA9]' : 'hover:bg-slate-200 text-slate-700'}`}
                                             >
                                                 <div className="flex items-center gap-2">
                                                     <div className={`w-2.5 h-2.5 rounded-full ${getTagColorClasses(tag.color).split(' ')[0]}`} />
@@ -212,7 +212,7 @@ export function TagSelector({ entityId, entityType, currentTags = [], onTagsChan
                             )}
                             <button
                                 onClick={() => setIsCreating(true)}
-                                className="w-full mt-2 py-1.5 border border-dashed border-slate-300 text-slate-500 rounded text-xs hover:border-blue-400 hover:text-blue-600 transition flex items-center justify-center gap-1"
+                                className="w-full mt-2 py-1.5 border border-dashed border-slate-300 text-slate-500 rounded text-xs hover:border-[#00AFA9] hover:text-[#00AFA9] transition flex items-center justify-center gap-1"
                             >
                                 <Plus className="w-3 h-3" /> Tạo nhãn mới
                             </button>

@@ -206,15 +206,15 @@ export default function TabContentLibrary() {
                     <p className="text-sm text-slate-500 mt-1">Lưu trữ tập trung Status, Hình ảnh, Video trên Cloud để BOT điều phối ngẫu nhiên khi đăng bài.</p>
                 </div>
                 {!isAdding && (
-                    <button onClick={handleOpenAdd} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-md">
+                    <button onClick={handleOpenAdd} className="flex items-center gap-2 px-5 py-2.5 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-xl font-bold transition-all shadow-sm">
                         <Plus className="w-5 h-5" /> Thêm Bài Mới
                     </button>
                 )}
             </div>
 
             {isAdding && (
-                <div className="mb-8 p-6 bg-indigo-50 border border-indigo-100 rounded-2xl animate-in fade-in slide-in-from-top-4 shadow-sm">
-                    <h3 className="font-bold text-indigo-900 mb-4 text-lg">
+                <div className="mb-8 p-6 bg-teal-50 border border-teal-100 rounded-2xl animate-in fade-in slide-in-from-top-4 shadow-sm">
+                    <h3 className="font-bold text-teal-900 mb-4 text-lg">
                         {editingId ? "Sửa Bài Đăng" : "Biên Tập Bài Đăng Mới"}
                     </h3>
                     
@@ -222,14 +222,14 @@ export default function TabContentLibrary() {
                         {/* Cột trái: Phân loại & Chữ */}
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-bold text-indigo-900 mb-1">Loại Nhóm Mồi (Thư mục)</label>
+                                <label className="block text-sm font-bold text-teal-900 mb-1">Loại Nhóm Mồi (Thư mục)</label>
                                 <input
                                     type="text"
                                     list="category-suggestions"
                                     value={category}
                                     onChange={e => setCategory(e.target.value)}
                                     placeholder="Gõ tên nhóm mới hoặc chọn nhóm cũ..."
-                                    className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
+                                    className="w-full text-sm p-3 border border-teal-200 rounded-xl outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white shadow-sm"
                                 />
                                 <datalist id="category-suggestions">
                                     {Array.from(new Set(contents.map(c => c.category))).map(cat => (
@@ -243,7 +243,7 @@ export default function TabContentLibrary() {
                             </div>
                             
                                 <div className="flex items-center justify-between mb-2">
-                                    <label className="block text-sm font-bold text-indigo-900">
+                                    <label className="block text-sm font-bold text-teal-900">
                                         Nội dung Chữ ({editingId ? '1 Bài' : `Tối đa 10 Bài ngẫu nhiên`})
                                     </label>
                                 </div>
@@ -256,8 +256,8 @@ export default function TabContentLibrary() {
                                                 onClick={() => setActiveTab(idx)}
                                                 className={`px-3 py-1.5 text-xs font-bold rounded-t-lg border-t border-x transition-colors ${
                                                     activeTab === idx 
-                                                    ? 'bg-white border-indigo-200 text-indigo-700 shadow-sm z-10 scale-105' 
-                                                    : 'bg-indigo-50 border-transparent text-slate-500 hover:bg-indigo-100 hover:text-indigo-600'
+                                                    ? 'bg-white border-teal-200 text-[#00AFA9] shadow-sm z-10 scale-105' 
+                                                    : 'bg-teal-50 border-transparent text-slate-500 hover:bg-teal-100 hover:text-[#00AFA9]'
                                                 }`}
                                             >
                                                 Bài {idx + 1}
@@ -280,7 +280,7 @@ export default function TabContentLibrary() {
                                                     setMessageTexts([...messageTexts, '']);
                                                     setActiveTab(messageTexts.length);
                                                 }}
-                                                className="px-3 py-1 text-xs font-bold text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-t-lg transition-colors flex items-center"
+                                                className="px-3 py-1 text-xs font-bold text-[#00AFA9] hover:text-[#009690] hover:bg-teal-50 rounded-t-lg transition-colors flex items-center"
                                             >
                                                 <Plus className="w-3 h-3 mr-1" /> Thêm Bài
                                             </button>
@@ -297,24 +297,24 @@ export default function TabContentLibrary() {
                                         setMessageTexts(newTexts);
                                     }} 
                                     placeholder={!editingId ? `Gõ nội dung bài số ${activeTab + 1}... Khi BOT đăng ngẫu nhiên, nó sẽ bốc ngẫu nhiên 1 trong các Tab này để đăng và tải kèm Media chung.` : 'Nội dung bài viết...'}
-                                    className="w-full text-sm p-3 border border-indigo-200 rounded-xl rounded-tl-none outline-none focus:ring-2 focus:ring-indigo-500 bg-white resize-none shadow-sm -mt-[3px] relative z-0"
+                                    className="w-full text-sm p-3 border border-teal-200 rounded-xl rounded-tl-none outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white resize-none shadow-sm -mt-[3px] relative z-0"
                                 ></textarea>
                         </div>
 
                         {/* Cột phải: Khung ảnh đính kèm */}
                         <div>
                             <div className="flex items-center justify-between mb-3">
-                                <label className="block text-sm font-bold text-indigo-900">Nguồn Media đính kèm</label>
-                                <div className="flex bg-indigo-100/50 p-1 rounded-lg">
+                                <label className="block text-sm font-bold text-teal-900">Nguồn Media đính kèm</label>
+                                <div className="flex bg-teal-100/50 p-1 rounded-lg">
                                     <button 
                                         onClick={() => setMediaSource('upload')}
-                                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${mediaSource === 'upload' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${mediaSource === 'upload' ? 'bg-white text-[#00AFA9] shadow-sm' : 'text-slate-500 hover:text-[#00AFA9]'}`}
                                     >
                                         Tải File Lẻ
                                     </button>
                                     <button 
                                         onClick={() => setMediaSource('folder')}
-                                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${mediaSource === 'folder' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${mediaSource === 'folder' ? 'bg-white text-[#00AFA9] shadow-sm' : 'text-slate-500 hover:text-[#00AFA9]'}`}
                                     >
                                         Link Thư Mục
                                     </button>
@@ -324,71 +324,71 @@ export default function TabContentLibrary() {
                             {mediaSource === 'upload' ? (
                                 <>
                                     {imagePreview ? (
-                                <div className="border border-indigo-200 bg-white rounded-xl overflow-hidden relative shadow-sm">
+                                <div className="border border-teal-200 bg-white rounded-xl overflow-hidden relative shadow-sm">
                                     {renderPreview(imagePreview, true)}
                                     <button onClick={() => {setImagePreview(null); setImageFile(null); setExistingImageUrl(null);}} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg z-20">
                                         <X className="w-4 h-4"/>
                                     </button>
                                 </div>
                             ) : existingImageUrl ? (
-                                <div className="border border-indigo-200 bg-white rounded-xl overflow-hidden relative shadow-sm">
+                                <div className="border border-teal-200 bg-white rounded-xl overflow-hidden relative shadow-sm">
                                     {renderPreview(existingImageUrl, false)}
                                     <button onClick={() => setExistingImageUrl(null)} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg z-20" title="Xóa file cữ">
                                         <X className="w-4 h-4"/>
                                     </button>
                                 </div>
                             ) : (
-                                <div className="border-2 border-dashed border-indigo-300 bg-white rounded-xl h-[220px] flex flex-col items-center justify-center p-6 text-center hover:bg-indigo-50 transition-colors shadow-sm">
+                                <div className="border-2 border-dashed border-teal-300 bg-white rounded-xl h-[220px] flex flex-col items-center justify-center p-6 text-center hover:bg-teal-50 transition-colors shadow-sm">
                                     <input type="file" id="upload-media" className="hidden" accept="image/*, video/*" onChange={handleImageDrop} />
                                     <label htmlFor="upload-media" className="cursor-pointer flex flex-col items-center justify-center h-full w-full">
-                                        <div className="w-14 h-14 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
-                                            <FolderOpen className="w-7 h-7 text-indigo-600"/>
+                                        <div className="w-14 h-14 bg-teal-100 rounded-full flex items-center justify-center mb-3">
+                                            <FolderOpen className="w-7 h-7 text-[#00AFA9]"/>
                                         </div>
-                                        <span className="text-sm font-bold text-indigo-700">Tải Ảnh/Video Lên Cloud</span>
+                                        <span className="text-sm font-bold text-[#00AFA9]">Tải Ảnh/Video Lên Cloud</span>
                                         <span className="text-xs text-slate-500 mt-1">Dung lượng tối đa 50MB</span>
                                     </label>
                                 </div>
                             )}
                             </>
                         ) : (
-                                <div className="border border-indigo-200 bg-white rounded-xl p-5 shadow-sm min-h-[220px] flex flex-col items-center justify-center relative">
+                                <div className="border border-teal-200 bg-white rounded-xl p-5 shadow-sm min-h-[220px] flex flex-col items-center justify-center relative">
                                     {docFolderId ? (
                                         <div className="text-center w-full">
                                             <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
                                                 <CheckCircle2 className="w-8 h-8" />
                                             </div>
                                             <h4 className="font-bold text-slate-800 text-lg flex items-center justify-center gap-2 mb-1">
-                                                <FolderOpen className="w-5 h-5 text-indigo-500"/> {docFolderName}
+                                                <FolderOpen className="w-5 h-5 text-[#00AFA9]"/> {docFolderName}
                                             </h4>
                                             <p className="text-xs text-slate-500 mb-4 px-4 hidden md:block">
-                                                Thư mục này hiện đang được liên kết làm tổng kho Media cho bài đăng này. Trong thẻ nhớ hiện tại mã ID: <span className="font-mono text-indigo-600 bg-indigo-50 px-1 py-0.5 rounded">{docFolderId.substring(0,8)}</span>
+                                                Thư mục này hiện đang được liên kết làm tổng kho Media cho bài đăng này. Trong thẻ nhớ hiện tại mã ID: <span className="font-mono text-[#00AFA9] bg-teal-50 px-1 py-0.5 rounded">{docFolderId.substring(0,8)}</span>
                                             </p>
                                             
-                                            <div className="bg-indigo-50/50 rounded-lg p-3 mx-4 mb-4 text-left border border-indigo-100">
-                                                <label className="block text-xs font-bold text-indigo-800 mb-1">Số Lượng lấy ra (Mỗi lần BOT chạy ngẫu nhiên)</label>
+                                            <div className="bg-teal-50/50 rounded-lg p-3 mx-4 mb-4 text-left border border-teal-100">
+                                                <label className="block text-xs font-bold text-teal-900 mb-1">Số Lượng lấy ra (Mỗi lần BOT chạy ngẫu nhiên)</label>
                                                 <div className="flex items-center">
                                                     <input 
                                                         type="number" min="1" max="10" 
                                                         value={mediaCount} 
                                                         onChange={e => setMediaCount(parseInt(e.target.value) || 1)}
-                                                        className="w-20 px-3 py-1.5 border border-indigo-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-400 font-bold text-center"
+                                                        className="w-20 px-3 py-1.5 border border-teal-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-[#00AFA9] font-bold text-center"
                                                     />
                                                     <span className="text-sm font-medium text-slate-600 ml-3">Media (Ảnh / Video)</span>
                                                 </div>
                                             </div>
                                             
-                                            <button onClick={() => setIsFolderModalOpen(true)} className="text-sm font-bold text-indigo-600 hover:text-indigo-800 underline transition-colors">
+                                            <button onClick={() => setIsFolderModalOpen(true)} className="text-sm font-bold text-[#00AFA9] hover:text-[#009690] underline transition-colors">
                                                 Đổi Thư Mục Khác
                                             </button>
                                         </div>
                                     ) : (
                                         <div className="text-center">
-                                            <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <div className="w-16 h-16 bg-teal-100 text-[#00AFA9] rounded-full flex items-center justify-center mx-auto mb-4">
                                                 <FolderOpen className="w-8 h-8" />
                                             </div>
                                             <h4 className="font-bold text-slate-800 mb-2">Chưa chọn thư mục</h4>
                                             <p className="text-sm text-slate-500 mb-5 max-w-[250px] mx-auto">Kết nối với hệ thống Tài Liệu nội bộ để BOT bốc random ảnh đăng bài.</p>
-                                            <button onClick={() => setIsFolderModalOpen(true)} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold transition-all shadow-md">
+                                            <button onClick={() => setIsFolderModalOpen(true)} className="px-5 py-2.5 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-lg font-bold transition-all shadow-sm">
                                                 Duyệt Kho Tài Liệu
                                             </button>
                                         </div>
@@ -398,11 +398,11 @@ export default function TabContentLibrary() {
                         </div>
                     </div>
 
-                    <div className="flex gap-3 mt-6 pt-6 border-t border-indigo-200/50">
-                        <button disabled={isSaving} onClick={handleSave} className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold transition-all shadow-md shadow-indigo-500/30 flex items-center gap-2">
+                    <div className="flex gap-3 mt-6 pt-6 border-t border-teal-200/50">
+                        <button disabled={isSaving} onClick={handleSave} className="px-8 py-2.5 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-lg font-bold transition-all shadow-sm flex items-center gap-2">
                             {isSaving ? "Đang đẩy/Cập nhật dữ liệu..." : "Lưu Trữ Ngay"}
                         </button>
-                        <button disabled={isSaving} onClick={() => setIsAdding(false)} className="px-6 py-2.5 bg-white border border-indigo-200 text-slate-600 rounded-lg font-bold hover:bg-slate-50 transition-all">Hủy bỏ</button>
+                        <button disabled={isSaving} onClick={() => setIsAdding(false)} className="px-6 py-2.5 bg-white border border-teal-200 text-slate-600 rounded-lg font-bold hover:bg-slate-50 transition-all">Hủy bỏ</button>
                     </div>
                 </div>
             )}
@@ -431,27 +431,27 @@ export default function TabContentLibrary() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {contents.map((c) => (
-                        <div key={c.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all group hover:-translate-y-1 flex flex-col">
+                        <div key={c.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-slate-300 transition-all group flex flex-col shadow-sm">
                             {/* Khung chứa Media (Nếu có) */}
                             {c.image_url ? renderThumbnail(c.image_url) : c.doc_folder_id ? (
-                                <div className="h-[200px] bg-indigo-50 flex items-center justify-center flex-col p-4 border-b border-indigo-100">
+                                <div className="h-[200px] bg-teal-50 flex items-center justify-center flex-col p-4 border-b border-teal-100">
                                     <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center flex-wrap gap-1 p-2 shadow-sm mb-3">
-                                        <ImageIcon className="w-5 h-5 text-indigo-400" />
-                                        <ImageIcon className="w-5 h-5 text-indigo-500" />
-                                        <ImageIcon className="w-5 h-5 text-indigo-600" />
+                                        <ImageIcon className="w-5 h-5 text-[#00AFA9]" />
+                                        <ImageIcon className="w-5 h-5 text-[#00AFA9]" />
+                                        <ImageIcon className="w-5 h-5 text-[#00AFA9]" />
                                     </div>
-                                    <span className="text-center font-bold text-indigo-900 border-b border-indigo-200 pb-1 mb-2 line-clamp-1">{c.doc_folder_name}</span>
-                                    <span className="bg-indigo-100 text-indigo-700 text-xs font-semibold px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                                    <span className="text-center font-bold text-teal-900 border-b border-teal-200 pb-1 mb-2 line-clamp-1">{c.doc_folder_name}</span>
+                                    <span className="bg-teal-100 text-teal-800 text-xs font-semibold px-2.5 py-0.5 rounded-md flex items-center gap-1">
                                         Ngẫu nhiên x{c.media_count || 1}
                                     </span>
                                 </div>
                             ) : (
-                                <div className="h-4 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+                                <div className="h-4 bg-[#00AFA9]"></div>
                             )}
 
                             <div className="p-5 relative bg-white z-10 flex flex-col h-full flex-1">
                                 <div className="absolute top-4 right-4 flex items-center gap-1">
-                                    <button onClick={() => handleEdit(c)} className="text-slate-400 hover:text-indigo-600 transition-colors bg-slate-50 hover:bg-indigo-50 p-1.5 rounded-md border border-slate-100">
+                                    <button onClick={() => handleEdit(c)} className="text-slate-400 hover:text-[#00AFA9] transition-colors bg-slate-50 hover:bg-teal-50 p-1.5 rounded-md border border-slate-100">
                                         <Edit2 className="w-4 h-4" />
                                     </button>
                                     <button onClick={() => handleDelete(c.id)} className="text-slate-400 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 p-1.5 rounded-md border border-slate-100">
@@ -459,7 +459,7 @@ export default function TabContentLibrary() {
                                     </button>
                                 </div>
                                 
-                                <span className="bg-indigo-50 text-indigo-700 text-[10px] uppercase font-extrabold px-3 py-1 rounded-full w-fit mb-3 tracking-wider max-w-full truncate">
+                                <span className="bg-teal-50 text-[#00AFA9] text-[10px] uppercase font-extrabold px-3 py-1 rounded-full w-fit mb-3 tracking-wider max-w-full truncate border border-teal-100">
                                     📁 {c.category}
                                 </span>
                                 

@@ -86,7 +86,7 @@ export function AffiliateWithdrawalsTab() {
                         <input
                             type="text"
                             placeholder="Tìm theo tên CTV, số điện thoại, mã affiliate, tên chủ thẻ..."
-                            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-[#00AFA9] focus:ring-1 focus:ring-[#00AFA9]"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -147,7 +147,7 @@ export function AffiliateWithdrawalsTab() {
                                                             navigator.clipboard.writeText(w.bank_info?.bank_account_number);
                                                             alert("Đã copy số tài khoản!");
                                                         }}
-                                                        className="text-indigo-600 hover:text-indigo-800 p-1 bg-indigo-50 rounded"
+                                                        className="text-[#00AFA9] hover:text-[#009690] p-1 bg-teal-50 rounded"
                                                         title="Copy STK"
                                                     >
                                                         Copy

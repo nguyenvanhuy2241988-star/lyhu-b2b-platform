@@ -157,7 +157,7 @@ export function ChatInput({
         <div className="relative p-4 border-t border-slate-200 bg-white">
             {/* Mention Popup */}
             {showMentionPopup && (
-                <div className="absolute bottom-full left-4 mb-2 z-50 bg-white rounded-lg shadow-xl border border-slate-200 w-64 max-h-48 overflow-y-auto">
+                <div className="absolute bottom-full left-4 mb-2 z-50 bg-white rounded-lg border border-slate-200 w-64 max-h-48 overflow-y-auto">
                     <div className="p-2 border-b border-slate-100 text-xs font-semibold text-slate-500">Nhắc đến ai đó...</div>
                     {users
                         .filter(u =>
@@ -170,7 +170,7 @@ export function ChatInput({
                                 className="p-2 hover:bg-slate-100 cursor-pointer flex items-center gap-2"
                                 onClick={() => insertMention(u)}
                             >
-                                <div className="w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center text-[10px] font-bold text-primary-600">
+                                <div className="w-6 h-6 rounded-full bg-teal-50 flex items-center justify-center text-[10px] font-bold text-[#00AFA9]">
                                     {(u.full_name || u.email).charAt(0).toUpperCase()}
                                 </div>
                                 <div className="text-sm text-slate-700 truncate">{u.full_name || u.email}</div>
@@ -181,10 +181,10 @@ export function ChatInput({
 
             {/* Actions Banner (Replying / Editing / Pending File) */}
             {(replyingTo || editingMessage || pendingFile) && (
-                <div className="flex items-center justify-between mb-2 px-4 py-2 bg-slate-50 border-l-4 border-blue-500 rounded-r text-sm text-slate-600">
+                <div className="flex items-center justify-between mb-2 px-4 py-2 bg-slate-50 border-l-4 border-[#00AFA9] rounded-r text-sm text-slate-600">
                     <div>
-                        {editingMessage && <span className="font-bold text-blue-600 block">Đang chỉnh sửa tin nhắn</span>}
-                        {replyingTo && <span className="font-bold text-blue-600 block">Đang trả lời {users.find(u => u.id === replyingTo?.sender_id)?.full_name || '...'}</span>}
+                        {editingMessage && <span className="font-bold text-[#00AFA9] block">Đang chỉnh sửa tin nhắn</span>}
+                        {replyingTo && <span className="font-bold text-[#00AFA9] block">Đang trả lời {users.find(u => u.id === replyingTo?.sender_id)?.full_name || '...'}</span>}
                         {pendingFile && <span className="font-bold text-green-600 block">Đang gửi tệp: {pendingFile.name}</span>}
 
                         <span className="truncate block opacity-80 max-w-xs">
@@ -197,7 +197,7 @@ export function ChatInput({
 
             {/* Emoji Picker */}
             {showEmojiPicker && (
-                <div className="absolute bottom-20 right-4 bg-white border border-slate-200 shadow-xl rounded-lg p-2 z-50 grid grid-cols-6 gap-2 w-64">
+                <div className="absolute bottom-20 right-4 bg-white border border-slate-200 rounded-lg p-2 z-50 grid grid-cols-6 gap-2 w-64">
                     {['👍', '❤️', '😂', '😮', '😢', '😡', '🎉', '🔥', '✨', '👋', '🙏', '🤝', '✅', '❌', '❤️', '💔', '💯', '🤔'].map(emoji => (
                         <button key={emoji} onClick={() => { setInput(prev => prev + emoji); setShowEmojiPicker(false); inputRef.current?.focus(); }} className="text-xl p-1 hover:bg-slate-100 rounded">{emoji}</button>
                     ))}
@@ -208,8 +208,8 @@ export function ChatInput({
                 <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleSubmit(e as any, e.target.files[0]); }} />
                 <input type="file" accept="image/*" ref={imageInputRef} className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleSubmit(e as any, e.target.files[0]); }} />
 
-                <button type="button" onClick={() => imageInputRef.current?.click()} className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors" title="Gửi hình ảnh"><ImageIcon className="w-5 h-5" /></button>
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors" title="Gửi tập tin"><Paperclip className="w-5 h-5" /></button>
+                <button type="button" onClick={() => imageInputRef.current?.click()} className="p-2 text-slate-400 hover:text-[#00AFA9] hover:bg-teal-50 rounded-full transition-colors" title="Gửi hình ảnh"><ImageIcon className="w-5 h-5" /></button>
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-[#00AFA9] hover:bg-teal-50 rounded-full transition-colors" title="Gửi tập tin"><Paperclip className="w-5 h-5" /></button>
                 <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors" title="Biểu tượng cảm xúc"><Smile className="w-5 h-5" /></button>
 
                 <input
@@ -229,13 +229,13 @@ export function ChatInput({
                             }
                         }
                     }}
-                    className="flex-1 bg-slate-100 border-0 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 text-slate-800 placeholder-slate-400"
+                    className="flex-1 bg-slate-100 border-0 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9]/30 text-slate-800 placeholder-slate-400"
                     placeholder={editingMessage ? "Sửa tin nhắn..." : "Nhắn tin (hoặc dán ảnh)..."}
                 />
                 <button
                     type="submit"
                     disabled={(!input.trim() && !pendingFile) || isSubmitting}
-                    className={`p-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none ${isSubmitting ? 'animate-pulse' : ''}`}
+                    className={`p-2 bg-[#00AFA9] text-white rounded-full hover:bg-[#009690] transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isSubmitting ? 'animate-pulse' : ''}`}
                 >
                     {editingMessage ? <Edit2 className="w-4 h-4 ml-0.5" /> : <Send className="w-4 h-4 ml-0.5" />}
                 </button>

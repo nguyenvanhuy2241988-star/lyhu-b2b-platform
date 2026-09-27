@@ -53,7 +53,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
     planned: { label: "Kế hoạch", color: "bg-slate-100 text-slate-600" },
     shooting: { label: "Chụp/Quay", color: "bg-amber-100 text-amber-700" },
     editing: { label: "Dựng/Chỉnh", color: "bg-blue-100 text-blue-700" },
-    review: { label: "Review", color: "bg-purple-100 text-purple-700" },
+    review: { label: "Review", color: "bg-teal-100 text-[#009690]" },
     completed: { label: "Hoàn thành", color: "bg-green-100 text-green-700" },
     cancelled: { label: "Đã hủy", color: "bg-slate-100 text-slate-500" },
 };
@@ -70,7 +70,7 @@ const PROJECT_STATUS_COLORS: Record<string, string> = {
     planned: "bg-slate-400",
     shooting: "bg-amber-500",
     editing: "bg-blue-500",
-    review: "bg-purple-500",
+    review: "bg-[#00AFA9]",
     completed: "bg-green-500",
 };
 

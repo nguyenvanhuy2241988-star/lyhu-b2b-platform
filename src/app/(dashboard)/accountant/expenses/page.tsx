@@ -176,7 +176,7 @@ export default function AccountantExpensesPage() {
                     </button>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex items-center gap-2 bg-[#00AFA9] hover:bg-[#009b95] text-white px-4 py-2 rounded-xl text-sm font-bold border border-teal-600 transition-colors"
+                        className="flex items-center gap-2 bg-[#00AFA9] hover:bg-[#009690] text-white px-4 py-2 rounded-xl text-sm font-bold border border-[#00AFA9] transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         Thêm phiếu chi
@@ -254,7 +254,7 @@ export default function AccountantExpensesPage() {
                                                     <span className="text-[10px] text-[#00AFA9] font-mono">TK {expense.accounting_account}</span>
                                                 )}
                                                 {expense.accounting_object && (
-                                                    <span className="text-[10px] text-indigo-500 font-mono">/ DT: {expense.accounting_object}</span>
+                                                    <span className="text-[10px] text-[#00AFA9] font-mono">/ DT: {expense.accounting_object}</span>
                                                 )}
                                             </div>
                                         </td>
@@ -333,7 +333,7 @@ export default function AccountantExpensesPage() {
                                             <span className="text-[10px] text-[#00AFA9] font-mono">TK {expense.accounting_account}</span>
                                         )}
                                         {expense.accounting_object && (
-                                            <span className="text-[10px] text-indigo-500 font-mono line-clamp-1">DT: {expense.accounting_object}</span>
+                                            <span className="text-[10px] text-[#00AFA9] font-mono line-clamp-1">DT: {expense.accounting_object}</span>
                                         )}
                                     </div>
                                     <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
@@ -463,7 +463,7 @@ export default function AccountantExpensesPage() {
                                 <button
                                     type="submit"
                                     disabled={isSaving}
-                                    className="flex-1 px-4 py-2 bg-[#00AFA9] hover:bg-[#009b95] text-white font-bold rounded-xl border border-teal-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="flex-1 px-4 py-2 bg-[#00AFA9] hover:bg-[#009690] text-white font-bold rounded-xl border border-[#00AFA9] disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     {editingExpense ? "Cập nhật" : "Lưu phiếu chi"}

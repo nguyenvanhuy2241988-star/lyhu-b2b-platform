@@ -206,7 +206,7 @@ export const LuckyWheelGame = ({ currentUser }: LuckyWheelGameProps) => {
 
                     {/* Wheel Container */}
                     <div
-                        className="rounded-full overflow-hidden shadow-2xl border-4 border-white transition-transform ease-out"
+                        className="rounded-full overflow-hidden border-4 border-white transition-transform ease-out"
                         style={{
                             width: '400px',
                             height: '400px',
@@ -221,7 +221,7 @@ export const LuckyWheelGame = ({ currentUser }: LuckyWheelGameProps) => {
                 <button
                     disabled={isSpinning || items.length < 2}
                     onClick={handleSpin}
-                    className="mt-8 px-12 py-4 bg-gradient-to-r from-teal-500 to-teal-400 text-white text-xl font-bold rounded-full shadow-xl hover:scale-105 transition-transform disabled:opacity-50 disabled:grayscale"
+                    className="mt-8 px-12 py-4 bg-[#00AFA9] hover:bg-[#009690] text-white text-xl font-bold rounded-full hover:scale-105 transition-transform disabled:opacity-50 disabled:grayscale"
                 >
                     {isSpinning ? "Đang quay..." : "QUAY NGAY!"}
                 </button>
@@ -229,13 +229,13 @@ export const LuckyWheelGame = ({ currentUser }: LuckyWheelGameProps) => {
                 {winner && !isSpinning && (
                     <div className="mt-6 animate-bounce text-center">
                         <p className="text-sm text-slate-500 font-medium uppercase tracking-wider">Kết quả</p>
-                        <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-emerald-500">{winner}</h2>
+                        <h2 className="text-3xl font-extrabold text-[#00AFA9]">{winner}</h2>
                     </div>
                 )}
             </div>
 
             {/* Controls Section */}
-            <div className="w-full md:w-80 bg-white rounded-xl shadow-lg border border-slate-200 p-5 max-h-[600px] flex flex-col">
+            <div className="w-full md:w-80 bg-white rounded-xl border border-slate-200 p-5 max-h-[600px] flex flex-col">
                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <RotateCw className="w-5 h-5 text-blue-500" /> Thiết lập vòng quay
                 </h3>

@@ -103,7 +103,7 @@ export default function AdminLeaderboardPage() {
                 </div>
                 <button
                     onClick={handleExportCSV}
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2"
+                    className="px-4 py-2 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] transition-colors flex items-center gap-2"
                 >
                     <Download className="w-4 h-4" />
                     <span>Export CSV</span>
@@ -126,7 +126,7 @@ export default function AdminLeaderboardPage() {
                 </div>
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                     <p className="text-sm text-slate-600">Tổng hoa hồng</p>
-                    <p className="text-2xl font-bold text-purple-600">{formatPrice(stats.totalCommission)}</p>
+                    <p className="text-2xl font-bold text-[#00AFA9]">{formatPrice(stats.totalCommission)}</p>
                 </div>
             </div>
 
@@ -138,7 +138,7 @@ export default function AdminLeaderboardPage() {
                         <select
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                         >
                             {MONTHS.map((m, i) => (
                                 <option key={i} value={i + 1}>{m}</option>
@@ -147,7 +147,7 @@ export default function AdminLeaderboardPage() {
                         <select
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                         >
                             {[2024, 2025, 2026].map(y => (
                                 <option key={y} value={y}>{y}</option>
@@ -159,7 +159,7 @@ export default function AdminLeaderboardPage() {
                         <select
                             value={filterRegion}
                             onChange={(e) => setFilterRegion(e.target.value as Region | "all")}
-                            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                         >
                             {REGIONS.map(r => (
                                 <option key={r.value} value={r.value}>{r.label}</option>
@@ -170,7 +170,7 @@ export default function AdminLeaderboardPage() {
                             placeholder="Lọc theo tỉnh..."
                             value={filterProvince}
                             onChange={(e) => setFilterProvince(e.target.value)}
-                            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#00AFA9] focus:border-[#00AFA9]"
                         />
                     </div>
                 </div>
