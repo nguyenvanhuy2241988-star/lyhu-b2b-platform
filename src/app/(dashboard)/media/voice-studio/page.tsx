@@ -22,6 +22,7 @@ import {
     AlertCircle
 } from "lucide-react";
 import Link from "next/link";
+import { normalizeVietnamesePhonetics } from "@/lib/ttsHelper";
 
 interface VoiceOption {
     id: string;
@@ -126,13 +127,51 @@ export default function VoiceStudioPage() {
         }
 
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text.trim());
+        
+        // Chuẩn hóa phát âm tên thương hiệu và từ viết tắt: LYHU -> Ly Hu, date -> hạn sử dụng...
+        const phoneticText = normalizeVietnamesePhonetics(text.trim());
+        const utterance = new SpeechSynthesisUtterance(phoneticText);
         utterance.lang = "vi-VN";
         utterance.rate = getSpeedMultiplier(selectedSpeed);
 
-        const voices = window.speechSynthesis.getVoices();
-        const vnVoice = voices.find(v => v.lang.startsWith("vi"));
-        if (vnVoice) utterance.voice = vnVoice;
+        const isFemale = selectedVoice.includes("HoaiMy") || selectedVoice.includes("female");
+        const allVoices = window.speechSynthesis.getVoices();
+        const viVoices = allVoices.filter(v => 
+            v.lang.toLowerCase().startsWith("vi") || 
+            v.lang.toLowerCase().includes("vn") || 
+            v.name.toLowerCase().includes("vietnamese")
+        );
+
+        let chosenVoice: SpeechSynthesisVoice | undefined;
+
+        if (isFemale) {
+            // Ưu tiên giọng nữ: Hoài My, Google, Female, hoặc giọng không phải nam
+            chosenVoice = viVoices.find(v => {
+                const n = v.name.toLowerCase();
+                return n.includes("hoaimy") || n.includes("female") || n.includes("google") || n.includes("linh") || (n.includes("natural") && !n.includes("namminh"));
+            }) || viVoices.find(v => {
+                const n = v.name.toLowerCase();
+                return !n.includes("nam") && !n.includes("an") && !n.includes("male");
+            });
+        } else {
+            // Ưu tiên giọng nam: Nam Minh, Male, An
+            chosenVoice = viVoices.find(v => {
+                const n = v.name.toLowerCase();
+                return n.includes("namminh") || n.includes("male") || n.includes("an") || n.includes("nam");
+            });
+        }
+
+        // Nếu không khớp chính xác thì dùng giọng tiếng Việt đầu tiên
+        if (!chosenVoice && viVoices.length > 0) {
+            chosenVoice = viVoices[0];
+        }
+
+        if (chosenVoice) {
+            utterance.voice = chosenVoice;
+        }
+
+        // Tinh chỉnh cao độ (pitch) tự nhiên
+        utterance.pitch = isFemale ? 1.05 : 0.95;
 
         utterance.onend = () => setIsBrowserSpeaking(false);
         utterance.onerror = () => setIsBrowserSpeaking(false);
@@ -151,11 +190,14 @@ export default function VoiceStudioPage() {
         setErrorMessage(null);
 
         try {
+            // Chuẩn hóa phát âm tên thương hiệu và từ viết tắt trước khi gửi lên máy chủ tạo MP3
+            const phoneticText = normalizeVietnamesePhonetics(text.trim());
+
             const res = await fetch("/api/ai/tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    text: text.trim(),
+                    text: phoneticText,
                     voice: selectedVoice,
                     rate: selectedSpeed,
                     pitch: pitch

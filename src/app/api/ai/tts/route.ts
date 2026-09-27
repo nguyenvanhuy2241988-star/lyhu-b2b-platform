@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { normalizeVietnamesePhonetics } from "@/lib/ttsHelper";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -54,7 +55,10 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const chunks = splitTextIntoChunks(text);
+        // Chuẩn hóa phiên âm từ ngữ (LYHU -> Ly Hu, NPP -> Nhà phân phối...)
+        const normalizedText = normalizeVietnamesePhonetics(text);
+
+        const chunks = splitTextIntoChunks(normalizedText);
         if (chunks.length === 0) {
             return NextResponse.json(
                 { error: "Không tìm thấy nội dung hợp lệ." },
