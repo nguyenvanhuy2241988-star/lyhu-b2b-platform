@@ -271,7 +271,7 @@ export async function POST(req: NextRequest) {
             console.log("[TTS] Google Translate fallback:", audioBuffer.length, "bytes");
         }
 
-        return new NextResponse(audioBuffer, {
+        return new NextResponse(new Uint8Array(audioBuffer), {
             status: 200,
             headers: {
                 "Content-Type": contentType,
