@@ -453,9 +453,9 @@ export default function HRCulturePage() {
                                             {birthdays.map((b) => (
                                                 <div key={b.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
                                                     <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
-                                                        {b.avatar_url ? <img src={b.avatar_url} className="w-full h-full object-cover" alt="" /> : <span className="text-xs font-semibold text-slate-500">{b.full_name?.charAt(0)}</span>}
+                                                        {b.avatar_url ? <img src={b.avatar_url} className="w-full h-full object-cover" alt="" /> : <span className="text-xs font-semibold text-slate-500">{(b.full_name?.trim() || b.email || '?').charAt(0).toUpperCase()}</span>}
                                                     </div>
-                                                    <p className="text-sm font-medium text-slate-900 truncate flex-1">{b.full_name}</p>
+                                                    <p className="text-sm font-medium text-slate-900 truncate flex-1">{b.full_name?.trim() || b.email?.split('@')[0] || "Nhân sự"}</p>
                                                     <span className="text-xs text-slate-400 shrink-0">{String(b.day).padStart(2, '0')}/{String(b.month + 1).padStart(2, '0')}</span>
                                                 </div>
                                             ))}

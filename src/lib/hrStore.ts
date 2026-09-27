@@ -62,6 +62,7 @@ export const getHRProfiles = async (departmentId?: string, includeInactive: bool
             *,
             department:departments!profiles_department_id_fkey(name)
         `)
+        .neq('role', 'customer')
         .order('full_name');
 
     if (!includeInactive) {
@@ -119,6 +120,7 @@ export const getUpcomingBirthdays = async () => {
     const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, avatar_url, dob, department:departments!profiles_department_id_fkey(name)')
+        .neq('role', 'customer')
         .not('dob', 'is', null);
 
     if (error) throw error;

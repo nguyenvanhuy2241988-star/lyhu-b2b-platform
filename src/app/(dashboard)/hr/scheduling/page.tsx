@@ -280,12 +280,13 @@ export default function HRSchedulingPage() {
     const DAY_NAMES = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"];
     const themeColor = selectedSchedule?.theme_color || "#00AFA9";
 
-    // Filter profiles: non-admin never sees hidden, admin can toggle
+    // Filter profiles: non-admin never sees hidden, admin can toggle. Exclude customer roles.
     const displayProfiles = profiles.filter(p => {
+        if (p.role === 'customer') return false;
         if (!(p as any).hidden_from_schedule) return true; // not hidden → always show
         return isAdmin && showHidden; // hidden → only show if admin + toggle on
     });
-    const hiddenCount = profiles.filter(p => (p as any).hidden_from_schedule).length;
+    const hiddenCount = profiles.filter(p => p.role !== 'customer' && (p as any).hidden_from_schedule).length;
 
     // Toggle hidden_from_schedule for a user
     const handleToggleHidden = async (profileId: string, currentlyHidden: boolean) => {
@@ -594,10 +595,16 @@ export default function HRSchedulingPage() {
                                                     </button>
                                                 )}
                                                 <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600 shrink-0 border border-slate-200 shadow-sm">
-                                                    {profile.avatar_url ? <img src={profile.avatar_url} className="w-full h-full rounded-full object-cover" /> : profile.full_name?.charAt(0)}
+                                                    {profile.avatar_url ? (
+                                                        <img src={profile.avatar_url} className="w-full h-full rounded-full object-cover" alt="" />
+                                                    ) : (
+                                                        (profile.full_name?.trim() || profile.email || 'U').charAt(0).toUpperCase()
+                                                    )}
                                                 </div>
                                                 <div className="flex flex-col truncate">
-                                                    <span className="text-xs font-medium text-slate-900 truncate">{profile.full_name}</span>
+                                                    <span className="text-xs font-medium text-slate-900 truncate">
+                                                        {profile.full_name?.trim() || profile.email?.split('@')[0] || "Chưa cập nhật tên"}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </td>
@@ -639,7 +646,7 @@ export default function HRSchedulingPage() {
                                                             onClick={e => e.stopPropagation()}
                                                         >
                                                             <div className="px-3 py-2 text-[10px] bg-slate-50 border-b border-slate-100 font-semibold text-slate-500 flex justify-between items-center">
-                                                                <span>{profile.full_name} - {format(date, 'dd/MM')}</span>
+                                                                <span>{profile.full_name?.trim() || profile.email?.split('@')[0] || "Nhân viên"} - {format(date, 'dd/MM')}</span>
                                                                 <button onClick={() => setOpenDropdown(null)} className="hover:bg-slate-200 p-1 rounded-full"><X className="w-3 h-3 hover:text-red-500" /></button>
                                                             </div>
 

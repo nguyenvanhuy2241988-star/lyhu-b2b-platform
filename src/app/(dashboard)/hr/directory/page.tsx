@@ -47,9 +47,11 @@ export default function HRDirectoryPage() {
     };
 
     const filteredProfiles = profiles.filter(p => {
-        const matchSearch = p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        if (p.role === 'customer') return false;
+        const nameOrEmail = p.full_name || p.email || '';
+        const matchSearch = nameOrEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.phone?.includes(searchTerm);
+            (p.phone && p.phone.includes(searchTerm));
         const matchDept = selectedDept === 'all' || p.department_id === selectedDept;
         return matchSearch && matchDept;
     });
@@ -110,13 +112,13 @@ export default function HRDirectoryPage() {
                                         <div className="flex items-center gap-4">
                                             <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center text-[#00AFA9] font-bold text-lg">
                                                 {profile.avatar_url ? (
-                                                    <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full rounded-full object-cover" />
+                                                    <img src={profile.avatar_url} alt={profile.full_name || ''} className="w-full h-full rounded-full object-cover" />
                                                 ) : (
-                                                    profile.full_name?.charAt(0) || '?'
+                                                    (profile.full_name?.trim() || profile.email || '?').charAt(0).toUpperCase()
                                                 )}
                                             </div>
                                             <div>
-                                                <h3 className="font-semibold text-slate-900">{profile.full_name}</h3>
+                                                <h3 className="font-semibold text-slate-900">{profile.full_name?.trim() || profile.email?.split('@')[0] || 'Chưa cập nhật tên'}</h3>
                                                 <p className="text-sm text-slate-500">{profile.position || 'Nhân viên'} &bull; {profile.department?.name || 'Chưa phân phòng'}</p>
                                             </div>
                                         </div>
@@ -203,14 +205,14 @@ export default function HRDirectoryPage() {
                             <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-full bg-teal-50 flex items-center justify-center text-[#00AFA9] font-bold text-2xl">
                                     {viewingProfile.avatar_url ? (
-                                        <img src={viewingProfile.avatar_url} alt={viewingProfile.full_name} className="w-full h-full rounded-full object-cover" />
+                                        <img src={viewingProfile.avatar_url} alt={viewingProfile.full_name || ''} className="w-full h-full rounded-full object-cover" />
                                     ) : (
-                                        viewingProfile.full_name?.charAt(0) || '?'
+                                        (viewingProfile.full_name?.trim() || viewingProfile.email || '?').charAt(0).toUpperCase()
                                     )}
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-bold text-slate-900">{viewingProfile.full_name}</h2>
-                                    <p className="text-slate-500">{viewingProfile.position || 'Nhân viên'} &bull; {viewingProfile.department?.name}</p>
+                                    <h2 className="text-xl font-bold text-slate-900">{viewingProfile.full_name?.trim() || viewingProfile.email?.split('@')[0] || 'Chưa cập nhật tên'}</h2>
+                                    <p className="text-slate-500">{viewingProfile.position || 'Nhân viên'} &bull; {viewingProfile.department?.name || 'Chưa phân phòng'}</p>
                                 </div>
                             </div>
                             <button
