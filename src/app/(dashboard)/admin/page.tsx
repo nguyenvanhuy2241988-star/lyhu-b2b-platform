@@ -75,7 +75,7 @@ const LEAD_STATUS_MAP: Record<string, { label: string; badge: string }> = {
 
 export default function AdminDashboard() {
     const { session, user } = useAuth();
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     // Data State
     const [stats, setStats] = useState<AdminLeadStats | null>(null);
@@ -154,7 +154,7 @@ export default function AdminDashboard() {
             window.removeEventListener("orders-updated", handleUpdates);
             supabase.removeChannel(channel);
         };
-    }, [loadData]);
+    }, [loadData, supabase]);
 
     // Preset Handlers
     const handleSetPreset = (preset: "all" | "today" | "7days" | "month") => {
