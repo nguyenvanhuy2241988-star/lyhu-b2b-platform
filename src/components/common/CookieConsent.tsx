@@ -33,13 +33,13 @@ export default function CookieConsent() {
 
     return (
         <div 
-            className={`fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:w-[420px] bg-white rounded-xl shadow-2xl border border-gray-100 z-[9999] p-5 flex flex-col gap-4 transition-all duration-500 transform ${
+            className={`fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:w-[420px] bg-white rounded-xl border border-slate-200 z-[9999] p-5 flex flex-col gap-4 transition-all duration-500 transform ${
                 isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
             }`}
         >
             <div className="flex items-start gap-4">
-                <div className="bg-primary-50 p-2.5 rounded-full shrink-0">
-                    <ShieldAlert className="w-6 h-6 text-primary-600" />
+                <div className="bg-teal-50 p-2.5 rounded-full shrink-0">
+                    <ShieldAlert className="w-6 h-6 text-[#00AFA9]" />
                 </div>
                 <div className="flex-1">
                     <h3 className="font-bold text-gray-900 mb-1 text-base">Quyền riêng tư & Cookie</h3>
@@ -69,7 +69,7 @@ export default function CookieConsent() {
                 </button>
                 <button 
                     onClick={handleAccept}
-                    className="px-6 py-2 text-sm font-bold bg-primary-600 text-white hover:bg-primary-700 rounded-lg shadow-sm hover:shadow transition-all"
+                    className="px-6 py-2 text-sm font-bold bg-[#00AFA9] text-white hover:bg-[#009690] rounded-lg shadow-sm transition-all"
                 >
                     Đồng ý tất cả
                 </button>
