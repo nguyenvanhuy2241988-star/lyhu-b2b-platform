@@ -8,6 +8,7 @@ import {
     DocumentFolder,
     DocumentFile,
     listFolders,
+    filterFoldersForRole,
     createFolder,
     renameFolder,
     deleteFolder,
@@ -49,8 +50,13 @@ function DocumentsPageContent() {
     const isAdmin = role === 'admin';
 
     // Data State
-    const [folders, setFolders] = useState<DocumentFolder[]>([]);
+    const [rawFolders, setRawFolders] = useState<DocumentFolder[]>([]);
     const [files, setFiles] = useState<DocumentFile[]>([]);
+
+    // Filter folders strictly based on the current user role
+    const folders = React.useMemo(() => {
+        return filterFoldersForRole(rawFolders, role);
+    }, [rawFolders, role]);
 
     // UI State
     const [loadingFiles, setLoadingFiles] = useState(false);
@@ -83,7 +89,7 @@ function DocumentsPageContent() {
     const loadFolders = useCallback(async (silent = false) => {
         try {
             const data = await listFolders();
-            setFolders(data);
+            setRawFolders(data);
             return data;
         } catch (error) {
             console.error(error);
@@ -118,11 +124,14 @@ function DocumentsPageContent() {
         if (!session?.access_token) return;
 
         loadFolders().then((data) => {
-            // If no folder in URL, select root "Công ty" or first folder
-            if (!selectedFolderId && data.length > 0) {
-                const root = data.find(f => f.name === 'Công ty' && !f.parent_id);
-                const defaultId = root?.id || data[0].id;
-                replaceFolderUrl(defaultId);
+            const accessible = filterFoldersForRole(data, role);
+            if (accessible.length > 0) {
+                // If no folder in URL or selected folder is not permitted for this role
+                if (!selectedFolderId || !accessible.some(f => f.id === selectedFolderId)) {
+                    const root = accessible.find(f => f.name === 'Công ty' && !f.parent_id);
+                    const defaultId = root?.id || accessible[0].id;
+                    replaceFolderUrl(defaultId);
+                }
             }
         });
         listTags().then(setAllTags).catch(console.error);
@@ -138,7 +147,19 @@ function DocumentsPageContent() {
         return () => {
             supabase.removeChannel(folderChannel);
         };
-    }, [session?.access_token, loadFolders, replaceFolderUrl, selectedFolderId]);
+    }, [session?.access_token, loadFolders, replaceFolderUrl, selectedFolderId, role]);
+
+    // Safety effect: if current selectedFolderId is not in the accessible folders, redirect to default
+    useEffect(() => {
+        if (folders.length > 0 && selectedFolderId) {
+            const isAccessible = folders.some(f => f.id === selectedFolderId);
+            if (!isAccessible) {
+                const root = folders.find(f => f.name === 'Công ty' && !f.parent_id);
+                const defaultId = root?.id || folders[0].id;
+                replaceFolderUrl(defaultId);
+            }
+        }
+    }, [folders, selectedFolderId, replaceFolderUrl]);
 
     // 2. Load Files when params change
     useEffect(() => {
@@ -323,7 +344,7 @@ function DocumentsPageContent() {
         try {
             await updateFolderOrder(updates);
             // Optimistic update
-            setFolders(prev => prev.map(f => {
+            setRawFolders(prev => prev.map(f => {
                 const u = updates.find(update => update.id === f.id);
                 if (u) return { ...f, parent_id: u.parent_id, order_index: u.order_index };
                 return f;
@@ -619,7 +640,7 @@ function DocumentsPageContent() {
                     folder={selectedFolder}
                     readOnly={!isAdmin}
                     onUpdate={(updated) => {
-                        setFolders(prev => prev.map(f => f.id === updated.id ? updated : f));
+                        setRawFolders(prev => prev.map(f => f.id === updated.id ? updated : f));
                     }}
                     onClose={() => { }}
                 />

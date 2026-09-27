@@ -21,6 +21,8 @@ export interface DocumentFolder {
     parent_id: string | null;
     name: string;
     guidance_md?: string | null;
+    visibility?: 'all' | 'roles' | 'private';
+    allowed_roles?: string[];
     owner_id?: string | null;
     created_by: string;
     created_at: string;
@@ -131,6 +133,101 @@ export async function updateFolderGuidance(id: string, guidance_md: string): Pro
 
     if (error) throw error;
     await logActivity('folder', id, 'update_guidance', 'Updated guidance text');
+}
+
+export async function updateFolderPermissions(
+    id: string,
+    visibility: 'all' | 'roles' | 'private',
+    allowed_roles: string[]
+): Promise<void> {
+    const { error } = await supabase
+        .from(FOLDERS_TABLE)
+        .update({
+            visibility,
+            allowed_roles,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+    if (error) throw error;
+    await logActivity('folder', id, 'rename', `Updated folder permissions to ${visibility} (${allowed_roles.join(', ')})`);
+}
+
+// Default role mappings for root department folders
+export const DEFAULT_FOLDER_ROLES: Record<string, string[]> = {
+    "công ty": ["*"], // Toàn bộ công ty
+    "kế toán": ["admin", "accountant"],
+    "hr": ["admin", "recruiter", "hr"],
+    "nhân sự": ["admin", "recruiter", "hr"],
+    "kho vận": ["admin", "warehouse", "shipper"],
+    "kho": ["admin", "warehouse", "shipper"],
+    "kinh doanh": ["admin", "sales", "telesales", "ctv", "sale_admin", "sales_gt", "ecommerce", "livestream"],
+    "sales": ["admin", "sales", "telesales", "ctv", "sale_admin", "sales_gt", "ecommerce", "livestream"],
+    "marketing": ["admin", "marketing", "media_creator", "ecommerce", "livestream"],
+};
+
+export function isFolderAllowedForRole(folder: DocumentFolder, role?: string | null): boolean {
+    if (!role || role === 'admin') return true;
+
+    // 1. Explicit folder visibility check
+    if (folder.visibility === 'roles' && folder.allowed_roles && folder.allowed_roles.length > 0) {
+        return folder.allowed_roles.includes(role);
+    }
+    if (folder.visibility === 'private') {
+        return false;
+    }
+
+    // 2. If folder has explicit allowed_roles set
+    if (folder.allowed_roles && folder.allowed_roles.length > 0) {
+        return folder.allowed_roles.includes(role);
+    }
+
+    // 3. Fallback to default department roles by name
+    const normalizedName = folder.name.trim().toLowerCase();
+    for (const [key, allowed] of Object.entries(DEFAULT_FOLDER_ROLES)) {
+        if (normalizedName === key || normalizedName.startsWith(key)) {
+            if (allowed.includes("*") || allowed.includes(role)) {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    // Default for any other unclassified folder: allow all
+    return true;
+}
+
+export function filterFoldersForRole(folders: DocumentFolder[], role?: string | null): DocumentFolder[] {
+    if (!role || role === 'admin') return folders;
+
+    const folderMap = new Map<string, DocumentFolder>(folders.map(f => [f.id, f]));
+    const allowedCache = new Map<string, boolean>();
+
+    function canAccess(folderId: string): boolean {
+        if (allowedCache.has(folderId)) return allowedCache.get(folderId)!;
+
+        const folder = folderMap.get(folderId);
+        if (!folder) return false;
+
+        // Check folder itself
+        const selfAllowed = isFolderAllowedForRole(folder, role);
+        if (!selfAllowed) {
+            allowedCache.set(folderId, false);
+            return false;
+        }
+
+        // If it has a parent, check parent recursively
+        if (folder.parent_id) {
+            const parentAllowed = canAccess(folder.parent_id);
+            allowedCache.set(folderId, parentAllowed);
+            return parentAllowed;
+        }
+
+        allowedCache.set(folderId, true);
+        return true;
+    }
+
+    return folders.filter(f => canAccess(f.id));
 }
 
 export async function renameFolder(id: string, name: string): Promise<void> {
