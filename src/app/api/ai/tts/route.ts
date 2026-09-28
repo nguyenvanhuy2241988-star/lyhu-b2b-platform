@@ -164,6 +164,38 @@ async function synthesizeWithGeminiTTS(
     throw new Error("Gemini TTS failed with all models");
 }
 
+// --------------- ElevenLabs Voice Cloning Engine ---------------
+
+async function synthesizeWithElevenLabs(
+    text: string,
+    voiceId: string,
+    apiKey: string
+): Promise<Buffer> {
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: "POST",
+        headers: {
+            "xi-api-key": apiKey,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            text,
+            model_id: "eleven_multilingual_v2",
+            voice_settings: {
+                stability: 0.5,
+                similarity_boost: 0.85
+            }
+        })
+    });
+
+    if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`ElevenLabs error (${res.status}): ${err}`);
+    }
+
+    const arrayBuffer = await res.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+}
+
 // --------------- Google Translate Fallback ---------------
 
 function splitTextIntoChunks(text: string, maxLen = 140): string[] {
@@ -229,7 +261,7 @@ async function synthesizeWithGoogleTranslate(text: string): Promise<Buffer> {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { text, voice = "female", rate = "+0%", style = "female" } = body;
+        const { text, voice = "female", rate = "+0%", style = "female", voiceId, elevenApiKey } = body;
 
         if (!text || typeof text !== "string" || !text.trim()) {
             return NextResponse.json(
@@ -261,17 +293,33 @@ export async function POST(req: NextRequest) {
         let audioBuffer: Buffer;
         let contentType = "audio/mpeg";
 
-        // Strategy: Gemini TTS (studio quality) → Google Translate (fallback)
-        try {
-            console.log("[TTS] Trying Gemini 3.8 Flash TTS...");
-            audioBuffer = await synthesizeWithGeminiTTS(normalizedText, voiceKey, speakingRate);
-            contentType = "audio/wav"; // Gemini returns WAV
-            console.log("[TTS] Gemini TTS SUCCESS:", audioBuffer.length, "bytes");
-        } catch (geminiErr: any) {
-            console.warn("[TTS] Gemini TTS failed, falling back to Google Translate:", geminiErr.message);
-            audioBuffer = await synthesizeWithGoogleTranslate(normalizedText);
-            contentType = "audio/mpeg";
-            console.log("[TTS] Google Translate fallback:", audioBuffer.length, "bytes");
+        const apiKey = elevenApiKey || process.env.ELEVENLABS_API_KEY;
+
+        // Ưu tiên 1: Nếu là giọng nhân bản (Custom Cloned Voice)
+        if (voiceId && apiKey) {
+            try {
+                console.log("[TTS] Trying ElevenLabs Voice Cloning for voiceId:", voiceId);
+                audioBuffer = await synthesizeWithElevenLabs(normalizedText, voiceId, apiKey);
+                contentType = "audio/mpeg";
+                console.log("[TTS] ElevenLabs SUCCESS:", audioBuffer.length, "bytes");
+            } catch (elevenErr: any) {
+                console.warn("[TTS] ElevenLabs failed, fallback to Gemini:", elevenErr.message);
+                audioBuffer = await synthesizeWithGeminiTTS(normalizedText, voiceKey, speakingRate);
+                contentType = "audio/wav";
+            }
+        } else {
+            // Ưu tiên 2: Gemini TTS (studio quality) → Ưu tiên 3: Google Translate (fallback)
+            try {
+                console.log("[TTS] Trying Gemini 3.8 Flash TTS...");
+                audioBuffer = await synthesizeWithGeminiTTS(normalizedText, voiceKey, speakingRate);
+                contentType = "audio/wav"; // Gemini returns WAV
+                console.log("[TTS] Gemini TTS SUCCESS:", audioBuffer.length, "bytes");
+            } catch (geminiErr: any) {
+                console.warn("[TTS] Gemini TTS failed, falling back to Google Translate:", geminiErr.message);
+                audioBuffer = await synthesizeWithGoogleTranslate(normalizedText);
+                contentType = "audio/mpeg";
+                console.log("[TTS] Google Translate fallback:", audioBuffer.length, "bytes");
+            }
         }
 
         return new NextResponse(new Uint8Array(audioBuffer), {

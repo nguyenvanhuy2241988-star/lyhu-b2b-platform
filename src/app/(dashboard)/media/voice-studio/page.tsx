@@ -220,14 +220,32 @@ export default function VoiceStudioPage() {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    const selectedStyle = VOICE_STYLES.find(s => s.id === selectedStyleId) || VOICE_STYLES[0];
+    // Custom cloned voices state
+    const [customVoices, setCustomVoices] = useState<VoiceStyleOption[]>([]);
+    const [cloningApiKey, setCloningApiKey] = useState("");
+    const [cloningLoading, setCloningLoading] = useState(false);
+    const [showKeyGuide, setShowKeyGuide] = useState(false);
 
-    // Nạp lịch sử từ IndexedDB và kiểm tra kịch bản nhập từ trang khác
+    const allVoiceStyles = [...customVoices, ...VOICE_STYLES];
+    const selectedStyle = allVoiceStyles.find(s => s.id === selectedStyleId) || allVoiceStyles[0];
+
+    // Nạp lịch sử từ IndexedDB, API key và custom voices
     useEffect(() => {
         loadHistory();
 
-        // Kiểm tra xem có kịch bản chuyển từ /media/scripts/[id] qua không
         if (typeof window !== "undefined") {
+            const savedKey = localStorage.getItem("lyhu_eleven_key") || "";
+            if (savedKey) setCloningApiKey(savedKey);
+
+            const savedVoices = localStorage.getItem("lyhu_custom_voices");
+            if (savedVoices) {
+                try {
+                    const parsed = JSON.parse(savedVoices);
+                    if (Array.isArray(parsed)) setCustomVoices(parsed);
+                } catch (e) {}
+            }
+
+            // Kiểm tra xem có kịch bản chuyển từ /media/scripts/[id] qua không
             const imported = sessionStorage.getItem("lyhu_voice_import");
             if (imported) {
                 try {
@@ -349,6 +367,10 @@ export default function VoiceStudioPage() {
             const speedPercentNum = Math.round((speedRate - 1.0) * 100);
             const rateStr = speedPercentNum >= 0 ? `+${speedPercentNum}%` : `${speedPercentNum}%`;
 
+            const isCustom = selectedStyle.id.startsWith("custom-");
+            const customVoiceId = isCustom ? selectedStyle.id.replace("custom-", "") : undefined;
+            const keyToUse = isCustom ? (cloningApiKey || localStorage.getItem("lyhu_eleven_key") || undefined) : undefined;
+
             const res = await fetch("/api/ai/tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -357,7 +379,9 @@ export default function VoiceStudioPage() {
                     voice: selectedStyle.gender === "female" ? "vi-VN-HoaiMyNeural" : "vi-VN-NamMinhNeural",
                     style: selectedStyle.id,
                     rate: rateStr,
-                    pitch: selectedStyle.pitchStr
+                    pitch: selectedStyle.pitchStr,
+                    voiceId: customVoiceId,
+                    elevenApiKey: keyToUse
                 })
             });
 
@@ -578,6 +602,67 @@ export default function VoiceStudioPage() {
         }
     };
 
+    const handleStartCloning = async () => {
+        if (!cloningFile) {
+            alert("Vui lòng tải lên file âm thanh mẫu của Chị nhà.");
+            return;
+        }
+
+        if (!cloningApiKey.trim()) {
+            setShowKeyGuide(true);
+            alert("Vui lòng nhập mã ElevenLabs API Key để kết nối AI nhân bản giọng nói. Hãy xem hướng dẫn bên dưới ô nhập để lấy mã hoàn toàn miễn phí trong 30 giây!");
+            return;
+        }
+
+        setCloningLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", cloningFile);
+            formData.append("name", cloningVoiceName || "Giọng Chị Nhà");
+            formData.append("apiKey", cloningApiKey.trim());
+
+            const res = await fetch("/api/ai/voice-clone", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || "Không thể nhân bản giọng nói. Vui lòng kiểm tra lại API Key.");
+            }
+
+            // Lưu API Key trên máy
+            localStorage.setItem("lyhu_eleven_key", cloningApiKey.trim());
+
+            const newCustomVoice: VoiceStyleOption = {
+                id: `custom-${data.voiceId}`,
+                name: `${cloningVoiceName || "Giọng Chị Nhà"} (Chính Chủ)`,
+                gender: "female",
+                category: "sweet",
+                description: "Giọng thật chính chủ của Chị nhà, phát âm chuẩn 100% ngữ điệu thực tế.",
+                tag: "Chính chủ: Video TikTok, Reels, Shorts",
+                avatar: "👑",
+                pitchVal: 1.0,
+                pitchStr: "+0Hz",
+                recommendedSpeed: 1.15,
+                color: "from-purple-500/10 to-indigo-500/10 text-purple-700",
+                border: "border-purple-300"
+            };
+
+            const updatedVoices = [newCustomVoice, ...customVoices.filter(v => v.id !== newCustomVoice.id)];
+            setCustomVoices(updatedVoices);
+            localStorage.setItem("lyhu_custom_voices", JSON.stringify(updatedVoices));
+
+            setSelectedStyleId(newCustomVoice.id);
+            setActiveTab("tts");
+            alert(`🎉 Chúc mừng! Đã nhân bản thành công "${newCustomVoice.name}". Giọng đọc đã được thêm vào danh sách và sẵn sàng tạo kịch bản!`);
+        } catch (err: any) {
+            alert(err.message || "Có lỗi xảy ra khi nhân bản giọng nói.");
+        } finally {
+            setCloningLoading(false);
+        }
+    };
+
     const toggleRecording = () => {
         if (isRecording) {
             setIsRecording(false);
@@ -670,7 +755,7 @@ export default function VoiceStudioPage() {
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                    {VOICE_STYLES.map((v) => {
+                                    {allVoiceStyles.map((v) => {
                                         const isSelected = selectedStyleId === v.id;
                                         return (
                                             <div
@@ -1471,24 +1556,65 @@ export default function VoiceStudioPage() {
                                         Instant Cloning
                                     </span>
                                 </div>
+
+                                {/* API Key Input with Guide */}
+                                <div className="space-y-1.5 pt-2 border-t border-slate-200">
+                                    <div className="flex items-center justify-between text-xs font-semibold text-gray-700">
+                                        <span>Mã ElevenLabs API Key:</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowKeyGuide(!showKeyGuide)}
+                                            className="text-purple-600 hover:text-purple-800 text-[11px] underline"
+                                        >
+                                            {showKeyGuide ? "Ẩn hướng dẫn" : "Lấy key miễn phí (30 giây)"}
+                                        </button>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        value={cloningApiKey}
+                                        onChange={(e) => {
+                                            setCloningApiKey(e.target.value);
+                                            localStorage.setItem("lyhu_eleven_key", e.target.value);
+                                        }}
+                                        placeholder="Dán mã API key (dạng sk_...) vào đây"
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs font-mono outline-none focus:border-purple-500 bg-white"
+                                    />
+                                    {showKeyGuide && (
+                                        <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl text-[11px] text-purple-950 space-y-1.5 leading-relaxed">
+                                            <p className="font-bold text-purple-900">👉 3 bước lấy API Key miễn phí (cho 10,000 ký tự):</p>
+                                            <ol className="list-decimal pl-4 space-y-1 text-purple-800">
+                                                <li>Truy cập <a href="https://elevenlabs.io/sign-up" target="_blank" rel="noreferrer" className="underline font-bold text-purple-900">elevenlabs.io</a> và đăng ký bằng tài khoản Google.</li>
+                                                <li>Bấm vào biểu tượng ảnh đại diện ở góc dưới cùng bên trái → Chọn <strong>API Keys</strong>.</li>
+                                                <li>Bấm nút <strong>Create Key</strong> → Sao chép mã và dán vào ô bên trên.</li>
+                                            </ol>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Action Button */}
                             <div className="space-y-2 pt-3">
                                 <button
                                     type="button"
-                                    disabled={!cloningFile}
-                                    onClick={() => {
-                                        alert("Đã nhận file mẫu của Chị nhà! Để AI bắt đầu học và sinh giọng nói chính chủ, hệ thống cần kết nối mã ElevenLabs API Key (hoặc Google AI Studio Voice ID). Bạn hãy nhắn với trợ lý để kết nối mã API Key vào hệ thống nhé!");
-                                    }}
+                                    disabled={!cloningFile || cloningLoading}
+                                    onClick={handleStartCloning}
                                     className="w-full py-3.5 px-4 bg-purple-600 hover:bg-purple-700 active:scale-[0.99] text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
-                                    <Sparkles className="w-4 h-4" />
-                                    <span>TIẾN HÀNH NHÂN BẢN GIỌNG NÓI NÀY</span>
+                                    {cloningLoading ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            <span>Đang gửi mẫu & AI đang học giọng nói...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className="w-4 h-4" />
+                                            <span>TIẾN HÀNH NHÂN BẢN GIỌNG NÓI NÀY</span>
+                                        </>
+                                    )}
                                 </button>
                                 
                                 <p className="text-[11px] text-center text-gray-400">
-                                    Sau khi nhân bản, giọng Chị nhà sẽ xuất hiện ngay trong danh sách chọn giọng ở Tab 1.
+                                    Sau khi nhân bản xong, giọng Chị nhà sẽ xuất hiện ngay trong danh sách chọn giọng ở Tab 1.
                                 </p>
                             </div>
                         </div>
