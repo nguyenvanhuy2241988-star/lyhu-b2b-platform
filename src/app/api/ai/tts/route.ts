@@ -91,7 +91,10 @@ async function synthesizeWithGeminiTTS(
         contents: [{
             parts: [
                 {
-                    text: `${style.speech_instruction}${rateInstruction}\n\nĐọc đoạn văn sau bằng tiếng Việt:\n\n${text}`
+                    speech_metadata: {
+                        style: `${style.speech_instruction}${rateInstruction}`
+                    },
+                    text: text
                 }
             ]
         }],

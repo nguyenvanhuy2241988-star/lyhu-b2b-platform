@@ -409,7 +409,7 @@ export default function VoiceStudioPage() {
                         </span>
                     </div>
                     <p className="text-sm text-gray-500 pl-11">
-                        Tùy chọn đa chất giọng Gen Z trẻ trung, thanh trượt tốc độ kéo thả $\rightarrow$ Xuất MP3 ghép CapCut không cần tự thu âm!
+                        Tùy chọn đa chất giọng Gen Z trẻ trung, thanh trượt tốc độ kéo thả → Xuất MP3 ghép CapCut không cần tự thu âm!
                     </p>
                 </div>
 
@@ -637,16 +637,22 @@ export default function VoiceStudioPage() {
                                 />
                             </div>
 
-                            {/* Metrics Bar */}
-                            <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
-                                <div className="flex items-center gap-4">
+                            {/* Metrics & Cost Bar */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-gray-500 pt-1 gap-2">
+                                <div className="flex items-center gap-3 flex-wrap">
                                     <span>{text.length} ký tự</span>
                                     <span>•</span>
                                     <span>{wordCount} từ</span>
                                     <span>•</span>
                                     <span className="flex items-center gap-1 text-[#00AFA9] font-medium">
                                         <Clock className="w-3.5 h-3.5" />
-                                        Ước tính video: ~{estimatedSeconds}s
+                                        Video: ~{estimatedSeconds}s
+                                    </span>
+                                    <span>•</span>
+                                    {/* Cost Estimation Badge */}
+                                    <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-medium border border-emerald-200" title="Chi phí Gemini API tính theo token audio output ($9/1M tokens). Rất rẻ!">
+                                        💰 Ước tính: ~{Math.max(15, Math.round(wordCount * 0.25))}đ
+                                        <span className="text-[10px] text-emerald-600">(~0.001$)</span>
                                     </span>
                                 </div>
 
@@ -654,7 +660,7 @@ export default function VoiceStudioPage() {
                                     <button
                                         type="button"
                                         onClick={copyText}
-                                        className="text-gray-400 hover:text-gray-600 flex items-center gap-1"
+                                        className="text-gray-400 hover:text-gray-600 flex items-center gap-1 self-end sm:self-auto"
                                     >
                                         {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                                         {copied ? "Đã chép" : "Chép lời thoại"}
@@ -681,12 +687,12 @@ export default function VoiceStudioPage() {
                                     {loading ? (
                                         <>
                                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            <span>Đang tạo file MP3...</span>
+                                            <span>Đang tạo giọng đọc AI (Gemini Studio)...</span>
                                         </>
                                     ) : (
                                         <>
                                             <Sparkles className="w-5 h-5" />
-                                            <span>TẠO FILE MP3 ĐỂ GHÉP VIDEO</span>
+                                            <span>TẠO FILE AUDIO & NGHE THỬ (GEMINI AI)</span>
                                         </>
                                     )}
                                 </button>
@@ -695,17 +701,20 @@ export default function VoiceStudioPage() {
                                     type="button"
                                     onClick={speakWithBrowser}
                                     disabled={!text.trim()}
-                                    className={`py-3.5 px-5 rounded-xl font-semibold border transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed ${
+                                    className={`py-3.5 px-4 rounded-xl font-semibold border transition-all flex items-center justify-center gap-2 text-xs sm:text-sm disabled:opacity-40 disabled:cursor-not-allowed ${
                                         isBrowserSpeaking 
                                             ? "bg-amber-500 text-white border-amber-600 animate-pulse shadow-md" 
-                                            : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
+                                            : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200"
                                     }`}
-                                    title="Nghe đọc thử tức thì trên máy tính"
+                                    title="Nghe bằng giọng mặc định trên máy tính (chất lượng thấp hơn file AI thật)"
                                 >
                                     <Volume2 className="w-4 h-4" />
-                                    <span>{isBrowserSpeaking ? "Dừng đọc" : "Đọc thử (0s)"}</span>
+                                    <span>{isBrowserSpeaking ? "Dừng" : "Đọc nhanh (Máy tính)"}</span>
                                 </button>
                             </div>
+                            <p className="text-[11px] text-gray-400 italic">
+                                * Lưu ý: Nút "TẠO FILE AUDIO" sẽ sinh giọng AI Gemini chất lượng như thật. Nút "Đọc nhanh (Máy tính)" chỉ để soát nhanh chính tả bằng giọng mặc định của Windows.
+                            </p>
                         </div>
                     </div>
 
@@ -871,7 +880,7 @@ export default function VoiceStudioPage() {
                                         3
                                     </span>
                                     <div>
-                                        <strong className="text-white">Tải file MP3 & Kéo vào CapCut:</strong> Bấm tải file MP3 về $\rightarrow$ Mở CapCut chọn <em>Thêm âm thanh</em> $\rightarrow$ Ghép vào video là hoàn tất!
+                                        <strong className="text-white">Tải file MP3 & Kéo vào CapCut:</strong> Bấm tải file MP3 về → Mở CapCut chọn <em>Thêm âm thanh</em> → Ghép vào video là hoàn tất!
                                     </div>
                                 </div>
                             </div>
