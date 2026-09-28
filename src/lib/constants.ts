@@ -47,6 +47,7 @@ import {
     Bot,
     Store,          // Retail Chains
     Mic,            // Voice Studio
+    Film,           // Video Studio Auto-Cut
 } from "lucide-react";
 import { MODULES } from '@/modules/registry';
 
@@ -189,6 +190,7 @@ export const NAV_ITEMS = {
         { label: "Video Ngắn 9:16", href: "/admin/short-videos", icon: Video },
         { label: "Kịch bản Media", href: "/media/scripts", icon: FileInput },
         { label: "Lồng tiếng AI (Voice)", href: "/media/voice-studio", icon: Mic },
+        { label: "Dựng Video AI (Auto Cut)", href: "/media/video-studio", icon: Film },
         { label: "Tin tức & Blog", href: "/marketing/blog", icon: BookOpen },
         { label: "Chủ đề AI", href: "/marketing/ai-topics", icon: Sparkles },
         { label: "Tự động viết bài (AI)", href: "/marketing/ai-blog", icon: Sparkles },
@@ -367,6 +369,7 @@ export const NAV_ITEMS = {
         { label: "Brief / Yêu cầu", href: "/media/briefs", icon: FileInput },
         { label: "Kịch bản Media", href: "/media/scripts", icon: FileInput },
         { label: "Lồng tiếng AI (Voice)", href: "/media/voice-studio", icon: Mic },
+        { label: "Dựng Video AI (Auto Cut)", href: "/media/video-studio", icon: Film },
         { label: "Thư viện Media", href: "/media/library", icon: FolderOpen },
         { label: "Dự án", href: "/media/projects", icon: ClipboardList },
         { label: "Thiết bị", href: "/media/equipment", icon: Wrench },
