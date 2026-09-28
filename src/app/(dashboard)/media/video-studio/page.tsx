@@ -8,40 +8,27 @@ import {
     Pause,
     Download,
     Sparkles,
-    Sliders,
-    Layers,
-    Music,
-    Volume2,
-    VolumeX,
     Trash2,
     RotateCcw,
-    Check,
     Plus,
     MoveUp,
     MoveDown,
-    Type,
     Eye,
-    Maximize2,
     Radio,
-    Clock,
     FileVideo,
     CheckCircle2,
-    HelpCircle,
-    ArrowRight,
     Wand2,
-    FolderOpen,
     DollarSign,
     TrendingDown,
-    PieChart,
     Palette,
     Zap,
-    Split,
     Monitor,
     Smartphone,
     Square,
     Edit3,
-    CheckCheck,
-    RefreshCw
+    Volume2,
+    Music,
+    Loader2
 } from "lucide-react";
 import Link from "next/link";
 import { getVoiceHistory, VoiceHistoryItem } from "@/lib/voiceHistoryStore";
@@ -54,7 +41,6 @@ interface VideoClip {
     duration: number; // in seconds
     width: number;
     height: number;
-    thumbnailUrl?: string;
     muted: boolean;
 }
 
@@ -64,7 +50,7 @@ interface SubtitleCue {
     text: string;
 }
 
-// Preset local royalty-free BGM tracks (100% reliable, zero CORS)
+// Preset local royalty-free BGM tracks
 const BGM_PRESETS = [
     {
         id: "trending_upbeat",
@@ -88,7 +74,7 @@ const BGM_PRESETS = [
     },
     {
         id: "none",
-        name: "🔇 Không dùng nhạc nền (Chỉ giữ giọng đọc thuyết minh)",
+        name: "🔇 Không dùng nhạc nền (Chỉ giữ giọng đọc)",
         url: ""
     }
 ];
@@ -116,6 +102,8 @@ export default function AutoVideoStudioPage() {
     const [clips, setClips] = useState<VideoClip[]>([]);
     const [aspectRatio, setAspectRatio] = useState<"9:16" | "16:9" | "1:1">("9:16");
     const [exportFormat, setExportFormat] = useState<"mp4" | "webm">("mp4");
+    const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     // ── STEP 2: Voiceover & Audio State ──
     const [voiceHistory, setVoiceHistory] = useState<VoiceHistoryItem[]>([]);
@@ -136,7 +124,7 @@ export default function AutoVideoStudioPage() {
     const [showHookTitle, setShowHookTitle] = useState(true);
 
     // ── STEP 4: Transitions & Pacing ──
-    const [transitionEffect, setTransitionEffect] = useState<"auto" | "hard_cut" | "crossfade" | "white_flash" | "slide_left">("auto");
+    const [transitionEffect, setTransitionEffect] = useState<"auto" | "crossfade" | "slide_left" | "white_flash" | "hard_cut">("auto");
     const [clipSwitchInterval, setClipSwitchInterval] = useState<number>(3.5); // 3.5s per shot
     const [showWatermark, setShowWatermark] = useState(true);
 
@@ -150,15 +138,17 @@ export default function AutoVideoStudioPage() {
     const [totalVideosCreated, setTotalVideosCreated] = useState<number>(0);
     const [totalCostSpent, setTotalCostSpent] = useState<number>(0);
 
-    // ── PLAYBACK & RENDER STATE ──
+    // ── PLAYBACK STATE (Throttled for Smooth 60FPS UI) ──
     const [isPlaying, setIsPlaying] = useState(false);
-    const [currentTime, setCurrentTime] = useState(0);
+    const [displayTime, setDisplayTime] = useState(0); // Only updated ~5 times/sec for UI
     const [isRendering, setIsRendering] = useState(false);
     const [renderProgress, setRenderProgress] = useState(0);
     const [renderedVideoUrl, setRenderedVideoUrl] = useState<string | null>(null);
     const [renderedFormat, setRenderedFormat] = useState<string>("mp4");
 
-    // ── REFS ──
+    // ── REFS (Avoid React Re-renders on high-speed loops) ──
+    const currentTimeRef = useRef<number>(0);
+    const lastActiveClipIdRef = useRef<string | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const hiddenAudioRef = useRef<HTMLAudioElement | null>(null);
     const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -168,8 +158,9 @@ export default function AutoVideoStudioPage() {
     const audioInputRef = useRef<HTMLInputElement | null>(null);
     const bgmInputRef = useRef<HTMLInputElement | null>(null);
     const isExportingRef = useRef(false);
+    const lastUiUpdateRef = useRef<number>(0);
 
-    // Inject Google Brand Fonts on Mount
+    // Inject Google Brand Fonts
     useEffect(() => {
         const fontId = "lyhu-google-brand-fonts";
         if (!document.getElementById(fontId)) {
@@ -181,7 +172,7 @@ export default function AutoVideoStudioPage() {
         }
     }, []);
 
-    // Load Financial Tracker & Voice History on mount
+    // Load History & Financials on mount
     useEffect(() => {
         loadHistory();
         loadFinancialTracker();
@@ -257,8 +248,8 @@ export default function AutoVideoStudioPage() {
 
     // Calculate dynamic cost
     const wordCount = selectedVoiceText.trim() ? selectedVoiceText.trim().split(/\s+/).length : 0;
-    const aiAnalysisCost = 35; // Gemini Flash 2.5 analysis ~35đ
-    const ttsCost = Math.round(wordCount * 0.4); // Gemini TTS ~40đ/100 words
+    const aiAnalysisCost = 35;
+    const ttsCost = Math.round(wordCount * 0.4);
     const estimatedCurrentVideoCost = aiAnalysisCost + (ttsCost > 0 ? ttsCost : 40);
     const commercialSaasEquivalentCost = (totalVideosCreated > 0 ? totalVideosCreated : 1) * 25000;
     const totalSavings = Math.max(0, commercialSaasEquivalentCost - totalCostSpent);
@@ -308,39 +299,56 @@ export default function AutoVideoStudioPage() {
         });
     }, [selectedVoiceText, voiceDuration]);
 
-    // Active Subtitle at current playback time
-    const activeSubtitle = useMemo(() => {
-        if (!enableSubtitles) return null;
-        return subtitleCues.find(cue => currentTime >= cue.start && currentTime <= cue.end);
-    }, [subtitleCues, currentTime, enableSubtitles]);
-
     // Project Total Duration
     const totalDuration = voiceDuration > 0 ? voiceDuration : (clips.length > 0 ? clips.reduce((acc, c) => acc + c.duration, 0) : 30);
 
-    // Upload Video Clips
-    const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
+    // ── ROBUST VIDEO UPLOAD PROCESSOR (With timeout & drag-drop) ──
+    const processVideoFiles = async (fileList: FileList | File[]) => {
+        if (!fileList || fileList.length === 0) return;
+        setIsUploadingVideo(true);
 
         const newClips: VideoClip[] = [];
 
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+        for (let i = 0; i < fileList.length; i++) {
+            const file = fileList[i];
+            if (!file.type.startsWith("video/") && !file.name.match(/\.(mp4|mov|webm|avi|mkv|m4v)$/i)) {
+                continue;
+            }
+
             const url = URL.createObjectURL(file);
 
+            // Extract metadata with strict timeout to prevent hangs
             const meta = await new Promise<{ duration: number; width: number; height: number }>((resolve) => {
+                let resolved = false;
                 const vid = document.createElement("video");
                 vid.src = url;
                 vid.preload = "metadata";
+
+                const timeout = setTimeout(() => {
+                    if (!resolved) {
+                        resolved = true;
+                        resolve({ duration: 15, width: 1080, height: 1920 });
+                    }
+                }, 1200);
+
                 vid.onloadedmetadata = () => {
-                    resolve({
-                        duration: vid.duration || 10,
-                        width: vid.videoWidth || 1080,
-                        height: vid.videoHeight || 1920
-                    });
+                    if (!resolved) {
+                        resolved = true;
+                        clearTimeout(timeout);
+                        resolve({
+                            duration: vid.duration && !isNaN(vid.duration) && vid.duration > 0 ? vid.duration : 15,
+                            width: vid.videoWidth || 1080,
+                            height: vid.videoHeight || 1920
+                        });
+                    }
                 };
+
                 vid.onerror = () => {
-                    resolve({ duration: 10, width: 1080, height: 1920 });
+                    if (!resolved) {
+                        resolved = true;
+                        clearTimeout(timeout);
+                        resolve({ duration: 15, width: 1080, height: 1920 });
+                    }
                 };
             });
 
@@ -356,7 +364,26 @@ export default function AutoVideoStudioPage() {
             });
         }
 
-        setClips(prev => [...prev, ...newClips]);
+        if (newClips.length > 0) {
+            setClips(prev => [...prev, ...newClips]);
+        }
+        setIsUploadingVideo(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            await processVideoFiles(e.target.files);
+        }
+    };
+
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        if (e.dataTransfer.files) {
+            await processVideoFiles(e.dataTransfer.files);
+        }
     };
 
     const handleLoadDemoClips = () => {
@@ -400,6 +427,7 @@ export default function AutoVideoStudioPage() {
         tempAudio.onloadedmetadata = () => {
             setVoiceDuration(tempAudio.duration || 30);
         };
+        if (audioInputRef.current) audioInputRef.current.value = "";
     };
 
     const handleBgmUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -408,36 +436,10 @@ export default function AutoVideoStudioPage() {
         const url = URL.createObjectURL(file);
         setBgmCustomUrl(url);
         setBgmChoice("custom");
+        if (bgmInputRef.current) bgmInputRef.current.value = "";
     };
 
-    // Current Clip & Transition Calculation
-    const currentClipInfo = useMemo(() => {
-        if (clips.length === 0) return null;
-        const switchSec = Math.max(2, clipSwitchInterval);
-        const clipIdx = Math.floor(currentTime / switchSec) % clips.length;
-        const clip = clips[clipIdx];
-        const clipTime = (currentTime % switchSec) % Math.max(1, clip.duration);
-
-        const nextClipIdx = (clipIdx + 1) % clips.length;
-        const nextClip = clips[nextClipIdx];
-
-        const timeInInterval = currentTime % switchSec;
-        const transitionWindow = 0.45; // 0.45s transition
-        const isNearTransition = switchSec - timeInInterval <= transitionWindow;
-        const transitionProgress = isNearTransition ? (switchSec - timeInInterval) / transitionWindow : 1.0;
-
-        return {
-            clip,
-            clipIdx,
-            clipTime,
-            nextClip,
-            nextClipIdx,
-            isNearTransition,
-            transitionProgress
-        };
-    }, [clips, currentTime, clipSwitchInterval]);
-
-    // ── DRAW FRAME ON CANVAS ──
+    // ── DRAW FRAME ON CANVAS (Hardware-accelerated) ──
     const drawCanvasFrame = useCallback((time: number) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -451,37 +453,46 @@ export default function AutoVideoStudioPage() {
         ctx.fillStyle = "#090d16";
         ctx.fillRect(0, 0, cw, ch);
 
-        if (!currentClipInfo || clips.length === 0) {
-            // Placeholder when no video clips
+        if (clips.length === 0) {
             ctx.fillStyle = "#1e293b";
             ctx.fillRect(0, 0, cw, ch);
-
             ctx.fillStyle = "#64748b";
             ctx.font = "bold 20px 'Be Vietnam Pro', sans-serif";
             ctx.textAlign = "center";
             ctx.fillText("Chưa có video quay thô", cw / 2, ch / 2 - 12);
             ctx.font = "14px sans-serif";
             ctx.fillStyle = "#94a3b8";
-            ctx.fillText("Tải lên video hoặc bấm '+ Dùng clip mẫu'", cw / 2, ch / 2 + 16);
+            ctx.fillText("Nhấp '+ Tải video từ máy' hoặc '+ Dùng 2 clip mẫu'", cw / 2, ch / 2 + 16);
             return;
         }
 
-        const currentVid = videoElementsRef.current[currentClipInfo.clip.id];
-        const nextVid = videoElementsRef.current[currentClipInfo.nextClip.id];
+        const switchSec = Math.max(2, clipSwitchInterval);
+        const clipIdx = Math.floor(time / switchSec) % clips.length;
+        const currentClip = clips[clipIdx];
+        const nextClipIdx = (clipIdx + 1) % clips.length;
+        const nextClip = clips[nextClipIdx];
 
-        // Determine active transition effect
+        const timeInInterval = time % switchSec;
+        const transitionWindow = 0.45;
+        const isNearTransition = switchSec - timeInInterval <= transitionWindow && clips.length > 1;
+        const transitionFactor = isNearTransition ? (switchSec - timeInInterval) / transitionWindow : 1.0;
+
+        const currentVid = videoElementsRef.current[currentClip.id];
+        const nextVid = videoElementsRef.current[nextClip.id];
+
+        // Active transition effect
         let activeTrans = transitionEffect;
         if (activeTrans === "auto") {
-            const transPool: ("crossfade" | "white_flash" | "slide_left" | "hard_cut")[] = [
+            const transPool: ("crossfade" | "white_flash" | "slide_left" | "crossfade")[] = [
                 "crossfade",
-                "white_flash",
                 "slide_left",
+                "white_flash",
                 "crossfade"
             ];
-            activeTrans = transPool[currentClipInfo.clipIdx % transPool.length];
+            activeTrans = transPool[clipIdx % transPool.length];
         }
 
-        // Helper to draw a video scaled (Cover fit) with Ken Burns zoom
+        // Draw cover video helper
         const drawVideoCover = (
             videoEl: HTMLVideoElement,
             offsetX = 0,
@@ -489,7 +500,6 @@ export default function AutoVideoStudioPage() {
             scaleMultiplier = 1.0
         ) => {
             if (!videoEl || videoEl.readyState < 2) return;
-
             const vw = videoEl.videoWidth || cw;
             const vh = videoEl.videoHeight || ch;
             const baseScale = Math.max(cw / vw, ch / vh) * scaleMultiplier;
@@ -504,41 +514,32 @@ export default function AutoVideoStudioPage() {
             ctx.restore();
         };
 
-        // Ken Burns subtle zoom
         const zoomProgress = (time % clipSwitchInterval) / clipSwitchInterval;
         const dynamicScale = 1.0 + zoomProgress * 0.04;
 
-        // Render Video with Selected Transition
-        if (currentClipInfo.isNearTransition && clips.length > 1) {
-            const factor = currentClipInfo.transitionProgress; // 1.0 -> 0.0
-
+        // Render with Transition
+        if (isNearTransition && clips.length > 1) {
             if (activeTrans === "crossfade") {
-                // Draw next clip underneath
                 if (nextVid) drawVideoCover(nextVid, 0, 1.0, 1.0);
-                // Draw current clip on top fading out
-                if (currentVid) drawVideoCover(currentVid, 0, factor, dynamicScale);
+                if (currentVid) drawVideoCover(currentVid, 0, transitionFactor, dynamicScale);
 
             } else if (activeTrans === "slide_left") {
-                // Slide out current clip to the left, slide in next clip from the right
-                const slideOffset = (1 - factor) * cw;
+                const slideOffset = (1 - transitionFactor) * cw;
                 if (currentVid) drawVideoCover(currentVid, -slideOffset, 1.0, dynamicScale);
                 if (nextVid) drawVideoCover(nextVid, cw - slideOffset, 1.0, 1.0);
 
             } else if (activeTrans === "white_flash") {
                 if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
-                // Flash overlay peaking at transition midpoint
-                const flashAlpha = Math.sin((1 - factor) * Math.PI) * 0.85;
+                const flashAlpha = Math.sin((1 - transitionFactor) * Math.PI) * 0.85;
                 ctx.save();
                 ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
                 ctx.fillRect(0, 0, cw, ch);
                 ctx.restore();
 
             } else {
-                // Hard Cut
                 if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
             }
         } else {
-            // Normal frame playback
             if (currentVid) {
                 drawVideoCover(currentVid, 0, 1.0, dynamicScale);
             }
@@ -557,7 +558,6 @@ export default function AutoVideoStudioPage() {
             const badgeH = 44;
             const badgeX = (cw - badgeW) / 2;
 
-            // Red gradient pill
             const grad = ctx.createLinearGradient(badgeX, hookY, badgeX + badgeW, hookY);
             grad.addColorStop(0, "#DC2626");
             grad.addColorStop(1, "#EA580C");
@@ -568,7 +568,6 @@ export default function AutoVideoStudioPage() {
             ctx.roundRect(badgeX, hookY - badgeH / 2, badgeW, badgeH, 10);
             ctx.fill();
 
-            // Text
             ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
             ctx.shadowBlur = 4;
             ctx.fillStyle = "#ffffff";
@@ -600,71 +599,69 @@ export default function AutoVideoStudioPage() {
         }
 
         // 4. Draw Animated Subtitle with Typography & Styles
-        if (enableSubtitles && activeSubtitle) {
-            ctx.save();
-            const text = activeSubtitle.text;
+        if (enableSubtitles) {
+            const activeSub = subtitleCues.find(cue => time >= cue.start && time <= cue.end);
+            if (activeSub) {
+                ctx.save();
+                const text = activeSub.text;
 
-            let subY = ch * 0.82;
-            if (textPosition === "center") subY = ch * 0.52;
-            if (textPosition === "top") subY = ch * 0.28;
+                let subY = ch * 0.82;
+                if (textPosition === "center") subY = ch * 0.52;
+                if (textPosition === "top") subY = ch * 0.28;
 
-            ctx.font = `900 ${fontSize}px ${fontFamily}`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
+                ctx.font = `900 ${fontSize}px ${fontFamily}`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
 
-            if (subtitleStyle === "tiktok_stroke") {
-                // TikTok Thick Outline Style with Drop Shadow
-                ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
-                ctx.shadowBlur = 12;
-                ctx.lineWidth = 7;
-                ctx.strokeStyle = "#000000";
-                ctx.lineJoin = "round";
-                ctx.strokeText(text, cw / 2, subY);
+                if (subtitleStyle === "tiktok_stroke") {
+                    ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
+                    ctx.shadowBlur = 12;
+                    ctx.lineWidth = 7;
+                    ctx.strokeStyle = "#000000";
+                    ctx.lineJoin = "round";
+                    ctx.strokeText(text, cw / 2, subY);
 
-                ctx.fillStyle = textColor;
-                ctx.fillText(text, cw / 2, subY);
+                    ctx.fillStyle = textColor;
+                    ctx.fillText(text, cw / 2, subY);
 
-            } else if (subtitleStyle === "neon_glow") {
-                // Neon Glow Style
-                ctx.shadowColor = textColor;
-                ctx.shadowBlur = 16;
-                ctx.lineWidth = 5;
-                ctx.strokeStyle = "#000000";
-                ctx.lineJoin = "round";
-                ctx.strokeText(text, cw / 2, subY);
+                } else if (subtitleStyle === "neon_glow") {
+                    ctx.shadowColor = textColor;
+                    ctx.shadowBlur = 16;
+                    ctx.lineWidth = 5;
+                    ctx.strokeStyle = "#000000";
+                    ctx.lineJoin = "round";
+                    ctx.strokeText(text, cw / 2, subY);
 
-                ctx.fillStyle = textColor;
-                ctx.fillText(text, cw / 2, subY);
+                    ctx.fillStyle = textColor;
+                    ctx.fillText(text, cw / 2, subY);
 
-            } else if (subtitleStyle === "pill_dark") {
-                // Modern Frosted Pill Badge
-                const textWidth = ctx.measureText(text).width;
-                const pillW = textWidth + 36;
-                const pillH = fontSize + 20;
-                ctx.fillStyle = "rgba(10, 15, 30, 0.75)";
-                ctx.beginPath();
-                ctx.roundRect((cw - pillW) / 2, subY - pillH / 2, pillW, pillH, 14);
-                ctx.fill();
+                } else if (subtitleStyle === "pill_dark") {
+                    const textWidth = ctx.measureText(text).width;
+                    const pillW = textWidth + 36;
+                    const pillH = fontSize + 20;
+                    ctx.fillStyle = "rgba(10, 15, 30, 0.75)";
+                    ctx.beginPath();
+                    ctx.roundRect((cw - pillW) / 2, subY - pillH / 2, pillW, pillH, 14);
+                    ctx.fill();
 
-                ctx.fillStyle = textColor;
-                ctx.fillText(text, cw / 2, subY);
+                    ctx.fillStyle = textColor;
+                    ctx.fillText(text, cw / 2, subY);
 
-            } else {
-                // Clean Shadow Minimalist Style
-                ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-                ctx.shadowBlur = 8;
-                ctx.lineWidth = 3;
-                ctx.strokeStyle = "#000000";
-                ctx.strokeText(text, cw / 2, subY);
+                } else {
+                    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+                    ctx.shadowBlur = 8;
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = "#000000";
+                    ctx.strokeText(text, cw / 2, subY);
 
-                ctx.fillStyle = textColor;
-                ctx.fillText(text, cw / 2, subY);
+                    ctx.fillStyle = textColor;
+                    ctx.fillText(text, cw / 2, subY);
+                }
+
+                ctx.restore();
             }
-
-            ctx.restore();
         }
     }, [
-        currentClipInfo,
         clips,
         clipSwitchInterval,
         transitionEffect,
@@ -677,161 +674,200 @@ export default function AutoVideoStudioPage() {
         showHookTitle,
         showWatermark,
         enableSubtitles,
-        activeSubtitle
+        subtitleCues
     ]);
 
-    // Keep hidden video elements synchronized to currentTime
-    useEffect(() => {
-        if (!currentClipInfo) return;
+    // ── HIGH-PERFORMANCE PREVIEW PLAYBACK LOOP (0 STUTTER) ──
+    const startPlayback = () => {
+        if (clips.length === 0) return;
+        setIsPlaying(true);
 
-        const currentVid = videoElementsRef.current[currentClipInfo.clip.id];
-        if (currentVid) {
-            // Keep current video playing and in sync
-            if (isPlaying && currentVid.paused) {
-                currentVid.play().catch(() => {});
-            } else if (!isPlaying && !currentVid.paused) {
-                currentVid.pause();
-            }
+        const currentT = currentTimeRef.current;
 
-            // Sync seek if drifting by > 0.3s
-            if (Math.abs(currentVid.currentTime - currentClipInfo.clipTime) > 0.35) {
-                currentVid.currentTime = currentClipInfo.clipTime;
-            }
+        // 1. Play Voice Audio
+        if (hiddenAudioRef.current && selectedVoiceAudioUrl) {
+            hiddenAudioRef.current.currentTime = currentT;
+            hiddenAudioRef.current.play().catch(() => {});
         }
 
-        // Pause other video elements that are not currently in the transition window
+        // 2. Play BGM Audio
+        if (bgmAudioRef.current && activeBgmUrl) {
+            const bgm = bgmAudioRef.current;
+            bgm.currentTime = currentT % (bgm.duration || 60);
+            bgm.volume = bgmVolume;
+            bgm.play().catch(() => {});
+        }
+
+        // 3. Play Active Video Clip
+        const switchSec = Math.max(2, clipSwitchInterval);
+        const clipIdx = Math.floor(currentT / switchSec) % clips.length;
+        const activeClip = clips[clipIdx];
+        const activeVid = videoElementsRef.current[activeClip.id];
+        if (activeVid) {
+            const localT = (currentT % switchSec) % Math.max(1, activeClip.duration);
+            activeVid.currentTime = localT;
+            activeVid.play().catch(() => {});
+            lastActiveClipIdRef.current = activeClip.id;
+        }
+    };
+
+    const pausePlayback = () => {
+        setIsPlaying(false);
+        if (hiddenAudioRef.current) hiddenAudioRef.current.pause();
+        if (bgmAudioRef.current) bgmAudioRef.current.pause();
         clips.forEach(c => {
-            if (c.id !== currentClipInfo.clip.id && (!currentClipInfo.isNearTransition || c.id !== currentClipInfo.nextClip.id)) {
-                const vid = videoElementsRef.current[c.id];
-                if (vid && !vid.paused) {
-                    vid.pause();
-                }
-            }
+            const vid = videoElementsRef.current[c.id];
+            if (vid && !vid.paused) vid.pause();
         });
+    };
 
-        // Pre-roll next clip during transition
-        if (currentClipInfo.isNearTransition && currentClipInfo.nextClip) {
-            const nextVid = videoElementsRef.current[currentClipInfo.nextClip.id];
-            if (nextVid && isPlaying && nextVid.paused) {
-                nextVid.currentTime = 0;
-                nextVid.play().catch(() => {});
-            }
-        }
-    }, [currentClipInfo, isPlaying, clips]);
-
-    // Handle BGM volume & Audio Ducking during preview
-    useEffect(() => {
-        const bgmEl = bgmAudioRef.current;
-        if (!bgmEl) return;
-
-        if (activeBgmUrl) {
-            if (bgmEl.src !== window.location.origin + activeBgmUrl && !bgmEl.src.includes(activeBgmUrl)) {
-                bgmEl.src = activeBgmUrl;
-                bgmEl.load();
-            }
-
-            // Dynamic Audio Ducking: lower BGM when voice is active
-            const isVoiceSpeaking = voiceDuration > 0 && currentTime < voiceDuration;
-            const targetVolume = enableAudioDucking && isVoiceSpeaking
-                ? bgmVolume * 0.22
-                : bgmVolume;
-
-            bgmEl.volume = Math.max(0, Math.min(1, targetVolume));
-
-            if (isPlaying) {
-                bgmEl.play().catch(() => {});
-            } else {
-                bgmEl.pause();
-            }
+    const togglePlay = () => {
+        if (isPlaying) {
+            pausePlayback();
         } else {
-            bgmEl.pause();
+            startPlayback();
         }
-    }, [activeBgmUrl, bgmVolume, enableAudioDucking, currentTime, voiceDuration, isPlaying]);
+    };
 
-    // Main Animation / Playback Loop
-    useEffect(() => {
-        let lastTimestamp = performance.now();
+    const handleSeek = (newTime: number) => {
+        currentTimeRef.current = newTime;
+        setDisplayTime(newTime);
 
-        const tick = (now: number) => {
-            if (!isPlaying || isExportingRef.current) return;
+        if (hiddenAudioRef.current) {
+            hiddenAudioRef.current.currentTime = newTime;
+        }
+        if (bgmAudioRef.current) {
+            bgmAudioRef.current.currentTime = newTime % (bgmAudioRef.current.duration || 60);
+        }
 
-            const delta = (now - lastTimestamp) / 1000;
-            lastTimestamp = now;
+        if (clips.length > 0) {
+            const switchSec = Math.max(2, clipSwitchInterval);
+            const clipIdx = Math.floor(newTime / switchSec) % clips.length;
+            const activeClip = clips[clipIdx];
+            const activeVid = videoElementsRef.current[activeClip.id];
 
-            setCurrentTime(prev => {
-                const next = prev + delta;
-                if (next >= totalDuration) {
-                    setIsPlaying(false);
-                    if (hiddenAudioRef.current) hiddenAudioRef.current.pause();
-                    if (bgmAudioRef.current) bgmAudioRef.current.pause();
-                    return 0;
-                }
-                return next;
+            clips.forEach(c => {
+                const v = videoElementsRef.current[c.id];
+                if (v && c.id !== activeClip.id && !v.paused) v.pause();
             });
 
-            drawCanvasFrame(currentTime);
-            animationFrameRef.current = requestAnimationFrame(tick);
+            if (activeVid) {
+                const localT = (newTime % switchSec) % Math.max(1, activeClip.duration);
+                activeVid.currentTime = localT;
+                if (isPlaying && activeVid.paused) activeVid.play().catch(() => {});
+            }
+            lastActiveClipIdRef.current = activeClip.id;
+        }
+
+        drawCanvasFrame(newTime);
+    };
+
+    // Main 60FPS RequestAnimationFrame Animation Loop
+    useEffect(() => {
+        if (!isPlaying || isExportingRef.current) return;
+
+        let lastTime = performance.now();
+
+        const loop = (now: number) => {
+            if (!isPlaying || isExportingRef.current) return;
+
+            const delta = (now - lastTime) / 1000;
+            lastTime = now;
+
+            const nextTime = currentTimeRef.current + delta;
+            currentTimeRef.current = nextTime;
+
+            // Loop back when totalDuration ends
+            if (nextTime >= totalDuration) {
+                pausePlayback();
+                currentTimeRef.current = 0;
+                setDisplayTime(0);
+                drawCanvasFrame(0);
+                return;
+            }
+
+            // Throttle UI React state update to ~5 times per second to prevent stutter
+            if (now - lastUiUpdateRef.current > 180) {
+                setDisplayTime(nextTime);
+                lastUiUpdateRef.current = now;
+            }
+
+            // Dynamic Smooth Audio Ducking
+            if (bgmAudioRef.current && activeBgmUrl) {
+                const isSpeaking = voiceDuration > 0 && nextTime < voiceDuration;
+                const targetVol = enableAudioDucking && isSpeaking ? bgmVolume * 0.22 : bgmVolume;
+                bgmAudioRef.current.volume += (targetVol - bgmAudioRef.current.volume) * 0.15;
+            }
+
+            // Seamless clip switching
+            if (clips.length > 1) {
+                const switchSec = Math.max(2, clipSwitchInterval);
+                const clipIdx = Math.floor(nextTime / switchSec) % clips.length;
+                const currentClip = clips[clipIdx];
+                const nextClipIdx = (clipIdx + 1) % clips.length;
+                const nextClip = clips[nextClipIdx];
+                const timeInInterval = nextTime % switchSec;
+
+                // Pre-roll next clip 0.45s before switch
+                if (switchSec - timeInInterval <= 0.45) {
+                    const nextVid = videoElementsRef.current[nextClip.id];
+                    if (nextVid && nextVid.paused) {
+                        nextVid.currentTime = 0;
+                        nextVid.play().catch(() => {});
+                    }
+                }
+
+                // If active clip transitioned, pause previous
+                if (currentClip.id !== lastActiveClipIdRef.current) {
+                    if (lastActiveClipIdRef.current) {
+                        const prevVid = videoElementsRef.current[lastActiveClipIdRef.current];
+                        if (prevVid && !prevVid.paused) prevVid.pause();
+                    }
+                    const activeVid = videoElementsRef.current[currentClip.id];
+                    if (activeVid && activeVid.paused) {
+                        activeVid.play().catch(() => {});
+                    }
+                    lastActiveClipIdRef.current = currentClip.id;
+                }
+            }
+
+            drawCanvasFrame(nextTime);
+            animationFrameRef.current = requestAnimationFrame(loop);
         };
 
-        if (isPlaying) {
-            lastTimestamp = performance.now();
-            animationFrameRef.current = requestAnimationFrame(tick);
-
-            // Play voiceover
-            if (hiddenAudioRef.current && selectedVoiceAudioUrl) {
-                hiddenAudioRef.current.currentTime = currentTime;
-                hiddenAudioRef.current.play().catch(() => {});
-            }
-        } else {
-            if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-            if (hiddenAudioRef.current) hiddenAudioRef.current.pause();
-            if (bgmAudioRef.current) bgmAudioRef.current.pause();
-            drawCanvasFrame(currentTime);
-        }
+        animationFrameRef.current = requestAnimationFrame(loop);
 
         return () => {
             if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
         };
-    }, [isPlaying, totalDuration, drawCanvasFrame, currentTime, selectedVoiceAudioUrl]);
+    }, [isPlaying, totalDuration, clips, clipSwitchInterval, activeBgmUrl, bgmVolume, enableAudioDucking, voiceDuration, drawCanvasFrame]);
 
-    // Re-draw canvas whenever styling / aspect ratio changes
+    // Re-draw canvas on aspect ratio or styling change
     useEffect(() => {
-        drawCanvasFrame(currentTime);
-    }, [drawCanvasFrame, currentTime, aspectRatio]);
+        drawCanvasFrame(currentTimeRef.current);
+    }, [drawCanvasFrame, aspectRatio]);
 
-    const togglePlay = () => {
-        setIsPlaying(!isPlaying);
-    };
-
-    const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newTime = parseFloat(e.target.value);
-        setCurrentTime(newTime);
-        if (hiddenAudioRef.current) hiddenAudioRef.current.currentTime = newTime;
-        if (bgmAudioRef.current) bgmAudioRef.current.currentTime = newTime % (bgmAudioRef.current.duration || 60);
-        drawCanvasFrame(newTime);
-    };
-
-    // ── HIGH-FIDELITY MP4 / WEBM VIDEO EXPORT ──
+    // ── HIGH-FIDELITY MP4 / WEBM VIDEO EXPORT (Real-time Recording) ──
     const handleExportVideo = async () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
         if (clips.length === 0) {
-            alert("Vui lòng nạp ít nhất 1 video quay thô hoặc bấm '+ Dùng clip mẫu' để xuất video!");
+            alert("Vui lòng tải lên ít nhất 1 video quay thô hoặc bấm '+ Dùng 2 clip mẫu' để dựng video!");
             return;
         }
 
+        pausePlayback();
         setIsRendering(true);
         setRenderProgress(0);
-        setIsPlaying(false);
         isExportingRef.current = true;
 
         try {
-            // Setup Web Audio Context for synchronous track mixing
+            // Setup Web Audio Context for audio mixing
             const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
             const destNode = audioCtx.createMediaStreamDestination();
 
-            // 1. Connect Voiceover Track
+            // 1. Voiceover Source
             let voiceAudioEl: HTMLAudioElement | null = null;
             if (selectedVoiceAudioUrl) {
                 voiceAudioEl = new Audio(selectedVoiceAudioUrl);
@@ -841,7 +877,7 @@ export default function AutoVideoStudioPage() {
                 voiceAudioEl.currentTime = 0;
             }
 
-            // 2. Connect BGM Track with Audio Ducking
+            // 2. BGM Source with Ducking Gain
             let bgmAudioEl: HTMLAudioElement | null = null;
             let bgmGainNode: GainNode | null = null;
             if (activeBgmUrl) {
@@ -856,7 +892,7 @@ export default function AutoVideoStudioPage() {
                 bgmAudioEl.currentTime = 0;
             }
 
-            // Combine Canvas Video Track & Mixed Audio Tracks
+            // Capture 30FPS canvas stream + mixed audio stream
             const canvasStream = canvas.captureStream(30);
             const combinedTracks = [
                 ...canvasStream.getVideoTracks(),
@@ -884,7 +920,6 @@ export default function AutoVideoStudioPage() {
                 }
             }
 
-            // Fallback to WebM if MP4 is unsupported or WebM is chosen
             if (!chosenMime) {
                 const webmCandidates = [
                     "video/webm;codecs=vp9,opus",
@@ -909,7 +944,7 @@ export default function AutoVideoStudioPage() {
 
             const recorder = new MediaRecorder(combinedStream, {
                 mimeType: chosenMime,
-                videoBitsPerSecond: 6000000 // Crisp 6 Mbps
+                videoBitsPerSecond: 6500000 // 6.5 Mbps crisp
             });
 
             const chunks: Blob[] = [];
@@ -925,19 +960,17 @@ export default function AutoVideoStudioPage() {
                 setRenderProgress(100);
                 isExportingRef.current = false;
 
-                // Stop media elements
                 if (voiceAudioEl) voiceAudioEl.pause();
                 if (bgmAudioEl) bgmAudioEl.pause();
                 clips.forEach(c => {
                     const v = videoElementsRef.current[c.id];
-                    if (v) v.pause();
+                    if (v && !v.paused) v.pause();
                 });
                 audioCtx.close().catch(() => {});
 
-                // Record financial stats
                 updateFinancialTracker();
 
-                // Trigger Instant Download
+                // Instant download trigger
                 const a = document.createElement("a");
                 a.href = finalUrl;
                 a.download = `LYHU_${aspectRatio.replace(":", "-")}_${Date.now()}.${finalExt}`;
@@ -946,37 +979,49 @@ export default function AutoVideoStudioPage() {
                 document.body.removeChild(a);
             };
 
-            // Start playing audio
+            // Start Audio
             if (voiceAudioEl) voiceAudioEl.play().catch(() => {});
             if (bgmAudioEl) bgmAudioEl.play().catch(() => {});
 
+            // Start First Video Clip
+            const firstVid = videoElementsRef.current[clips[0].id];
+            if (firstVid) {
+                firstVid.currentTime = 0;
+                firstVid.play().catch(() => {});
+            }
+
             recorder.start(100);
 
-            // Step through rendering synchronously
             let exportTime = 0;
-            const fps = 30;
-            const step = 1 / fps;
+            const startTime = performance.now();
 
-            const renderInterval = setInterval(() => {
-                exportTime += step;
-                setCurrentTime(exportTime);
+            const renderTimer = setInterval(() => {
+                exportTime = (performance.now() - startTime) / 1000;
+                currentTimeRef.current = exportTime;
 
-                // Sync video elements for active clip
-                const switchSec = Math.max(2, clipSwitchInterval);
-                const clipIdx = Math.floor(exportTime / switchSec) % clips.length;
-                const activeClip = clips[clipIdx];
-                const activeVid = videoElementsRef.current[activeClip.id];
-                if (activeVid) {
-                    const localTime = (exportTime % switchSec) % Math.max(1, activeClip.duration);
-                    if (Math.abs(activeVid.currentTime - localTime) > 0.2) {
-                        activeVid.currentTime = localTime;
+                // Sync video clips for export
+                if (clips.length > 1) {
+                    const switchSec = Math.max(2, clipSwitchInterval);
+                    const clipIdx = Math.floor(exportTime / switchSec) % clips.length;
+                    const curClip = clips[clipIdx];
+                    const nxtClip = clips[(clipIdx + 1) % clips.length];
+                    const timeInInt = exportTime % switchSec;
+
+                    if (switchSec - timeInInt <= 0.45) {
+                        const nxtVid = videoElementsRef.current[nxtClip.id];
+                        if (nxtVid && nxtVid.paused) {
+                            nxtVid.currentTime = 0;
+                            nxtVid.play().catch(() => {});
+                        }
                     }
-                    if (activeVid.paused) {
+
+                    const activeVid = videoElementsRef.current[curClip.id];
+                    if (activeVid && activeVid.paused) {
                         activeVid.play().catch(() => {});
                     }
                 }
 
-                // Dynamic Audio Ducking during export
+                // Dynamic Audio Ducking in export
                 if (bgmGainNode) {
                     const isSpeaking = voiceDuration > 0 && exportTime < voiceDuration;
                     bgmGainNode.gain.value = enableAudioDucking && isSpeaking
@@ -990,10 +1035,10 @@ export default function AutoVideoStudioPage() {
                 setRenderProgress(progress);
 
                 if (exportTime >= totalDuration) {
-                    clearInterval(renderInterval);
+                    clearInterval(renderTimer);
                     recorder.stop();
                 }
-            }, 1000 / fps);
+            }, 1000 / 30);
 
         } catch (err: any) {
             console.error("Render error:", err);
@@ -1101,7 +1146,7 @@ export default function AutoVideoStudioPage() {
                             <button
                                 type="button"
                                 onClick={handleLoadDemoClips}
-                                className="text-xs text-purple-600 hover:text-purple-800 hover:underline font-medium"
+                                className="text-xs text-purple-600 hover:text-purple-800 hover:underline font-semibold"
                             >
                                 + Dùng 2 clip mẫu Bánh Phồng Tôm
                             </button>
@@ -1158,36 +1203,61 @@ export default function AutoVideoStudioPage() {
                             </button>
                         </div>
 
-                        {/* Upload Dropzone */}
+                        {/* Upload Dropzone & Button */}
                         <div
+                            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                            onDragLeave={() => setIsDragging(false)}
+                            onDrop={handleDrop}
                             onClick={() => fileInputRef.current?.click()}
-                            className="border-2 border-dashed border-gray-200 hover:border-purple-400 rounded-xl p-5 text-center cursor-pointer transition-colors bg-slate-50/50 hover:bg-purple-50/20 group"
+                            className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all ${
+                                isDragging
+                                    ? "border-purple-500 bg-purple-50 scale-[1.01]"
+                                    : "border-gray-200 hover:border-purple-400 bg-slate-50/50 hover:bg-purple-50/20"
+                            }`}
                         >
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="video/*"
-                                multiple
-                                onChange={handleVideoUpload}
-                                className="hidden"
-                            />
-                            <div className="flex flex-col items-center gap-1.5">
-                                <span className="p-2.5 rounded-full bg-white shadow-sm border border-gray-100 group-hover:scale-110 transition-transform">
-                                    <Upload className="w-5 h-5 text-purple-600" />
-                                </span>
-                                <p className="text-xs font-semibold text-gray-700">
-                                    Nhấp để tải lên các đoạn video quay thô (MP4, MOV, WebM)
-                                </p>
-                                <p className="text-[11px] text-gray-400">
-                                    Có thể chọn nhiều file cùng lúc • Hệ thống tự cắt và ghép nhịp nhàng
-                                </p>
+                            <div className="flex flex-col items-center gap-2">
+                                {isUploadingVideo ? (
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Loader2 className="w-6 h-6 text-purple-600 animate-spin" />
+                                        <p className="text-xs font-semibold text-purple-700">Đang nạp video vào bộ nhớ...</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <span className="p-2.5 rounded-full bg-white shadow-sm border border-gray-100">
+                                            <Upload className="w-5 h-5 text-purple-600" />
+                                        </span>
+                                        <p className="text-xs font-bold text-gray-800">
+                                            Kéo thả hoặc nhấp để nạp video quay thô
+                                        </p>
+                                        <p className="text-[11px] text-gray-400">
+                                            Hỗ trợ MP4, MOV, WebM • Chọn nhiều góc quay cùng lúc
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                                            className="mt-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-sm"
+                                        >
+                                            + Chọn file video từ máy
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </div>
+
+                        {/* Hidden Native File Input */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="video/*,.mp4,.mov,.webm,.m4v,.mkv"
+                            multiple
+                            onChange={handleVideoUpload}
+                            className="hidden"
+                        />
 
                         {/* Clip list */}
                         {clips.length > 0 && (
                             <div className="space-y-2">
-                                <span className="text-xs font-semibold text-gray-600">Thứ tự góc quay phát trong video:</span>
+                                <span className="text-xs font-semibold text-gray-600">Thứ tự các góc quay ({clips.length} clip):</span>
                                 <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                                     {clips.map((c, idx) => (
                                         <div
@@ -1251,7 +1321,7 @@ export default function AutoVideoStudioPage() {
                             </button>
                         </div>
 
-                        {/* Pick from Voice Studio History */}
+                        {/* Pick from Voice History */}
                         {voiceHistory.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
                                 {voiceHistory.slice(0, 6).map((item) => {
@@ -1528,7 +1598,7 @@ export default function AutoVideoStudioPage() {
                                     <input
                                         ref={bgmInputRef}
                                         type="file"
-                                        accept="audio/*"
+                                        accept="audio/*,.mp3,.m4a,.wav"
                                         onChange={handleBgmUpload}
                                         className="hidden"
                                     />
@@ -1589,7 +1659,7 @@ export default function AutoVideoStudioPage() {
                                 Màn hình xem trước ({aspectRatio})
                             </h3>
                             <span className="text-[11px] font-mono text-gray-500 font-medium">
-                                {currentTime.toFixed(1)}s / {totalDuration.toFixed(1)}s
+                                {displayTime.toFixed(1)}s / {totalDuration.toFixed(1)}s
                             </span>
                         </div>
 
@@ -1634,20 +1704,15 @@ export default function AutoVideoStudioPage() {
                                 min={0}
                                 max={Math.max(1, totalDuration)}
                                 step={0.1}
-                                value={currentTime}
-                                onChange={handleSeek}
+                                value={displayTime}
+                                onChange={(e) => handleSeek(parseFloat(e.target.value))}
                                 className="w-full accent-purple-600 h-1.5 bg-gray-200 rounded-lg cursor-pointer"
                             />
 
                             <div className="flex items-center justify-center gap-3">
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        setCurrentTime(0);
-                                        if (hiddenAudioRef.current) hiddenAudioRef.current.currentTime = 0;
-                                        if (bgmAudioRef.current) bgmAudioRef.current.currentTime = 0;
-                                        drawCanvasFrame(0);
-                                    }}
+                                    onClick={() => handleSeek(0)}
                                     className="p-2 text-gray-500 hover:text-gray-900 hover:bg-slate-100 rounded-full"
                                     title="Phát lại từ đầu"
                                 >
