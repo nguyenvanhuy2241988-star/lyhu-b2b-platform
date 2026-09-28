@@ -115,11 +115,27 @@ export async function getVoiceHistory(): Promise<VoiceHistoryItem[]> {
                 if (cursor) {
                     const val = cursor.value;
                     let audioUrl: string | undefined = undefined;
-                    if (val.audioBlob instanceof Blob) {
-                        audioUrl = URL.createObjectURL(val.audioBlob);
+                    let audioBlob = val.audioBlob;
+
+                    if (audioBlob instanceof Blob) {
+                        try {
+                            audioUrl = URL.createObjectURL(audioBlob);
+                        } catch (e) {
+                            console.warn("[VoiceHistory] createObjectURL failed:", e);
+                        }
+                    } else if (audioBlob) {
+                        try {
+                            const reconstructed = new Blob([audioBlob], { type: "audio/mpeg" });
+                            audioUrl = URL.createObjectURL(reconstructed);
+                            audioBlob = reconstructed;
+                        } catch (e) {
+                            console.warn("[VoiceHistory] Blob reconstruction failed:", e);
+                        }
                     }
+
                     results.push({
                         ...val,
+                        audioBlob,
                         audioUrl
                     });
                     cursor.continue();

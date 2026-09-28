@@ -275,12 +275,13 @@ export default function VoiceStudioPage() {
         }
     };
 
-    // Clean up audio URL
+    // Dọn dẹp âm thanh khi rời khỏi trang
     useEffect(() => {
         return () => {
-            if (audioUrl) URL.revokeObjectURL(audioUrl);
+            if (audioRef.current) audioRef.current.pause();
+            if (historyAudioRef.current) historyAudioRef.current.pause();
         };
-    }, [audioUrl]);
+    }, []);
 
     // Apply speed changes to audio player
     useEffect(() => {
@@ -401,8 +402,6 @@ export default function VoiceStudioPage() {
                 throw new Error("Dữ liệu âm thanh không hợp lệ. Vui lòng thử lại.");
             }
 
-            if (audioUrl) URL.revokeObjectURL(audioUrl);
-
             const newUrl = URL.createObjectURL(blob);
             setAudioUrl(newUrl);
 
@@ -488,8 +487,19 @@ export default function VoiceStudioPage() {
         setText(item.text);
         setSelectedStyleId(item.styleId);
         setSpeedRate(item.speedRate);
-        if (item.audioUrl) {
-            setAudioUrl(item.audioUrl);
+
+        let activeUrl = "";
+        if (item.audioBlob && item.audioBlob.size > 0) {
+            try {
+                activeUrl = URL.createObjectURL(item.audioBlob);
+            } catch (e) {}
+        }
+        if (!activeUrl && item.audioUrl) {
+            activeUrl = item.audioUrl;
+        }
+
+        if (activeUrl) {
+            setAudioUrl(activeUrl);
             setTimeout(() => {
                 if (audioRef.current) {
                     audioRef.current.playbackRate = item.speedRate;
@@ -520,6 +530,8 @@ export default function VoiceStudioPage() {
     // Phát âm thanh trong lịch sử
     const handlePlayHistoryAudio = (item: VoiceHistoryItem, e: React.MouseEvent) => {
         e.stopPropagation();
+
+        // 1. Nếu đang phát chính file này thì bấm để pause
         if (historyPlayingId === item.id) {
             if (historyAudioRef.current) {
                 historyAudioRef.current.pause();
@@ -528,18 +540,75 @@ export default function VoiceStudioPage() {
             return;
         }
 
-        if (item.audioUrl) {
-            if (historyAudioRef.current) {
-                historyAudioRef.current.pause();
-            }
-            const audio = new Audio(item.audioUrl);
-            audio.playbackRate = item.speedRate;
-            historyAudioRef.current = audio;
-            audio.play();
-            setHistoryPlayingId(item.id);
-            audio.onended = () => setHistoryPlayingId(null);
-            audio.onerror = () => setHistoryPlayingId(null);
+        // 2. Dừng âm thanh player chính nếu đang phát
+        if (audioRef.current && isPlaying) {
+            audioRef.current.pause();
+            setIsPlaying(false);
         }
+
+        // 3. Dừng âm thanh lịch sử trước đó nếu có
+        if (historyAudioRef.current) {
+            historyAudioRef.current.pause();
+        }
+
+        // 4. Lấy URL phát: Luôn ưu tiên tạo mới từ audioBlob để không bao giờ bị lỗi URL hết hạn
+        let playableUrl = "";
+        if (item.audioBlob && item.audioBlob.size > 0) {
+            try {
+                playableUrl = URL.createObjectURL(item.audioBlob);
+            } catch (err) {
+                console.warn("[VoiceHistory] Không tạo được URL từ Blob:", err);
+            }
+        }
+        if (!playableUrl && item.audioUrl) {
+            playableUrl = item.audioUrl;
+        }
+
+        if (!playableUrl) {
+            alert("Không tìm thấy dữ liệu âm thanh của file này. Bạn có thể bấm nút 'Dùng lại' để tạo lại âm thanh nhé!");
+            return;
+        }
+
+        const audio = new Audio(playableUrl);
+        audio.playbackRate = item.speedRate || 1.0;
+        historyAudioRef.current = audio;
+
+        audio.onended = () => {
+            setHistoryPlayingId(null);
+        };
+        audio.onerror = (err) => {
+            console.error("[VoiceHistory] Lỗi phát âm thanh:", err);
+            setHistoryPlayingId(null);
+            alert("Lỗi khi phát âm thanh cũ. Bạn có thể bấm nút 'Dùng lại' để tạo lại kịch bản này nhé!");
+        };
+
+        setHistoryPlayingId(item.id);
+        audio.play().catch((err) => {
+            console.warn("[VoiceHistory] Audio play error:", err);
+            setHistoryPlayingId(null);
+        });
+    };
+
+    // Tải file MP3 trực tiếp từ lịch sử
+    const handleDownloadHistoryItem = (item: VoiceHistoryItem, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        let targetUrl = "";
+        if (item.audioBlob && item.audioBlob.size > 0) {
+            try {
+                targetUrl = URL.createObjectURL(item.audioBlob);
+            } catch (err) {}
+        }
+        if (!targetUrl && item.audioUrl) {
+            targetUrl = item.audioUrl;
+        }
+
+        if (!targetUrl) {
+            alert("Không tìm thấy dữ liệu âm thanh để tải về.");
+            return;
+        }
+
+        const smartName = generateSmartFileName(item.text, item.styleId, item.speedRate);
+        handleDownload(targetUrl, smartName);
     };
 
     // Tiện ích xử lý văn bản: Tải file .txt từ máy tính
@@ -1535,7 +1604,7 @@ export default function VoiceStudioPage() {
                                                     {/* Download MP3 */}
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleDownload(item.audioUrl, generateSmartFileName(item.text, item.styleId, item.speedRate))}
+                                                        onClick={(e) => handleDownloadHistoryItem(item, e)}
                                                         className="p-2 rounded-lg text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors flex items-center gap-1"
                                                         title="Tải file MP3 này về máy"
                                                     >
