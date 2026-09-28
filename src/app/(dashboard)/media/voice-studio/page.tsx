@@ -1311,109 +1311,185 @@ export default function VoiceStudioPage() {
             {/* TAB 2: VOICE CLONING (NHÂN BẢN GIỌNG NÓI THẬT) */}
             {activeTab === "cloning" && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-6">
-                    <div className="border-b border-gray-100 pb-4">
-                        <div className="flex items-center gap-2">
-                            <span className="p-2 rounded-xl bg-purple-50 text-purple-600">
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                            <span className="p-2.5 rounded-xl bg-purple-50 text-purple-600">
                                 <Dna className="w-6 h-6" />
                             </span>
                             <div>
-                                <h2 className="text-xl font-bold text-gray-900">
+                                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
                                     Nhân Bản Giọng Nói Chính Chủ (AI Voice Cloning)
                                 </h2>
-                                <p className="text-sm text-gray-500">
-                                    Tải đoạn thu âm giọng thật của Chị nhà hoặc Anh Huy lên để AI học và phát ra đúng 100% âm sắc, ngữ điệu của anh chị!
+                                <p className="text-xs sm:text-sm text-gray-500">
+                                    Tải 1 đoạn thu âm giọng thật của Chị nhà lên để AI sao chép đúng 100% âm sắc, ngữ điệu thực tế!
                                 </p>
                             </div>
+                        </div>
+
+                        {/* Quick switch to Tab 1 banner button */}
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("tts")}
+                            className="px-4 py-2 bg-teal-50 hover:bg-teal-100 text-[#00AFA9] font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors border border-teal-200 self-start sm:self-auto"
+                        >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>Dùng ngay 7 giọng AI có sẵn (Miễn phí)</span>
+                        </button>
+                    </div>
+
+                    {/* Notice Banner */}
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3 text-xs text-amber-800">
+                        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                            <p className="font-bold text-amber-900">
+                                💡 Lời khuyên cho Chị nhà khi làm video TikTok / CapCut:
+                            </p>
+                            <p className="leading-relaxed">
+                                Nếu chỉ cần lồng tiếng video bán hàng nhanh, bạn nên dùng <strong>Tab "Studio Giọng Đọc AI"</strong> bên cạnh vì đã có sẵn <strong>7 chất giọng Gen Z cực chuẩn và hoàn toàn miễn phí</strong>. Tính năng <em>Nhân bản giọng thật</em> này chỉ cần thiết khi bạn muốn AI nói ra <strong>chính xác 100% âm sắc giọng của chính Chị nhà</strong>.
+                            </p>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Left: Upload or Record Audio */}
+                        {/* Left: Step 1 & Audio Preview */}
                         <div className="space-y-4">
                             <h3 className="font-bold text-gray-800 text-sm flex items-center gap-2">
                                 <Upload className="w-4 h-4 text-purple-600" />
-                                Bước 1: Nạp mẫu giọng nói thật (15 giây - 1 phút)
+                                Bước 1: Nạp file âm thanh mẫu (15 giây - 1 phút)
                             </h3>
 
                             {/* Dropzone */}
-                            <label className="border-2 border-dashed border-purple-200 hover:border-purple-400 bg-purple-50/20 hover:bg-purple-50/50 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all space-y-2 block">
-                                <input
-                                    type="file"
-                                    accept="audio/*"
-                                    onChange={handleFileUpload}
-                                    className="hidden"
-                                />
-                                <div className="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
-                                    <Upload className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-bold text-gray-800">
-                                        {cloningFile ? cloningFile.name : "Kéo thả file âm thanh hoặc bấm để tải lên"}
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        Hỗ trợ MP3, M4A, WAV (ghi âm bằng điện thoại hoặc ứng dụng ghi âm)
-                                    </p>
-                                </div>
-                            </label>
+                            {!cloningFile ? (
+                                <label className="border-2 border-dashed border-purple-200 hover:border-purple-400 bg-purple-50/20 hover:bg-purple-50/50 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all space-y-2 block">
+                                    <input
+                                        type="file"
+                                        accept="audio/*,.m4a,.mp3,.wav,.aac,.ogg"
+                                        onChange={handleFileUpload}
+                                        className="hidden"
+                                    />
+                                    <div className="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
+                                        <Upload className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-800">
+                                            Kéo thả file âm thanh hoặc bấm để chọn file
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Hỗ trợ MP3, M4A, WAV (ghi âm bằng iPhone hoặc điện thoại)
+                                        </p>
+                                    </div>
+                                </label>
+                            ) : (
+                                /* File Preview Card */
+                                <div className="p-4 bg-purple-50/60 border border-purple-200 rounded-2xl space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm">
+                                                🎵
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-gray-900 truncate max-w-[200px]">
+                                                    {cloningFile.name}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    {(cloningFile.size / (1024 * 1024)).toFixed(2)} MB • File mẫu sẵn sàng
+                                                </p>
+                                            </div>
+                                        </div>
 
-                            <div className="flex items-center justify-center gap-3">
-                                <span className="text-xs text-gray-400 font-medium">HOẶC THU ÂM TRỰC TIẾP:</span>
-                                <button
-                                    type="button"
-                                    onClick={toggleRecording}
-                                    className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-                                        isRecording 
-                                            ? "bg-rose-600 text-white animate-pulse" 
-                                            : "bg-slate-100 hover:bg-slate-200 text-slate-700"
-                                    }`}
-                                >
-                                    <Radio className="w-4 h-4" />
-                                    <span>{isRecording ? `Đang ghi âm (${recordingSeconds}s)... Bấm để dừng` : "Bật Micro thu âm 30 giây"}</span>
-                                </button>
-                            </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setCloningFile(null)}
+                                            className="text-xs text-rose-600 hover:text-rose-800 bg-white px-2.5 py-1 rounded-lg border border-rose-200"
+                                        >
+                                            Đổi file khác
+                                        </button>
+                                    </div>
+
+                                    {/* Native Audio Preview */}
+                                    <audio 
+                                        controls 
+                                        src={URL.createObjectURL(cloningFile)}
+                                        className="w-full h-9 rounded-lg"
+                                    />
+                                    <p className="text-[11px] text-gray-500 italic">
+                                        ✓ Hãy bấm nút Play ở trên để nghe thử xem giọng Chị nhà có trong trẻo, không bị ồn không.
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Voice Name Input */}
-                            <div className="space-y-1.5 pt-2">
+                            <div className="space-y-1.5 pt-1">
                                 <label className="text-xs font-semibold text-gray-700">
-                                    Đặt tên cho giọng nhân bản:
+                                    Đặt tên cho giọng nhân bản này:
                                 </label>
                                 <input
                                     type="text"
                                     value={cloningVoiceName}
                                     onChange={(e) => setCloningVoiceName(e.target.value)}
+                                    placeholder="VD: Giọng Chị Nhà (Chính Chủ)"
                                     className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
                                 />
                             </div>
                         </div>
 
-                        {/* Right: Technical Explanation & Integration */}
-                        <div className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                            <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-purple-600" />
-                                Cơ chế hoạt động của Voice Cloning:
-                            </h3>
+                        {/* Right: Step 2 - Action & Integration */}
+                        <div className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between">
+                            <div className="space-y-3">
+                                <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-purple-600" />
+                                    Bước 2: Kích hoạt Nhân Bản Giọng Nói
+                                </h3>
 
-                            <div className="space-y-3 text-xs text-gray-600 leading-relaxed">
-                                <p>
-                                    <strong className="text-gray-900">1. Trích xuất âm sắc độc quyền:</strong> Khác với các giọng đọc mẫu có sẵn của hệ thống, tính năng Nhân Bản Giọng Nói sử dụng công nghệ Deep Learning để phân tích tần số giọng, ngữ điệu, cách ngắt nhịp và âm hưởng tự nhiên của chính bạn.
-                                </p>
-                                <p>
-                                    <strong className="text-gray-900">2. Kết nối API chuyên sâu (ElevenLabs / FPT AI):</strong> Để nhân bản giọng nói với chất lượng phòng thu cao nhất, hệ thống có thể kết nối với dịch vụ <strong>ElevenLabs Instant Voice Cloning</strong>. Bạn chỉ cần dán mã API Key vào là kích hoạt được ngay.
-                                </p>
-                                <p>
-                                    <strong className="text-gray-900">3. Sử dụng lâu dài:</strong> Sau khi nhân bản xong, giọng đọc của bạn sẽ xuất hiện vĩnh viễn trong danh sách chọn giọng để bạn viết kịch bản và xuất voice bất cứ lúc nào!
-                                </p>
-                            </div>
+                                <div className="space-y-2.5 text-xs text-gray-600 leading-relaxed bg-white p-3.5 rounded-xl border border-gray-200">
+                                    <p className="font-semibold text-gray-800">
+                                        Hệ thống hỗ trợ 2 phương thức nhân bản:
+                                    </p>
+                                    <div className="space-y-1.5 pl-2">
+                                        <div className="flex items-start gap-1.5">
+                                            <span className="font-bold text-purple-600">•</span>
+                                            <span>
+                                                <strong>ElevenLabs Instant Cloning (Tốt nhất thế giới):</strong> Chỉ cần đoạn âm thanh 1 phút của Chị nhà, AI học xong trong 15 giây. Giọng đọc ra y hệt 100%.
+                                            </span>
+                                        </div>
+                                        <div className="flex items-start gap-1.5">
+                                            <span className="font-bold text-teal-600">•</span>
+                                            <span>
+                                                <strong>Google Gemini Voice Replication:</strong> Công nghệ của Google DeepMind, yêu cầu thêm câu tuyên thệ bản quyền trên Google AI Studio.
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
 
-                            <div className="pt-3 border-t border-slate-200">
-                                <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 flex items-center justify-between text-xs">
-                                    <span className="text-purple-800 font-medium">
-                                        Trạng thái: <strong>Sẵn sàng nạp giọng mẫu</strong>
+                                {/* Status */}
+                                <div className="p-3 bg-white rounded-xl border border-gray-200 flex items-center justify-between text-xs">
+                                    <span className="text-gray-600">
+                                        Tình trạng file: <strong className={cloningFile ? "text-emerald-600" : "text-amber-600"}>{cloningFile ? "Đã nạp file mẫu" : "Chưa chọn file"}</strong>
                                     </span>
-                                    <span className="px-2 py-0.5 rounded-full bg-purple-200 text-purple-800 font-bold text-[10px]">
-                                        ElevenLabs Ready
+                                    <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold text-[10px]">
+                                        Instant Cloning
                                     </span>
                                 </div>
+                            </div>
+
+                            {/* Action Button */}
+                            <div className="space-y-2 pt-3">
+                                <button
+                                    type="button"
+                                    disabled={!cloningFile}
+                                    onClick={() => {
+                                        alert("Đã nhận file mẫu của Chị nhà! Để AI bắt đầu học và sinh giọng nói chính chủ, hệ thống cần kết nối mã ElevenLabs API Key (hoặc Google AI Studio Voice ID). Bạn hãy nhắn với trợ lý để kết nối mã API Key vào hệ thống nhé!");
+                                    }}
+                                    className="w-full py-3.5 px-4 bg-purple-600 hover:bg-purple-700 active:scale-[0.99] text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    <Sparkles className="w-4 h-4" />
+                                    <span>TIẾN HÀNH NHÂN BẢN GIỌNG NÓI NÀY</span>
+                                </button>
+                                
+                                <p className="text-[11px] text-center text-gray-400">
+                                    Sau khi nhân bản, giọng Chị nhà sẽ xuất hiện ngay trong danh sách chọn giọng ở Tab 1.
+                                </p>
                             </div>
                         </div>
                     </div>
