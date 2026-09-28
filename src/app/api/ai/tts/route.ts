@@ -197,9 +197,9 @@ async function synthesizeWithElevenLabs(
                     model_id: modelId,
                     language_code: "vi", // Ép ElevenLabs phát âm tiếng Việt chuẩn xác
                     voice_settings: {
-                        stability: 0.70, // Giữ vững thanh điệu tiếng Việt (hỏi, ngã, nặng)
-                        similarity_boost: 0.90, // Tái tạo 95% độ giống giọng thật của chị nhà
-                        style: 0.05,
+                        stability: 0.45, // Độ ổn định vừa phải giúp giọng nhấn nhá, luyến láy tự nhiên không bị cứng
+                        similarity_boost: 0.80, // Tái tạo chính xác âm sắc thật của người nói
+                        style: 0.35, // Tăng độ biểu cảm, cảm xúc và ngữ điệu cho video bán hàng
                         use_speaker_boost: true
                     }
                 })
