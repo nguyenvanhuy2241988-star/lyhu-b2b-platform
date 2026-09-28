@@ -69,7 +69,8 @@ const VOICE_STYLES: Record<string, VoiceStyle> = {
 async function synthesizeWithGeminiTTS(
     text: string,
     voiceStyle: string,
-    speakingRate: number
+    speakingRate: number,
+    voiceSampleBase64?: string
 ): Promise<Buffer> {
     if (!GEMINI_API_KEY) {
         throw new Error("GEMINI_API_KEY not configured");
@@ -87,6 +88,17 @@ async function synthesizeWithGeminiTTS(
         rateInstruction = " Nói hơi nhanh, nhịp độ vừa phải.";
     }
 
+    const voiceConfig = voiceSampleBase64 ? {
+        replicated_voice_config: {
+            voice_sample_audio: voiceSampleBase64,
+            mime_type: "audio/wav"
+        }
+    } : {
+        prebuilt_voice_config: {
+            voice_name: style.voice_name
+        }
+    };
+
     const requestBody = {
         contents: [{
             parts: [
@@ -101,11 +113,7 @@ async function synthesizeWithGeminiTTS(
         generation_config: {
             response_modalities: ["AUDIO"],
             speech_config: {
-                voice_config: {
-                    prebuilt_voice_config: {
-                        voice_name: style.voice_name
-                    }
-                }
+                voice_config: voiceConfig
             }
         }
     };
@@ -261,7 +269,7 @@ async function synthesizeWithGoogleTranslate(text: string): Promise<Buffer> {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { text, voice = "female", rate = "+0%", style = "female", voiceId, elevenApiKey } = body;
+        const { text, voice = "female", rate = "+0%", style = "female", voiceId, elevenApiKey, voiceSampleBase64 } = body;
 
         if (!text || typeof text !== "string" || !text.trim()) {
             return NextResponse.json(
@@ -295,7 +303,7 @@ export async function POST(req: NextRequest) {
 
         const apiKey = elevenApiKey || process.env.ELEVENLABS_API_KEY;
 
-        // Ưu tiên 1: Nếu là giọng nhân bản (Custom Cloned Voice)
+        // Ưu tiên 1: Nếu là giọng nhân bản (Custom Cloned Voice với ElevenLabs)
         if (voiceId && apiKey) {
             try {
                 console.log("[TTS] Trying ElevenLabs Voice Cloning for voiceId:", voiceId);
@@ -304,14 +312,14 @@ export async function POST(req: NextRequest) {
                 console.log("[TTS] ElevenLabs SUCCESS:", audioBuffer.length, "bytes");
             } catch (elevenErr: any) {
                 console.warn("[TTS] ElevenLabs failed, fallback to Gemini:", elevenErr.message);
-                audioBuffer = await synthesizeWithGeminiTTS(normalizedText, voiceKey, speakingRate);
+                audioBuffer = await synthesizeWithGeminiTTS(normalizedText, voiceKey, speakingRate, voiceSampleBase64);
                 contentType = "audio/wav";
             }
         } else {
-            // Ưu tiên 2: Gemini TTS (studio quality) → Ưu tiên 3: Google Translate (fallback)
+            // Ưu tiên 2: Gemini TTS (chất lượng studio - có hỗ trợ sao chép giọng mẫu voiceSampleBase64) → Ưu tiên 3: Google Translate (fallback)
             try {
-                console.log("[TTS] Trying Gemini 3.8 Flash TTS...");
-                audioBuffer = await synthesizeWithGeminiTTS(normalizedText, voiceKey, speakingRate);
+                console.log("[TTS] Trying Gemini 3.8 Flash TTS...", voiceSampleBase64 ? "(Replicated Voice Sample)" : "");
+                audioBuffer = await synthesizeWithGeminiTTS(normalizedText, voiceKey, speakingRate, voiceSampleBase64);
                 contentType = "audio/wav"; // Gemini returns WAV
                 console.log("[TTS] Gemini TTS SUCCESS:", audioBuffer.length, "bytes");
             } catch (geminiErr: any) {

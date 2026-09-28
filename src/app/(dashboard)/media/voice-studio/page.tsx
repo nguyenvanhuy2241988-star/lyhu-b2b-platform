@@ -371,6 +371,9 @@ export default function VoiceStudioPage() {
             const customVoiceId = isCustom ? selectedStyle.id.replace("custom-", "") : undefined;
             const keyToUse = isCustom ? (cloningApiKey || localStorage.getItem("lyhu_eleven_key") || undefined) : undefined;
 
+            const isGeminiCloned = selectedStyle.id.startsWith("gemini-cloned-");
+            const sampleBase64 = isGeminiCloned ? (localStorage.getItem("lyhu_voice_sample_" + selectedStyle.id) || undefined) : undefined;
+
             const res = await fetch("/api/ai/tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -381,7 +384,8 @@ export default function VoiceStudioPage() {
                     rate: rateStr,
                     pitch: selectedStyle.pitchStr,
                     voiceId: customVoiceId,
-                    elevenApiKey: keyToUse
+                    elevenApiKey: keyToUse,
+                    voiceSampleBase64: sampleBase64
                 })
             });
 
@@ -658,6 +662,61 @@ export default function VoiceStudioPage() {
             alert(`🎉 Chúc mừng! Đã nhân bản thành công "${newCustomVoice.name}". Giọng đọc đã được thêm vào danh sách và sẵn sàng tạo kịch bản!`);
         } catch (err: any) {
             alert(err.message || "Có lỗi xảy ra khi nhân bản giọng nói.");
+        } finally {
+            setCloningLoading(false);
+        }
+    };
+
+    // Lưu mẫu âm thanh của Chị nhà trực tiếp vào hệ thống để Gemini AI xử lý (Miễn phí 100%)
+    const handleSaveGeminiVoiceSample = async () => {
+        if (!cloningFile) {
+            alert("Vui lòng tải lên file âm thanh mẫu của Chị nhà.");
+            return;
+        }
+
+        setCloningLoading(true);
+        try {
+            const reader = new FileReader();
+            const base64Promise = new Promise<string>((resolve, reject) => {
+                reader.onload = () => {
+                    const result = reader.result as string;
+                    const base64Data = result.includes(",") ? result.split(",")[1] : result;
+                    resolve(base64Data);
+                };
+                reader.onerror = reject;
+            });
+            reader.readAsDataURL(cloningFile);
+            const base64Audio = await base64Promise;
+
+            const voiceId = "gemini-cloned-" + Date.now();
+            const voiceName = (cloningVoiceName || "Giọng Chị Nhà").trim();
+
+            localStorage.setItem("lyhu_voice_sample_" + voiceId, base64Audio);
+
+            const newCustomVoice: VoiceStyleOption = {
+                id: voiceId,
+                name: `${voiceName} (Chính Chủ)`,
+                gender: "female",
+                category: "sweet",
+                description: "Giọng thật của Chị nhà được xử lý trực tiếp bởi Gemini AI siêu rẻ (~20đ/video).",
+                tag: "Chính chủ: Gemini AI xử lý, không tốn phí duy trì",
+                avatar: "👑",
+                pitchVal: 1.0,
+                pitchStr: "+0Hz",
+                recommendedSpeed: 1.15,
+                color: "from-teal-500/10 to-emerald-500/10 text-teal-700",
+                border: "border-teal-300"
+            };
+
+            const updatedVoices = [newCustomVoice, ...customVoices.filter(v => v.id !== newCustomVoice.id)];
+            setCustomVoices(updatedVoices);
+            localStorage.setItem("lyhu_custom_voices", JSON.stringify(updatedVoices));
+
+            setSelectedStyleId(newCustomVoice.id);
+            setActiveTab("tts");
+            alert(`🎉 Tuyệt vời! Đã lưu giọng của Chị nhà vào hệ thống. Bây giờ Chị nhà có thể viết kịch bản và xuất giọng đọc bằng Gemini AI với giá chỉ ~20đ/video mà không mất bất kỳ khoản phí duy trì nào!`);
+        } catch (err: any) {
+            alert(err.message || "Có lỗi xảy ra khi lưu giọng.");
         } finally {
             setCloningLoading(false);
         }
@@ -1592,30 +1651,42 @@ export default function VoiceStudioPage() {
                                 </div>
                             </div>
 
-                            {/* Action Button */}
-                            <div className="space-y-2 pt-3">
+                            {/* Action Buttons */}
+                            <div className="space-y-3 pt-3">
+                                {/* Option A: Gemini AI Voice Processing (Recommended - 100% Free / Pay-as-you-go) */}
                                 <button
                                     type="button"
                                     disabled={!cloningFile || cloningLoading}
-                                    onClick={handleStartCloning}
-                                    className="w-full py-3.5 px-4 bg-purple-600 hover:bg-purple-700 active:scale-[0.99] text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                                    onClick={handleSaveGeminiVoiceSample}
+                                    className="w-full py-3.5 px-4 bg-[#00AFA9] hover:bg-[#009690] active:scale-[0.99] text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     {cloningLoading ? (
                                         <>
                                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            <span>Đang gửi mẫu & AI đang học giọng nói...</span>
+                                            <span>Đang lưu mẫu & nạp vào Gemini AI...</span>
                                         </>
                                     ) : (
                                         <>
                                             <Sparkles className="w-4 h-4" />
-                                            <span>TIẾN HÀNH NHÂN BẢN GIỌNG NÓI NÀY</span>
+                                            <span>LƯU MẪU GIỌNG ĐỂ GEMINI XỬ LÝ (MIỄN PHÍ ~20Đ/VIDEO)</span>
                                         </>
                                     )}
                                 </button>
-                                
-                                <p className="text-[11px] text-center text-gray-400">
-                                    Sau khi nhân bản xong, giọng Chị nhà sẽ xuất hiện ngay trong danh sách chọn giọng ở Tab 1.
+                                <p className="text-[11px] text-center text-teal-700 font-medium">
+                                    ✓ Đúng như bạn mong muốn: Mẫu giọng được lưu vào hệ thống, Gemini AI tự xử lý đọc kịch bản chỉ ~20đ/video, KHÔNG tốn phí thuê bao hàng tháng!
                                 </p>
+
+                                {/* Option B: ElevenLabs Instant Cloning (Optional if user bought $6 plan) */}
+                                <div className="pt-2 border-t border-slate-200">
+                                    <button
+                                        type="button"
+                                        disabled={!cloningFile || cloningLoading}
+                                        onClick={handleStartCloning}
+                                        className="w-full py-2.5 px-4 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-colors border border-purple-200"
+                                    >
+                                        <span>Hoặc: Nhân bản chuyên sâu qua ElevenLabs (nếu có gói $6/tháng)</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
