@@ -225,6 +225,8 @@ export default function VoiceStudioPage() {
     const [cloningApiKey, setCloningApiKey] = useState("");
     const [cloningLoading, setCloningLoading] = useState(false);
     const [showKeyGuide, setShowKeyGuide] = useState(false);
+    const [manualVoiceId, setManualVoiceId] = useState("");
+    const [manualVoiceName, setManualVoiceName] = useState("");
 
     const allVoiceStyles = [...customVoices, ...VOICE_STYLES];
     const selectedStyle = allVoiceStyles.find(s => s.id === selectedStyleId) || allVoiceStyles[0];
@@ -638,9 +640,12 @@ export default function VoiceStudioPage() {
             // Lưu API Key trên máy
             localStorage.setItem("lyhu_eleven_key", cloningApiKey.trim());
 
+            const cleanName = (cloningVoiceName || "Giọng Chị Nhà").trim();
+            const finalVoiceName = cleanName.toLowerCase().includes("chính chủ") ? cleanName : `${cleanName} (Chính Chủ)`;
+
             const newCustomVoice: VoiceStyleOption = {
                 id: `custom-${data.voiceId}`,
-                name: `${cloningVoiceName || "Giọng Chị Nhà"} (Chính Chủ)`,
+                name: finalVoiceName,
                 gender: "female",
                 category: "sweet",
                 description: "Giọng thật chính chủ của Chị nhà, phát âm chuẩn 100% ngữ điệu thực tế.",
@@ -689,13 +694,14 @@ export default function VoiceStudioPage() {
             const base64Audio = await base64Promise;
 
             const voiceId = "gemini-cloned-" + Date.now();
-            const voiceName = (cloningVoiceName || "Giọng Chị Nhà").trim();
+            const cleanName = (cloningVoiceName || "Giọng Chị Nhà").trim();
+            const finalVoiceName = cleanName.toLowerCase().includes("chính chủ") ? cleanName : `${cleanName} (Chính Chủ)`;
 
             localStorage.setItem("lyhu_voice_sample_" + voiceId, base64Audio);
 
             const newCustomVoice: VoiceStyleOption = {
                 id: voiceId,
-                name: `${voiceName} (Chính Chủ)`,
+                name: finalVoiceName,
                 gender: "female",
                 category: "sweet",
                 description: "Giọng thật của Chị nhà được xử lý trực tiếp bởi Gemini AI siêu rẻ (~20đ/video).",
@@ -720,6 +726,93 @@ export default function VoiceStudioPage() {
         } finally {
             setCloningLoading(false);
         }
+    };
+
+    // Xóa một giọng tùy chỉnh cụ thể
+    const handleDeleteCustomVoice = (voiceId: string, voiceName: string, e?: React.MouseEvent) => {
+        if (e) {
+            e.stopPropagation();
+        }
+
+        const confirmDelete = window.confirm(`Bạn có chắc muốn xóa giọng "${voiceName}" khỏi danh sách không?`);
+        if (!confirmDelete) return;
+
+        const updated = customVoices.filter(v => v.id !== voiceId);
+        setCustomVoices(updated);
+
+        if (typeof window !== "undefined") {
+            localStorage.setItem("lyhu_custom_voices", JSON.stringify(updated));
+            localStorage.removeItem("lyhu_voice_sample_" + voiceId);
+        }
+
+        // Nếu giọng đang chọn bị xóa, đổi về giọng mặc định Nữ Gen Z
+        if (selectedStyleId === voiceId) {
+            setSelectedStyleId("female-genz");
+            setSpeedRate(1.15);
+        }
+    };
+
+    // Xóa tất cả các giọng tùy chỉnh đã thêm
+    const handleClearAllCustomVoices = (e?: React.MouseEvent) => {
+        if (e) {
+            e.stopPropagation();
+        }
+
+        const confirmDelete = window.confirm(`Bạn có chắc muốn xóa toàn bộ ${customVoices.length} giọng nhân bản đã thêm không?`);
+        if (!confirmDelete) return;
+
+        if (typeof window !== "undefined") {
+            customVoices.forEach(v => {
+                localStorage.removeItem("lyhu_voice_sample_" + v.id);
+            });
+            localStorage.removeItem("lyhu_custom_voices");
+        }
+
+        setCustomVoices([]);
+
+        if (selectedStyleId.startsWith("custom-") || selectedStyleId.startsWith("gemini-cloned-")) {
+            setSelectedStyleId("female-genz");
+            setSpeedRate(1.15);
+        }
+    };
+
+    // Thêm nhanh bằng Voice ID trực tiếp từ ElevenLabs (dành cho giọng đã tạo trên web elevenlabs.io)
+    const handleSaveManualVoiceId = () => {
+        if (!manualVoiceId.trim()) {
+            alert("Vui lòng nhập mã Voice ID từ ElevenLabs (VD: 21m00Tcm4TlvDq8ikWAM).");
+            return;
+        }
+
+        const cleanName = (manualVoiceName || "Giọng Chị Nhà").trim();
+        const finalVoiceName = cleanName.toLowerCase().includes("chính chủ") ? cleanName : `${cleanName} (Chính Chủ)`;
+        const cleanVoiceId = manualVoiceId.trim();
+
+        const newCustomVoice: VoiceStyleOption = {
+            id: `custom-${cleanVoiceId}`,
+            name: finalVoiceName,
+            gender: "female",
+            category: "sweet",
+            description: `Giọng thật nhân bản ElevenLabs (Voice ID: ${cleanVoiceId.slice(0, 8)}...).`,
+            tag: "Chính chủ: ElevenLabs Voice",
+            avatar: "👑",
+            pitchVal: 1.0,
+            pitchStr: "+0Hz",
+            recommendedSpeed: 1.15,
+            color: "from-purple-500/10 to-indigo-500/10 text-purple-700",
+            border: "border-purple-300"
+        };
+
+        const updated = [newCustomVoice, ...customVoices.filter(v => v.id !== newCustomVoice.id)];
+        setCustomVoices(updated);
+        if (typeof window !== "undefined") {
+            localStorage.setItem("lyhu_custom_voices", JSON.stringify(updated));
+        }
+
+        setSelectedStyleId(newCustomVoice.id);
+        setManualVoiceId("");
+        setManualVoiceName("");
+        setActiveTab("tts");
+        alert(`🎉 Đã kết nối thành công giọng "${finalVoiceName}" vào Studio! Giọng đọc đã sẵn sàng để lồng tiếng kịch bản.`);
     };
 
     const toggleRecording = () => {
@@ -803,19 +896,33 @@ export default function VoiceStudioPage() {
                         <div className="lg:col-span-7 space-y-5">
                             {/* Voice Style Selection */}
                             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-3">
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
                                     <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
                                         <Smile className="w-4 h-4 text-[#00AFA9]" />
                                         1. Chọn Phong cách & Chất giọng (Trẻ trung / Gen Z / Bán hàng)
                                     </label>
-                                    <span className="text-xs text-teal-700 font-medium bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
-                                        {selectedStyle.name}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {customVoices.length > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={handleClearAllCustomVoices}
+                                                className="text-[11px] text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200 transition-colors flex items-center gap-1 font-medium"
+                                                title="Xóa tất cả giọng nhân bản đã thêm"
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                                <span>Xóa hết giọng tự thêm ({customVoices.length})</span>
+                                            </button>
+                                        )}
+                                        <span className="text-xs text-teal-700 font-medium bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                                            {selectedStyle.name}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                     {allVoiceStyles.map((v) => {
                                         const isSelected = selectedStyleId === v.id;
+                                        const isCustom = customVoices.some(cv => cv.id === v.id);
                                         return (
                                             <div
                                                 key={v.id}
@@ -823,21 +930,26 @@ export default function VoiceStudioPage() {
                                                     setSelectedStyleId(v.id);
                                                     setSpeedRate(v.recommendedSpeed);
                                                 }}
-                                                className={`cursor-pointer p-3.5 rounded-xl border-2 transition-all relative ${
+                                                className={`group cursor-pointer p-3.5 rounded-xl border-2 transition-all relative ${
                                                     isSelected 
                                                         ? `border-[#00AFA9] bg-teal-50/20 shadow-sm ring-2 ring-[#00AFA9]/20` 
                                                         : "border-gray-200 hover:border-gray-300 bg-white"
                                                 }`}
                                             >
                                                 <div className="flex items-start justify-between gap-2">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <span className="text-2xl">{v.avatar}</span>
-                                                        <div>
-                                                            <div className="font-bold text-sm text-gray-900 flex items-center gap-1.5">
-                                                                {v.name}
+                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                        <span className="text-2xl shrink-0">{v.avatar}</span>
+                                                        <div className="min-w-0">
+                                                            <div className="font-bold text-sm text-gray-900 flex items-center gap-1.5 flex-wrap">
+                                                                <span className="truncate">{v.name}</span>
                                                                 {v.category === "genz" && (
-                                                                    <span className="text-[10px] bg-pink-100 text-pink-700 font-bold px-1.5 py-0.2 rounded-full">
+                                                                    <span className="text-[10px] bg-pink-100 text-pink-700 font-bold px-1.5 py-0.2 rounded-full shrink-0">
                                                                         HOT
+                                                                    </span>
+                                                                )}
+                                                                {isCustom && (
+                                                                    <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.2 rounded-full shrink-0">
+                                                                        Chính chủ
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -846,9 +958,21 @@ export default function VoiceStudioPage() {
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    {isSelected && (
-                                                        <span className="w-2.5 h-2.5 rounded-full bg-[#00AFA9] ring-4 ring-teal-100 shrink-0 mt-1" />
-                                                    )}
+                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                        {isCustom && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => handleDeleteCustomVoice(v.id, v.name, e)}
+                                                                className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200"
+                                                                title={`Xóa giọng "${v.name}"`}
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                        {isSelected && (
+                                                            <span className="w-2.5 h-2.5 rounded-full bg-[#00AFA9] ring-4 ring-teal-100 shrink-0 mt-1" />
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
                                                     <span className="text-[#00AFA9] font-medium truncate max-w-[200px]">
@@ -1687,6 +1811,136 @@ export default function VoiceStudioPage() {
                                         <span>Hoặc: Nhân bản chuyên sâu qua ElevenLabs (nếu có gói $6/tháng)</span>
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Danh sách các giọng đã thêm & Quản lý / Xóa */}
+                    {customVoices.length > 0 && (
+                        <div className="pt-6 border-t border-gray-100 space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div>
+                                    <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                        <span>👑 Danh sách giọng nhân bản đã lưu</span>
+                                        <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold">
+                                            {customVoices.length} giọng
+                                        </span>
+                                    </h3>
+                                    <p className="text-xs text-gray-500">
+                                        Quản lý hoặc xóa các giọng bạn đã thêm vào để làm gọn danh sách.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleClearAllCustomVoices}
+                                    className="px-3 py-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors flex items-center gap-1.5 border border-rose-200 self-start sm:self-auto"
+                                >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>Xóa tất cả {customVoices.length} giọng</span>
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                {customVoices.map((cv) => {
+                                    const isSelected = selectedStyleId === cv.id;
+                                    return (
+                                        <div
+                                            key={cv.id}
+                                            className={`p-3.5 rounded-xl border transition-all flex flex-col justify-between space-y-3 ${
+                                                isSelected 
+                                                    ? "bg-purple-50/40 border-purple-300 ring-2 ring-purple-100" 
+                                                    : "bg-slate-50 border-gray-200 hover:border-purple-200"
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <span className="text-2xl">{cv.avatar}</span>
+                                                    <div className="min-w-0">
+                                                        <h4 className="font-bold text-sm text-gray-900 truncate">
+                                                            {cv.name}
+                                                        </h4>
+                                                        <p className="text-[11px] text-gray-500 truncate">
+                                                            {cv.tag.split(":")[0]}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-200/60">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedStyleId(cv.id);
+                                                        setSpeedRate(cv.recommendedSpeed);
+                                                        setActiveTab("tts");
+                                                    }}
+                                                    className="px-2.5 py-1 text-xs font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors flex items-center gap-1 border border-teal-200"
+                                                >
+                                                    <Check className="w-3 h-3" />
+                                                    <span>{isSelected ? "Đang chọn" : "Dùng giọng này"}</span>
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => handleDeleteCustomVoice(cv.id, cv.name, e)}
+                                                    className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200"
+                                                    title={`Xóa giọng "${cv.name}"`}
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Cách 3: Kết nối nhanh bằng Voice ID đã tạo trên ElevenLabs */}
+                    <div className="pt-6 border-t border-gray-100 space-y-3">
+                        <div className="flex items-center gap-2">
+                            <span className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+                                <Sparkles className="w-4 h-4" />
+                            </span>
+                            <div>
+                                <h3 className="text-sm font-bold text-gray-900">
+                                    Cách 3: Đã tạo giọng trên trang web ElevenLabs? Thêm nhanh bằng Voice ID
+                                </h3>
+                                <p className="text-xs text-gray-500">
+                                    Không cần tải lại file mẫu. Chỉ cần dán Voice ID của giọng bạn vừa lưu trên ElevenLabs vào đây.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <div className="sm:col-span-4 space-y-1">
+                                <label className="text-xs font-semibold text-gray-700">Tên giọng hiển thị:</label>
+                                <input
+                                    type="text"
+                                    value={manualVoiceName}
+                                    onChange={(e) => setManualVoiceName(e.target.value)}
+                                    placeholder="VD: Giọng Chị Ly"
+                                    className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white outline-none focus:border-purple-400"
+                                />
+                            </div>
+                            <div className="sm:col-span-5 space-y-1">
+                                <label className="text-xs font-semibold text-gray-700">Mã Voice ID (từ ElevenLabs):</label>
+                                <input
+                                    type="text"
+                                    value={manualVoiceId}
+                                    onChange={(e) => setManualVoiceId(e.target.value)}
+                                    placeholder="VD: 21m00Tcm4TlvDq8ikWAM"
+                                    className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-gray-200 bg-white outline-none focus:border-purple-400"
+                                />
+                            </div>
+                            <div className="sm:col-span-3 flex items-end">
+                                <button
+                                    type="button"
+                                    onClick={handleSaveManualVoiceId}
+                                    className="w-full py-2 px-3 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors shadow-sm"
+                                >
+                                    + Thêm vào Studio
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -179,9 +179,9 @@ async function synthesizeWithElevenLabs(
     voiceId: string,
     apiKey: string
 ): Promise<Buffer> {
-    // Model tối ưu tiếng Việt chuẩn xác nhất của ElevenLabs: eleven_turbo_v2_5
-    // Kèm language_code: "vi" để AI phát âm chuẩn 100% tiếng Việt, không bị lơ lớ giọng tây
-    const models = ["eleven_turbo_v2_5", "eleven_multilingual_v2"];
+    // Model tối ưu tiếng Việt chuẩn xác nhất của ElevenLabs: eleven_multilingual_v2
+    // Đọc chuẩn 100% thanh điệu tiếng Việt (hỏi, ngã, nặng, sắc), hạn chế tối đa ngọng dấu
+    const models = ["eleven_multilingual_v2", "eleven_turbo_v2_5"];
 
     for (const modelId of models) {
         try {
@@ -197,9 +197,9 @@ async function synthesizeWithElevenLabs(
                     model_id: modelId,
                     language_code: "vi", // Ép ElevenLabs phát âm tiếng Việt chuẩn xác
                     voice_settings: {
-                        stability: 0.45, // Độ ổn định vừa phải giúp giọng nhấn nhá, luyến láy tự nhiên không bị cứng
+                        stability: 0.65, // Tăng lên 0.65 để giữ vững thanh điệu tiếng Việt, không bị nhảy dấu thanh
                         similarity_boost: 0.80, // Tái tạo chính xác âm sắc thật của người nói
-                        style: 0.35, // Tăng độ biểu cảm, cảm xúc và ngữ điệu cho video bán hàng
+                        style: 0.05, // Giữ thấp (0.05) để tránh bẻ cong cao độ làm sai dấu tiếng Việt
                         use_speaker_boost: true
                     }
                 })
