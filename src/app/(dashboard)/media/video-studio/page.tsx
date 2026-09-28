@@ -79,17 +79,69 @@ const BGM_PRESETS = [
     }
 ];
 
+interface LyhuTemplate {
+    id: string;
+    badge: string;
+    title: string;
+    hookTitle: string;
+    script: string;
+    pacing: number;
+    transition: "auto" | "crossfade" | "slide_left" | "white_flash" | "hard_cut";
+    bgm: string;
+    textColor: string;
+    subtitleStyle: "tiktok_stroke" | "neon_glow" | "pill_dark" | "clean_shadow";
+}
+
+const LYHU_TEMPLATES: LyhuTemplate[] = [
+    {
+        id: "kho_dem",
+        badge: "🌙 Chuyện Kho Đêm",
+        title: "Kể chuyện đóng hàng sỉ xuyên đêm (Chuẩn phong cách 24Zone)",
+        hookTitle: "🌙 11H ĐÊM KHO SỈ LYHU VẪN ĐÓNG HÀNG!",
+        script: "Nhiều người bảo giờ này chỉ có đi ngủ, nhưng ở tổng kho sỉ LYHU thì bọn mình vẫn đang kiểm từng kiện hàng để sáng mai kịp giao cho các chủ quán. Nào là thanh khoai môn sấy trứng cua, da cá hoàng kim, bánh tráng Abi với bột phô mai Boyo. Khách đặt cả trăm thùng thì dù khuya mấy bọn mình cũng đóng gói cẩn thận. Cần mẫu thử hay bảng giá sỉ cứ nhắn bọn mình nha!",
+        pacing: 2.5,
+        transition: "auto",
+        bgm: "trending_upbeat",
+        textColor: "#FACC15",
+        subtitleStyle: "tiktok_stroke"
+    },
+    {
+        id: "khoai_mon_trung_cua",
+        badge: "🦀 Review Món Hot",
+        title: "Thanh khoai môn sấy trứng cua & Truffle (Kén khách nhưng siêu ngon)",
+        hookTitle: "🦀 THANH KHOAI MÔN TRỨNG CUA CÓ GÌ MÀ HOT?",
+        script: "Nhiều người bảo snack khoai môn sấy trên thị trường thiếu gì, sao LYHU lại mang dòng trứng cua với nấm truffle này về bán sỉ? Nói thật là vì vị nó quá cuốn! Sấy thăng hoa giòn rụm, phủ lớp trứng cua béo ngậy mằn mặn, ăn là dính. Quán cafe hay quán trà sữa để món này lên quầy là khách gọi lai rai suốt buổi. Ai muốn lấy thử thùng sỉ trải nghiệm nhắn LYHU gửi liền nha!",
+        pacing: 2.5,
+        transition: "crossfade",
+        bgm: "food_review",
+        textColor: "#22D3EE",
+        subtitleStyle: "neon_glow"
+    },
+    {
+        id: "bot_pho_mai_boyo",
+        badge: "🧀 Bột Phô Mai BOYO",
+        title: "Bột phô mai BOYO tận xưởng cho quán F&B (Mở bán rộn ràng)",
+        hookTitle: "🧀 BỘT PHÔ MAI BOYO GIÁ SỈ TẬN XƯỞNG!",
+        script: "500 anh em chủ quán ăn vặt và F&B ơi! Lô bột phô mai Boyo chính hãng mới về ngập kho LYHU rồi nè! Hạt mịn màng, thơm nức mũi, vị mặn ngọt béo ngậy chuẩn công thức cho quán gà rán, khoai tây lắc. Lấy bao 1kg tiết kiệm chi phí tối đa, bao đổi trả nếu không chuẩn vị. Cần bảng giá sỉ sập sàn để lại bình luận cho bọn mình nhé!",
+        pacing: 2.5,
+        transition: "slide_left",
+        bgm: "trending_upbeat",
+        textColor: "#FACC15",
+        subtitleStyle: "tiktok_stroke"
+    }
+];
+
 // Demo video clips for instant testing
 const DEMO_CLIPS = [
     {
-        name: "Cận cảnh Bánh Phồng Tôm chiên giòn",
+        name: "Tổng kho sỉ đồ ăn vặt & Đóng hàng",
         url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
         duration: 15,
         width: 1280,
         height: 720
     },
     {
-        name: "Đóng gói & Xếp thùng kho sỉ",
+        name: "Thanh khoai môn sấy & Bột phô mai",
         url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
         duration: 15,
         width: 1280,
@@ -109,8 +161,10 @@ export default function AutoVideoStudioPage() {
     const [voiceHistory, setVoiceHistory] = useState<VoiceHistoryItem[]>([]);
     const [selectedVoiceId, setSelectedVoiceId] = useState<string | null>(null);
     const [selectedVoiceAudioUrl, setSelectedVoiceAudioUrl] = useState<string | null>(null);
-    const [selectedVoiceText, setSelectedVoiceText] = useState<string>("");
-    const [voiceDuration, setVoiceDuration] = useState<number>(0);
+    const [selectedVoiceText, setSelectedVoiceText] = useState<string>(
+        "Nhiều người bảo giờ này chỉ có đi ngủ, nhưng ở tổng kho sỉ LYHU thì bọn mình vẫn đang kiểm từng kiện hàng để sáng mai kịp giao cho các chủ quán. Nào là thanh khoai môn sấy trứng cua, da cá hoàng kim, bánh tráng Abi với bột phô mai Boyo. Cần mẫu thử hay bảng giá sỉ cứ nhắn bọn mình nha!"
+    );
+    const [voiceDuration, setVoiceDuration] = useState<number>(30);
     const [isEditingText, setIsEditingText] = useState(false);
 
     // ── STEP 3: Subtitles & Brand Typography ──
@@ -120,13 +174,14 @@ export default function AutoVideoStudioPage() {
     const [textColor, setTextColor] = useState<string>("#FACC15"); // Bright yellow
     const [textPosition, setTextPosition] = useState<"bottom" | "center" | "top">("bottom");
     const [subtitleStyle, setSubtitleStyle] = useState<"tiktok_stroke" | "neon_glow" | "pill_dark" | "clean_shadow">("tiktok_stroke");
-    const [customHookTitle, setCustomHookTitle] = useState("🔥 XẢ KHO BÁNH PHỒNG TÔM GIÁ SỈ TẬN GỐC!");
+    const [customHookTitle, setCustomHookTitle] = useState("🔥 TỔNG KHO ĂN VẶT & BỘT PHÔ MAI BOYO GIÁ SỈ!");
     const [showHookTitle, setShowHookTitle] = useState(true);
 
     // ── STEP 4: Transitions & Pacing ──
     const [transitionEffect, setTransitionEffect] = useState<"auto" | "crossfade" | "slide_left" | "white_flash" | "hard_cut">("auto");
-    const [clipSwitchInterval, setClipSwitchInterval] = useState<number>(3.5); // 3.5s per shot
+    const [clipSwitchInterval, setClipSwitchInterval] = useState<number>(2.5); // 2.5s per shot (Nhịp cắt 24Zone)
     const [showWatermark, setShowWatermark] = useState(true);
+    const [activeTemplateId, setActiveTemplateId] = useState<string | null>("kho_dem");
 
     // ── STEP 5: Background Music (BGM) ──
     const [bgmChoice, setBgmChoice] = useState<string>("trending_upbeat");
@@ -397,6 +452,40 @@ export default function AutoVideoStudioPage() {
             muted: true
         }));
         setClips(prev => [...prev, ...demoFormatted]);
+    };
+
+    const handleApplyTemplate = (tpl: LyhuTemplate) => {
+        setActiveTemplateId(tpl.id);
+        setCustomHookTitle(tpl.hookTitle);
+        setSelectedVoiceText(tpl.script);
+        setClipSwitchInterval(tpl.pacing);
+        setTransitionEffect(tpl.transition);
+        setBgmChoice(tpl.bgm);
+        setTextColor(tpl.textColor);
+        setSubtitleStyle(tpl.subtitleStyle);
+        setFontFamily("'Be Vietnam Pro', Montserrat, sans-serif");
+        setVoiceDuration(32);
+        setShowHookTitle(true);
+        setEnableSubtitles(true);
+
+        if (clips.length === 0) {
+            const demoFormatted: VideoClip[] = DEMO_CLIPS.map((demo, idx) => ({
+                id: `demo-${idx}-${Date.now()}`,
+                url: demo.url,
+                name: demo.name,
+                duration: demo.duration,
+                width: demo.width,
+                height: demo.height,
+                muted: true
+            }));
+            setClips(demoFormatted);
+        }
+
+        currentTimeRef.current = 0;
+        setDisplayTime(0);
+        setTimeout(() => {
+            drawCanvasFrame(0);
+        }, 50);
     };
 
     const removeClip = (id: string) => {
@@ -1132,6 +1221,65 @@ export default function AutoVideoStudioPage() {
                 </div>
             </div>
 
+            {/* 🎬 LYHU BRAND & 24ZONE STYLE TEMPLATES SELECTOR */}
+            <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-2xl p-5 text-white shadow-md border border-purple-800/50 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <span className="p-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                            <Sparkles className="w-5 h-5 text-amber-400" />
+                        </span>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-sm sm:text-base text-white">
+                                    Định Hình Phong Cách Video LYHU (Chuẩn Trà My 24Zone)
+                                </h3>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-black">
+                                    1-Click Setup
+                                </span>
+                            </div>
+                            <p className="text-xs text-purple-200/80">
+                                AI tự động cấu hình: Nhịp cắt 2.5s Jump-cut, Hook đập mắt, kịch bản ăn vặt sỉ mộc mạc & nhạc nền Audio Ducking.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                    {LYHU_TEMPLATES.map((tpl) => {
+                        const isActive = activeTemplateId === tpl.id;
+                        return (
+                            <button
+                                key={tpl.id}
+                                type="button"
+                                onClick={() => handleApplyTemplate(tpl)}
+                                className={`p-3 rounded-xl border text-left transition-all relative group ${
+                                    isActive
+                                        ? "bg-white/15 border-amber-400 ring-2 ring-amber-400 shadow-lg text-white"
+                                        : "bg-white/5 hover:bg-white/10 border-white/10 text-gray-300"
+                                }`}
+                            >
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <span className="text-xs font-bold text-amber-300 flex items-center gap-1">
+                                        {tpl.badge}
+                                    </span>
+                                    {isActive && (
+                                        <span className="text-[10px] bg-amber-400 text-black px-1.5 py-0.2 rounded font-black">
+                                            ĐANG CHỌN
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="text-xs font-semibold text-white mb-1 line-clamp-1">
+                                    {tpl.hookTitle}
+                                </div>
+                                <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed">
+                                    {tpl.title}
+                                </p>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* LEFT: Controls & Setup (7 cols) */}
                 <div className="lg:col-span-7 space-y-5">
@@ -1148,7 +1296,7 @@ export default function AutoVideoStudioPage() {
                                 onClick={handleLoadDemoClips}
                                 className="text-xs text-purple-600 hover:text-purple-800 hover:underline font-semibold"
                             >
-                                + Dùng 2 clip mẫu Bánh Phồng Tôm
+                                + Dùng 2 clip mẫu Tổng kho LYHU
                             </button>
                         </div>
 
@@ -1525,7 +1673,7 @@ export default function AutoVideoStudioPage() {
                                     type="text"
                                     value={customHookTitle}
                                     onChange={(e) => setCustomHookTitle(e.target.value)}
-                                    placeholder="VD: 🔥 XẢ KHO BÁNH PHỒNG TÔM GIÁ SỈ TẬN GỐC!"
+                                    placeholder="VD: 🔥 TỔNG KHO ĂN VẶT & BỘT PHÔ MAI BOYO GIÁ SỈ!"
                                     className="w-full p-2.5 bg-slate-50 border border-gray-200 rounded-lg outline-none font-bold text-red-600 text-xs"
                                 />
                             )}
