@@ -27,10 +27,30 @@ import {
     UserCheck,
     Dna,
     Wand2,
-    RefreshCw
+    RefreshCw,
+    History,
+    Trash2,
+    Search,
+    FileUp,
+    ListMusic,
+    ArrowUpRight,
+    Scissors,
+    Sparkles as SparklesIcon
 } from "lucide-react";
 import Link from "next/link";
-import { normalizeVietnamesePhonetics } from "@/lib/ttsHelper";
+import { 
+    normalizeVietnamesePhonetics, 
+    removeEmojis, 
+    optimizeBreathPauses, 
+    generateSmartFileName 
+} from "@/lib/ttsHelper";
+import { 
+    VoiceHistoryItem, 
+    getVoiceHistory, 
+    saveVoiceHistory, 
+    deleteVoiceHistoryItem, 
+    clearVoiceHistory 
+} from "@/lib/voiceHistoryStore";
 
 interface VoiceStyleOption {
     id: string;
@@ -56,7 +76,7 @@ const VOICE_STYLES: VoiceStyleOption[] = [
         description: "Giọng nữ tươi vui, nhí nhảnh, nhịp điệu cuốn hút chuẩn TikTok Vlogger.",
         tag: "Khuyên dùng: TikTok, Review bánh kẹo Sa Giang, Đồ ăn vặt, Video ngắn",
         avatar: "🎀",
-        pitchVal: 1.25,        // Cao độ thanh thoát, trẻ trung
+        pitchVal: 1.25,
         pitchStr: "+20Hz",
         recommendedSpeed: 1.15,
         color: "from-pink-500/10 to-purple-500/10 text-pink-700",
@@ -150,7 +170,7 @@ const VOICE_STYLES: VoiceStyleOption[] = [
 
 const SAMPLE_SCRIPTS = [
     {
-        title: "Kịch bản 1: Giới thiệu Bánh phồng tôm Sa Giang (TikTok Review)",
+        title: "Kịch bản 1: Bánh phồng tôm Sa Giang (TikTok Review)",
         text: "Mở gói bánh phồng tôm Sa Giang vuông thượng hạng này ra là thấy thơm nức mũi luôn cả nhà ơi! Miếng bánh giòn tan rụm rụm, vị tôm ngọt đậm đà tự nhiên chứ không hề bị ngấy dầu nha. Chuẩn món ăn vặt quốc dân cho cả gia đình, nhâm nhi xem phim hay làm mồi nhậu thì hết nước chấm! Khách sỉ và siêu thị mini liên hệ LYHU ngay để nhận giá tận xưởng cực sốc nhé!"
     },
     {
@@ -169,7 +189,8 @@ export default function VoiceStudioPage() {
     // TTS Form state
     const [text, setText] = useState("");
     const [selectedStyleId, setSelectedStyleId] = useState("female-genz");
-    const [speedRate, setSpeedRate] = useState<number>(1.15); // Slider: 0.75x to 1.5x
+    const [speedRate, setSpeedRate] = useState<number>(1.15); // Slider: 0.50x to 2.50x
+    const [customFileName, setCustomFileName] = useState("");
 
     // Output & Playback state
     const [loading, setLoading] = useState(false);
@@ -181,6 +202,13 @@ export default function VoiceStudioPage() {
     const [copied, setCopied] = useState(false);
     const [isBrowserSpeaking, setIsBrowserSpeaking] = useState(false);
 
+    // Voice History State
+    const [historyList, setHistoryList] = useState<VoiceHistoryItem[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(true);
+    const [historySearch, setHistorySearch] = useState("");
+    const [historyPlayingId, setHistoryPlayingId] = useState<string | null>(null);
+    const historyAudioRef = useRef<HTMLAudioElement | null>(null);
+
     // Voice Cloning state
     const [cloningFile, setCloningFile] = useState<File | null>(null);
     const [cloningVoiceName, setCloningVoiceName] = useState("Giọng Chị Nhà (Chính Chủ)");
@@ -190,8 +218,42 @@ export default function VoiceStudioPage() {
     const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const selectedStyle = VOICE_STYLES.find(s => s.id === selectedStyleId) || VOICE_STYLES[0];
+
+    // Nạp lịch sử từ IndexedDB và kiểm tra kịch bản nhập từ trang khác
+    useEffect(() => {
+        loadHistory();
+
+        // Kiểm tra xem có kịch bản chuyển từ /media/scripts/[id] qua không
+        if (typeof window !== "undefined") {
+            const imported = sessionStorage.getItem("lyhu_voice_import");
+            if (imported) {
+                try {
+                    const parsed = JSON.parse(imported);
+                    if (parsed.text) setText(parsed.text);
+                    if (parsed.title) setCustomFileName(parsed.title);
+                    sessionStorage.removeItem("lyhu_voice_import");
+                } catch (e) {
+                    setText(imported);
+                    sessionStorage.removeItem("lyhu_voice_import");
+                }
+            }
+        }
+    }, []);
+
+    const loadHistory = async () => {
+        setLoadingHistory(true);
+        try {
+            const items = await getVoiceHistory();
+            setHistoryList(items);
+        } catch (e) {
+            console.warn("Lỗi tải lịch sử:", e);
+        } finally {
+            setLoadingHistory(false);
+        }
+    };
 
     // Clean up audio URL
     useEffect(() => {
@@ -223,7 +285,7 @@ export default function VoiceStudioPage() {
 
         window.speechSynthesis.cancel();
 
-        // 1. Chuẩn hóa ngữ âm: LYHU -> Ly Hu, cận date -> cận hạn sử dụng...
+        // Chuẩn hóa ngữ âm
         const phoneticText = normalizeVietnamesePhonetics(text.trim());
         const utterance = new SpeechSynthesisUtterance(phoneticText);
         utterance.lang = "vi-VN";
@@ -270,7 +332,7 @@ export default function VoiceStudioPage() {
         window.speechSynthesis.speak(utterance);
     };
 
-    // Generate MP3 File via Server
+    // Generate Audio File via Server (Gemini 3.8 Flash TTS)
     const handleGenerateVoice = async () => {
         if (!text.trim()) {
             setErrorMessage("Vui lòng nhập lời thoại hoặc kịch bản cần lồng tiếng.");
@@ -314,7 +376,27 @@ export default function VoiceStudioPage() {
             const newUrl = URL.createObjectURL(blob);
             setAudioUrl(newUrl);
 
-            // Auto play preview
+            // Lưu tự động vào Lịch sử (IndexedDB)
+            const cleanSnippet = text.trim().slice(0, 48).replace(/\s+/g, " ");
+            const newHistoryItem: VoiceHistoryItem = {
+                id: Date.now().toString(),
+                text: text.trim(),
+                title: cleanSnippet + (text.length > 48 ? "..." : ""),
+                styleId: selectedStyle.id,
+                styleName: selectedStyle.name,
+                styleAvatar: selectedStyle.avatar,
+                speedRate: speedRate,
+                wordCount: wordCount,
+                estimatedSeconds: estimatedSeconds,
+                createdAt: Date.now(),
+                audioBlob: blob,
+                audioUrl: newUrl
+            };
+
+            await saveVoiceHistory(newHistoryItem);
+            setHistoryList(prev => [newHistoryItem, ...prev]);
+
+            // Tự động phát âm thanh vừa sinh
             setTimeout(() => {
                 if (audioRef.current) {
                     audioRef.current.playbackRate = speedRate;
@@ -343,16 +425,121 @@ export default function VoiceStudioPage() {
         }
     };
 
-    const handleDownload = () => {
-        if (!audioUrl) return;
+    const handleDownload = (targetUrl?: string, targetName?: string) => {
+        const urlToUse = targetUrl || audioUrl;
+        if (!urlToUse) return;
+
+        let fileName = targetName;
+        if (!fileName) {
+            if (customFileName.trim()) {
+                const cleanCustom = customFileName.trim()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/đ/g, "d")
+                    .replace(/Đ/g, "D")
+                    .replace(/[^a-zA-Z0-9\-_ ]/g, "")
+                    .replace(/\s+/g, "_");
+                fileName = `${cleanCustom}_${speedRate}x.mp3`;
+            } else {
+                fileName = generateSmartFileName(text, selectedStyle.id, speedRate);
+            }
+        }
+
         const a = document.createElement("a");
-        a.href = audioUrl;
-        const styleName = selectedStyle.id;
-        const dateStr = new Date().toISOString().slice(0, 10);
-        a.download = `voiceover_LYHU_${styleName}_${speedRate}x_${dateStr}.mp3`;
+        a.href = urlToUse;
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+    };
+
+    // Tải lại kịch bản từ lịch sử lên màn hình chính
+    const handleRestoreFromHistory = (item: VoiceHistoryItem) => {
+        setText(item.text);
+        setSelectedStyleId(item.styleId);
+        setSpeedRate(item.speedRate);
+        if (item.audioUrl) {
+            setAudioUrl(item.audioUrl);
+            setTimeout(() => {
+                if (audioRef.current) {
+                    audioRef.current.playbackRate = item.speedRate;
+                    audioRef.current.currentTime = 0;
+                    audioRef.current.play().catch(() => {});
+                    setIsPlaying(true);
+                }
+            }, 100);
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    // Xóa 1 bản ghi lịch sử
+    const handleDeleteHistoryItem = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        await deleteVoiceHistoryItem(id);
+        setHistoryList(prev => prev.filter(item => item.id !== id));
+    };
+
+    // Xóa tất cả lịch sử
+    const handleClearAllHistory = async () => {
+        if (window.confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử các file âm thanh đã tạo?")) {
+            await clearVoiceHistory();
+            setHistoryList([]);
+        }
+    };
+
+    // Phát âm thanh trong lịch sử
+    const handlePlayHistoryAudio = (item: VoiceHistoryItem, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (historyPlayingId === item.id) {
+            if (historyAudioRef.current) {
+                historyAudioRef.current.pause();
+            }
+            setHistoryPlayingId(null);
+            return;
+        }
+
+        if (item.audioUrl) {
+            if (historyAudioRef.current) {
+                historyAudioRef.current.pause();
+            }
+            const audio = new Audio(item.audioUrl);
+            audio.playbackRate = item.speedRate;
+            historyAudioRef.current = audio;
+            audio.play();
+            setHistoryPlayingId(item.id);
+            audio.onended = () => setHistoryPlayingId(null);
+            audio.onerror = () => setHistoryPlayingId(null);
+        }
+    };
+
+    // Tiện ích xử lý văn bản: Tải file .txt từ máy tính
+    const handleTxtFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const content = event.target?.result;
+            if (typeof content === "string") {
+                setText(content);
+                const titleGuess = file.name.replace(/\.[^/.]+$/, "");
+                setCustomFileName(titleGuess);
+            }
+        };
+        reader.readAsText(file);
+    };
+
+    // Tiện ích xử lý văn bản: Tối ưu ngắt nhịp thở
+    const handleOptimizePauses = () => {
+        if (!text.trim()) return;
+        const optimized = optimizeBreathPauses(text);
+        setText(optimized);
+    };
+
+    // Tiện ích xử lý văn bản: Lọc emoji & icon
+    const handleCleanEmojis = () => {
+        if (!text.trim()) return;
+        const cleaned = removeEmojis(text);
+        setText(cleaned);
     };
 
     const copyText = () => {
@@ -369,12 +556,25 @@ export default function VoiceStudioPage() {
         return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
     };
 
-    // Voice Cloning Mock Handlers
+    const formatDate = (timestamp: number) => {
+        const d = new Date(timestamp);
+        return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")} - ${d.getDate()}/${d.getMonth() + 1}`;
+    };
+
+    // Lọc lịch sử theo từ khóa tìm kiếm
+    const filteredHistory = historyList.filter(item => {
+        if (!historySearch.trim()) return true;
+        const s = historySearch.toLowerCase();
+        return item.text.toLowerCase().includes(s) || 
+               item.styleName.toLowerCase().includes(s) ||
+               (item.title && item.title.toLowerCase().includes(s));
+    });
+
+    // Voice Cloning file upload handler
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             setCloningFile(file);
-            setCloningStatus("ready");
         }
     };
 
@@ -382,12 +582,18 @@ export default function VoiceStudioPage() {
         if (isRecording) {
             setIsRecording(false);
             if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
-            setCloningStatus("ready");
         } else {
             setIsRecording(true);
             setRecordingSeconds(0);
             recordingTimerRef.current = setInterval(() => {
-                setRecordingSeconds(prev => prev + 1);
+                setRecordingSeconds(prev => {
+                    if (prev >= 60) {
+                        setIsRecording(false);
+                        if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+                        return 60;
+                    }
+                    return prev + 1;
+                });
             }, 1000);
         }
     };
@@ -395,17 +601,17 @@ export default function VoiceStudioPage() {
     return (
         <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                <div>
-                    <div className="flex items-center gap-2 mb-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-2">
                         <span className="p-2 rounded-xl bg-teal-50 text-[#00AFA9]">
                             <Mic className="w-6 h-6" />
                         </span>
-                        <h1 className="text-2xl font-bold text-gray-900">
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
                             Studio Lồng Tiếng AI (Text to Voice)
                         </h1>
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 flex items-center gap-1">
-                            <Sparkle className="w-3 h-3" /> Gen Z & TikTok Edition
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-sm">
+                            ✦ Gen Z & TikTok Edition
                         </span>
                     </div>
                     <p className="text-sm text-gray-500 pl-11">
@@ -447,444 +653,657 @@ export default function VoiceStudioPage() {
 
             {/* TAB 1: STUDIO TEXT TO SPEECH */}
             {activeTab === "tts" && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* Left: Input & Configurations (7 cols) */}
-                    <div className="lg:col-span-7 space-y-5">
-                        {/* Voice Style Selection */}
-                        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-3">
-                            <div className="flex items-center justify-between">
-                                <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                                    <Smile className="w-4 h-4 text-[#00AFA9]" />
-                                    1. Chọn Phong cách & Chất giọng (Trẻ trung / Gen Z / Bán hàng)
-                                </label>
-                                <span className="text-xs text-purple-600 font-medium bg-purple-50 px-2 py-0.5 rounded-full">
-                                    {selectedStyle.name}
-                                </span>
-                            </div>
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        {/* Left: Input & Configurations (7 cols) */}
+                        <div className="lg:col-span-7 space-y-5">
+                            {/* Voice Style Selection */}
+                            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                                        <Smile className="w-4 h-4 text-[#00AFA9]" />
+                                        1. Chọn Phong cách & Chất giọng (Trẻ trung / Gen Z / Bán hàng)
+                                    </label>
+                                    <span className="text-xs text-teal-700 font-medium bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                                        {selectedStyle.name}
+                                    </span>
+                                </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                {VOICE_STYLES.map((v) => {
-                                    const isSelected = selectedStyleId === v.id;
-                                    return (
-                                        <div
-                                            key={v.id}
-                                            onClick={() => {
-                                                setSelectedStyleId(v.id);
-                                                setSpeedRate(v.recommendedSpeed);
-                                            }}
-                                            className={`cursor-pointer p-3.5 rounded-xl border-2 transition-all relative ${
-                                                isSelected 
-                                                    ? `border-[#00AFA9] bg-teal-50/20 shadow-sm ring-2 ring-[#00AFA9]/20` 
-                                                    : "border-gray-200 hover:border-gray-300 bg-white"
-                                            }`}
-                                        >
-                                            <div className="flex items-start gap-2.5">
-                                                <span className="text-2xl">{v.avatar}</span>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between">
-                                                        <h3 className="font-bold text-gray-900 text-sm">
-                                                            {v.name}
-                                                        </h3>
-                                                        {isSelected && (
-                                                            <span className="w-2.5 h-2.5 rounded-full bg-[#00AFA9]" />
-                                                        )}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    {VOICE_STYLES.map((v) => {
+                                        const isSelected = selectedStyleId === v.id;
+                                        return (
+                                            <div
+                                                key={v.id}
+                                                onClick={() => {
+                                                    setSelectedStyleId(v.id);
+                                                    setSpeedRate(v.recommendedSpeed);
+                                                }}
+                                                className={`cursor-pointer p-3.5 rounded-xl border-2 transition-all relative ${
+                                                    isSelected 
+                                                        ? `border-[#00AFA9] bg-teal-50/20 shadow-sm ring-2 ring-[#00AFA9]/20` 
+                                                        : "border-gray-200 hover:border-gray-300 bg-white"
+                                                }`}
+                                            >
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <span className="text-2xl">{v.avatar}</span>
+                                                        <div>
+                                                            <div className="font-bold text-sm text-gray-900 flex items-center gap-1.5">
+                                                                {v.name}
+                                                                {v.category === "genz" && (
+                                                                    <span className="text-[10px] bg-pink-100 text-pink-700 font-bold px-1.5 py-0.2 rounded-full">
+                                                                        HOT
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">
+                                                                {v.description}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                                                        {v.description}
-                                                    </p>
+                                                    {isSelected && (
+                                                        <span className="w-2.5 h-2.5 rounded-full bg-[#00AFA9] ring-4 ring-teal-100 shrink-0 mt-1" />
+                                                    )}
+                                                </div>
+                                                <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
+                                                    <span className="text-[#00AFA9] font-medium truncate max-w-[200px]">
+                                                        {v.tag.split(":")[0]}
+                                                    </span>
+                                                    <span>{v.recommendedSpeed}x</span>
                                                 </div>
                                             </div>
-                                            <div className="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between text-[11px]">
-                                                <span className="font-medium text-[#00AFA9] truncate">
-                                                    {v.tag.split(":")[0]}
-                                                </span>
-                                                <span className="text-gray-400 text-[10px]">
-                                                    {v.recommendedSpeed}x
-                                                </span>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Speed Slider Card */}
+                            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                                        <Sliders className="w-4 h-4 text-[#00AFA9]" />
+                                        2. Tốc độ nói (Kéo thả thanh trượt)
+                                    </label>
+                                    <span className="text-xs font-mono font-bold text-[#00AFA9] bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200">
+                                        {speedRate.toFixed(2)}x
+                                    </span>
+                                </div>
+
+                                <div className="space-y-2 pt-1">
+                                    <input
+                                        type="range"
+                                        min={0.50}
+                                        max={2.50}
+                                        step={0.05}
+                                        value={speedRate}
+                                        onChange={(e) => setSpeedRate(parseFloat(e.target.value))}
+                                        className="w-full accent-[#00AFA9] h-2 bg-gray-200 rounded-lg cursor-pointer"
+                                    />
+                                    <div className="flex justify-between text-[11px] text-gray-400 font-mono">
+                                        <span>0.5x</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSpeedRate(0.80)}
+                                            className={`hover:text-[#00AFA9] ${speedRate === 0.80 ? "text-[#00AFA9] font-bold underline" : ""}`}
+                                        >
+                                            0.8x
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSpeedRate(1.0)}
+                                            className={`hover:text-[#00AFA9] ${speedRate === 1.0 ? "text-[#00AFA9] font-bold underline" : ""}`}
+                                        >
+                                            1.0x (Chuẩn)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSpeedRate(1.15)}
+                                            className={`flex items-center gap-0.5 hover:text-[#00AFA9] ${speedRate === 1.15 ? "text-[#00AFA9] font-bold underline" : ""}`}
+                                        >
+                                            <Flame className="w-3 h-3 text-amber-500" />
+                                            1.15x (TikTok)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSpeedRate(1.35)}
+                                            className={`hover:text-[#00AFA9] ${speedRate === 1.35 ? "text-[#00AFA9] font-bold underline" : ""}`}
+                                        >
+                                            1.35x (Nhanh)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSpeedRate(1.60)}
+                                            className={`hover:text-[#00AFA9] ${speedRate === 1.60 ? "text-[#00AFA9] font-bold underline" : ""}`}
+                                        >
+                                            1.60x (Siêu tốc)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSpeedRate(2.00)}
+                                            className={`hover:text-[#00AFA9] ${speedRate === 2.00 ? "text-[#00AFA9] font-bold underline" : ""}`}
+                                        >
+                                            2.0x (Gấp đôi)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSpeedRate(2.50)}
+                                            className={`hover:text-[#00AFA9] ${speedRate === 2.50 ? "text-[#00AFA9] font-bold underline" : ""}`}
+                                        >
+                                            2.5x (Max)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Text Editor Box */}
+                            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+                                <div className="flex items-center justify-between flex-wrap gap-2">
+                                    <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                                        <FileText className="w-4 h-4 text-[#00AFA9]" />
+                                        3. Lời thoại / Kịch bản lồng tiếng
+                                    </label>
+
+                                    {/* Text Processing Utilities */}
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        {/* Upload .txt */}
+                                        <input 
+                                            ref={fileInputRef} 
+                                            type="file" 
+                                            accept=".txt" 
+                                            onChange={handleTxtFileUpload} 
+                                            className="hidden" 
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="px-2 py-1 text-xs text-gray-600 hover:text-gray-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-1"
+                                            title="Tải nội dung từ file text (.txt)"
+                                        >
+                                            <FileUp className="w-3.5 h-3.5 text-slate-500" />
+                                            <span>Nạp file .txt</span>
+                                        </button>
+
+                                        {/* Auto Breath pause */}
+                                        <button
+                                            type="button"
+                                            onClick={handleOptimizePauses}
+                                            disabled={!text.trim()}
+                                            className="px-2 py-1 text-xs text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-40"
+                                            title="Tự động thêm dấu ngắt nghỉ lấy hơi cho AI"
+                                        >
+                                            <SparklesIcon className="w-3.5 h-3.5 text-[#00AFA9]" />
+                                            <span>Ngắt nhịp thở</span>
+                                        </button>
+
+                                        {/* Clean Emojis */}
+                                        <button
+                                            type="button"
+                                            onClick={handleCleanEmojis}
+                                            disabled={!text.trim()}
+                                            className="px-2 py-1 text-xs text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-40"
+                                            title="Lọc sạch icon emoji để AI đọc không bị vấp"
+                                        >
+                                            <Scissors className="w-3.5 h-3.5 text-amber-600" />
+                                            <span>Lọc Emoji</span>
+                                        </button>
+
+                                        {text && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setText("")}
+                                                className="px-2 py-1 text-xs text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"
+                                            >
+                                                Xóa hết
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Quick Sample Scripts */}
+                                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-thin">
+                                    <span className="text-gray-400 whitespace-nowrap">Mẫu nhanh:</span>
+                                    {SAMPLE_SCRIPTS.map((s, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => setText(s.text)}
+                                            className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-teal-50 hover:text-[#00AFA9] text-gray-600 whitespace-nowrap transition-colors border border-transparent hover:border-teal-200"
+                                        >
+                                            {s.title.split(":")[0]}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Textarea */}
+                                <div className="relative">
+                                    <textarea
+                                        value={text}
+                                        onChange={(e) => setText(e.target.value)}
+                                        rows={7}
+                                        placeholder="Nhập hoặc dán lời thoại kịch bản video vào đây... Tên thương hiệu LYHU sẽ được tự động phát âm chuẩn là 'Ly Hu' tự nhiên!"
+                                        className="w-full p-4 rounded-xl border border-gray-200 focus:border-[#00AFA9] focus:ring-2 focus:ring-[#00AFA9]/20 outline-none text-gray-800 text-sm leading-relaxed transition-all resize-y placeholder:text-gray-400"
+                                    />
+                                </div>
+
+                                {/* Smart Filename Input */}
+                                <div className="flex items-center gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                                    <span className="text-gray-500 whitespace-nowrap font-medium">📁 Tên file khi tải về:</span>
+                                    <input
+                                        type="text"
+                                        value={customFileName}
+                                        onChange={(e) => setCustomFileName(e.target.value)}
+                                        placeholder={`Tự động (VD: ${generateSmartFileName(text || "kịch bản", selectedStyle.id, speedRate)})`}
+                                        className="flex-1 bg-white px-2.5 py-1 rounded-lg border border-gray-200 text-gray-700 outline-none focus:border-[#00AFA9]"
+                                    />
+                                </div>
+
+                                {/* Metrics & Cost Bar */}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-gray-500 pt-1 gap-2">
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                        <span>{text.length} ký tự</span>
+                                        <span>•</span>
+                                        <span>{wordCount} từ</span>
+                                        <span>•</span>
+                                        <span className="flex items-center gap-1 text-[#00AFA9] font-medium">
+                                            <Clock className="w-3.5 h-3.5" />
+                                            Video: ~{estimatedSeconds}s
+                                        </span>
+                                        <span>•</span>
+                                        {/* Cost Estimation Badge */}
+                                        <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-medium border border-emerald-200" title="Chi phí Gemini API tính theo token audio output ($9/1M tokens). Rất rẻ!">
+                                            💰 Ước tính: ~{Math.max(15, Math.round(wordCount * 0.25))}đ
+                                            <span className="text-[10px] text-emerald-600">(~0.001$)</span>
+                                        </span>
+                                    </div>
+
+                                    {text && (
+                                        <button
+                                            type="button"
+                                            onClick={copyText}
+                                            className="text-gray-400 hover:text-gray-600 flex items-center gap-1 self-end sm:self-auto"
+                                        >
+                                            {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                                            {copied ? "Đã chép" : "Chép lời thoại"}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Error Alert */}
+                                {errorMessage && (
+                                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4 shrink-0" />
+                                        <span>{errorMessage}</span>
+                                    </div>
+                                )}
+
+                                {/* Action Buttons */}
+                                <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerateVoice}
+                                        disabled={loading || !text.trim()}
+                                        className="flex-1 py-3.5 px-6 rounded-xl font-bold text-white bg-[#00AFA9] hover:bg-[#009690] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                <span>Đang tạo giọng đọc AI (Gemini Studio)...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles className="w-5 h-5" />
+                                                <span>TẠO FILE AUDIO & NGHE THỬ (GEMINI AI)</span>
+                                            </>
+                                        )}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={speakWithBrowser}
+                                        disabled={!text.trim()}
+                                        className={`py-3.5 px-4 rounded-xl font-semibold border transition-all flex items-center justify-center gap-2 text-xs sm:text-sm disabled:opacity-40 disabled:cursor-not-allowed ${
+                                            isBrowserSpeaking 
+                                                ? "bg-amber-500 text-white border-amber-600 animate-pulse shadow-md" 
+                                                : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200"
+                                        }`}
+                                        title="Nghe bằng giọng mặc định trên máy tính (chất lượng thấp hơn file AI thật)"
+                                    >
+                                        <Volume2 className="w-4 h-4" />
+                                        <span>{isBrowserSpeaking ? "Dừng" : "Đọc nhanh (Máy tính)"}</span>
+                                    </button>
+                                </div>
+                                <p className="text-[11px] text-gray-400 italic">
+                                    * Lưu ý: Nút "TẠO FILE AUDIO" sẽ sinh giọng AI Gemini chất lượng như thật và tự động lưu vào Lịch sử bên dưới. Nút "Đọc nhanh (Máy tính)" chỉ để soát nhanh chính tả bằng giọng mặc định của Windows.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Right: Audio Player & CapCut Guide (5 cols) */}
+                        <div className="lg:col-span-5 space-y-5">
+                            {/* Audio Player Card */}
+                            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+                                <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                                    <h2 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                                        <Volume2 className="w-4 h-4 text-[#00AFA9]" />
+                                        Kết quả lồng tiếng (Studio Audio)
+                                    </h2>
+                                    {audioUrl && (
+                                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                                            Đã sẵn sàng
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Audio Preview Area */}
+                                {audioUrl ? (
+                                    <div className="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                        <audio
+                                            ref={audioRef}
+                                            src={audioUrl}
+                                            onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                                            onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                                            onEnded={() => setIsPlaying(false)}
+                                            className="hidden"
+                                        />
+
+                                        {/* Waveform animation */}
+                                        <div className="flex items-center justify-center gap-1 h-12 bg-white rounded-lg px-4 border border-slate-200 overflow-hidden">
+                                            {Array.from({ length: 28 }).map((_, i) => {
+                                                const heights = [20, 45, 75, 30, 90, 60, 40, 85, 95, 50, 30, 70, 80, 40, 65, 85, 55, 35, 90, 75, 45, 60, 30, 80, 65, 40, 25, 50];
+                                                const h = heights[i % heights.length];
+                                                return (
+                                                    <div
+                                                        key={i}
+                                                        style={{ height: `${h}%` }}
+                                                        className={`w-1 rounded-full transition-all ${
+                                                            isPlaying 
+                                                                ? "bg-[#00AFA9] animate-pulse" 
+                                                                : "bg-slate-300"
+                                                        }`}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Controls */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between text-xs font-mono text-gray-500">
+                                                <span>{formatTime(currentTime)}</span>
+                                                <span className="text-[#00AFA9] font-bold">{speedRate.toFixed(2)}x</span>
+                                                <span>{formatTime(duration)}</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min={0}
+                                                max={duration || 100}
+                                                value={currentTime}
+                                                onChange={(e) => {
+                                                    const t = parseFloat(e.target.value);
+                                                    setCurrentTime(t);
+                                                    if (audioRef.current) audioRef.current.currentTime = t;
+                                                }}
+                                                className="w-full accent-[#00AFA9] h-1.5 bg-gray-200 rounded-lg cursor-pointer"
+                                            />
+                                        </div>
+
+                                        {/* Action Buttons */}
+                                        <div className="flex items-center gap-3 pt-1">
+                                            <button
+                                                type="button"
+                                                onClick={togglePlay}
+                                                className="flex-1 py-2.5 px-4 bg-gray-900 hover:bg-black text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm"
+                                            >
+                                                {isPlaying ? (
+                                                    <>
+                                                        <Pause className="w-4 h-4 fill-white" />
+                                                        <span>Tạm dừng</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Play className="w-4 h-4 fill-white" />
+                                                        <span>Phát nghe thử</span>
+                                                    </>
+                                                )}
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (audioRef.current) {
+                                                        audioRef.current.currentTime = 0;
+                                                        audioRef.current.play();
+                                                        setIsPlaying(true);
+                                                    }
+                                                }}
+                                                className="p-2.5 bg-white border border-gray-200 hover:bg-gray-100 rounded-xl text-gray-700 transition-colors"
+                                                title="Phát lại từ đầu"
+                                            >
+                                                <RotateCcw className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        {/* Download MP3 Button */}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDownload()}
+                                            className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                            <span>TẢI FILE MP3 VỀ MÁY (ĐỂ GHÉP CAPCUT)</span>
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-10 px-4 bg-slate-50/70 rounded-xl border border-dashed border-gray-200 space-y-3">
+                                        <div className="w-12 h-12 mx-auto rounded-full bg-teal-50 text-[#00AFA9] flex items-center justify-center">
+                                            <Headphones className="w-6 h-6" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h3 className="font-semibold text-gray-800 text-sm">
+                                                Chưa có file âm thanh nào
+                                            </h3>
+                                            <p className="text-xs text-gray-500 max-w-xs mx-auto">
+                                                Dán lời thoại vào khung bên trái rồi bấm <strong>"TẠO FILE AUDIO & NGHE THỬ"</strong> để nghe và tải về.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Guide Card */}
+                            <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-2xl shadow-sm space-y-3">
+                                <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                                    <Film className="w-4 h-4" />
+                                    <span>Hướng dẫn lồng tiếng video 3 bước cho Chị nhà:</span>
+                                </div>
+
+                                <div className="space-y-3 text-xs text-slate-300">
+                                    <div className="flex items-start gap-2.5">
+                                        <span className="w-5 h-5 rounded-full bg-white/10 font-bold text-white flex items-center justify-center shrink-0 text-[11px]">
+                                            1
+                                        </span>
+                                        <div>
+                                            <strong className="text-white">Chọn chất giọng:</strong> Bấm chọn thẻ <em>Nữ Gen Z Bắt Trend</em> để giọng trẻ trung, nhí nhảnh chuẩn TikTok.
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-2.5">
+                                        <span className="w-5 h-5 rounded-full bg-white/10 font-bold text-white flex items-center justify-center shrink-0 text-[11px]">
+                                            2
+                                        </span>
+                                        <div>
+                                            <strong className="text-white">Kéo thanh tốc độ:</strong> Kéo thanh trượt đến mức <em>1.15x</em> hoặc <em>1.20x</em> để nhịp điệu nhanh và cuốn hút hơn.
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-2.5">
+                                        <span className="w-5 h-5 rounded-full bg-white/10 font-bold text-white flex items-center justify-center shrink-0 text-[11px]">
+                                            3
+                                        </span>
+                                        <div>
+                                            <strong className="text-white">Tải file MP3 & Kéo vào CapCut:</strong> Bấm tải file MP3 về → Mở CapCut chọn <em>Thêm âm thanh</em> → Ghép vào video là hoàn tất!
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SECTION: VOICE HISTORY & LIBRARY (LỊCH SỬ LỒNG TIẾNG ĐÃ TẠO) */}
+                    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+                            <div className="flex items-center gap-2.5">
+                                <span className="p-2 rounded-xl bg-purple-50 text-purple-600">
+                                    <History className="w-5 h-5" />
+                                </span>
+                                <div>
+                                    <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                                        Kho File Lồng Tiếng Đã Tạo (Lịch Sử)
+                                        <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold">
+                                            {historyList.length} file
+                                        </span>
+                                    </h2>
+                                    <p className="text-xs text-gray-500">
+                                        Tự động lưu trữ nội dung và file âm thanh trên trình duyệt. Không sợ mất khi chuyển kịch bản hoặc F5 tải lại trang.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {/* Search in history */}
+                                <div className="relative">
+                                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Tìm theo từ khóa..."
+                                        value={historySearch}
+                                        onChange={(e) => setHistorySearch(e.target.value)}
+                                        className="pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-gray-200 rounded-lg outline-none focus:border-purple-400 w-44"
+                                    />
+                                </div>
+
+                                {historyList.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={handleClearAllHistory}
+                                        className="px-3 py-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors flex items-center gap-1 border border-rose-200"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                        <span>Xóa tất cả</span>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* History Items Grid / List */}
+                        {loadingHistory ? (
+                            <div className="py-8 text-center text-xs text-gray-400">
+                                Đang tải kho âm thanh đã tạo...
+                            </div>
+                        ) : filteredHistory.length === 0 ? (
+                            <div className="text-center py-10 px-4 bg-slate-50/50 rounded-xl border border-dashed border-gray-200 space-y-2">
+                                <ListMusic className="w-8 h-8 text-gray-300 mx-auto" />
+                                <p className="text-xs text-gray-500 font-medium">
+                                    {historySearch ? "Không tìm thấy kịch bản nào khớp từ khóa" : "Chưa có file âm thanh nào trong lịch sử"}
+                                </p>
+                                <p className="text-[11px] text-gray-400 max-w-sm mx-auto">
+                                    Mỗi lần bạn bấm "TẠO FILE AUDIO & NGHE THỬ", file âm thanh và lời thoại sẽ được lưu trữ tự động tại đây để bạn nghe lại và tải về bất cứ lúc nào.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {filteredHistory.map((item) => {
+                                    const isPlayingThis = historyPlayingId === item.id;
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            className="p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-sm bg-white transition-all space-y-3 flex flex-col justify-between"
+                                        >
+                                            <div className="space-y-2">
+                                                {/* Header of Item */}
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <div className="flex items-center gap-1.5 font-semibold text-gray-800">
+                                                        <span>{item.styleAvatar}</span>
+                                                        <span className="truncate max-w-[130px]">{item.styleName}</span>
+                                                        <span className="text-[10px] px-1.5 py-0.2 bg-teal-50 text-[#00AFA9] font-mono rounded">
+                                                            {item.speedRate}x
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[11px] text-gray-400">
+                                                        {formatDate(item.createdAt)}
+                                                    </span>
+                                                </div>
+
+                                                {/* Snippet text */}
+                                                <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                                    {item.text}
+                                                </p>
+
+                                                {/* Word count & duration */}
+                                                <div className="flex items-center gap-3 text-[11px] text-gray-400">
+                                                    <span>{item.wordCount} từ</span>
+                                                    <span>•</span>
+                                                    <span>~{item.estimatedSeconds}s</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Action bar for History Item */}
+                                            <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-1.5">
+                                                <div className="flex items-center gap-1.5">
+                                                    {/* Play / Stop Mini */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handlePlayHistoryAudio(item, e)}
+                                                        className={`p-2 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${
+                                                            isPlayingThis 
+                                                                ? "bg-rose-50 text-rose-600 border border-rose-200" 
+                                                                : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                                                        }`}
+                                                        title={isPlayingThis ? "Dừng phát" : "Nghe nhanh file này"}
+                                                    >
+                                                        {isPlayingThis ? <Pause className="w-3.5 h-3.5 fill-rose-600" /> : <Play className="w-3.5 h-3.5 fill-slate-700" />}
+                                                    </button>
+
+                                                    {/* Download MP3 */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDownload(item.audioUrl, generateSmartFileName(item.text, item.styleId, item.speedRate))}
+                                                        className="p-2 rounded-lg text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors flex items-center gap-1"
+                                                        title="Tải file MP3 này về máy"
+                                                    >
+                                                        <Download className="w-3.5 h-3.5" />
+                                                        <span className="hidden sm:inline">Tải MP3</span>
+                                                    </button>
+                                                </div>
+
+                                                <div className="flex items-center gap-1">
+                                                    {/* Restore Script */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRestoreFromHistory(item)}
+                                                        className="px-2.5 py-1.5 text-xs font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors flex items-center gap-1 border border-teal-200"
+                                                        title="Nạp lại nội dung kịch bản và cài đặt này lên màn hình chính để sửa"
+                                                    >
+                                                        <ArrowUpRight className="w-3.5 h-3.5" />
+                                                        <span>Dùng lại</span>
+                                                    </button>
+
+                                                    {/* Delete this item */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handleDeleteHistoryItem(item.id, e)}
+                                                        className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                                        title="Xóa khỏi lịch sử"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     );
                                 })}
                             </div>
-                        </div>
-
-                        {/* Drag-and-Drop Speed Slider */}
-                        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-3">
-                            <div className="flex items-center justify-between">
-                                <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                                    <Sliders className="w-4 h-4 text-[#00AFA9]" />
-                                    2. Tốc độ nói (Kéo thả thanh trượt)
-                                </label>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-teal-50 text-[#00AFA9] border border-teal-200 text-sm">
-                                        {speedRate.toFixed(2)}x
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Interactive Slider up to 2.5x */}
-                            <div className="space-y-2 pt-2">
-                                <input
-                                    type="range"
-                                    min="0.50"
-                                    max="2.50"
-                                    step="0.05"
-                                    value={speedRate}
-                                    onChange={(e) => setSpeedRate(parseFloat(e.target.value))}
-                                    className="w-full accent-[#00AFA9] h-2 bg-gray-200 rounded-lg cursor-pointer"
-                                />
-
-                                {/* Ruler / Markers */}
-                                <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-gray-400 font-mono pt-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => setSpeedRate(0.80)}
-                                        className={`hover:text-[#00AFA9] ${speedRate === 0.80 ? "text-[#00AFA9] font-bold underline" : ""}`}
-                                    >
-                                        0.8x
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSpeedRate(1.0)}
-                                        className={`hover:text-[#00AFA9] ${speedRate === 1.0 ? "text-[#00AFA9] font-bold underline" : ""}`}
-                                    >
-                                        1.0x (Chuẩn)
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSpeedRate(1.15)}
-                                        className={`flex items-center gap-0.5 hover:text-[#00AFA9] ${speedRate === 1.15 ? "text-[#00AFA9] font-bold underline" : ""}`}
-                                    >
-                                        <Flame className="w-3 h-3 text-amber-500" />
-                                        1.15x (TikTok)
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSpeedRate(1.35)}
-                                        className={`hover:text-[#00AFA9] ${speedRate === 1.35 ? "text-[#00AFA9] font-bold underline" : ""}`}
-                                    >
-                                        1.35x (Nhanh)
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSpeedRate(1.60)}
-                                        className={`hover:text-[#00AFA9] ${speedRate === 1.60 ? "text-[#00AFA9] font-bold underline" : ""}`}
-                                    >
-                                        1.60x (Siêu tốc)
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSpeedRate(2.00)}
-                                        className={`hover:text-[#00AFA9] ${speedRate === 2.00 ? "text-[#00AFA9] font-bold underline" : ""}`}
-                                    >
-                                        2.0x (Gấp đôi)
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSpeedRate(2.50)}
-                                        className={`hover:text-[#00AFA9] ${speedRate === 2.50 ? "text-[#00AFA9] font-bold underline" : ""}`}
-                                    >
-                                        2.5x (Max)
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Text Editor Box */}
-                        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-3">
-                            <div className="flex items-center justify-between">
-                                <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                                    <FileText className="w-4 h-4 text-[#00AFA9]" />
-                                    3. Lời thoại / Kịch bản lồng tiếng
-                                </label>
-
-                                <div className="flex items-center gap-2">
-                                    {text && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setText("")}
-                                            className="px-2.5 py-1 text-xs text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"
-                                        >
-                                            Xóa hết
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Quick Sample Scripts */}
-                            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-thin">
-                                <span className="text-gray-400 whitespace-nowrap">Mẫu nhanh:</span>
-                                {SAMPLE_SCRIPTS.map((s, idx) => (
-                                    <button
-                                        key={idx}
-                                        type="button"
-                                        onClick={() => setText(s.text)}
-                                        className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-teal-50 hover:text-[#00AFA9] text-gray-600 whitespace-nowrap transition-colors border border-transparent hover:border-teal-200"
-                                    >
-                                        {s.title.split(":")[0]}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Textarea */}
-                            <div className="relative">
-                                <textarea
-                                    value={text}
-                                    onChange={(e) => setText(e.target.value)}
-                                    rows={7}
-                                    placeholder="Nhập hoặc dán lời thoại kịch bản video vào đây... Tên thương hiệu LYHU sẽ được tự động phát âm chuẩn là 'Ly Hu' tự nhiên!"
-                                    className="w-full p-4 rounded-xl border border-gray-200 focus:border-[#00AFA9] focus:ring-2 focus:ring-[#00AFA9]/20 outline-none text-gray-800 text-sm leading-relaxed transition-all resize-y placeholder:text-gray-400"
-                                />
-                            </div>
-
-                            {/* Metrics & Cost Bar */}
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-gray-500 pt-1 gap-2">
-                                <div className="flex items-center gap-3 flex-wrap">
-                                    <span>{text.length} ký tự</span>
-                                    <span>•</span>
-                                    <span>{wordCount} từ</span>
-                                    <span>•</span>
-                                    <span className="flex items-center gap-1 text-[#00AFA9] font-medium">
-                                        <Clock className="w-3.5 h-3.5" />
-                                        Video: ~{estimatedSeconds}s
-                                    </span>
-                                    <span>•</span>
-                                    {/* Cost Estimation Badge */}
-                                    <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-medium border border-emerald-200" title="Chi phí Gemini API tính theo token audio output ($9/1M tokens). Rất rẻ!">
-                                        💰 Ước tính: ~{Math.max(15, Math.round(wordCount * 0.25))}đ
-                                        <span className="text-[10px] text-emerald-600">(~0.001$)</span>
-                                    </span>
-                                </div>
-
-                                {text && (
-                                    <button
-                                        type="button"
-                                        onClick={copyText}
-                                        className="text-gray-400 hover:text-gray-600 flex items-center gap-1 self-end sm:self-auto"
-                                    >
-                                        {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                                        {copied ? "Đã chép" : "Chép lời thoại"}
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* Error Alert */}
-                            {errorMessage && (
-                                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 flex items-center gap-2">
-                                    <AlertCircle className="w-4 h-4 shrink-0" />
-                                    <span>{errorMessage}</span>
-                                </div>
-                            )}
-
-                            {/* Action Buttons */}
-                            <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
-                                <button
-                                    type="button"
-                                    onClick={handleGenerateVoice}
-                                    disabled={loading || !text.trim()}
-                                    className="flex-1 py-3.5 px-6 rounded-xl font-bold text-white bg-[#00AFA9] hover:bg-[#009690] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
-                                >
-                                    {loading ? (
-                                        <>
-                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            <span>Đang tạo giọng đọc AI (Gemini Studio)...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Sparkles className="w-5 h-5" />
-                                            <span>TẠO FILE AUDIO & NGHE THỬ (GEMINI AI)</span>
-                                        </>
-                                    )}
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={speakWithBrowser}
-                                    disabled={!text.trim()}
-                                    className={`py-3.5 px-4 rounded-xl font-semibold border transition-all flex items-center justify-center gap-2 text-xs sm:text-sm disabled:opacity-40 disabled:cursor-not-allowed ${
-                                        isBrowserSpeaking 
-                                            ? "bg-amber-500 text-white border-amber-600 animate-pulse shadow-md" 
-                                            : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200"
-                                    }`}
-                                    title="Nghe bằng giọng mặc định trên máy tính (chất lượng thấp hơn file AI thật)"
-                                >
-                                    <Volume2 className="w-4 h-4" />
-                                    <span>{isBrowserSpeaking ? "Dừng" : "Đọc nhanh (Máy tính)"}</span>
-                                </button>
-                            </div>
-                            <p className="text-[11px] text-gray-400 italic">
-                                * Lưu ý: Nút "TẠO FILE AUDIO" sẽ sinh giọng AI Gemini chất lượng như thật. Nút "Đọc nhanh (Máy tính)" chỉ để soát nhanh chính tả bằng giọng mặc định của Windows.
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Right: Audio Player & CapCut Guide (5 cols) */}
-                    <div className="lg:col-span-5 space-y-5">
-                        {/* Audio Player Card */}
-                        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-                            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-                                <h2 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                                    <Volume2 className="w-4 h-4 text-[#00AFA9]" />
-                                    Kết quả lồng tiếng (Studio Audio)
-                                </h2>
-                                {audioUrl && (
-                                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                                        Đã sẵn sàng
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Audio Preview Area */}
-                            {audioUrl ? (
-                                <div className="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                    <audio
-                                        ref={audioRef}
-                                        src={audioUrl}
-                                        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-                                        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-                                        onEnded={() => setIsPlaying(false)}
-                                        className="hidden"
-                                    />
-
-                                    {/* Waveform animation */}
-                                    <div className="flex items-center justify-center gap-1 h-12 bg-white rounded-lg px-4 border border-slate-200 overflow-hidden">
-                                        {Array.from({ length: 28 }).map((_, i) => {
-                                            const heights = [20, 45, 75, 30, 90, 60, 40, 85, 95, 50, 30, 70, 80, 40, 65, 85, 55, 35, 90, 75, 45, 60, 30, 80, 65, 40, 25, 50];
-                                            const h = heights[i % heights.length];
-                                            return (
-                                                <div
-                                                    key={i}
-                                                    style={{ height: `${h}%` }}
-                                                    className={`w-1 rounded-full transition-all ${
-                                                        isPlaying 
-                                                            ? "bg-[#00AFA9] animate-pulse" 
-                                                            : "bg-slate-300"
-                                                    }`}
-                                                />
-                                            );
-                                        })}
-                                    </div>
-
-                                    {/* Controls */}
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between text-xs font-mono text-gray-500">
-                                            <span>{formatTime(currentTime)}</span>
-                                            <span className="text-[#00AFA9] font-bold">{speedRate.toFixed(2)}x</span>
-                                            <span>{formatTime(duration)}</span>
-                                        </div>
-                                        <input
-                                            type="range"
-                                            min={0}
-                                            max={duration || 100}
-                                            value={currentTime}
-                                            onChange={(e) => {
-                                                const t = parseFloat(e.target.value);
-                                                setCurrentTime(t);
-                                                if (audioRef.current) audioRef.current.currentTime = t;
-                                            }}
-                                            className="w-full accent-[#00AFA9] h-1.5 bg-gray-200 rounded-lg cursor-pointer"
-                                        />
-                                    </div>
-
-                                    {/* Action Buttons */}
-                                    <div className="flex items-center gap-3 pt-1">
-                                        <button
-                                            type="button"
-                                            onClick={togglePlay}
-                                            className="flex-1 py-2.5 px-4 bg-gray-900 hover:bg-black text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm"
-                                        >
-                                            {isPlaying ? (
-                                                <>
-                                                    <Pause className="w-4 h-4 fill-white" />
-                                                    <span>Tạm dừng</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Play className="w-4 h-4 fill-white" />
-                                                    <span>Phát nghe thử</span>
-                                                </>
-                                            )}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (audioRef.current) {
-                                                    audioRef.current.currentTime = 0;
-                                                    audioRef.current.play();
-                                                    setIsPlaying(true);
-                                                }
-                                            }}
-                                            className="p-2.5 bg-white border border-gray-200 hover:bg-gray-100 rounded-xl text-gray-700 transition-colors"
-                                            title="Phát lại từ đầu"
-                                        >
-                                            <RotateCcw className="w-4 h-4" />
-                                        </button>
-                                    </div>
-
-                                    {/* Download MP3 Button */}
-                                    <button
-                                        type="button"
-                                        onClick={handleDownload}
-                                        className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg"
-                                    >
-                                        <Download className="w-4 h-4" />
-                                        <span>TẢI FILE MP3 VỀ MÁY (ĐỂ GHÉP CAPCUT)</span>
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="text-center py-10 px-4 bg-slate-50/70 rounded-xl border border-dashed border-gray-200 space-y-3">
-                                    <div className="w-12 h-12 mx-auto rounded-full bg-teal-50 text-[#00AFA9] flex items-center justify-center">
-                                        <Headphones className="w-6 h-6" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <h3 className="font-semibold text-gray-800 text-sm">
-                                            Chưa có file MP3 nào
-                                        </h3>
-                                        <p className="text-xs text-gray-500 max-w-xs mx-auto">
-                                            Dán lời thoại vào khung bên trái rồi bấm <strong>"TẠO FILE MP3 ĐỂ GHÉP VIDEO"</strong> để nghe và tải về.
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Guide Card */}
-                        <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-2xl shadow-sm space-y-3">
-                            <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
-                                <Film className="w-4 h-4" />
-                                <span>Hướng dẫn lồng tiếng video 3 bước cho Chị nhà:</span>
-                            </div>
-
-                            <div className="space-y-3 text-xs text-slate-300">
-                                <div className="flex items-start gap-2.5">
-                                    <span className="w-5 h-5 rounded-full bg-white/10 font-bold text-white flex items-center justify-center shrink-0 text-[11px]">
-                                        1
-                                    </span>
-                                    <div>
-                                        <strong className="text-white">Chọn chất giọng:</strong> Bấm chọn thẻ <em>Nữ Gen Z Bắt Trend</em> để giọng trẻ trung, nhí nhảnh chuẩn TikTok.
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-2.5">
-                                    <span className="w-5 h-5 rounded-full bg-white/10 font-bold text-white flex items-center justify-center shrink-0 text-[11px]">
-                                        2
-                                    </span>
-                                    <div>
-                                        <strong className="text-white">Kéo thanh tốc độ:</strong> Kéo thanh trượt đến mức <em>1.15x</em> hoặc <em>1.20x</em> để nhịp điệu nhanh và cuốn hút hơn.
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-2.5">
-                                    <span className="w-5 h-5 rounded-full bg-white/10 font-bold text-white flex items-center justify-center shrink-0 text-[11px]">
-                                        3
-                                    </span>
-                                    <div>
-                                        <strong className="text-white">Tải file MP3 & Kéo vào CapCut:</strong> Bấm tải file MP3 về → Mở CapCut chọn <em>Thêm âm thanh</em> → Ghép vào video là hoàn tất!
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             )}

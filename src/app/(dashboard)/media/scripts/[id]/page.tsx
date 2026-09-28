@@ -152,9 +152,24 @@ export default function ScriptEditor() {
                 <div className="flex items-center gap-3">
                     <button 
                         type="button"
-                        onClick={() => router.push('/media/voice-studio')}
+                        onClick={() => {
+                            // Bóc tách text thuần từ HTML kịch bản để chuyển sang Voice Studio
+                            let plainText = "";
+                            if (form.content) {
+                                const tempDiv = document.createElement("div");
+                                tempDiv.innerHTML = form.content;
+                                plainText = tempDiv.textContent || tempDiv.innerText || "";
+                            }
+                            if (typeof window !== "undefined") {
+                                sessionStorage.setItem("lyhu_voice_import", JSON.stringify({
+                                    text: plainText.trim(),
+                                    title: form.title
+                                }));
+                            }
+                            router.push('/media/voice-studio');
+                        }}
                         className="px-4 py-2 bg-teal-50 hover:bg-teal-100 text-[#00AFA9] font-medium rounded-lg flex items-center transition-colors border border-teal-200"
-                        title="Mở Studio Lồng tiếng AI để chuyển lời thoại thành voice"
+                        title="Chuyển toàn bộ kịch bản này sang Studio Lồng tiếng AI"
                     >
                         <Mic className="w-4 h-4 mr-1.5" />
                         Lồng tiếng AI
