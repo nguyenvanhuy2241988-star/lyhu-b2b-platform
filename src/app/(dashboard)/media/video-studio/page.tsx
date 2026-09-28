@@ -189,6 +189,13 @@ export default function AutoVideoStudioPage() {
     const [bgmVolume, setBgmVolume] = useState<number>(0.15); // 15% volume
     const [enableAudioDucking, setEnableAudioDucking] = useState(true);
 
+    // ── AI STYLE CLONE STATE ──
+    const [isCloneModalOpen, setIsCloneModalOpen] = useState(true);
+    const [cloneRefUrl, setCloneRefUrl] = useState("https://www.tiktok.com/@tra.my.24zone/video/7653479957431061778");
+    const [cloneTopic, setCloneTopic] = useState("Hàng khoai môn CVT container về buổi đêm date mới tinh");
+    const [isAnalyzingClone, setIsAnalyzingClone] = useState(false);
+    const [cloneStoryboard, setCloneStoryboard] = useState<string[]>([]);
+
     // ── FINANCIAL / USAGE TRACKER ──
     const [totalVideosCreated, setTotalVideosCreated] = useState<number>(0);
     const [totalCostSpent, setTotalCostSpent] = useState<number>(0);
@@ -486,6 +493,52 @@ export default function AutoVideoStudioPage() {
         setTimeout(() => {
             drawCanvasFrame(0);
         }, 50);
+    };
+
+    const handleCloneStyle = async () => {
+        if (!cloneTopic.trim()) {
+            alert("Vui lòng nhập chủ đề sản phẩm của bạn!");
+            return;
+        }
+
+        setIsAnalyzingClone(true);
+        try {
+            const res = await fetch("/api/ai/clone-video-style", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    referenceUrl: cloneRefUrl.trim(),
+                    userTopic: cloneTopic.trim()
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                setCustomHookTitle(data.hookTitle || customHookTitle);
+                setSelectedVoiceText(data.script || selectedVoiceText);
+                setClipSwitchInterval(data.pacing || 2.5);
+                setTransitionEffect(data.transition || "auto");
+                setTextColor(data.textColor || "#FACC15");
+                setSubtitleStyle(data.subtitleStyle || "tiktok_stroke");
+                setFontFamily("'Be Vietnam Pro', Montserrat, sans-serif");
+                setVoiceDuration(45);
+                setShowHookTitle(true);
+                setEnableSubtitles(true);
+                if (data.storyboard && data.storyboard.length > 0) {
+                    setCloneStoryboard(data.storyboard);
+                }
+                if (clips.length === 0) {
+                    handleLoadDemoClips();
+                }
+                alert("✨ AI đã học phong cách video mẫu thành công! Kịch bản, tiêu đề hook và nhịp dựng đã được nạp tự động vào Studio.");
+            } else {
+                alert("Không thể phân tích: " + (data.error || "Lỗi không xác định"));
+            }
+        } catch (e: any) {
+            alert("Lỗi khi kết nối AI: " + e.message);
+        } finally {
+            setIsAnalyzingClone(false);
+        }
     };
 
     const removeClip = (id: string) => {
@@ -1222,8 +1275,8 @@ export default function AutoVideoStudioPage() {
             </div>
 
             {/* 🎬 LYHU BRAND & 24ZONE STYLE TEMPLATES SELECTOR */}
-            <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-2xl p-5 text-white shadow-md border border-purple-800/50 space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-2xl p-5 text-white shadow-md border border-purple-800/50 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                         <span className="p-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30">
                             <Sparkles className="w-5 h-5 text-amber-400" />
@@ -1242,6 +1295,15 @@ export default function AutoVideoStudioPage() {
                             </p>
                         </div>
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setIsCloneModalOpen(!isCloneModalOpen)}
+                        className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 text-black font-bold text-xs hover:opacity-95 transition-all flex items-center gap-2 shadow-sm self-start sm:self-center"
+                    >
+                        <Wand2 className="w-3.5 h-3.5" />
+                        <span>{isCloneModalOpen ? "Ẩn công cụ học mẫu" : "🤖 Nạp Link TikTok / Học Mẫu Video"}</span>
+                    </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
@@ -1278,6 +1340,119 @@ export default function AutoVideoStudioPage() {
                         );
                     })}
                 </div>
+
+                {/* 🤖 AI CLONE STYLE & STORYBOARD GENERATOR PANEL */}
+                {isCloneModalOpen && (
+                    <div className="mt-4 p-4 rounded-xl bg-black/40 border border-purple-500/40 backdrop-blur-sm space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="p-1.5 rounded-lg bg-amber-400/20 text-amber-300">
+                                    <Sparkles className="w-4 h-4" />
+                                </span>
+                                <h4 className="text-xs sm:text-sm font-bold text-amber-300">
+                                    Nạp Video Mẫu / Link TikTok để AI Học Phong Cách & Viết Kịch Bản Cho LYHU
+                                </h4>
+                            </div>
+                            <span className="text-[10px] font-semibold text-purple-300 bg-purple-900/60 px-2 py-0.5 rounded-full border border-purple-500/30">
+                                Gemini AI Engine
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-medium text-gray-300 flex items-center justify-between">
+                                    <span>Link TikTok tham khảo mẫu:</span>
+                                    <span className="text-[10px] text-purple-300">TikTok / Reels URL</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={cloneRefUrl}
+                                    onChange={(e) => setCloneRefUrl(e.target.value)}
+                                    placeholder="https://www.tiktok.com/@tra.my.24zone/video/..."
+                                    className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 font-mono"
+                                />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-medium text-gray-300 flex items-center justify-between">
+                                    <span>Chủ đề / Sản phẩm LYHU muốn làm:</span>
+                                    <span className="text-[10px] text-purple-300">Ăn vặt & Gia vị sỉ</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={cloneTopic}
+                                    onChange={(e) => setCloneTopic(e.target.value)}
+                                    placeholder="VD: Hàng khoai môn CVT container về buổi đêm date mới tinh"
+                                    className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-amber-400"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Quick topic pills */}
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                            <span className="text-[10px] text-gray-400">Gợi ý chủ đề nhanh:</span>
+                            {[
+                                "Hàng khoai môn CVT container về buổi đêm date mới tinh",
+                                "Bột phô mai BOYO 1kg cho quán khoai tây lắc",
+                                "Da cá trứng muối & Bánh tráng Abi Snack giá sỉ"
+                            ].map((topic, i) => (
+                                <button
+                                    key={i}
+                                    type="button"
+                                    onClick={() => setCloneTopic(topic)}
+                                    className="px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-[10px] text-purple-200 border border-white/10 transition-colors"
+                                >
+                                    {topic}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-white/10">
+                            <p className="text-[11px] text-gray-300">
+                                AI sẽ phân tích: Nhịp cắt 2.5s, Hook giật tít, phong cách phụ đề, và tạo <strong>Kịch bản thoại + 5 góc quay gợi ý</strong>.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={handleCloneStyle}
+                                disabled={isAnalyzingClone}
+                                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all disabled:opacity-60 shadow-md"
+                            >
+                                {isAnalyzingClone ? (
+                                    <>
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        <span>AI Đang Phân Tích Video Mẫu...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Wand2 className="w-3.5 h-3.5" />
+                                        <span>✨ AI Học Phong Cách & Cấu Hình Studio</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Storyboard guide display if available */}
+                        {cloneStoryboard.length > 0 && (
+                            <div className="mt-3 p-3 rounded-lg bg-purple-950/70 border border-purple-500/40 space-y-2">
+                                <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                                    <Film className="w-3.5 h-3.5" />
+                                    <span>Gợi ý 5 góc quay bằng điện thoại cho chủ đề này (Quay mỗi đoạn 2-3s):</span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+                                    {cloneStoryboard.map((shot, idx) => (
+                                        <div key={idx} className="p-2 rounded bg-black/50 border border-white/10 text-[11px] space-y-1">
+                                            <div className="font-bold text-amber-400 text-[10px]">CẢNH {idx + 1}</div>
+                                            <div className="text-gray-200 line-clamp-3 leading-snug">{shot}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-gray-300 italic">
+                                    💡 Sau khi quay bằng điện thoại, bạn bấm "Nạp video thô" ở Bước 1 bên dưới để Studio tự động cắt ghép khớp hoàn hảo theo nhịp thoại!
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
