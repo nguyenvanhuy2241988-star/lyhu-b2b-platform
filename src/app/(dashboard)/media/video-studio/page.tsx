@@ -1858,13 +1858,18 @@ export default function AutoVideoStudioPage() {
         try {
             // Setup Web Audio Context for audio mixing
             const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            if (audioCtx.state === "suspended") {
+                await audioCtx.resume();
+            }
             const destNode = audioCtx.createMediaStreamDestination();
 
             // 1. Voiceover Source
             let voiceAudioEl: HTMLAudioElement | null = null;
             if (selectedVoiceAudioUrl) {
                 voiceAudioEl = new Audio(selectedVoiceAudioUrl);
-                voiceAudioEl.crossOrigin = "anonymous";
+                if (!selectedVoiceAudioUrl.startsWith("blob:")) {
+                    voiceAudioEl.crossOrigin = "anonymous";
+                }
                 const voiceSrc = audioCtx.createMediaElementSource(voiceAudioEl);
                 voiceSrc.connect(destNode);
                 voiceAudioEl.currentTime = 0;
@@ -1875,7 +1880,9 @@ export default function AutoVideoStudioPage() {
             let bgmGainNode: GainNode | null = null;
             if (activeBgmUrl) {
                 bgmAudioEl = new Audio(activeBgmUrl);
-                bgmAudioEl.crossOrigin = "anonymous";
+                if (activeBgmUrl.startsWith("http") && !activeBgmUrl.includes(window.location.host)) {
+                    bgmAudioEl.crossOrigin = "anonymous";
+                }
                 bgmAudioEl.loop = true;
                 const bgmSrc = audioCtx.createMediaElementSource(bgmAudioEl);
                 bgmGainNode = audioCtx.createGain();
@@ -1997,13 +2004,15 @@ export default function AutoVideoStudioPage() {
                 };
                 saveVideoProject(savedProj).then(() => loadSavedProjects()).catch(() => {});
 
-                // Instant download trigger
+                // Instant safe download trigger
                 const a = document.createElement("a");
                 a.href = finalUrl;
                 a.download = `LYHU_${aspectRatio.replace(":", "-")}_${Date.now()}.${finalExt}`;
                 document.body.appendChild(a);
                 a.click();
-                document.body.removeChild(a);
+                setTimeout(() => {
+                    if (document.body.contains(a)) document.body.removeChild(a);
+                }, 1000);
             };
 
             // Pause all background clips first
@@ -2026,9 +2035,11 @@ export default function AutoVideoStudioPage() {
             if (voiceAudioEl) voiceAudioEl.play().catch(() => {});
             if (bgmAudioEl) bgmAudioEl.play().catch(() => {});
 
-            recorder.start(1000); // 1-second chunks prevent container fragmentation jitter
+            // Unfragmented recording creates valid seekable video container without corruption
+            recorder.start();
 
             const exportActiveClipId = { current: firstClip?.id || null };
+            let lastRecordedT = 0;
             const exportStartTime = performance.now();
             let animExportId: number;
 
@@ -2041,8 +2052,13 @@ export default function AutoVideoStudioPage() {
                 // Sync strictly to voice audio if playing, avoiding any drift
                 if (voiceAudioEl && !voiceAudioEl.paused && voiceAudioEl.currentTime > 0) {
                     exportTime = voiceAudioEl.currentTime;
+                } else if (voiceAudioEl && voiceAudioEl.ended) {
+                    exportTime = Math.max(elapsed, voiceDuration);
                 }
-                const validExportT = (typeof exportTime === "number" && isFinite(exportTime) && exportTime >= 0) ? exportTime : 0;
+
+                // Monotonic non-decreasing time
+                lastRecordedT = Math.max(lastRecordedT, exportTime);
+                const validExportT = Math.min(totalDuration, lastRecordedT);
                 currentTimeRef.current = validExportT;
 
                 // Seamless clip switching during export (0 decode contention)
@@ -3687,15 +3703,25 @@ export default function AutoVideoStudioPage() {
 
                                 {/* Render progress overlay */}
                                 {isRendering && (
-                                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-white text-center z-20">
-                                        <div className="w-12 h-12 border-4 border-teal-400 border-t-white rounded-full animate-spin mb-3" />
-                                        <div className="font-black text-xl font-mono">{renderProgress}%</div>
-                                        <div className="text-xs font-semibold text-teal-200 mt-1">
-                                            Đang xuất video {exportFormat.toUpperCase()}...
+                                    <div className="absolute inset-0 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-5 text-white text-center z-20 space-y-2.5">
+                                        <div className="w-12 h-12 border-4 border-teal-400/30 border-t-teal-400 rounded-full animate-spin" />
+                                        <div className="font-black text-2xl font-mono text-teal-300">{renderProgress}%</div>
+                                        <div className="text-xs font-bold text-white">
+                                            Đang xuất video {exportFormat.toUpperCase()} (60 FPS Chuẩn Mượt)...
                                         </div>
-                                        <div className="text-[10px] text-gray-400 mt-1 max-w-[200px]">
-                                            Khớp khung hình, lồng tiếng & nhạc nền tự động
+                                        <div className="text-[10px] text-amber-300 bg-amber-950/60 border border-amber-500/40 rounded-lg p-2 max-w-[240px] leading-relaxed font-medium">
+                                            ⚠️ Vui lòng giữ tab này mở trong lúc đang xuất để chip đồ họa xuất đủ 60 FPS mượt mà!
                                         </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                isExportingRef.current = false;
+                                                setIsRendering(false);
+                                            }}
+                                            className="px-3 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-slate-300 text-xs font-medium cursor-pointer mt-1"
+                                        >
+                                            Hủy xuất video
+                                        </button>
                                     </div>
                                 )}
                             </div>
