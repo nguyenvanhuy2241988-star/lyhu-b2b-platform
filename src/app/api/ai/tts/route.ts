@@ -8,46 +8,20 @@ export const maxDuration = 60;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // ── GEMINI 3.8 FLASH TTS (OMNI & FLOW AI SPEECH TECHNOLOGY) ──
-interface GeminiVoiceConfig {
-    voiceName: string;
-    speechInstruction: string;
-}
-
-const GEMINI_VOICES: Record<string, GeminiVoiceConfig> = {
+const GEMINI_VOICES: Record<string, { voiceName: string }> = {
     // Nữ Gen Z - trẻ trung, năng động, chuẩn trend TikTok
-    "female-genz": {
-        voiceName: "Kore",
-        speechInstruction: "Nói với giọng nữ Gen Z Việt Nam trẻ trung, tươi vui, năng động, hào hứng, tự nhiên như một bạn trẻ đang quay clip TikTok."
-    },
+    "female-genz": { voiceName: "Kore" },
     // Nữ dịu dàng - ấm áp, tâm sự, gần gũi
-    "female-sweet": {
-        voiceName: "Aoede",
-        speechInstruction: "Nói với giọng nữ Việt Nam dịu dàng, ấm áp, nhẹ nhàng, truyền cảm như đang tâm sự thủ thỉ với người nghe."
-    },
+    "female-sweet": { voiceName: "Aoede" },
     // Nữ chuyên nghiệp - tự tin, rành mạch, giới thiệu thương hiệu sỉ
-    "female-pro": {
-        voiceName: "Leda",
-        speechInstruction: "Nói với giọng nữ phát thanh viên chuyên nghiệp, tự tin, rành mạch, uy tín, chuẩn mực."
-    },
+    "female-pro": { voiceName: "Leda" },
     // Nam Gen Z - hóm hỉnh, trẻ trung, tự nhiên
-    "male-genz": {
-        voiceName: "Puck",
-        speechInstruction: "Nói với giọng nam Gen Z Việt Nam trẻ trung, hoạt bát, dí dỏm, hào sảng, cực kỳ tự nhiên."
-    },
+    "male-genz": { voiceName: "Puck" },
     // Nam chuyên nghiệp - trầm ấm, uy tín, phát thanh viên
-    "male-pro": {
-        voiceName: "Fenrir",
-        speechInstruction: "Nói với giọng nam trầm ấm, chín chắn, phong thái đĩnh đạc, uy tín, phát thanh viên doanh nghiệp."
-    },
+    "male-pro": { voiceName: "Fenrir" },
     // Mặc định
-    "female": {
-        voiceName: "Kore",
-        speechInstruction: "Nói với giọng nữ Việt Nam chuẩn mực, tự nhiên, truyền cảm, dễ nghe."
-    },
-    "male": {
-        voiceName: "Puck",
-        speechInstruction: "Nói với giọng nam Việt Nam chuẩn mực, tự nhiên, ấm áp, dễ nghe."
-    }
+    "female": { voiceName: "Kore" },
+    "male": { voiceName: "Puck" }
 };
 
 async function synthesizeWithGeminiTTS(
@@ -59,7 +33,7 @@ async function synthesizeWithGeminiTTS(
     }
 
     const voiceCfg = GEMINI_VOICES[styleKey] || (styleKey.includes("male") ? GEMINI_VOICES["male-genz"] : GEMINI_VOICES["female-genz"]);
-    const promptText = `${voiceCfg.speechInstruction}\n\nĐọc chính xác đoạn văn bản sau bằng tiếng Việt, tuyệt đối không thêm lời chào hay bất kỳ từ ngữ nào khác:\n\n"${text}"`;
+    const promptText = text.trim();
 
     const models = [
         "gemini-3.8-flash-tts",
