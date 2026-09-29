@@ -481,7 +481,7 @@ export default function AutoVideoStudioPage() {
                     engine: engineChoice,
                     rate: "+8%"
                 }),
-                signal: AbortSignal.timeout(15000)
+                signal: AbortSignal.timeout(35000)
             });
 
             if (!res.ok) {
@@ -506,9 +506,13 @@ export default function AutoVideoStudioPage() {
                 }
             };
 
-            // Update hidden audio element
+            // Update hidden audio element for video playback
             if (hiddenAudioRef.current) {
                 hiddenAudioRef.current.src = url;
+            }
+            // Update audition audio element
+            if (auditionAudioRef.current) {
+                auditionAudioRef.current.src = url;
             }
 
             return url;
@@ -3093,7 +3097,12 @@ export default function AutoVideoStudioPage() {
                                         <span className="text-[11px] font-bold text-slate-700">Giọng:</span>
                                         <select
                                             value={selectedVoiceStyleId}
-                                            onChange={(e) => setSelectedVoiceStyleId(e.target.value)}
+                                            onChange={(e) => {
+                                                const newStyle = e.target.value;
+                                                setSelectedVoiceStyleId(newStyle);
+                                                setSelectedVoiceAudioUrl(null);
+                                                generateSpeechForText(selectedVoiceText, newStyle, selectedVoiceEngine);
+                                            }}
                                             className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
                                         >
                                             <option value="female-genz">🌸 Nữ Gen Z (Vui tươi, chuẩn TikTok)</option>
