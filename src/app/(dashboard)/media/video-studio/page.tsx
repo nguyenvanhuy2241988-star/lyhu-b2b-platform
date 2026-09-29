@@ -612,8 +612,10 @@ export default function AutoVideoStudioPage() {
         });
     }, [selectedVoiceText, voiceDuration, subtitleOffset]);
 
-    // Project Total Duration
-    const totalDuration = voiceDuration > 0 ? voiceDuration : (clips.length > 0 ? clips.reduce((acc, c) => acc + c.duration, 0) : 30);
+    // Project Total Duration (Guaranteed Finite Number)
+    const totalDuration = voiceDuration > 0
+        ? voiceDuration
+        : (clips.length > 0 ? Math.max(1, clips.reduce((acc, c) => acc + ((c && isFinite(c.duration) && c.duration > 0) ? c.duration : 15), 0)) : 30);
 
     // ── ROBUST VIDEO UPLOAD PROCESSOR (With timeout & drag-drop) ──
     const processVideoFiles = async (fileList: FileList | File[]) => {
@@ -624,7 +626,7 @@ export default function AutoVideoStudioPage() {
 
         for (let i = 0; i < fileList.length; i++) {
             const file = fileList[i];
-            if (!file.type.startsWith("video/") && !file.name.match(/\.(mp4|mov|webm|avi|mkv|m4v)$/i)) {
+            if (!file || (!file.type.startsWith("video/") && !file.name.match(/\.(mp4|mov|webm|avi|mkv|m4v)$/i))) {
                 continue;
             }
 
@@ -642,14 +644,16 @@ export default function AutoVideoStudioPage() {
                         resolved = true;
                         resolve({ duration: 15, width: 1080, height: 1920 });
                     }
-                }, 1200);
+                }, 1500);
 
                 vid.onloadedmetadata = () => {
                     if (!resolved) {
                         resolved = true;
                         clearTimeout(timeout);
+                        const dur = vid.duration;
+                        const safeDur = (typeof dur === "number" && isFinite(dur) && dur > 0) ? dur : 15;
                         resolve({
-                            duration: vid.duration && !isNaN(vid.duration) && vid.duration > 0 ? vid.duration : 15,
+                            duration: safeDur,
                             width: vid.videoWidth || 1080,
                             height: vid.videoHeight || 1920
                         });
@@ -1235,19 +1239,22 @@ export default function AutoVideoStudioPage() {
             return;
         }
 
-        const switchSec = Math.max(2, clipSwitchInterval);
-        const clipIdx = Math.floor(time / switchSec) % clips.length;
-        const currentClip = clips[clipIdx];
-        const nextClipIdx = (clipIdx + 1) % clips.length;
-        const nextClip = clips[nextClipIdx];
+        const switchSec = Math.max(2, clipSwitchInterval || 2.5);
+        const validTime = (typeof time === "number" && isFinite(time) && time >= 0) ? time : 0;
+        const rawIdx = Math.floor(validTime / switchSec);
+        const clipIdx = (isFinite(rawIdx) && clips.length > 0) ? (Math.abs(rawIdx) % clips.length) : 0;
+        const currentClip = clips[clipIdx] || clips[0];
+        if (!currentClip) return;
+        const nextClipIdx = clips.length > 0 ? (clipIdx + 1) % clips.length : 0;
+        const nextClip = clips[nextClipIdx] || currentClip;
 
-        const timeInInterval = time % switchSec;
+        const timeInInterval = validTime % switchSec;
         const transitionWindow = 0.45;
         const isNearTransition = switchSec - timeInInterval <= transitionWindow && clips.length > 1;
         const transitionFactor = isNearTransition ? (switchSec - timeInInterval) / transitionWindow : 1.0;
 
-        const currentVid = videoElementsRef.current[currentClip.id];
-        const nextVid = videoElementsRef.current[nextClip.id];
+        const currentVid = currentClip?.id ? videoElementsRef.current[currentClip.id] : null;
+        const nextVid = nextClip?.id ? videoElementsRef.current[nextClip.id] : null;
 
         // Active transition effect
         let activeTrans = transitionEffect;
@@ -1559,15 +1566,20 @@ export default function AutoVideoStudioPage() {
         }
 
         // 3. Play Active Video Clip
-        const switchSec = Math.max(2, clipSwitchInterval);
-        const clipIdx = Math.floor(currentT / switchSec) % clips.length;
-        const activeClip = clips[clipIdx];
-        const activeVid = videoElementsRef.current[activeClip.id];
-        if (activeVid) {
-            const localT = (currentT % switchSec) % Math.max(1, activeClip.duration);
-            activeVid.currentTime = localT;
-            activeVid.play().catch(() => {});
-            lastActiveClipIdRef.current = activeClip.id;
+        if (clips.length > 0) {
+            const switchSec = Math.max(2, clipSwitchInterval || 2.5);
+            const validT = (typeof currentT === "number" && isFinite(currentT) && currentT >= 0) ? currentT : 0;
+            const clipIdx = Math.floor(validT / switchSec) % clips.length;
+            const activeClip = clips[clipIdx] || clips[0];
+            if (activeClip?.id) {
+                const activeVid = videoElementsRef.current[activeClip.id];
+                if (activeVid) {
+                    const localT = (validT % switchSec) % Math.max(1, activeClip.duration || 15);
+                    activeVid.currentTime = isFinite(localT) ? localT : 0;
+                    activeVid.play().catch(() => {});
+                    lastActiveClipIdRef.current = activeClip.id;
+                }
+            }
         }
     };
 
@@ -1576,8 +1588,10 @@ export default function AutoVideoStudioPage() {
         if (hiddenAudioRef.current) hiddenAudioRef.current.pause();
         if (bgmAudioRef.current) bgmAudioRef.current.pause();
         clips.forEach(c => {
-            const vid = videoElementsRef.current[c.id];
-            if (vid && !vid.paused) vid.pause();
+            if (c?.id) {
+                const vid = videoElementsRef.current[c.id];
+                if (vid && !vid.paused) vid.pause();
+            }
         });
     };
 
@@ -1590,36 +1604,40 @@ export default function AutoVideoStudioPage() {
     };
 
     const handleSeek = (newTime: number) => {
-        currentTimeRef.current = newTime;
-        setDisplayTime(newTime);
+        const validTime = (typeof newTime === "number" && isFinite(newTime) && newTime >= 0) ? newTime : 0;
+        currentTimeRef.current = validTime;
+        setDisplayTime(validTime);
 
         if (hiddenAudioRef.current) {
-            hiddenAudioRef.current.currentTime = newTime;
+            hiddenAudioRef.current.currentTime = validTime;
         }
         if (bgmAudioRef.current) {
-            bgmAudioRef.current.currentTime = newTime % (bgmAudioRef.current.duration || 60);
+            bgmAudioRef.current.currentTime = validTime % (bgmAudioRef.current.duration || 60);
         }
 
         if (clips.length > 0) {
-            const switchSec = Math.max(2, clipSwitchInterval);
-            const clipIdx = Math.floor(newTime / switchSec) % clips.length;
-            const activeClip = clips[clipIdx];
-            const activeVid = videoElementsRef.current[activeClip.id];
+            const switchSec = Math.max(2, clipSwitchInterval || 2.5);
+            const clipIdx = Math.floor(validTime / switchSec) % clips.length;
+            const activeClip = clips[clipIdx] || clips[0];
+            if (activeClip?.id) {
+                const activeVid = videoElementsRef.current[activeClip.id];
 
-            clips.forEach(c => {
-                const v = videoElementsRef.current[c.id];
-                if (v && c.id !== activeClip.id && !v.paused) v.pause();
-            });
+                clips.forEach(c => {
+                    if (!c?.id) return;
+                    const v = videoElementsRef.current[c.id];
+                    if (v && c.id !== activeClip.id && !v.paused) v.pause();
+                });
 
-            if (activeVid) {
-                const localT = (newTime % switchSec) % Math.max(1, activeClip.duration);
-                activeVid.currentTime = localT;
-                if (isPlaying && activeVid.paused) activeVid.play().catch(() => {});
+                if (activeVid) {
+                    const localT = (validTime % switchSec) % Math.max(1, activeClip.duration || 15);
+                    activeVid.currentTime = isFinite(localT) ? localT : 0;
+                    if (isPlaying && activeVid.paused) activeVid.play().catch(() => {});
+                }
+                lastActiveClipIdRef.current = activeClip.id;
             }
-            lastActiveClipIdRef.current = activeClip.id;
         }
 
-        drawCanvasFrame(newTime);
+        drawCanvasFrame(validTime);
     };
 
     // Main 60FPS RequestAnimationFrame Animation Loop
@@ -1661,15 +1679,16 @@ export default function AutoVideoStudioPage() {
 
             // Seamless clip switching
             if (clips.length > 1) {
-                const switchSec = Math.max(2, clipSwitchInterval);
-                const clipIdx = Math.floor(nextTime / switchSec) % clips.length;
-                const currentClip = clips[clipIdx];
+                const switchSec = Math.max(2, clipSwitchInterval || 2.5);
+                const validT = (typeof nextTime === "number" && isFinite(nextTime) && nextTime >= 0) ? nextTime : 0;
+                const clipIdx = Math.floor(validT / switchSec) % clips.length;
+                const currentClip = clips[clipIdx] || clips[0];
                 const nextClipIdx = (clipIdx + 1) % clips.length;
-                const nextClip = clips[nextClipIdx];
-                const timeInInterval = nextTime % switchSec;
+                const nextClip = clips[nextClipIdx] || currentClip;
+                const timeInInterval = validT % switchSec;
 
                 // Pre-roll next clip 0.45s before switch
-                if (switchSec - timeInInterval <= 0.45) {
+                if (switchSec - timeInInterval <= 0.45 && nextClip?.id) {
                     const nextVid = videoElementsRef.current[nextClip.id];
                     if (nextVid && nextVid.paused) {
                         nextVid.currentTime = 0;
@@ -1678,7 +1697,7 @@ export default function AutoVideoStudioPage() {
                 }
 
                 // If active clip transitioned, pause previous
-                if (currentClip.id !== lastActiveClipIdRef.current) {
+                if (currentClip?.id && currentClip.id !== lastActiveClipIdRef.current) {
                     if (lastActiveClipIdRef.current) {
                         const prevVid = videoElementsRef.current[lastActiveClipIdRef.current];
                         if (prevVid && !prevVid.paused) prevVid.pause();
@@ -2511,11 +2530,13 @@ export default function AutoVideoStudioPage() {
                             <div className="space-y-2">
                                 <span className="text-xs font-semibold text-gray-600">Thứ tự các góc quay ({clips.length} clip):</span>
                                 <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                                    {clips.map((c, idx) => (
-                                        <div
-                                            key={c.id}
-                                            className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-gray-100 text-xs"
-                                        >
+                                    {clips.map((c, idx) => {
+                                        if (!c?.id) return null;
+                                        return (
+                                            <div
+                                                key={c.id}
+                                                className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-gray-100 text-xs"
+                                            >
                                             <div className="flex items-center gap-2 truncate">
                                                 <span className="w-5 h-5 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-[10px] shrink-0">
                                                     {idx + 1}
@@ -2550,7 +2571,8 @@ export default function AutoVideoStudioPage() {
                                                 </button>
                                             </div>
                                         </div>
-                                    ))}
+                                    );
+                                })}
                                 </div>
                             </div>
                         )}
@@ -3874,19 +3896,24 @@ export default function AutoVideoStudioPage() {
 
             {/* Hidden media elements for canvas sync */}
             <div className="hidden">
-                {clips.map((clip) => (
-                    <video
-                        key={clip.id}
-                        ref={(el) => {
-                            videoElementsRef.current[clip.id] = el;
-                        }}
-                        src={clip.url}
-                        playsInline
-                        muted
-                        preload="auto"
-                        crossOrigin="anonymous"
-                    />
-                ))}
+                {clips.map((clip) => {
+                    if (!clip?.id || !clip?.url) return null;
+                    return (
+                        <video
+                            key={clip.id}
+                            ref={(el) => {
+                                if (clip?.id) {
+                                    videoElementsRef.current[clip.id] = el;
+                                }
+                            }}
+                            src={clip.url}
+                            playsInline
+                            muted
+                            preload="auto"
+                            crossOrigin="anonymous"
+                        />
+                    );
+                })}
                 <audio ref={hiddenAudioRef} src={selectedVoiceAudioUrl || ""} />
                 <audio ref={bgmAudioRef} src={activeBgmUrl || ""} loop crossOrigin="anonymous" />
                 <audio ref={previewAudioRef} onEnded={() => setPreviewingSoundUrl(null)} />
