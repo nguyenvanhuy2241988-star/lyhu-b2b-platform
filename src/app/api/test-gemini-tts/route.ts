@@ -9,10 +9,10 @@ export async function GET() {
     }
 
     const testModels = [
-        "gemini-2.0-flash",
-        "gemini-2.0-flash-exp",
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite"
+        "gemini-3.8-flash",
+        "gemini-3.8-pro",
+        "gemini-3.8-flash-lite",
+        "gemini-3.0-flash"
     ];
 
     const results: Record<string, any> = {};
@@ -57,7 +57,13 @@ export async function GET() {
                     hasAudio,
                     keys: Object.keys(json),
                     candidateCount: json.candidates?.length,
-                    error: json.error || null
+                    error: json.error || null,
+                    parts: json.candidates?.[0]?.content?.parts?.map((p: any) => ({
+                        hasInline: !!p.inlineData,
+                        mimeType: p.inlineData?.mimeType,
+                        dataLength: p.inlineData?.data?.length,
+                        text: p.text
+                    }))
                 };
             } catch {
                 results[model] = { status: res.status, rawText: text.slice(0, 200) };
