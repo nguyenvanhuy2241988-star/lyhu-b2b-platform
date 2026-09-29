@@ -476,12 +476,11 @@ export default function AutoVideoStudioPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     text: textToSpeak.trim(),
-                    voice: styleId.includes("male") ? "vi-VN-NamMinhNeural" : "vi-VN-HoaiMyNeural",
+                    voice: styleId,
                     style: styleId,
-                    engine: engineChoice,
                     rate: "+8%"
                 }),
-                signal: AbortSignal.timeout(35000)
+                signal: AbortSignal.timeout(45000)
             });
 
             if (!res.ok) {
