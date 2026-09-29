@@ -103,7 +103,7 @@ async function synthesizeWithEdgeTTS(
         }
     });
 
-    return withTimeout(edgePromise, 25000, "Edge TTS timeout after 25s");
+    return withTimeout(edgePromise, 4000, "Edge TTS timeout after 4s");
 }
 
 // --------------- ElevenLabs Voice Cloning Engine ---------------
