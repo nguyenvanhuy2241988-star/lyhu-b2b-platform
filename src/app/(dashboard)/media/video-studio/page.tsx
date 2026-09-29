@@ -472,7 +472,8 @@ export default function AutoVideoStudioPage() {
                     voice: styleId.includes("male") ? "vi-VN-NamMinhNeural" : "vi-VN-HoaiMyNeural",
                     style: styleId,
                     rate: "+8%"
-                })
+                }),
+                signal: AbortSignal.timeout(12000)
             });
 
             if (!res.ok) {
@@ -801,7 +802,13 @@ export default function AutoVideoStudioPage() {
 
                 // 2/2 TỰ ĐỘNG THU ÂM GIỌNG ĐỌC AI CHO CHÍNH KỊCH BẢN VỪA TẠO
                 setAnalyzingStepText("2/2 AI đang thu âm giọng đọc tiếng Việt khớp 100% kịch bản...");
-                await generateSpeechForText(newScript, selectedVoiceStyleId);
+                let voiceGenerated = false;
+                try {
+                    const audioUrl = await generateSpeechForText(newScript, selectedVoiceStyleId);
+                    if (audioUrl) voiceGenerated = true;
+                } catch (voiceErr: any) {
+                    console.warn("Lỗi thu giọng đọc tự động:", voiceErr);
+                }
 
                 // Auto-save project into history
                 const autoProj: VideoProjectItem = {
@@ -839,7 +846,11 @@ export default function AutoVideoStudioPage() {
                 setDisplayTime(0);
                 setTimeout(() => drawCanvasFrame(0), 100);
 
-                alert("🎬 Đạo diễn AI đã hoàn tất: Kịch bản mới + Thu âm giọng đọc chuẩn xác + 5 góc quay thực chiến đã sẵn sàng trên video!");
+                alert(
+                    voiceGenerated
+                        ? "🎬 Đạo diễn AI đã hoàn tất: Kịch bản mới + Thu âm giọng đọc chuẩn xác + 5 góc quay thực chiến đã sẵn sàng trên video!"
+                        : "🎬 Đạo diễn AI đã hoàn tất: Kịch bản mới + 5 góc quay thực chiến đã lên video! (Bạn có thể bấm nút 'Thu Giọng' để cập nhật lại giọng đọc bất cứ lúc nào)."
+                );
             } else {
                 alert("Không thể phân tích: " + (data.error || "Lỗi không xác định"));
             }
