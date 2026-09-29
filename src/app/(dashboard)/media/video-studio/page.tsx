@@ -95,6 +95,11 @@ interface SubtitleCue {
     start: number; // seconds
     end: number;   // seconds
     text: string;
+    words?: {
+        word: string;
+        start: number;
+        end: number;
+    }[];
 }
 
 interface TikTokTrendingSound {
@@ -309,7 +314,7 @@ export default function AutoVideoStudioPage() {
     const [textColor, setTextColor] = useState<string>("#FACC15"); // Bright yellow
     const [textPosition, setTextPosition] = useState<"bottom" | "center" | "top">("bottom");
     const [subtitleStyle, setSubtitleStyle] = useState<"tiktok_stroke" | "neon_glow" | "pill_dark" | "clean_shadow">("tiktok_stroke");
-    const [textAnimationEffect, setTextAnimationEffect] = useState<"tiktok_pop" | "karaoke_glow" | "fire_shake" | "box_pill" | "clean_fade">("tiktok_pop");
+    const [textAnimationEffect, setTextAnimationEffect] = useState<"tiktok_pop" | "karaoke_glow" | "bicolor_punch" | "fire_shake" | "box_pill" | "clean_fade">("tiktok_pop");
     const [keyPowerWords, setKeyPowerWords] = useState<string[]>(["DATE MỚI TINH", "GIÒN RỤM", "GIÁ SỈ TẬN KHO", "VỪA CẬP BẾN"]);
     const [subtitleOffset, setSubtitleOffset] = useState<number>(0);
     const [customHookTitle, setCustomHookTitle] = useState("🔥 TỔNG KHO ĂN VẶT & BỘT PHÔ MAI BOYO GIÁ SỈ!");
@@ -325,7 +330,7 @@ export default function AutoVideoStudioPage() {
     const [isSavingProject, setIsSavingProject] = useState(false);
 
     // ── STEP 4: Transitions & Pacing ──
-    const [transitionEffect, setTransitionEffect] = useState<"auto" | "crossfade" | "slide_left" | "white_flash" | "hard_cut">("auto");
+    const [transitionEffect, setTransitionEffect] = useState<"auto" | "crossfade" | "zoom_in" | "slide_left" | "white_flash" | "hard_cut">("auto");
     const [clipSwitchInterval, setClipSwitchInterval] = useState<number>(2.5); // 2.5s per shot (Nhịp cắt 24Zone)
     const [showWatermark, setShowWatermark] = useState(true);
     const [activeTemplateId, setActiveTemplateId] = useState<string | null>("kho_dem");
@@ -518,11 +523,11 @@ export default function AutoVideoStudioPage() {
             setSelectedVoiceAudioUrl(url);
             setSelectedVoiceId("ai-generated");
 
-            // Measure accurate duration
+            // Measure exact audio duration
             const tempAudio = new Audio(url);
             tempAudio.onloadedmetadata = () => {
                 if (tempAudio.duration && !isNaN(tempAudio.duration) && tempAudio.duration > 0) {
-                    setVoiceDuration(Math.ceil(tempAudio.duration) + 1);
+                    setVoiceDuration(tempAudio.duration);
                 }
             };
 
@@ -568,7 +573,7 @@ export default function AutoVideoStudioPage() {
                 const tempAudio = new Audio(url);
                 tempAudio.onloadedmetadata = () => {
                     if (tempAudio.duration && !isNaN(tempAudio.duration) && tempAudio.duration > 0) {
-                        setVoiceDuration(Math.ceil(tempAudio.duration) + 1);
+                        setVoiceDuration(tempAudio.duration);
                     }
                 };
 
@@ -754,23 +759,24 @@ export default function AutoVideoStudioPage() {
         if (!selectedVoiceText.trim() || voiceDuration <= 0) return [];
 
         const sentences = selectedVoiceText.split(/(?<=[.!?,;:\n])\s+/).filter(s => s.trim().length > 0);
-        const phrases: { text: string; weight: number }[] = [];
+        const phrases: { text: string; weight: number; words: string[] }[] = [];
 
         sentences.forEach(s => {
-            const words = s.trim().split(/\s+/);
-            if (words.length <= 4) {
-                const hasComma = /[,;]/.test(s);
+            const rawWords = s.trim().split(/\s+/).filter(Boolean);
+            if (rawWords.length <= 4) {
+                const hasComma = /[,;:]/.test(s);
                 const hasPeriod = /[.!?\n]/.test(s);
-                const weight = words.length + (hasComma ? 0.7 : 0) + (hasPeriod ? 1.4 : 0);
-                phrases.push({ text: words.join(" "), weight });
+                const weight = rawWords.length * 1.0 + (hasComma ? 0.35 : 0) + (hasPeriod ? 0.65 : 0);
+                phrases.push({ text: rawWords.join(" "), weight, words: rawWords });
             } else {
-                for (let i = 0; i < words.length; i += 4) {
-                    const chunk = words.slice(i, i + 4);
+                for (let i = 0; i < rawWords.length; i += 4) {
+                    const chunk = rawWords.slice(i, i + 4);
                     const chunkText = chunk.join(" ");
-                    const hasComma = /[,;]/.test(chunkText);
-                    const hasPeriod = /[.!?\n]/.test(chunkText);
-                    const weight = chunk.length + (hasComma ? 0.7 : 0) + (hasPeriod ? 1.4 : 0);
-                    phrases.push({ text: chunkText, weight });
+                    const isLastChunk = i + 4 >= rawWords.length;
+                    const hasComma = isLastChunk && /[,;:]/.test(s);
+                    const hasPeriod = isLastChunk && /[.!?\n]/.test(s);
+                    const weight = chunk.length * 1.0 + (hasComma ? 0.35 : 0) + (hasPeriod ? 0.65 : 0);
+                    phrases.push({ text: chunkText, weight, words: chunk });
                 }
             }
         });
@@ -778,18 +784,29 @@ export default function AutoVideoStudioPage() {
         if (phrases.length === 0) return [];
 
         const totalWeight = phrases.reduce((acc, p) => acc + p.weight, 0);
-        const durationPerWeight = voiceDuration / Math.max(1, totalWeight);
+        const secPerWeight = voiceDuration / Math.max(0.1, totalWeight);
 
-        let currentStartTime = Math.max(0, subtitleOffset);
+        let currentStartTime = 0;
         return phrases.map(phrase => {
-            const rawDuration = Math.max(0.9, phrase.weight * durationPerWeight);
-            const cue: SubtitleCue = {
-                start: currentStartTime,
-                end: Math.min(voiceDuration, currentStartTime + rawDuration),
-                text: phrase.text
+            const phraseDur = phrase.weight * secPerWeight;
+            const start = Math.max(0, currentStartTime + subtitleOffset);
+            const end = Math.min(voiceDuration, start + phraseDur);
+
+            // Compute exact sub-second timestamps for each word
+            const wordSlice = phraseDur / Math.max(1, phrase.words.length);
+            const words = phrase.words.map((w, wIdx) => ({
+                word: w,
+                start: start + wIdx * wordSlice,
+                end: start + (wIdx + 1) * wordSlice
+            }));
+
+            currentStartTime += phraseDur;
+            return {
+                start,
+                end,
+                text: phrase.text,
+                words
             };
-            currentStartTime += rawDuration;
-            return cue;
         });
     }, [selectedVoiceText, voiceDuration, subtitleOffset]);
 
@@ -1450,10 +1467,10 @@ export default function AutoVideoStudioPage() {
         // Active transition effect
         let activeTrans = transitionEffect;
         if (activeTrans === "auto") {
-            const transPool: ("crossfade" | "white_flash" | "slide_left" | "crossfade")[] = [
+            const transPool: ("crossfade" | "zoom_in" | "slide_left" | "white_flash")[] = [
                 "crossfade",
+                "zoom_in",
                 "slide_left",
-                "white_flash",
                 "crossfade"
             ];
             activeTrans = transPool[clipIdx % transPool.length];
@@ -1487,23 +1504,50 @@ export default function AutoVideoStudioPage() {
             ctx.restore();
         };
 
-        const zoomProgress = (time % clipSwitchInterval) / clipSwitchInterval;
+        const zoomProgress = (validTime % switchSec) / switchSec;
         const dynamicScale = 1.0 + zoomProgress * 0.04;
 
-        // Render with Transition
+        const isNextVidReady = nextVid && nextVid.readyState >= 2;
+        // Smooth S-curve easing factor from 0.0 to 1.0
+        const progress = Math.max(0, Math.min(1, 1.0 - transitionFactor));
+        const ease = 0.5 - 0.5 * Math.cos(progress * Math.PI);
+
+        // Render with Transition (ZERO-JERK & ZERO BLACK-FRAME)
         if (isNearTransition && clips.length > 1) {
             if (activeTrans === "crossfade") {
-                if (nextVid) drawVideoCover(nextVid, 0, 1.0, 1.0);
-                if (currentVid) drawVideoCover(currentVid, 0, transitionFactor, dynamicScale);
+                if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
+                if (isNextVidReady) {
+                    drawVideoCover(nextVid, 0, ease, 1.0);
+                }
+
+            } else if (activeTrans === "zoom_in") {
+                const curScale = dynamicScale * (1.0 + ease * 0.08);
+                if (currentVid) drawVideoCover(currentVid, 0, 1.0, curScale);
+                if (isNextVidReady) {
+                    const nxtScale = 0.94 + ease * 0.06;
+                    drawVideoCover(nextVid, 0, ease, nxtScale);
+                }
 
             } else if (activeTrans === "slide_left") {
-                const slideOffset = (1 - transitionFactor) * cw;
-                if (currentVid) drawVideoCover(currentVid, -slideOffset, 1.0, dynamicScale);
-                if (nextVid) drawVideoCover(nextVid, cw - slideOffset, 1.0, 1.0);
+                if (isNextVidReady) {
+                    const slideOffset = ease * cw;
+                    if (currentVid) drawVideoCover(currentVid, -slideOffset, 1.0, dynamicScale);
+                    drawVideoCover(nextVid, cw - slideOffset, 1.0, 1.0);
+                } else {
+                    if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
+                }
 
             } else if (activeTrans === "white_flash") {
-                if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
-                const flashAlpha = Math.sin((1 - transitionFactor) * Math.PI) * 0.85;
+                if (progress < 0.5) {
+                    if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
+                } else {
+                    if (isNextVidReady) {
+                        drawVideoCover(nextVid, 0, 1.0, 1.0);
+                    } else if (currentVid) {
+                        drawVideoCover(currentVid, 0, 1.0, dynamicScale);
+                    }
+                }
+                const flashAlpha = Math.sin(progress * Math.PI) * 0.65;
                 ctx.save();
                 ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
                 ctx.fillRect(0, 0, cw, ch);
@@ -1655,7 +1699,7 @@ export default function AutoVideoStudioPage() {
             if (activeSub) {
                 ctx.save();
                 const text = activeSub.text;
-                const cueProgress = Math.max(0, Math.min(1, (time - activeSub.start) / Math.max(0.1, activeSub.end - activeSub.start)));
+                const cueDur = Math.max(0.1, activeSub.end - activeSub.start);
                 const cueElapsed = time - activeSub.start;
 
                 let subY = ch * 0.82;
@@ -1666,140 +1710,251 @@ export default function AutoVideoStudioPage() {
                 const uppercaseText = text.toUpperCase();
                 const matchedPowerWord = keyPowerWords.find(pw => pw && uppercaseText.includes(pw.toUpperCase()));
 
-                // Animation transforms
-                let scale = 1.0;
+                // Overall phrase transforms
+                let phraseScale = 1.0;
                 let shakeX = 0;
                 let shakeY = 0;
 
                 if (textAnimationEffect === "tiktok_pop") {
-                    // Elastic pop-in bounce on entry (first 0.22s)
-                    if (cueElapsed < 0.22) {
-                        const t = cueElapsed / 0.22;
-                        scale = 1.0 + Math.sin(t * Math.PI) * 0.22;
+                    // Elastic pop-in bounce on phrase entry (first 0.18s)
+                    if (cueElapsed < 0.18) {
+                        const t = cueElapsed / 0.18;
+                        phraseScale = 1.0 + Math.sin(t * Math.PI) * 0.22;
                     }
                 } else if (textAnimationEffect === "fire_shake") {
+                    // Slam-down impact on entrance (first 0.12s) + dynamic shake for power words
+                    if (cueElapsed < 0.12) {
+                        const t = cueElapsed / 0.12;
+                        phraseScale = 1.35 - 0.35 * Math.sin(t * Math.PI * 0.5);
+                    }
                     if (matchedPowerWord) {
-                        shakeX = Math.sin(time * 35) * 2.5;
-                        shakeY = Math.cos(time * 28) * 2;
+                        shakeX = Math.sin(time * 36) * 3;
+                        shakeY = Math.cos(time * 28) * 2.5;
                     }
                 }
 
                 ctx.translate(cw / 2 + shakeX, subY + shakeY);
-                ctx.scale(scale, scale);
+                ctx.scale(phraseScale, phraseScale);
 
-                const maxAllowedSubW = cw - 48;
+                const maxAllowedSubW = cw - 56;
                 let activeFontSize = fontSize;
                 ctx.font = `900 ${fontSize}px ${fontFamily}`;
-                const textW = ctx.measureText(text).width;
-                if (textW > maxAllowedSubW) {
-                    activeFontSize = Math.max(16, Math.floor(fontSize * (maxAllowedSubW / textW)));
+                const rawMeasure = ctx.measureText(text).width;
+                if (rawMeasure > maxAllowedSubW) {
+                    activeFontSize = Math.max(16, Math.floor(fontSize * (maxAllowedSubW / rawMeasure)));
                     ctx.font = `900 ${activeFontSize}px ${fontFamily}`;
                 }
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
 
-                // Subtitle Styles & Animation rendering
-                if (textAnimationEffect === "karaoke_glow") {
-                    // Karaoke word highlight: active word glows bright yellow/cyan
-                    const words = text.split(" ");
-                    const wordIdx = Math.min(words.length - 1, Math.floor(cueProgress * words.length));
-                    
-                    const spaceW = ctx.measureText(" ").width;
-                    const wordWidths = words.map(w => ctx.measureText(w).width);
-                    const totalLineW = wordWidths.reduce((a, b) => a + b, 0) + (words.length - 1) * spaceW;
-                    let curX = -totalLineW / 2;
+                // Words array with timestamps
+                const wordsList = activeSub.words || text.split(" ").map((w, idx, arr) => ({
+                    word: w,
+                    start: activeSub.start + (idx / arr.length) * cueDur,
+                    end: activeSub.start + ((idx + 1) / arr.length) * cueDur
+                }));
 
-                    words.forEach((w, i) => {
-                        const isCurrent = i === wordIdx;
-                        const wWidth = wordWidths[i];
+                // Calculate horizontal word layout
+                const spaceW = ctx.measureText(" ").width;
+                const wordWidths = wordsList.map(w => ctx.measureText(w.word).width);
+                const totalLineW = wordWidths.reduce((a, b) => a + b, 0) + (wordsList.length - 1) * spaceW;
+
+                // ── STYLE 1: TIKTOK_POP (CapCut Viral Word-by-Word Bounce & Highlight) ──
+                if (textAnimationEffect === "tiktok_pop") {
+                    let curX = -totalLineW / 2;
+                    wordsList.forEach((wObj, idx) => {
+                        const isSpeaking = time >= wObj.start && time <= wObj.end;
+                        const hasSpoken = time > wObj.end;
+                        const wWidth = wordWidths[idx];
                         const wordCenter = curX + wWidth / 2;
 
                         ctx.save();
-                        if (isCurrent) {
-                            ctx.shadowColor = "#FACC15";
+                        ctx.translate(wordCenter, 0);
+
+                        let wScale = 1.0;
+                        let wColor = textColor || "#FFFFFF";
+                        if (isSpeaking) {
+                            // Active word jumps 1.25x and turns radiant yellow/gold
+                            const wProgress = (time - wObj.start) / Math.max(0.05, wObj.end - wObj.start);
+                            wScale = 1.0 + Math.sin(Math.min(1, wProgress) * Math.PI) * 0.28;
+                            wColor = "#FFE600";
+                            ctx.shadowColor = "rgba(255, 230, 0, 0.9)";
                             ctx.shadowBlur = 18;
-                            ctx.fillStyle = "#FACC15";
+                        } else if (hasSpoken) {
+                            wColor = "#FFFFFF";
+                            ctx.shadowColor = "rgba(0,0,0,0.95)";
+                            ctx.shadowBlur = 10;
                         } else {
-                            ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-                            ctx.shadowBlur = 6;
-                            ctx.fillStyle = "#FFFFFF";
+                            wColor = "rgba(255, 255, 255, 0.85)";
+                            ctx.shadowColor = "rgba(0,0,0,0.8)";
+                            ctx.shadowBlur = 8;
                         }
 
-                        ctx.lineWidth = 6;
+                        ctx.scale(wScale, wScale);
+                        ctx.lineWidth = Math.max(6, Math.round(activeFontSize * 0.24));
                         ctx.strokeStyle = "#000000";
                         ctx.lineJoin = "round";
-                        ctx.strokeText(w, wordCenter, 0);
-                        ctx.fillText(w, wordCenter, 0);
+                        ctx.strokeText(wObj.word, 0, 0);
+
+                        ctx.fillStyle = wColor;
+                        ctx.fillText(wObj.word, 0, 0);
                         ctx.restore();
 
                         curX += wWidth + spaceW;
                     });
 
-                } else if (subtitleStyle === "tiktok_stroke" || textAnimationEffect === "tiktok_pop") {
-                    // TikTok Thick Stroke with vibrant color & Power Word emphasis
-                    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
-                    ctx.shadowBlur = 12;
-                    ctx.lineWidth = 8;
-                    ctx.strokeStyle = "#000000";
-                    ctx.lineJoin = "round";
-                    ctx.strokeText(text, 0, 0);
+                // ── STYLE 2: KARAOKE_GLOW (Vệt sáng Neon lướt theo từng âm tiết) ──
+                } else if (textAnimationEffect === "karaoke_glow") {
+                    let curX = -totalLineW / 2;
+                    wordsList.forEach((wObj, idx) => {
+                        const isSpeaking = time >= wObj.start && time <= wObj.end;
+                        const hasSpoken = time > wObj.end;
+                        const wWidth = wordWidths[idx];
+                        const wordCenter = curX + wWidth / 2;
 
-                    ctx.fillStyle = matchedPowerWord ? "#FACC15" : textColor;
-                    ctx.fillText(text, 0, 0);
-
-                    // Power Word Tag if active
-                    if (matchedPowerWord) {
                         ctx.save();
-                        ctx.font = `900 11px ${fontFamily}`;
-                        ctx.fillStyle = "#DC2626";
-                        const tagW = ctx.measureText(`🔥 ${matchedPowerWord}`).width + 16;
-                        ctx.beginPath();
-                        ctx.roundRect(-tagW / 2, -fontSize - 12, tagW, 20, 6);
-                        ctx.fill();
-                        ctx.fillStyle = "#FFFFFF";
-                        ctx.fillText(`🔥 ${matchedPowerWord}`, 0, -fontSize - 2);
+                        ctx.translate(wordCenter, 0);
+
+                        ctx.lineWidth = Math.max(6, Math.round(activeFontSize * 0.22));
+                        ctx.strokeStyle = "#000000";
+                        ctx.lineJoin = "round";
+
+                        if (isSpeaking) {
+                            ctx.shadowColor = "#00F2FE";
+                            ctx.shadowBlur = 24;
+                            ctx.strokeText(wObj.word, 0, 0);
+                            ctx.fillStyle = "#00F2FE";
+                            ctx.fillText(wObj.word, 0, 0);
+
+                            // Glowing dot beneath active word
+                            ctx.beginPath();
+                            ctx.arc(0, activeFontSize * 0.65, 4, 0, Math.PI * 2);
+                            ctx.fillStyle = "#00F2FE";
+                            ctx.fill();
+                        } else if (hasSpoken) {
+                            ctx.shadowColor = "rgba(0,0,0,0.85)";
+                            ctx.shadowBlur = 8;
+                            ctx.strokeText(wObj.word, 0, 0);
+                            ctx.fillStyle = "#FFFFFF";
+                            ctx.fillText(wObj.word, 0, 0);
+                        } else {
+                            ctx.shadowColor = "rgba(0,0,0,0.6)";
+                            ctx.shadowBlur = 6;
+                            ctx.strokeText(wObj.word, 0, 0);
+                            ctx.fillStyle = "rgba(255, 255, 255, 0.65)";
+                            ctx.fillText(wObj.word, 0, 0);
+                        }
                         ctx.restore();
-                    }
 
-                } else if (subtitleStyle === "neon_glow") {
-                    ctx.shadowColor = textColor;
-                    ctx.shadowBlur = 22;
-                    ctx.lineWidth = 6;
-                    ctx.strokeStyle = "#000000";
-                    ctx.lineJoin = "round";
-                    ctx.strokeText(text, 0, 0);
-                    ctx.fillStyle = textColor;
-                    ctx.fillText(text, 0, 0);
+                        curX += wWidth + spaceW;
+                    });
 
+                // ── STYLE 3: BICOLOR_PUNCH (CapCut 2 Màu Tương Phản Thời Thượng) ──
+                } else if (textAnimationEffect === "bicolor_punch") {
+                    let curX = -totalLineW / 2;
+                    wordsList.forEach((wObj, idx) => {
+                        const wWidth = wordWidths[idx];
+                        const wordCenter = curX + wWidth / 2;
+                        const isPower = matchedPowerWord && wObj.word.toUpperCase().includes(matchedPowerWord.toUpperCase());
+                        const isSpeaking = time >= wObj.start && time <= wObj.end;
+
+                        ctx.save();
+                        ctx.translate(wordCenter, 0);
+                        if (isSpeaking) {
+                            ctx.scale(1.15, 1.15);
+                        }
+
+                        // Thick 3D drop shadow
+                        ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+                        ctx.shadowBlur = 12;
+                        ctx.shadowOffsetX = 3;
+                        ctx.shadowOffsetY = 4;
+
+                        ctx.lineWidth = Math.max(6, Math.round(activeFontSize * 0.22));
+                        ctx.strokeStyle = "#000000";
+                        ctx.lineJoin = "round";
+                        ctx.strokeText(wObj.word, 0, 0);
+
+                        // Dual tone: odd words or power words get vibrant yellow/orange, even words white
+                        ctx.fillStyle = isPower ? "#FF4500" : (idx % 2 === 0 ? "#FFE600" : "#FFFFFF");
+                        ctx.fillText(wObj.word, 0, 0);
+                        ctx.restore();
+
+                        curX += wWidth + spaceW;
+                    });
+
+                // ── STYLE 4: BOX_PILL (Hộp bo góc CapCut Pro Gen Z) ──
                 } else if (subtitleStyle === "pill_dark" || textAnimationEffect === "box_pill") {
-                    const textWidth = ctx.measureText(text).width;
-                    const pillW = textWidth + 36;
-                    const pillH = fontSize + 22;
+                    const pillW = totalLineW + 44;
+                    const pillH = activeFontSize + 26;
 
-                    ctx.fillStyle = "rgba(10, 15, 30, 0.85)";
-                    ctx.shadowColor = "rgba(0,0,0,0.5)";
-                    ctx.shadowBlur = 10;
+                    // Frosted dark pill background
+                    ctx.save();
+                    ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
+                    ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+                    ctx.shadowBlur = 14;
                     ctx.beginPath();
-                    ctx.roundRect(-pillW / 2, -pillH / 2, pillW, pillH, 12);
+                    ctx.roundRect(-pillW / 2, -pillH / 2, pillW, pillH, 14);
                     ctx.fill();
 
-                    // Pill border
-                    ctx.strokeStyle = matchedPowerWord ? "#FACC15" : "rgba(255, 255, 255, 0.25)";
-                    ctx.lineWidth = 2;
+                    // Golden/Cyan accent rim
+                    ctx.strokeStyle = matchedPowerWord ? "#FACC15" : "rgba(255, 255, 255, 0.35)";
+                    ctx.lineWidth = 2.5;
                     ctx.stroke();
+                    ctx.restore();
 
-                    ctx.fillStyle = matchedPowerWord ? "#FACC15" : "#FFFFFF";
-                    ctx.fillText(text, 0, 0);
+                    let curX = -totalLineW / 2;
+                    wordsList.forEach((wObj, idx) => {
+                        const isSpeaking = time >= wObj.start && time <= wObj.end;
+                        const wWidth = wordWidths[idx];
+                        const wordCenter = curX + wWidth / 2;
 
+                        ctx.save();
+                        ctx.translate(wordCenter, 0);
+                        if (isSpeaking) {
+                            ctx.scale(1.12, 1.12);
+                            ctx.fillStyle = "#FFE600";
+                            ctx.shadowColor = "#FFE600";
+                            ctx.shadowBlur = 12;
+                        } else {
+                            ctx.fillStyle = "#FFFFFF";
+                        }
+                        ctx.fillText(wObj.word, 0, 0);
+                        ctx.restore();
+
+                        curX += wWidth + spaceW;
+                    });
+
+                // ── STYLE 5: FIRE_SHAKE / CLEAN_FADE (Viền đen nét căng dứt khoát) ──
                 } else {
-                    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-                    ctx.shadowBlur = 8;
-                    ctx.lineWidth = 6;
+                    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+                    ctx.shadowBlur = 12;
+                    ctx.lineWidth = Math.max(6, Math.round(activeFontSize * 0.24));
                     ctx.strokeStyle = "#000000";
                     ctx.lineJoin = "round";
                     ctx.strokeText(text, 0, 0);
-                    ctx.fillStyle = textColor;
+
+                    ctx.fillStyle = matchedPowerWord ? "#FFE600" : (textColor || "#FFFFFF");
                     ctx.fillText(text, 0, 0);
+                }
+
+                // If Power Word matched in this phrase, render top mini badge
+                if (matchedPowerWord && textAnimationEffect !== "box_pill") {
+                    ctx.save();
+                    ctx.font = `900 ${Math.max(10, Math.round(activeFontSize * 0.38))}px ${fontFamily}`;
+                    ctx.fillStyle = "#DC2626";
+                    ctx.shadowColor = "rgba(220, 38, 38, 0.8)";
+                    ctx.shadowBlur = 10;
+                    const tagText = `🔥 ${matchedPowerWord}`;
+                    const tagW = ctx.measureText(tagText).width + 16;
+                    const tagH = Math.max(18, Math.round(activeFontSize * 0.6));
+                    ctx.beginPath();
+                    ctx.roundRect(-tagW / 2, -activeFontSize - tagH + 2, tagW, tagH, 6);
+                    ctx.fill();
+
+                    ctx.fillStyle = "#FFFFFF";
+                    ctx.fillText(tagText, 0, -activeFontSize - tagH / 2 + 2);
+                    ctx.restore();
                 }
 
                 ctx.restore();
@@ -2986,6 +3141,7 @@ export default function AutoVideoStudioPage() {
                                 >
                                     <option value="auto">✨ Tự động luân phiên (Khuyên dùng)</option>
                                     <option value="crossfade">🌫️ Mờ chồng (Crossfade - Mượt mà)</option>
+                                    <option value="zoom_in">🔍 Zoom đẩy khung hình (Zoom Push - Hút mắt)</option>
                                     <option value="slide_left">➡️ Trượt ngang (Slide Left - Năng động)</option>
                                     <option value="white_flash">💥 Chớp sáng (White Flash - Nổi bật)</option>
                                     <option value="hard_cut">⚡ Cắt nhanh (Hard Cut - Chuẩn TikTok)</option>
@@ -3469,11 +3625,12 @@ export default function AutoVideoStudioPage() {
                                     onChange={(e) => setTextAnimationEffect(e.target.value as any)}
                                     className="w-full p-2.5 border border-purple-200 rounded-lg bg-purple-50/40 outline-none text-xs font-bold text-purple-900 shadow-sm"
                                 >
-                                    <option value="tiktok_pop">🔥 Nảy chữ dồn dập (TikTok Pop-in Bounce - Khuyên dùng)</option>
-                                    <option value="karaoke_glow">🌟 Karaoke Neon Glow (Từ đang nói phát sáng rực rỡ)</option>
-                                    <option value="fire_shake">⚡ Rung động lực chốt đơn (Dynamic Shake khi có từ khóa)</option>
-                                    <option value="box_pill">🔲 Hộp Pill bo góc Gen Z (Đậm chất CapCut Pro)</option>
-                                    <option value="clean_fade">✨ Chữ tĩnh tinh gọn viền đen dày</option>
+                                    <option value="tiktok_pop">🔥 Nảy chữ từng từ CapCut (TikTok Pop Bounce - Khuyên dùng)</option>
+                                    <option value="karaoke_glow">🌟 Karaoke Neon Glow (Tô sáng & Chấm nhịp theo giọng đọc)</option>
+                                    <option value="bicolor_punch">🎨 CapCut 2 Màu Tương Phản (Vàng Chanh + Trắng Sành Điệu)</option>
+                                    <option value="fire_shake">⚡ Dynamic Slam & Shake (Đập dứt khoát & Rung năng lượng)</option>
+                                    <option value="box_pill">🏷️ Gen Z Dark Badge (Hộp bo góc CapCut Pro viền vàng)</option>
+                                    <option value="clean_fade">✨ Chữ nét căng viền đen dày (Classic Bold Stroke)</option>
                                 </select>
                             </div>
 
@@ -3505,8 +3662,8 @@ export default function AutoVideoStudioPage() {
                                 </div>
                             </div>
 
-                            {/* Subtitle Sync Offset Slider */}
-                            <div className="space-y-1.5 sm:col-span-2 p-3 rounded-xl bg-purple-50/40 border border-purple-200">
+                            {/* Subtitle Sync Offset Slider & Quick Nudge Buttons */}
+                            <div className="space-y-2 sm:col-span-2 p-3 rounded-xl bg-purple-50/40 border border-purple-200">
                                 <div className="flex items-center justify-between">
                                     <label className="font-semibold text-purple-900 flex items-center gap-1.5">
                                         <Sliders className="w-3.5 h-3.5 text-purple-600" />
@@ -3529,17 +3686,60 @@ export default function AutoVideoStudioPage() {
                                 </div>
                                 <input
                                     type="range"
-                                    min={-1.0}
-                                    max={1.0}
+                                    min={-2.0}
+                                    max={2.0}
                                     step={0.05}
                                     value={subtitleOffset}
                                     onChange={(e) => setSubtitleOffset(parseFloat(e.target.value))}
                                     className="w-full accent-purple-600"
                                 />
                                 <div className="flex items-center justify-between text-[10px] text-gray-400">
-                                    <span>-1.0s (Chữ hiện sớm hơn)</span>
+                                    <span>-2.0s (Chữ hiện sớm)</span>
                                     <span>0.0s (Chuẩn đồng bộ AI)</span>
-                                    <span>+1.0s (Chữ hiện trễ hơn)</span>
+                                    <span>+2.0s (Chữ hiện trễ)</span>
+                                </div>
+                                {/* Quick Nudge Buttons */}
+                                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                    <span className="text-[10px] text-purple-800 font-bold mr-1">Chỉnh nhanh:</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSubtitleOffset(prev => Math.max(-2, +(prev - 0.2).toFixed(2)))}
+                                        className="px-2 py-0.5 rounded bg-white border border-purple-200 text-[10px] font-bold text-purple-700 hover:bg-purple-100"
+                                        title="Chữ hiện sớm hơn 0.2s"
+                                    >
+                                        -0.2s
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSubtitleOffset(prev => Math.max(-2, +(prev - 0.1).toFixed(2)))}
+                                        className="px-2 py-0.5 rounded bg-white border border-purple-200 text-[10px] font-bold text-purple-700 hover:bg-purple-100"
+                                        title="Chữ hiện sớm hơn 0.1s"
+                                    >
+                                        -0.1s
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSubtitleOffset(0)}
+                                        className="px-2.5 py-0.5 rounded bg-purple-600 text-white text-[10px] font-bold hover:bg-purple-700"
+                                    >
+                                        0s (Chuẩn AI)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSubtitleOffset(prev => Math.min(2, +(prev + 0.1).toFixed(2)))}
+                                        className="px-2 py-0.5 rounded bg-white border border-purple-200 text-[10px] font-bold text-purple-700 hover:bg-purple-100"
+                                        title="Chữ hiện trễ hơn 0.1s"
+                                    >
+                                        +0.1s
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSubtitleOffset(prev => Math.min(2, +(prev + 0.2).toFixed(2)))}
+                                        className="px-2 py-0.5 rounded bg-white border border-purple-200 text-[10px] font-bold text-purple-700 hover:bg-purple-100"
+                                        title="Chữ hiện trễ hơn 0.2s"
+                                    >
+                                        +0.2s
+                                    </button>
                                 </div>
                             </div>
 
