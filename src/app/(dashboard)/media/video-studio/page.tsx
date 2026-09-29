@@ -33,10 +33,27 @@ import {
     Flame,
     Copy,
     Check,
-    ExternalLink
+    ExternalLink,
+    FolderOpen,
+    Save,
+    Clapperboard,
+    Camera,
+    Sliders,
+    Bookmark,
+    FileText,
+    ChevronDown,
+    ChevronUp,
+    X
 } from "lucide-react";
 import Link from "next/link";
 import { getVoiceHistory, VoiceHistoryItem } from "@/lib/voiceHistoryStore";
+import {
+    saveVideoProject,
+    getVideoProjects,
+    deleteVideoProject,
+    VideoProjectItem,
+    DirectorGuide
+} from "@/lib/videoProjectStore";
 
 interface VideoClip {
     id: string;
@@ -256,8 +273,18 @@ export default function AutoVideoStudioPage() {
     const [textColor, setTextColor] = useState<string>("#FACC15"); // Bright yellow
     const [textPosition, setTextPosition] = useState<"bottom" | "center" | "top">("bottom");
     const [subtitleStyle, setSubtitleStyle] = useState<"tiktok_stroke" | "neon_glow" | "pill_dark" | "clean_shadow">("tiktok_stroke");
+    const [textAnimationEffect, setTextAnimationEffect] = useState<"tiktok_pop" | "karaoke_glow" | "fire_shake" | "box_pill" | "clean_fade">("tiktok_pop");
+    const [keyPowerWords, setKeyPowerWords] = useState<string[]>(["DATE MỚI TINH", "GIÒN RỤM", "GIÁ SỈ TẬN KHO", "VỪA CẬP BẾN"]);
+    const [subtitleOffset, setSubtitleOffset] = useState<number>(0);
     const [customHookTitle, setCustomHookTitle] = useState("🔥 TỔNG KHO ĂN VẶT & BỘT PHÔ MAI BOYO GIÁ SỈ!");
     const [showHookTitle, setShowHookTitle] = useState(true);
+
+    // ── DIRECTOR'S SCRIPTBOOK & PROJECT HISTORY ──
+    const [directorGuide, setDirectorGuide] = useState<DirectorGuide | null>(null);
+    const [videoProjects, setVideoProjects] = useState<VideoProjectItem[]>([]);
+    const [isProjectHistoryOpen, setIsProjectHistoryOpen] = useState(false);
+    const [isDirectorHubOpen, setIsDirectorHubOpen] = useState(false);
+    const [isSavingProject, setIsSavingProject] = useState(false);
 
     // ── STEP 4: Transitions & Pacing ──
     const [transitionEffect, setTransitionEffect] = useState<"auto" | "crossfade" | "slide_left" | "white_flash" | "hard_cut">("auto");
@@ -330,11 +357,21 @@ export default function AutoVideoStudioPage() {
         }
     }, []);
 
-    // Load History & Financials on mount
+    // Load History & Financials & Saved Projects on mount
     useEffect(() => {
         loadHistory();
         loadFinancialTracker();
+        loadSavedProjects();
     }, []);
+
+    const loadSavedProjects = async () => {
+        try {
+            const list = await getVideoProjects();
+            setVideoProjects(list);
+        } catch (e) {
+            console.warn("Lỗi tải lịch sử dự án:", e);
+        }
+    };
 
     const loadFinancialTracker = () => {
         if (typeof window === "undefined") return;
@@ -423,42 +460,49 @@ export default function AutoVideoStudioPage() {
         return null;
     }, [bgmChoice, bgmCustomUrl]);
 
-    // Subtitle cues generation
+    // Subtitle cues generation (Punctuation-weighted & Offset-synchronized)
     const subtitleCues = useMemo<SubtitleCue[]>(() => {
         if (!selectedVoiceText.trim() || voiceDuration <= 0) return [];
 
         const sentences = selectedVoiceText.split(/(?<=[.!?,;:\n])\s+/).filter(s => s.trim().length > 0);
-        const phrases: string[] = [];
+        const phrases: { text: string; weight: number }[] = [];
 
         sentences.forEach(s => {
             const words = s.trim().split(/\s+/);
-            if (words.length <= 5) {
-                phrases.push(words.join(" "));
+            if (words.length <= 4) {
+                const hasComma = /[,;]/.test(s);
+                const hasPeriod = /[.!?\n]/.test(s);
+                const weight = words.length + (hasComma ? 0.7 : 0) + (hasPeriod ? 1.4 : 0);
+                phrases.push({ text: words.join(" "), weight });
             } else {
                 for (let i = 0; i < words.length; i += 4) {
-                    phrases.push(words.slice(i, i + 4).join(" "));
+                    const chunk = words.slice(i, i + 4);
+                    const chunkText = chunk.join(" ");
+                    const hasComma = /[,;]/.test(chunkText);
+                    const hasPeriod = /[.!?\n]/.test(chunkText);
+                    const weight = chunk.length + (hasComma ? 0.7 : 0) + (hasPeriod ? 1.4 : 0);
+                    phrases.push({ text: chunkText, weight });
                 }
             }
         });
 
         if (phrases.length === 0) return [];
 
-        const totalWords = selectedVoiceText.trim().split(/\s+/).length;
-        const secondsPerWord = voiceDuration / Math.max(1, totalWords);
+        const totalWeight = phrases.reduce((acc, p) => acc + p.weight, 0);
+        const durationPerWeight = voiceDuration / Math.max(1, totalWeight);
 
-        let currentStartTime = 0;
+        let currentStartTime = Math.max(0, subtitleOffset);
         return phrases.map(phrase => {
-            const wCount = phrase.split(/\s+/).length;
-            const duration = Math.max(1.1, wCount * secondsPerWord);
+            const rawDuration = Math.max(0.9, phrase.weight * durationPerWeight);
             const cue: SubtitleCue = {
                 start: currentStartTime,
-                end: Math.min(voiceDuration, currentStartTime + duration),
-                text: phrase
+                end: Math.min(voiceDuration, currentStartTime + rawDuration),
+                text: phrase.text
             };
-            currentStartTime += duration;
+            currentStartTime += rawDuration;
             return cue;
         });
-    }, [selectedVoiceText, voiceDuration]);
+    }, [selectedVoiceText, voiceDuration, subtitleOffset]);
 
     // Project Total Duration
     const totalDuration = voiceDuration > 0 ? voiceDuration : (clips.length > 0 ? clips.reduce((acc, c) => acc + c.duration, 0) : 30);
@@ -613,23 +657,65 @@ export default function AutoVideoStudioPage() {
 
             const data = await res.json();
             if (data.success) {
-                setCustomHookTitle(data.hookTitle || customHookTitle);
-                setSelectedVoiceText(data.script || selectedVoiceText);
+                const newHook = data.hookTitle || customHookTitle;
+                const newScript = data.script || selectedVoiceText;
+                setCustomHookTitle(newHook);
+                setSelectedVoiceText(newScript);
                 setClipSwitchInterval(data.pacing || 2.5);
                 setTransitionEffect(data.transition || "auto");
                 setTextColor(data.textColor || "#FACC15");
                 setSubtitleStyle(data.subtitleStyle || "tiktok_stroke");
+                if (data.textAnimationEffect) setTextAnimationEffect(data.textAnimationEffect);
+                if (data.keyPowerWords && data.keyPowerWords.length > 0) {
+                    setKeyPowerWords(data.keyPowerWords);
+                }
                 setFontFamily("'Be Vietnam Pro', Montserrat, sans-serif");
                 setVoiceDuration(45);
                 setShowHookTitle(true);
                 setEnableSubtitles(true);
+
+                if (data.directorGuide) {
+                    setDirectorGuide(data.directorGuide);
+                    setIsDirectorHubOpen(true);
+                }
                 if (data.storyboard && data.storyboard.length > 0) {
                     setCloneStoryboard(data.storyboard);
                 }
                 if (clips.length === 0) {
                     handleLoadDemoClips();
                 }
-                alert("✨ AI đã học phong cách video mẫu thành công! Kịch bản, tiêu đề hook và nhịp dựng đã được nạp tự động vào Studio.");
+
+                // Auto-save project into history
+                const autoProj: VideoProjectItem = {
+                    id: `proj-${Date.now()}`,
+                    title: cloneTopic.trim(),
+                    topic: cloneTopic.trim(),
+                    hookTitle: newHook,
+                    script: newScript,
+                    directorGuide: data.directorGuide || {
+                        hookVisual: "",
+                        spokenHook: "",
+                        pacingSpeed: "2.5s",
+                        keyPowerWords: data.keyPowerWords || keyPowerWords,
+                        callToAction: "",
+                        shootingTips: [],
+                        shots: []
+                    },
+                    aspectRatio,
+                    fontFamily: "'Be Vietnam Pro', Montserrat, sans-serif",
+                    fontSize,
+                    textColor: data.textColor || "#FACC15",
+                    subtitleStyle: data.subtitleStyle || "tiktok_stroke",
+                    textAnimationEffect: data.textAnimationEffect || "tiktok_pop",
+                    clipSwitchInterval: data.pacing || 2.5,
+                    transitionEffect: data.transition || "auto",
+                    bgmChoice,
+                    createdAt: Date.now()
+                };
+                await saveVideoProject(autoProj);
+                await loadSavedProjects();
+
+                alert("🎬 Đạo diễn AI đã thiết kế kịch bản & 5 góc quay thực chiến thành công! Dự án đã được lưu tự động vào Sổ Tay Đạo Diễn.");
             } else {
                 alert("Không thể phân tích: " + (data.error || "Lỗi không xác định"));
             }
@@ -637,6 +723,125 @@ export default function AutoVideoStudioPage() {
             alert("Lỗi khi kết nối AI: " + e.message);
         } finally {
             setIsAnalyzingClone(false);
+        }
+    };
+
+    const handleManualSaveProject = async () => {
+        setIsSavingProject(true);
+        try {
+            const item: VideoProjectItem = {
+                id: `proj-${Date.now()}`,
+                title: cloneTopic || customHookTitle.slice(0, 45) || "Dự án video LYHU",
+                topic: cloneTopic || customHookTitle,
+                hookTitle: customHookTitle,
+                script: selectedVoiceText,
+                directorGuide: directorGuide || {
+                    hookVisual: "",
+                    spokenHook: "",
+                    pacingSpeed: `${clipSwitchInterval}s`,
+                    keyPowerWords,
+                    callToAction: "Nhắn liền LYHU để nhận mẫu thử & bảng giá sỉ!",
+                    shootingTips: [
+                        "Quay dọc 9:16 bằng điện thoại.",
+                        "Góc cận cảnh chi tiết và đổi góc mỗi 2.5s."
+                    ],
+                    shots: []
+                },
+                aspectRatio,
+                fontFamily,
+                fontSize,
+                textColor,
+                subtitleStyle,
+                textAnimationEffect,
+                clipSwitchInterval,
+                transitionEffect,
+                bgmChoice,
+                createdAt: Date.now(),
+                renderedVideoUrl: renderedVideoUrl || undefined,
+                renderedFormat
+            };
+            await saveVideoProject(item);
+            await loadSavedProjects();
+            alert("💾 Đã lưu dự án video và kịch bản vào Sổ Tay Đạo Diễn thành công!");
+        } catch (e: any) {
+            alert("Lỗi khi lưu dự án: " + e.message);
+        } finally {
+            setIsSavingProject(false);
+        }
+    };
+
+    const handleLoadProject = (proj: VideoProjectItem) => {
+        setCloneTopic(proj.topic || proj.title);
+        setCustomHookTitle(proj.hookTitle);
+        setSelectedVoiceText(proj.script);
+        setAspectRatio(proj.aspectRatio);
+        setFontFamily(proj.fontFamily);
+        setFontSize(proj.fontSize || 28);
+        setTextColor(proj.textColor);
+        setSubtitleStyle(proj.subtitleStyle as any);
+        if (proj.textAnimationEffect) setTextAnimationEffect(proj.textAnimationEffect as any);
+        if (proj.directorGuide?.keyPowerWords) setKeyPowerWords(proj.directorGuide.keyPowerWords);
+        setClipSwitchInterval(proj.clipSwitchInterval);
+        setTransitionEffect(proj.transitionEffect as any);
+        setBgmChoice(proj.bgmChoice);
+        if (proj.directorGuide) {
+            setDirectorGuide(proj.directorGuide);
+            setIsDirectorHubOpen(true);
+        }
+        if (proj.renderedVideoUrl) {
+            setRenderedVideoUrl(proj.renderedVideoUrl);
+        }
+        setIsProjectHistoryOpen(false);
+        alert(`📂 Đã nạp lại dự án "${proj.title}" vào Studio!`);
+    };
+
+    const handleDeleteProject = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm("Bạn có chắc muốn xóa dự án này khỏi lịch sử?")) return;
+        await deleteVideoProject(id);
+        await loadSavedProjects();
+    };
+
+    const handleCopyDirectorShotlist = () => {
+        if (!directorGuide || !directorGuide.shots || directorGuide.shots.length === 0) {
+            const shotlistText = `🎬 KỊCH BẢN QUAY ĐIỆN THOẠI - TỔNG KHO LYHU\n📌 Tiêu đề: ${customHookTitle}\n🎯 Hook 3s đầu: Cận cảnh hành động thực tế\n📝 Lời thoại:\n"${selectedVoiceText}"\n📢 Kêu gọi: Nhắn liền LYHU để nhận mẫu thử & bảng giá sỉ!`;
+            navigator.clipboard.writeText(shotlistText);
+            alert("📋 Đã copy kịch bản gửi đội quay qua Zalo!");
+            return;
+        }
+
+        let text = `🎬 BẢNG PHÂN CẢNH ĐẠO DIỄN - TỔNG KHO SỈ LYHU\n`;
+        text += `📌 Chủ đề: ${cloneTopic || customHookTitle}\n`;
+        text += `🎯 Visual Hook 3s đầu: ${directorGuide.hookVisual}\n\n`;
+        text += `📸 PHÂN CẢNH 5 SHOT QUAY BẰNG ĐIỆN THOẠI (2.5s / cảnh):\n`;
+        directorGuide.shots.forEach(s => {
+            text += `• Cảnh ${s.shotNumber} [${s.shotType}] - Máy: ${s.cameraMovement}\n`;
+            text += `  - Thao tác: ${s.action}\n`;
+            text += `  - Lời thoại: "${s.dialogueSnippet}"\n`;
+            text += `  - Âm thanh SFX: ${s.sfx}\n\n`;
+        });
+        text += `📢 Kêu gọi hành động (CTA): ${directorGuide.callToAction}\n`;
+        text += `💡 Mẹo quay: ${directorGuide.shootingTips.join(" • ")}`;
+
+        navigator.clipboard.writeText(text);
+        alert("📋 Đã copy toàn bộ bảng phân cảnh đạo diễn để gửi qua Zalo cho đội quay!");
+    };
+
+    const handleScanPowerWords = () => {
+        if (!selectedVoiceText.trim()) return;
+        const candidates = [
+            "DATE MỚI TINH", "DATE MỚI TOANH", "GIÒN RỤM", "GIÁ SỈ TẬN XƯỞNG", "GIÁ SỈ TẬN KHO",
+            "TRỨNG CUA", "TRUFFLE", "BỘT PHÔ MAI", "BOYO", "BÒ BÍT TẾT", "12H ĐÊM", "11H ĐÊM",
+            "CONTAINER", "MẪU THỬ MIỄN PHÍ", "ĐỦ VỊ", "CHÁY HÀNG", "CHỐT ĐƠN"
+        ];
+        const upper = selectedVoiceText.toUpperCase();
+        const matched = candidates.filter(c => upper.includes(c));
+        if (matched.length > 0) {
+            setKeyPowerWords(matched);
+            alert(`✨ AI đã trích xuất được ${matched.length} từ khóa đắt giá: ${matched.join(", ")}`);
+        } else {
+            setKeyPowerWords(["DATE MỚI TINH", "GIÒN RỤM", "GIÁ SỈ TẬN KHO"]);
+            alert("✨ Đã cập nhật bộ từ khóa nổi bật chuẩn ăn vặt cho video!");
         }
     };
 
@@ -902,64 +1107,150 @@ export default function AutoVideoStudioPage() {
             ctx.restore();
         }
 
-        // 4. Draw Animated Subtitle with Typography & Styles
+        // 4. Draw Animated Subtitle with Kinetic Typography & Creative Effects
         if (enableSubtitles) {
             const activeSub = subtitleCues.find(cue => time >= cue.start && time <= cue.end);
             if (activeSub) {
                 ctx.save();
                 const text = activeSub.text;
+                const cueProgress = Math.max(0, Math.min(1, (time - activeSub.start) / Math.max(0.1, activeSub.end - activeSub.start)));
+                const cueElapsed = time - activeSub.start;
 
                 let subY = ch * 0.82;
                 if (textPosition === "center") subY = ch * 0.52;
                 if (textPosition === "top") subY = ch * 0.28;
 
+                // Check for Power Words in current phrase
+                const uppercaseText = text.toUpperCase();
+                const matchedPowerWord = keyPowerWords.find(pw => pw && uppercaseText.includes(pw.toUpperCase()));
+
+                // Animation transforms
+                let scale = 1.0;
+                let shakeX = 0;
+                let shakeY = 0;
+
+                if (textAnimationEffect === "tiktok_pop") {
+                    // Elastic pop-in bounce on entry (first 0.22s)
+                    if (cueElapsed < 0.22) {
+                        const t = cueElapsed / 0.22;
+                        scale = 1.0 + Math.sin(t * Math.PI) * 0.22;
+                    }
+                } else if (textAnimationEffect === "fire_shake") {
+                    if (matchedPowerWord) {
+                        shakeX = Math.sin(time * 35) * 2.5;
+                        shakeY = Math.cos(time * 28) * 2;
+                    }
+                }
+
+                ctx.translate(cw / 2 + shakeX, subY + shakeY);
+                ctx.scale(scale, scale);
+
                 ctx.font = `900 ${fontSize}px ${fontFamily}`;
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
 
-                if (subtitleStyle === "tiktok_stroke") {
-                    ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
+                // Subtitle Styles & Animation rendering
+                if (textAnimationEffect === "karaoke_glow") {
+                    // Karaoke word highlight: active word glows bright yellow/cyan
+                    const words = text.split(" ");
+                    const wordIdx = Math.min(words.length - 1, Math.floor(cueProgress * words.length));
+                    
+                    const spaceW = ctx.measureText(" ").width;
+                    const wordWidths = words.map(w => ctx.measureText(w).width);
+                    const totalLineW = wordWidths.reduce((a, b) => a + b, 0) + (words.length - 1) * spaceW;
+                    let curX = -totalLineW / 2;
+
+                    words.forEach((w, i) => {
+                        const isCurrent = i === wordIdx;
+                        const wWidth = wordWidths[i];
+                        const wordCenter = curX + wWidth / 2;
+
+                        ctx.save();
+                        if (isCurrent) {
+                            ctx.shadowColor = "#FACC15";
+                            ctx.shadowBlur = 18;
+                            ctx.fillStyle = "#FACC15";
+                        } else {
+                            ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+                            ctx.shadowBlur = 6;
+                            ctx.fillStyle = "#FFFFFF";
+                        }
+
+                        ctx.lineWidth = 6;
+                        ctx.strokeStyle = "#000000";
+                        ctx.lineJoin = "round";
+                        ctx.strokeText(w, wordCenter, 0);
+                        ctx.fillText(w, wordCenter, 0);
+                        ctx.restore();
+
+                        curX += wWidth + spaceW;
+                    });
+
+                } else if (subtitleStyle === "tiktok_stroke" || textAnimationEffect === "tiktok_pop") {
+                    // TikTok Thick Stroke with vibrant color & Power Word emphasis
+                    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
                     ctx.shadowBlur = 12;
-                    ctx.lineWidth = 7;
+                    ctx.lineWidth = 8;
                     ctx.strokeStyle = "#000000";
                     ctx.lineJoin = "round";
-                    ctx.strokeText(text, cw / 2, subY);
+                    ctx.strokeText(text, 0, 0);
 
-                    ctx.fillStyle = textColor;
-                    ctx.fillText(text, cw / 2, subY);
+                    ctx.fillStyle = matchedPowerWord ? "#FACC15" : textColor;
+                    ctx.fillText(text, 0, 0);
+
+                    // Power Word Tag if active
+                    if (matchedPowerWord) {
+                        ctx.save();
+                        ctx.font = `900 11px ${fontFamily}`;
+                        ctx.fillStyle = "#DC2626";
+                        const tagW = ctx.measureText(`🔥 ${matchedPowerWord}`).width + 16;
+                        ctx.beginPath();
+                        ctx.roundRect(-tagW / 2, -fontSize - 12, tagW, 20, 6);
+                        ctx.fill();
+                        ctx.fillStyle = "#FFFFFF";
+                        ctx.fillText(`🔥 ${matchedPowerWord}`, 0, -fontSize - 2);
+                        ctx.restore();
+                    }
 
                 } else if (subtitleStyle === "neon_glow") {
                     ctx.shadowColor = textColor;
-                    ctx.shadowBlur = 16;
-                    ctx.lineWidth = 5;
+                    ctx.shadowBlur = 22;
+                    ctx.lineWidth = 6;
                     ctx.strokeStyle = "#000000";
                     ctx.lineJoin = "round";
-                    ctx.strokeText(text, cw / 2, subY);
-
+                    ctx.strokeText(text, 0, 0);
                     ctx.fillStyle = textColor;
-                    ctx.fillText(text, cw / 2, subY);
+                    ctx.fillText(text, 0, 0);
 
-                } else if (subtitleStyle === "pill_dark") {
+                } else if (subtitleStyle === "pill_dark" || textAnimationEffect === "box_pill") {
                     const textWidth = ctx.measureText(text).width;
                     const pillW = textWidth + 36;
-                    const pillH = fontSize + 20;
-                    ctx.fillStyle = "rgba(10, 15, 30, 0.75)";
+                    const pillH = fontSize + 22;
+
+                    ctx.fillStyle = "rgba(10, 15, 30, 0.85)";
+                    ctx.shadowColor = "rgba(0,0,0,0.5)";
+                    ctx.shadowBlur = 10;
                     ctx.beginPath();
-                    ctx.roundRect((cw - pillW) / 2, subY - pillH / 2, pillW, pillH, 14);
+                    ctx.roundRect(-pillW / 2, -pillH / 2, pillW, pillH, 12);
                     ctx.fill();
 
-                    ctx.fillStyle = textColor;
-                    ctx.fillText(text, cw / 2, subY);
+                    // Pill border
+                    ctx.strokeStyle = matchedPowerWord ? "#FACC15" : "rgba(255, 255, 255, 0.25)";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.fillStyle = matchedPowerWord ? "#FACC15" : "#FFFFFF";
+                    ctx.fillText(text, 0, 0);
 
                 } else {
                     ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
                     ctx.shadowBlur = 8;
-                    ctx.lineWidth = 3;
+                    ctx.lineWidth = 6;
                     ctx.strokeStyle = "#000000";
-                    ctx.strokeText(text, cw / 2, subY);
-
+                    ctx.lineJoin = "round";
+                    ctx.strokeText(text, 0, 0);
                     ctx.fillStyle = textColor;
-                    ctx.fillText(text, cw / 2, subY);
+                    ctx.fillText(text, 0, 0);
                 }
 
                 ctx.restore();
@@ -974,6 +1265,8 @@ export default function AutoVideoStudioPage() {
         textColor,
         textPosition,
         subtitleStyle,
+        textAnimationEffect,
+        keyPowerWords,
         customHookTitle,
         showHookTitle,
         showWatermark,
@@ -1248,7 +1541,7 @@ export default function AutoVideoStudioPage() {
 
             const recorder = new MediaRecorder(combinedStream, {
                 mimeType: chosenMime,
-                videoBitsPerSecond: 6500000 // 6.5 Mbps crisp
+                videoBitsPerSecond: 4500000 // 4.5 Mbps optimal for mobile hardware decoding & 60fps smoothness
             });
 
             const chunks: Blob[] = [];
@@ -1274,6 +1567,37 @@ export default function AutoVideoStudioPage() {
 
                 updateFinancialTracker();
 
+                // Auto-save rendered video project into history
+                const savedProj: VideoProjectItem = {
+                    id: `proj-${Date.now()}`,
+                    title: cloneTopic || customHookTitle.slice(0, 45) || "Dự án video LYHU",
+                    topic: cloneTopic || customHookTitle,
+                    hookTitle: customHookTitle,
+                    script: selectedVoiceText,
+                    directorGuide: directorGuide || {
+                        hookVisual: "",
+                        spokenHook: "",
+                        pacingSpeed: `${clipSwitchInterval}s`,
+                        keyPowerWords,
+                        callToAction: "Nhắn liền LYHU để nhận mẫu thử & bảng giá sỉ!",
+                        shootingTips: [],
+                        shots: []
+                    },
+                    aspectRatio,
+                    fontFamily,
+                    fontSize,
+                    textColor,
+                    subtitleStyle,
+                    textAnimationEffect,
+                    clipSwitchInterval,
+                    transitionEffect,
+                    bgmChoice,
+                    createdAt: Date.now(),
+                    renderedVideoUrl: finalUrl,
+                    renderedFormat: finalExt
+                };
+                saveVideoProject(savedProj).then(() => loadSavedProjects()).catch(() => {});
+
                 // Instant download trigger
                 const a = document.createElement("a");
                 a.href = finalUrl;
@@ -1294,13 +1618,18 @@ export default function AutoVideoStudioPage() {
                 firstVid.play().catch(() => {});
             }
 
-            recorder.start(100);
+            recorder.start(1000); // 1-second chunks prevent container fragmentation jitter
 
             let exportTime = 0;
             const startTime = performance.now();
 
             const renderTimer = setInterval(() => {
-                exportTime = (performance.now() - startTime) / 1000;
+                // Lock export time strictly to audio playback position to ensure 100% voice-text sync!
+                if (voiceAudioEl && !voiceAudioEl.paused && voiceAudioEl.currentTime > 0) {
+                    exportTime = voiceAudioEl.currentTime;
+                } else {
+                    exportTime = (performance.now() - startTime) / 1000;
+                }
                 currentTimeRef.current = exportTime;
 
                 // Sync video clips for export
@@ -1373,13 +1702,41 @@ export default function AutoVideoStudioPage() {
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setIsProjectHistoryOpen(true)}
+                        className="px-3.5 py-2 rounded-xl bg-purple-50 text-purple-700 text-xs font-bold hover:bg-purple-100 transition-colors flex items-center gap-1.5 border border-purple-200"
+                    >
+                        <FolderOpen className="w-3.5 h-3.5 text-purple-600" />
+                        <span>Sổ Tay & Lịch Sử ({videoProjects.length})</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setIsDirectorHubOpen(true)}
+                        className="px-3.5 py-2 rounded-xl bg-amber-50 text-amber-800 text-xs font-bold hover:bg-amber-100 transition-colors flex items-center gap-1.5 border border-amber-200"
+                    >
+                        <Clapperboard className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Bảng Phân Cảnh Đạo Diễn</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={handleManualSaveProject}
+                        disabled={isSavingProject}
+                        className="px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                    >
+                        <Save className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{isSavingProject ? "Đang lưu..." : "Lưu Dự Án"}</span>
+                    </button>
+
                     <Link
                         href="/media/voice-studio"
                         className="px-3.5 py-2 rounded-xl bg-teal-50 text-[#00AFA9] text-xs font-bold hover:bg-teal-100 transition-colors flex items-center gap-1.5 border border-teal-200"
                     >
                         <Wand2 className="w-3.5 h-3.5" />
-                        <span>Mở Studio Lồng Tiếng</span>
+                        <span>Lồng Tiếng AI</span>
                     </Link>
                 </div>
             </div>
@@ -1926,6 +2283,94 @@ export default function AutoVideoStudioPage() {
                                 </div>
                             </div>
 
+                            {/* Kinetic Typography Dropdown */}
+                            <div className="space-y-1.5 sm:col-span-2">
+                                <label className="font-semibold text-gray-700 flex items-center justify-between">
+                                    <span className="flex items-center gap-1">
+                                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                                        <span>Hiệu ứng chữ sáng tạo (Kinetic Typography):</span>
+                                    </span>
+                                    <span className="text-[10px] text-purple-600 font-bold">Chuẩn Viral TikTok</span>
+                                </label>
+                                <select
+                                    value={textAnimationEffect}
+                                    onChange={(e) => setTextAnimationEffect(e.target.value as any)}
+                                    className="w-full p-2.5 border border-purple-200 rounded-lg bg-purple-50/40 outline-none text-xs font-bold text-purple-900 shadow-sm"
+                                >
+                                    <option value="tiktok_pop">🔥 Nảy chữ dồn dập (TikTok Pop-in Bounce - Khuyên dùng)</option>
+                                    <option value="karaoke_glow">🌟 Karaoke Neon Glow (Từ đang nói phát sáng rực rỡ)</option>
+                                    <option value="fire_shake">⚡ Rung động lực chốt đơn (Dynamic Shake khi có từ khóa)</option>
+                                    <option value="box_pill">🔲 Hộp Pill bo góc Gen Z (Đậm chất CapCut Pro)</option>
+                                    <option value="clean_fade">✨ Chữ tĩnh tinh gọn viền đen dày</option>
+                                </select>
+                            </div>
+
+                            {/* Power Words Highlight Tags */}
+                            <div className="space-y-2 sm:col-span-2 p-3 rounded-xl bg-slate-50 border border-gray-200">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-semibold text-gray-800 flex items-center gap-1.5">
+                                        <Flame className="w-3.5 h-3.5 text-amber-500" />
+                                        <span>Từ khóa đắt giá (AI tự động gắn Badge & làm nổi bật chữ):</span>
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={handleScanPowerWords}
+                                        className="text-[11px] text-purple-700 hover:text-purple-900 font-bold flex items-center gap-1 bg-purple-100 hover:bg-purple-200 px-2 py-0.5 rounded-lg transition-colors"
+                                    >
+                                        <Sparkles className="w-3 h-3" />
+                                        <span>AI Quét Từ Khóa</span>
+                                    </button>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                    {keyPowerWords.map((pw, i) => (
+                                        <span
+                                            key={i}
+                                            className="px-2 py-0.5 rounded-md bg-amber-400 text-black text-[10px] font-black flex items-center gap-1 shadow-sm"
+                                        >
+                                            <span>🔥 {pw}</span>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Subtitle Sync Offset Slider */}
+                            <div className="space-y-1.5 sm:col-span-2 p-3 rounded-xl bg-purple-50/40 border border-purple-200">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-semibold text-purple-900 flex items-center gap-1.5">
+                                        <Sliders className="w-3.5 h-3.5 text-purple-600" />
+                                        <span>Khớp giọng đọc chính xác (Độ trễ phụ đề +/- Offset):</span>
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-mono text-xs font-bold text-purple-700 bg-white px-2 py-0.5 rounded border border-purple-200">
+                                            {subtitleOffset > 0 ? `+${subtitleOffset.toFixed(2)}s` : `${subtitleOffset.toFixed(2)}s`}
+                                        </span>
+                                        {subtitleOffset !== 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setSubtitleOffset(0)}
+                                                className="text-[10px] text-purple-600 hover:underline font-semibold"
+                                            >
+                                                Đặt lại 0s
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                <input
+                                    type="range"
+                                    min={-1.0}
+                                    max={1.0}
+                                    step={0.05}
+                                    value={subtitleOffset}
+                                    onChange={(e) => setSubtitleOffset(parseFloat(e.target.value))}
+                                    className="w-full accent-purple-600"
+                                />
+                                <div className="flex items-center justify-between text-[10px] text-gray-400">
+                                    <span>-1.0s (Chữ hiện sớm hơn)</span>
+                                    <span>0.0s (Chuẩn đồng bộ AI)</span>
+                                    <span>+1.0s (Chữ hiện trễ hơn)</span>
+                                </div>
+                            </div>
+
                             {/* Fast Color Presets */}
                             <div className="sm:col-span-2 flex items-center gap-2 text-xs">
                                 <span className="text-gray-500 font-medium">Màu nhanh:</span>
@@ -2462,6 +2907,407 @@ export default function AutoVideoStudioPage() {
                     </div>
                 </div>
             </div>
+
+            {/* MODAL 1: SỔ TAY KỊCH BẢN & LỊCH SỬ DỰ ÁN VIDEO (PERSISTENT STORE) */}
+            {isProjectHistoryOpen && (
+                <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+                    <div className="max-w-3xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-purple-50 via-indigo-50 to-white">
+                            <div className="flex items-center gap-2.5">
+                                <span className="p-2 rounded-xl bg-purple-600 text-white shadow-sm">
+                                    <FolderOpen className="w-5 h-5" />
+                                </span>
+                                <div>
+                                    <h3 className="font-bold text-gray-900 text-base">
+                                        Sổ Tay Kịch Bản & Lịch Sử Dự Án Video
+                                    </h3>
+                                    <p className="text-xs text-gray-500">
+                                        Lưu trữ an toàn trên máy ({videoProjects.length} dự án) • Không bao giờ mất kịch bản khi F5!
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsProjectHistoryOpen(false)}
+                                className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Project List */}
+                        <div className="overflow-y-auto p-4 sm:p-5 space-y-3 flex-1">
+                            {videoProjects.length === 0 ? (
+                                <div className="text-center py-12 space-y-3">
+                                    <div className="w-14 h-14 mx-auto rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                                        <FolderOpen className="w-7 h-7" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="font-bold text-sm text-gray-800">Chưa có dự án nào được lưu</p>
+                                        <p className="text-xs text-gray-500 max-w-md mx-auto">
+                                            Khi bạn bấm "✨ AI Học Phong Cách & Cấu Hình Studio", "Lưu Dự Án" hoặc xuất video, kịch bản và bảng phân cảnh sẽ tự động lưu vào đây.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleManualSaveProject}
+                                        className="px-4 py-2 bg-purple-600 text-white font-bold text-xs rounded-xl hover:bg-purple-700 transition-colors shadow-sm"
+                                    >
+                                        Lưu Kịch Bản Hiện Tại
+                                    </button>
+                                </div>
+                            ) : (
+                                videoProjects.map((proj) => (
+                                    <div
+                                        key={proj.id}
+                                        onClick={() => handleLoadProject(proj)}
+                                        className="p-4 rounded-xl border border-gray-200 hover:border-purple-400 hover:shadow-md transition-all cursor-pointer bg-white group space-y-2.5"
+                                    >
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-sm text-gray-900 group-hover:text-purple-700 transition-colors">
+                                                    {proj.title}
+                                                </span>
+                                                <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
+                                                    {proj.aspectRatio}
+                                                </span>
+                                                {proj.directorGuide?.shots?.length ? (
+                                                    <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                                                        <Clapperboard className="w-2.5 h-2.5" /> 5 Shot Đạo Diễn
+                                                    </span>
+                                                ) : null}
+                                                {proj.renderedVideoUrl && (
+                                                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                                                        <CheckCircle2 className="w-2.5 h-2.5" /> Có file video
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[11px] text-gray-400">
+                                                    {new Date(proj.createdAt).toLocaleDateString("vi-VN", {
+                                                        day: "2-digit",
+                                                        month: "2-digit",
+                                                        year: "numeric",
+                                                        hour: "2-digit",
+                                                        minute: "2-digit"
+                                                    })}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => handleDeleteProject(proj.id, e)}
+                                                    className="p-1 text-gray-300 hover:text-red-600 transition-colors rounded-lg"
+                                                    title="Xóa dự án"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-xs text-gray-600 line-clamp-2 italic bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                            "{proj.script}"
+                                        </p>
+
+                                        <div className="flex flex-wrap items-center justify-between text-[11px] text-gray-500 pt-1">
+                                            <div className="flex items-center gap-2">
+                                                <span>Nhịp cắt: <strong>{proj.clipSwitchInterval}s</strong></span>
+                                                <span>•</span>
+                                                <span>Chữ: <strong className="capitalize">{proj.textAnimationEffect || "Pop"}</strong></span>
+                                                <span>•</span>
+                                                <span>Màu: <span className="inline-block w-3 h-3 rounded-full align-middle border border-gray-300" style={{ backgroundColor: proj.textColor }} /></span>
+                                            </div>
+                                            <span className="text-purple-600 font-bold group-hover:underline flex items-center gap-1">
+                                                Nhấn để dựng lại dự án này →
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                            <button
+                                type="button"
+                                onClick={handleManualSaveProject}
+                                disabled={isSavingProject}
+                                className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors flex items-center gap-1.5 shadow-sm"
+                            >
+                                <Save className="w-3.5 h-3.5 text-amber-400" />
+                                <span>Lưu kịch bản đang mở</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsProjectHistoryOpen(false)}
+                                className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-100 transition-colors"
+                            >
+                                Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL 2: BẢNG PHÂN CẢNH & CHỈ ĐẠO QUAY CỦA ĐẠO DIỄN AI (DIRECTOR'S SCRIPTBOOK) */}
+            {isDirectorHubOpen && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+                    <div className="max-w-4xl w-full bg-slate-900 text-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-amber-500/40 animate-in fade-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="p-4 sm:p-5 border-b border-amber-500/30 flex items-center justify-between bg-gradient-to-r from-amber-950/60 via-slate-900 to-purple-950/60">
+                            <div className="flex items-center gap-3">
+                                <span className="p-2.5 rounded-xl bg-amber-400 text-slate-950 shadow-md">
+                                    <Clapperboard className="w-6 h-6" />
+                                </span>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-bold text-white text-base sm:text-lg">
+                                            Bảng Phân Cảnh & Chỉ Đạo Quay Của Đạo Diễn AI
+                                        </h3>
+                                        <span className="text-[10px] bg-amber-400 text-black px-2 py-0.5 rounded font-black tracking-wide">
+                                            24ZONE STYLE
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-amber-200/80">
+                                        Chỉ đạo đội quay Smartphone tại kho LYHU • 5 góc quay nhịp 2.5s Jump-cut • Giữ chân người xem 100%
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleCopyDirectorShotlist}
+                                    className="px-3.5 py-1.5 bg-gradient-to-r from-amber-400 to-orange-400 text-black font-bold text-xs rounded-xl hover:opacity-95 transition-all flex items-center gap-1.5 shadow-sm"
+                                >
+                                    <Copy className="w-3.5 h-3.5" />
+                                    <span>Copy Gửi Zalo</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsDirectorHubOpen(false)}
+                                    className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="overflow-y-auto p-5 sm:p-6 space-y-6 flex-1 text-xs">
+                            {/* Hook Section (3s đầu quyết định ăn đề xuất) */}
+                            <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-transparent border border-amber-500/40 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <div className="text-amber-400 font-bold flex items-center gap-1.5 text-xs sm:text-sm">
+                                        <Zap className="w-4 h-4 text-amber-400" />
+                                        <span>QUY TẮC 3 GIÂY ĐẦU (VISUAL & SPOKEN HOOK ĐẬP MẮT):</span>
+                                    </div>
+                                    <span className="text-[10px] text-amber-300 font-mono">Giữ chân 70%+ người xem</span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                    <div className="p-3 rounded-lg bg-black/40 border border-white/10 space-y-1">
+                                        <div className="text-[11px] font-bold text-amber-300">🎯 Hình ảnh đập mắt (Visual Hook):</div>
+                                        <div className="text-gray-200 leading-relaxed">
+                                            {directorGuide?.hookVisual || "Cận cảnh mở bao/thùng hàng, hoặc hành động xé bọc, đổ sản phẩm giòn rụm ngay 1 giây đầu."}
+                                        </div>
+                                    </div>
+                                    <div className="p-3 rounded-lg bg-black/40 border border-white/10 space-y-1">
+                                        <div className="text-[11px] font-bold text-amber-300">🎙️ Câu thoại mở màn (Spoken Hook):</div>
+                                        <div className="text-gray-200 italic leading-relaxed">
+                                            "{directorGuide?.spokenHook || customHookTitle || "Hàng mới về đêm qua date mới tinh, đừng vội mua chỗ khác!"}"
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 5-Shot Storyboard Grid */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-bold text-sm text-white flex items-center gap-2">
+                                        <Camera className="w-4 h-4 text-amber-400" />
+                                        <span>BẢNG 5 GÓC MÁY QUAY BẰNG ĐIỆN THOẠI (Quay mỗi đoạn 2.5 - 3s):</span>
+                                    </h4>
+                                    <span className="text-[11px] text-gray-400 font-mono">Nhịp cắt: {directorGuide?.pacingSpeed || `${clipSwitchInterval}s`}</span>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {directorGuide && directorGuide.shots && directorGuide.shots.length > 0 ? (
+                                        directorGuide.shots.map((shot) => (
+                                            <div
+                                                key={shot.shotNumber}
+                                                className="p-3.5 rounded-xl bg-white/5 border border-white/10 hover:border-amber-400/50 transition-colors space-y-2"
+                                            >
+                                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="px-2 py-0.5 rounded bg-amber-400 text-black font-black text-xs">
+                                                            CẢNH {shot.shotNumber}
+                                                        </span>
+                                                        <span className="font-bold text-white">
+                                                            [{shot.shotType}]
+                                                        </span>
+                                                        <span className="text-gray-400 text-[11px]">
+                                                            • Chuyển động: <strong className="text-amber-300">{shot.cameraMovement}</strong>
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[10px] text-purple-300 font-mono bg-purple-950/80 px-2 py-0.5 rounded border border-purple-500/30">
+                                                        Âm thanh: {shot.sfx}
+                                                    </span>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                                    <div className="p-2 rounded bg-black/30 border border-white/5">
+                                                        <span className="text-gray-400 font-semibold">🎬 Thao tác nhân sự kho: </span>
+                                                        <span className="text-gray-200">{shot.action}</span>
+                                                    </div>
+                                                    <div className="p-2 rounded bg-black/30 border border-white/5">
+                                                        <span className="text-gray-400 font-semibold">🎙️ Lời thoại khớp hình: </span>
+                                                        <span className="text-amber-200 italic">"{shot.dialogueSnippet}"</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        /* Default 5 shots for LYHU warehouse operations */
+                                        [
+                                            {
+                                                shotNumber: 1,
+                                                shotType: "Cận Cảnh (Close-up)",
+                                                cameraMovement: "Zoom in từ từ",
+                                                action: "Tay xé seal thùng hàng hoặc bẻ đôi củ khoai môn / xé gói snack giòn rụm trước ống kính.",
+                                                dialogueSnippet: customHookTitle || "Hàng mới về đêm qua date mới tinh...",
+                                                sfx: "Tiếng xé bọc / giòn rụm 'Rắc'"
+                                            },
+                                            {
+                                                shotNumber: 2,
+                                                shotType: "Toàn Cảnh (Wide)",
+                                                cameraMovement: "Lia máy ngang (Pan)",
+                                                action: "Quay container hoặc các kệ pallet hàng chất cao ngập lối tại tổng kho LYHU.",
+                                                dialogueSnippet: "Container vừa đáp kho lúc nửa đêm, nguyên đai nguyên kiện...",
+                                                sfx: "Tiếng còi xe nâng / tiếng kho rộn ràng"
+                                            },
+                                            {
+                                                shotNumber: 3,
+                                                shotType: "Cực Cận (Macro)",
+                                                cameraMovement: "Cố định (Static)",
+                                                action: "Soi rõ nhãn mác NSX, HSD mới tinh năm 2026, màu sắc tươi ngon không vụn vỡ.",
+                                                dialogueSnippet: "Hàng date mới toanh, chất lượng bao test từng kiện...",
+                                                sfx: "Tiếng sột soạt kiểm hàng"
+                                            },
+                                            {
+                                                shotNumber: 4,
+                                                shotType: "Trung Cảnh (Medium)",
+                                                cameraMovement: "Góc thấp hất lên (Low Angle)",
+                                                action: "Nhân sự dán băng keo niêm phong thùng LYHU, xếp lên xe chuyển phát nhanh giao sỉ.",
+                                                dialogueSnippet: "Anh em NPP lấy bao nhiêu kiện cứ chốt số lượng là đi ngay trong ngày...",
+                                                sfx: "Tiếng kéo băng dính 'Rẹt rẹt'"
+                                            },
+                                            {
+                                                shotNumber: 5,
+                                                shotType: "Cận Cảnh (Call to action)",
+                                                cameraMovement: "Chĩa thẳng sản phẩm",
+                                                action: "Giơ sản phẩm về phía người xem, vẫy tay hoặc chỉ vào phần nhắn tin nhận bảng giá sỉ.",
+                                                dialogueSnippet: "Nhắn liền LYHU để nhận mẫu thử & giá sỉ tận gốc nha cả nhà!",
+                                                sfx: "Tiếng ting ting chốt đơn"
+                                            }
+                                        ].map((shot) => (
+                                            <div
+                                                key={shot.shotNumber}
+                                                className="p-3.5 rounded-xl bg-white/5 border border-white/10 hover:border-amber-400/50 transition-colors space-y-2"
+                                            >
+                                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="px-2 py-0.5 rounded bg-amber-400 text-black font-black text-xs">
+                                                            CẢNH {shot.shotNumber}
+                                                        </span>
+                                                        <span className="font-bold text-white">
+                                                            [{shot.shotType}]
+                                                        </span>
+                                                        <span className="text-gray-400 text-[11px]">
+                                                            • Chuyển động: <strong className="text-amber-300">{shot.cameraMovement}</strong>
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[10px] text-purple-300 font-mono bg-purple-950/80 px-2 py-0.5 rounded border border-purple-500/30">
+                                                        Âm thanh: {shot.sfx}
+                                                    </span>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                                    <div className="p-2 rounded bg-black/30 border border-white/5">
+                                                        <span className="text-gray-400 font-semibold">🎬 Thao tác nhân sự kho: </span>
+                                                        <span className="text-gray-200">{shot.action}</span>
+                                                    </div>
+                                                    <div className="p-2 rounded bg-black/30 border border-white/5">
+                                                        <span className="text-gray-400 font-semibold">🎙️ Lời thoại khớp hình: </span>
+                                                        <span className="text-amber-200 italic">"{shot.dialogueSnippet}"</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Practical Shooting Tips for LYHU Staff */}
+                            <div className="p-4 rounded-xl bg-purple-950/50 border border-purple-500/30 space-y-2">
+                                <div className="text-xs font-bold text-purple-300 flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-purple-400" />
+                                    <span>3 MẸO QUAY THỰC CHIẾN BẰNG SMARTPHONE TẠI TỔNG KHO LYHU:</span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 space-y-1">
+                                        <div className="font-bold text-white text-[11px]">1. Lau sạch camera & Quay dọc 9:16</div>
+                                        <p className="text-gray-300 text-[10px] leading-relaxed">
+                                            Dùng camera sau, lau sạch mồ hôi/bụi trên kính máy. Luôn quay dọc khung hình 9:16 để video TikTok nét nhất.
+                                        </p>
+                                    </div>
+                                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 space-y-1">
+                                        <div className="font-bold text-white text-[11px]">2. Quay cận cảnh 30-50cm & Chạm lấy nét</div>
+                                        <p className="text-gray-300 text-[10px] leading-relaxed">
+                                            Đưa camera gần sản phẩm để thấy rõ thớ khoai môn hoặc date in trên thùng. Giữ tay chắc không run.
+                                        </p>
+                                    </div>
+                                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 space-y-1">
+                                        <div className="font-bold text-white text-[11px]">3. Bấm quay 3 giây rồi đổi góc</div>
+                                        <p className="text-gray-300 text-[10px] leading-relaxed">
+                                            Không cần lia máy dài dòng! Cứ quay mỗi góc 3s, nạp vào Studio này AI sẽ tự động Jump-cut cắt nhịp 2.5s chuẩn TikTok.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* CTA Section */}
+                            <div className="p-3.5 rounded-xl bg-slate-800 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div>
+                                    <span className="text-[11px] text-gray-400 font-semibold block">LỜI KÊU GỌI HÀNH ĐỘNG (CTA KẾT VIDEO):</span>
+                                    <span className="text-xs font-bold text-amber-300">
+                                        {directorGuide?.callToAction || "Nhắn liền LYHU để nhận mẫu thử & bảng giá sỉ!"}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleCopyDirectorShotlist}
+                                    className="px-4 py-2 rounded-xl bg-amber-400 text-black font-bold text-xs hover:bg-amber-300 transition-colors flex items-center justify-center gap-1.5 shrink-0"
+                                >
+                                    <Copy className="w-4 h-4" />
+                                    <span>Copy Gửi Zalo Cho Đội Quay</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-4 bg-slate-950 border-t border-white/10 flex items-center justify-between">
+                            <span className="text-xs text-gray-400">
+                                💡 Sau khi quay xong các clip, nạp vào <strong>Bước 1</strong> để Studio tự động cắt ghép!
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setIsDirectorHubOpen(false)}
+                                className="px-5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors"
+                            >
+                                Đã Hiểu & Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Hidden media elements for canvas sync */}
             <div className="hidden">
