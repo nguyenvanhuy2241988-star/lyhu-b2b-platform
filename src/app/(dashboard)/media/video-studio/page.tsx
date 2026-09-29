@@ -264,7 +264,12 @@ export default function AutoVideoStudioPage() {
         "Nhiều người bảo giờ này chỉ có đi ngủ, nhưng ở tổng kho sỉ LYHU thì bọn mình vẫn đang kiểm từng kiện hàng để sáng mai kịp giao cho các chủ quán. Nào là thanh khoai môn sấy trứng cua, da cá hoàng kim, bánh tráng Abi với bột phô mai Boyo. Cần mẫu thử hay bảng giá sỉ cứ nhắn bọn mình nha!"
     );
     const [voiceDuration, setVoiceDuration] = useState<number>(30);
-    const [isEditingText, setIsEditingText] = useState(false);
+    const [isEditingText, setIsEditingText] = useState(true);
+    const [selectedVoiceStyleId, setSelectedVoiceStyleId] = useState<string>("female-genz");
+    const [isSynthesizingVoice, setIsSynthesizingVoice] = useState(false);
+    const [analyzingStepText, setAnalyzingStepText] = useState<string>("");
+    const [isAuditionPlaying, setIsAuditionPlaying] = useState(false);
+    const auditionAudioRef = useRef<HTMLAudioElement | null>(null);
 
     // ── STEP 3: Subtitles & Brand Typography ──
     const [enableSubtitles, setEnableSubtitles] = useState(true);
@@ -414,11 +419,87 @@ export default function AutoVideoStudioPage() {
         try {
             const items = await getVoiceHistory();
             setVoiceHistory(items);
-            if (items.length > 0 && !selectedVoiceId) {
-                selectVoiceItem(items[0]);
-            }
         } catch (e) {
             console.warn("Lỗi đọc lịch sử giọng đọc:", e);
+        }
+    };
+
+    // ── NATIVE AI SPEECH SYNTHESIS ENGINE (Google Gemini TTS / Edge Neural) ──
+    const generateSpeechForText = async (
+        textToSpeak: string,
+        styleId = selectedVoiceStyleId
+    ): Promise<string | null> => {
+        if (!textToSpeak || !textToSpeak.trim()) {
+            alert("Vui lòng nhập kịch bản hoặc lời thoại cần thu âm!");
+            return null;
+        }
+        setIsSynthesizingVoice(true);
+        try {
+            const res = await fetch("/api/ai/tts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text: textToSpeak.trim(),
+                    voice: styleId.includes("male") ? "vi-VN-NamMinhNeural" : "vi-VN-HoaiMyNeural",
+                    style: styleId,
+                    rate: "+8%"
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || `Lỗi máy chủ TTS (${res.status})`);
+            }
+
+            const blob = await res.blob();
+            if (blob.size < 100) {
+                throw new Error("File âm thanh không hợp lệ, vui lòng thử lại!");
+            }
+
+            const url = URL.createObjectURL(blob);
+            setSelectedVoiceAudioUrl(url);
+            setSelectedVoiceId("ai-generated");
+
+            // Measure accurate duration
+            const tempAudio = new Audio(url);
+            tempAudio.onloadedmetadata = () => {
+                if (tempAudio.duration && !isNaN(tempAudio.duration) && tempAudio.duration > 0) {
+                    setVoiceDuration(Math.ceil(tempAudio.duration) + 1);
+                }
+            };
+
+            // Update hidden audio element
+            if (hiddenAudioRef.current) {
+                hiddenAudioRef.current.src = url;
+            }
+
+            return url;
+        } catch (err: any) {
+            console.error("Lỗi tạo giọng đọc AI:", err);
+            alert("Không thể tạo giọng đọc: " + err.message);
+            return null;
+        } finally {
+            setIsSynthesizingVoice(false);
+        }
+    };
+
+    const handleToggleAuditionVoice = () => {
+        if (!selectedVoiceAudioUrl) {
+            generateSpeechForText(selectedVoiceText, selectedVoiceStyleId);
+            return;
+        }
+
+        if (!auditionAudioRef.current) return;
+
+        if (isAuditionPlaying) {
+            auditionAudioRef.current.pause();
+            setIsAuditionPlaying(false);
+        } else {
+            pausePlayback();
+            auditionAudioRef.current.src = selectedVoiceAudioUrl;
+            auditionAudioRef.current.currentTime = 0;
+            auditionAudioRef.current.play().catch(console.error);
+            setIsAuditionPlaying(true);
         }
     };
 
@@ -645,6 +726,7 @@ export default function AutoVideoStudioPage() {
         }
 
         setIsAnalyzingClone(true);
+        setAnalyzingStepText("1/2 Đạo diễn AI đang phân tích kịch bản & 5 góc quay...");
         try {
             const res = await fetch("/api/ai/clone-video-style", {
                 method: "POST",
@@ -670,13 +752,12 @@ export default function AutoVideoStudioPage() {
                     setKeyPowerWords(data.keyPowerWords);
                 }
                 setFontFamily("'Be Vietnam Pro', Montserrat, sans-serif");
-                setVoiceDuration(45);
                 setShowHookTitle(true);
                 setEnableSubtitles(true);
+                setIsEditingText(true);
 
                 if (data.directorGuide) {
                     setDirectorGuide(data.directorGuide);
-                    setIsDirectorHubOpen(true);
                 }
                 if (data.storyboard && data.storyboard.length > 0) {
                     setCloneStoryboard(data.storyboard);
@@ -684,6 +765,10 @@ export default function AutoVideoStudioPage() {
                 if (clips.length === 0) {
                     handleLoadDemoClips();
                 }
+
+                // 2/2 TỰ ĐỘNG THU ÂM GIỌNG ĐỌC AI CHO CHÍNH KỊCH BẢN VỪA TẠO
+                setAnalyzingStepText("2/2 AI đang thu âm giọng đọc tiếng Việt khớp 100% kịch bản...");
+                await generateSpeechForText(newScript, selectedVoiceStyleId);
 
                 // Auto-save project into history
                 const autoProj: VideoProjectItem = {
@@ -715,7 +800,13 @@ export default function AutoVideoStudioPage() {
                 await saveVideoProject(autoProj);
                 await loadSavedProjects();
 
-                alert("🎬 Đạo diễn AI đã thiết kế kịch bản & 5 góc quay thực chiến thành công! Dự án đã được lưu tự động vào Sổ Tay Đạo Diễn.");
+                // Reset canvas preview
+                pausePlayback();
+                currentTimeRef.current = 0;
+                setDisplayTime(0);
+                setTimeout(() => drawCanvasFrame(0), 100);
+
+                alert("🎬 Đạo diễn AI đã hoàn tất: Kịch bản mới + Thu âm giọng đọc chuẩn xác + 5 góc quay thực chiến đã sẵn sàng trên video!");
             } else {
                 alert("Không thể phân tích: " + (data.error || "Lỗi không xác định"));
             }
@@ -723,6 +814,7 @@ export default function AutoVideoStudioPage() {
             alert("Lỗi khi kết nối AI: " + e.message);
         } finally {
             setIsAnalyzingClone(false);
+            setAnalyzingStepText("");
         }
     };
 
@@ -1283,6 +1375,9 @@ export default function AutoVideoStudioPage() {
 
         // 1. Play Voice Audio
         if (hiddenAudioRef.current && selectedVoiceAudioUrl) {
+            if (hiddenAudioRef.current.src !== selectedVoiceAudioUrl) {
+                hiddenAudioRef.current.src = selectedVoiceAudioUrl;
+            }
             hiddenAudioRef.current.currentTime = currentT;
             hiddenAudioRef.current.play().catch(() => {});
         }
@@ -1741,76 +1836,50 @@ export default function AutoVideoStudioPage() {
                 </div>
             </div>
 
-            {/* FINANCIAL / COST TRANSPARENCY BANNER */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-teal-500/10 to-emerald-500/10 border border-teal-200/80 space-y-1">
-                    <div className="flex items-center justify-between text-xs text-teal-800 font-semibold">
-                        <span>Chi phí dựng video này:</span>
-                        <span className="text-xs bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full font-bold">
-                            Chính xác
-                        </span>
+            {/* COMPACT FINANCIAL / SAVINGS BANNER */}
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                    <div className="flex items-center gap-1.5 text-slate-700 font-medium">
+                        <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                        <span>Chi phí video này: <strong className="text-teal-700 font-mono font-bold">~{estimatedCurrentVideoCost} VNĐ</strong></span>
+                        <span className="text-[10px] text-slate-400 font-normal">(Phân tích: 35đ • Lồng tiếng: {ttsCost}đ • Render: 0đ)</span>
                     </div>
-                    <div className="text-2xl font-black text-teal-700 font-mono">
-                        ~{estimatedCurrentVideoCost} <span className="text-sm font-normal text-teal-600">VNĐ</span>
-                    </div>
-                    <p className="text-[11px] text-teal-600">
-                        Phân tích kịch bản: 35đ • Lồng tiếng: {ttsCost}đ • Render: 0đ
-                    </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-200/80 space-y-1">
-                    <div className="flex items-center justify-between text-xs text-purple-800 font-semibold">
-                        <span>Tổng chi phí đã dùng tháng này:</span>
+                    <span className="hidden sm:inline text-slate-300">•</span>
+                    <div className="text-slate-600 flex items-center gap-1.5">
+                        <span>Tháng này: <strong className="font-mono text-slate-800">{totalCostSpent.toLocaleString("vi-VN")} VNĐ</strong> ({totalVideosCreated} video)</span>
                         <button
                             type="button"
                             onClick={handleResetBudgetTracker}
-                            className="text-[10px] text-purple-600 hover:underline"
+                            className="text-[10px] text-slate-400 hover:text-slate-600 underline"
                         >
                             Đặt lại
                         </button>
                     </div>
-                    <div className="text-2xl font-black text-purple-700 font-mono">
-                        {totalCostSpent.toLocaleString("vi-VN")} <span className="text-sm font-normal text-purple-600">VNĐ</span>
-                    </div>
-                    <p className="text-[11px] text-purple-600">
-                        Đã tạo <strong>{totalVideosCreated} video</strong> hoàn chỉnh
-                    </p>
                 </div>
-
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-200/80 space-y-1">
-                    <div className="flex items-center justify-between text-xs text-amber-800 font-semibold">
-                        <span>Tiết kiệm so với thuê ngoài / SaaS:</span>
-                        <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-0.5">
-                            <TrendingDown className="w-3.5 h-3.5" /> 98.5%
-                        </span>
-                    </div>
-                    <div className="text-2xl font-black text-amber-700 font-mono">
-                        ~{totalSavings.toLocaleString("vi-VN")} <span className="text-sm font-normal text-amber-600">VNĐ</span>
-                    </div>
-                    <p className="text-[11px] text-amber-600">
-                        Không mất 750k/tháng phí Opus Clip / CapCut Pro
-                    </p>
+                <div className="flex items-center gap-2 text-emerald-700 font-semibold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 text-xs">
+                    <TrendingDown className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Tiết kiệm ~{totalSavings.toLocaleString("vi-VN")} VNĐ (98.5% so với thuê ngoài / CapCut Pro)</span>
                 </div>
             </div>
 
-            {/* 🎬 LYHU BRAND & 24ZONE STYLE TEMPLATES SELECTOR */}
-            <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-2xl p-5 text-white shadow-md border border-purple-800/50 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                        <span className="p-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                            <Sparkles className="w-5 h-5 text-amber-400" />
-                        </span>
+            {/* 🎬 LYHU AI STUDIO CREATOR CARD (Clean LYHU Brand) */}
+            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-teal-500/30 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-teal-500 text-white shadow-sm">
+                            <Sparkles className="w-5 h-5 text-amber-300" />
+                        </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-sm sm:text-base text-white">
-                                    Định Hình Phong Cách Video LYHU (Chuẩn Trà My 24Zone)
-                                </h3>
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-black">
-                                    1-Click Setup
+                                <h2 className="text-base font-bold text-slate-900">
+                                    Tạo Kịch Bản & Đồng Bộ Giọng Đọc 1-Click
+                                </h2>
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
+                                    Google Gemini AI Engine
                                 </span>
                             </div>
-                            <p className="text-xs text-purple-200/80">
-                                AI tự động cấu hình: Nhịp cắt 2.5s Jump-cut, Hook đập mắt, kịch bản ăn vặt sỉ mộc mạc & nhạc nền Audio Ducking.
+                            <p className="text-xs text-slate-500">
+                                AI tự động: Viết kịch bản bán buôn → Thu giọng đọc AI tiếng Việt → Cắt nhịp 2.5s Jump-cut & Đồng bộ phụ đề 100%.
                             </p>
                         </div>
                     </div>
@@ -1818,158 +1887,120 @@ export default function AutoVideoStudioPage() {
                     <button
                         type="button"
                         onClick={() => setIsCloneModalOpen(!isCloneModalOpen)}
-                        className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 text-black font-bold text-xs hover:opacity-95 transition-all flex items-center gap-2 shadow-sm self-start sm:self-center"
+                        className="text-xs text-teal-700 hover:text-teal-800 font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-200 hover:bg-teal-50 transition-colors self-start sm:self-center"
                     >
-                        <Wand2 className="w-3.5 h-3.5" />
-                        <span>{isCloneModalOpen ? "Ẩn công cụ học mẫu" : "🤖 Nạp Link TikTok / Học Mẫu Video"}</span>
+                        <Sliders className="w-3.5 h-3.5" />
+                        <span>{isCloneModalOpen ? "Thu gọn 3 phong cách" : "Xem 3 phong cách mẫu"}</span>
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                    {LYHU_TEMPLATES.map((tpl) => {
-                        const isActive = activeTemplateId === tpl.id;
-                        return (
-                            <button
-                                key={tpl.id}
-                                type="button"
-                                onClick={() => handleApplyTemplate(tpl)}
-                                className={`p-3 rounded-xl border text-left transition-all relative group ${
-                                    isActive
-                                        ? "bg-white/15 border-amber-400 ring-2 ring-amber-400 shadow-lg text-white"
-                                        : "bg-white/5 hover:bg-white/10 border-white/10 text-gray-300"
-                                }`}
-                            >
-                                <div className="flex items-center justify-between mb-1.5">
-                                    <span className="text-xs font-bold text-amber-300 flex items-center gap-1">
-                                        {tpl.badge}
-                                    </span>
-                                    {isActive && (
-                                        <span className="text-[10px] bg-amber-400 text-black px-1.5 py-0.2 rounded font-black">
-                                            ĐANG CHỌN
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="text-xs font-semibold text-white mb-1 line-clamp-1">
-                                    {tpl.hookTitle}
-                                </div>
-                                <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed">
-                                    {tpl.title}
-                                </p>
-                            </button>
-                        );
-                    })}
+                {/* Form input row */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+                    <div className="lg:col-span-6 space-y-1.5">
+                        <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                            <span>1. Chủ đề / Sản phẩm LYHU muốn làm video:</span>
+                            <span className="text-[11px] text-teal-600 font-normal">Khoai môn CVT • Bột phô mai • Bánh tráng</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={cloneTopic}
+                            onChange={(e) => setCloneTopic(e.target.value)}
+                            placeholder="Ví dụ: Hàng khoai môn CVT container về buổi đêm date mới tinh"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-xs text-slate-900 font-medium transition-all"
+                        />
+                    </div>
+
+                    <div className="lg:col-span-3 space-y-1.5">
+                        <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                            <span>2. Link TikTok mẫu (tùy chọn):</span>
+                            <span className="text-[11px] text-slate-400">Trà My 24Zone</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={cloneRefUrl}
+                            onChange={(e) => setCloneRefUrl(e.target.value)}
+                            placeholder="https://www.tiktok.com/@tra.my.24zone/video/..."
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-xs text-slate-800 font-mono transition-all"
+                        />
+                    </div>
+
+                    <div className="lg:col-span-3">
+                        <button
+                            type="button"
+                            onClick={handleCloneStyle}
+                            disabled={isAnalyzingClone || isSynthesizingVoice}
+                            className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-teal-600/20 disabled:opacity-60 transition-all cursor-pointer"
+                        >
+                            {isAnalyzingClone || isSynthesizingVoice ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin text-white shrink-0" />
+                                    <span className="truncate">{analyzingStepText || "AI Đang Xử Lý..."}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Wand2 className="w-4 h-4 text-amber-300" />
+                                    <span>✨ AI Viết Kịch Bản & Thu Giọng</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
 
-                {/* 🤖 AI CLONE STYLE & STORYBOARD GENERATOR PANEL */}
+                {/* Quick topic pills */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
+                    <span className="text-[11px] text-slate-400 font-medium">Gợi ý chủ đề nhanh:</span>
+                    {[
+                        "Hàng khoai môn CVT container về buổi đêm date mới tinh",
+                        "Bột phô mai BOYO 1kg cho quán khoai tây lắc",
+                        "Da cá trứng muối & Bánh tráng Abi Snack giá sỉ",
+                        "Chuyện kiểm hàng kho sỉ LYHU xuyên đêm kịp giao sáng mai"
+                    ].map((topic, i) => (
+                        <button
+                            key={i}
+                            type="button"
+                            onClick={() => setCloneTopic(topic)}
+                            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 text-[11px] text-slate-600 border border-slate-200 transition-colors"
+                        >
+                            {topic}
+                        </button>
+                    ))}
+                </div>
+
+                {/* 3 Quick template style cards */}
                 {isCloneModalOpen && (
-                    <div className="mt-4 p-4 rounded-xl bg-black/40 border border-purple-500/40 backdrop-blur-sm space-y-3">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <span className="p-1.5 rounded-lg bg-amber-400/20 text-amber-300">
-                                    <Sparkles className="w-4 h-4" />
-                                </span>
-                                <h4 className="text-xs sm:text-sm font-bold text-amber-300">
-                                    Nạp Video Mẫu / Link TikTok để AI Học Phong Cách & Viết Kịch Bản Cho LYHU
-                                </h4>
-                            </div>
-                            <span className="text-[10px] font-semibold text-purple-300 bg-purple-900/60 px-2 py-0.5 rounded-full border border-purple-500/30">
-                                Gemini AI Engine
-                            </span>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                                <label className="text-[11px] font-medium text-gray-300 flex items-center justify-between">
-                                    <span>Link TikTok tham khảo mẫu:</span>
-                                    <span className="text-[10px] text-purple-300">TikTok / Reels URL</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    value={cloneRefUrl}
-                                    onChange={(e) => setCloneRefUrl(e.target.value)}
-                                    placeholder="https://www.tiktok.com/@tra.my.24zone/video/..."
-                                    className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 font-mono"
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-[11px] font-medium text-gray-300 flex items-center justify-between">
-                                    <span>Chủ đề / Sản phẩm LYHU muốn làm:</span>
-                                    <span className="text-[10px] text-purple-300">Ăn vặt & Gia vị sỉ</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    value={cloneTopic}
-                                    onChange={(e) => setCloneTopic(e.target.value)}
-                                    placeholder="VD: Hàng khoai môn CVT container về buổi đêm date mới tinh"
-                                    className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-amber-400"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Quick topic pills */}
-                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                            <span className="text-[10px] text-gray-400">Gợi ý chủ đề nhanh:</span>
-                            {[
-                                "Hàng khoai môn CVT container về buổi đêm date mới tinh",
-                                "Bột phô mai BOYO 1kg cho quán khoai tây lắc",
-                                "Da cá trứng muối & Bánh tráng Abi Snack giá sỉ"
-                            ].map((topic, i) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                        {LYHU_TEMPLATES.map((tpl) => {
+                            const isActive = activeTemplateId === tpl.id;
+                            return (
                                 <button
-                                    key={i}
+                                    key={tpl.id}
                                     type="button"
-                                    onClick={() => setCloneTopic(topic)}
-                                    className="px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-[10px] text-purple-200 border border-white/10 transition-colors"
+                                    onClick={() => handleApplyTemplate(tpl)}
+                                    className={`p-3 rounded-xl border text-left transition-all ${
+                                        isActive
+                                            ? "bg-teal-50/60 border-teal-500 ring-2 ring-teal-500/20 shadow-sm"
+                                            : "bg-slate-50/50 hover:bg-slate-100/70 border-slate-200"
+                                    }`}
                                 >
-                                    {topic}
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-xs font-bold text-teal-800 flex items-center gap-1">
+                                            {tpl.badge}
+                                        </span>
+                                        {isActive && (
+                                            <span className="text-[10px] bg-teal-600 text-white px-2 py-0.2 rounded font-bold">
+                                                ĐANG CHỌN
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-xs font-semibold text-slate-800 mb-0.5 line-clamp-1">
+                                        {tpl.hookTitle}
+                                    </div>
+                                    <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                                        {tpl.title}
+                                    </p>
                                 </button>
-                            ))}
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-white/10">
-                            <p className="text-[11px] text-gray-300">
-                                AI sẽ phân tích: Nhịp cắt 2.5s, Hook giật tít, phong cách phụ đề, và tạo <strong>Kịch bản thoại + 5 góc quay gợi ý</strong>.
-                            </p>
-                            <button
-                                type="button"
-                                onClick={handleCloneStyle}
-                                disabled={isAnalyzingClone}
-                                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-black font-bold text-xs flex items-center justify-center gap-2 transition-all disabled:opacity-60 shadow-md"
-                            >
-                                {isAnalyzingClone ? (
-                                    <>
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                        <span>AI Đang Phân Tích Video Mẫu...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Wand2 className="w-3.5 h-3.5" />
-                                        <span>✨ AI Học Phong Cách & Cấu Hình Studio</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-
-                        {/* Storyboard guide display if available */}
-                        {cloneStoryboard.length > 0 && (
-                            <div className="mt-3 p-3 rounded-lg bg-purple-950/70 border border-purple-500/40 space-y-2">
-                                <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                                    <Film className="w-3.5 h-3.5" />
-                                    <span>Gợi ý 5 góc quay bằng điện thoại cho chủ đề này (Quay mỗi đoạn 2-3s):</span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
-                                    {cloneStoryboard.map((shot, idx) => (
-                                        <div key={idx} className="p-2 rounded bg-black/50 border border-white/10 text-[11px] space-y-1">
-                                            <div className="font-bold text-amber-400 text-[10px]">CẢNH {idx + 1}</div>
-                                            <div className="text-gray-200 line-clamp-3 leading-snug">{shot}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <p className="text-[10px] text-gray-300 italic">
-                                    💡 Sau khi quay bằng điện thoại, bạn bấm "Nạp video thô" ở Bước 1 bên dưới để Studio tự động cắt ghép khớp hoàn hảo theo nhịp thoại!
-                                </p>
-                            </div>
-                        )}
+                            );
+                        })}
                     </div>
                 )}
             </div>
@@ -2146,90 +2177,175 @@ export default function AutoVideoStudioPage() {
                         )}
                     </div>
 
-                    {/* BƯỚC 2: GIỌNG ĐỌC AI & KỊCH BẢN THUYẾT MINH */}
+                    {/* BƯỚC 2: KỊCH BẢN & GIỌNG ĐỌC AI ĐỒNG BỘ (100% KHỚP LỜI NÓI & CHỮ) */}
                     <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-gray-100">
                             <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                 <Radio className="w-4 h-4 text-teal-600" />
-                                2. Giọng đọc thuyết minh & Phụ đề ({voiceHistory.length} giọng sẵn có)
+                                2. Kịch bản & Giọng đọc AI đồng bộ (100% Khớp lời nói & Chữ)
                             </h2>
-                            <button
-                                type="button"
-                                onClick={() => setIsEditingText(!isEditingText)}
-                                className="text-xs text-teal-600 hover:text-teal-800 font-semibold flex items-center gap-1"
-                            >
-                                <Edit3 className="w-3.5 h-3.5" />
-                                {isEditingText ? "Đóng sửa lời" : "Sửa lời thoại"}
-                            </button>
+                            <div className="flex items-center gap-2">
+                                {selectedVoiceAudioUrl ? (
+                                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                        <span>Đã khớp tiếng & chữ ({voiceDuration.toFixed(1)}s)</span>
+                                    </span>
+                                ) : (
+                                    <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                        <Radio className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                                        <span>Chưa có giọng đọc</span>
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Pick from Voice History */}
-                        {voiceHistory.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
-                                {voiceHistory.slice(0, 6).map((item) => {
-                                    const isSel = selectedVoiceId === item.id;
-                                    return (
-                                        <button
-                                            key={item.id}
-                                            type="button"
-                                            onClick={() => selectVoiceItem(item)}
-                                            className={`p-3 rounded-xl border text-left transition-all relative ${
-                                                isSel
-                                                    ? "border-teal-500 bg-teal-50/60 ring-1 ring-teal-500 text-teal-900"
-                                                    : "border-gray-200 hover:border-gray-300 text-gray-700 bg-white"
-                                            }`}
-                                        >
-                                            <div className="flex items-center justify-between text-xs font-bold mb-1">
-                                                <span>{item.styleName || item.title || "Giọng đọc AI"}</span>
-                                                <span className="font-mono text-[10px] text-gray-400">
-                                                    ~{item.estimatedSeconds || 15}s
-                                                </span>
-                                            </div>
-                                            <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed">
-                                                {item.text}
-                                            </p>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
-                                Chưa có file giọng đọc nào được lưu. Bạn có thể sang <strong>Studio Lồng Tiếng</strong> để tạo giọng AI, hoặc bấm tải file MP3 bên dưới.
-                            </div>
-                        )}
-
-                        {/* Edit Script Textarea */}
-                        {isEditingText && (
-                            <div className="space-y-1.5 pt-2 border-t border-gray-100">
-                                <label className="text-xs font-semibold text-gray-700">Nội dung phụ đề / lời thoại:</label>
-                                <textarea
-                                    rows={3}
-                                    value={selectedVoiceText}
-                                    onChange={(e) => setSelectedVoiceText(e.target.value)}
-                                    placeholder="Nhập nội dung lời thoại để AI tự sinh phụ đề..."
-                                    className="w-full p-2.5 text-xs border border-gray-200 rounded-xl focus:border-teal-500 outline-none leading-relaxed"
-                                />
-                            </div>
-                        )}
-
-                        {/* Voice Upload Option */}
-                        <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                            <span>Hoặc nạp file âm thanh MP3 từ máy:</span>
-                            <button
-                                type="button"
-                                onClick={() => audioInputRef.current?.click()}
-                                className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg font-medium"
-                            >
-                                Chọn file MP3
-                            </button>
+                        {/* Tiêu đề Hook đập mắt 3s đầu */}
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
+                                <span>🎯 Tiêu đề Hook 3s đầu (Đập mắt người xem & Giữ chân TikTok):</span>
+                                <span className="text-[10px] text-teal-600 font-semibold">Chạy chữ to nổi bật</span>
+                            </label>
                             <input
-                                ref={audioInputRef}
-                                type="file"
-                                accept="audio/*,.mp3,.m4a,.wav"
-                                onChange={handleVoiceUpload}
-                                className="hidden"
+                                type="text"
+                                value={customHookTitle}
+                                onChange={(e) => setCustomHookTitle(e.target.value)}
+                                placeholder="Ví dụ: 🔥 CONTAINER KHOAI MÔN CVT VỀ ĐÊM DATE MỚI TINH!"
+                                className="w-full px-3 py-2 text-xs font-bold text-amber-900 bg-amber-50/50 border border-amber-200 rounded-xl focus:border-teal-500 outline-none"
                             />
                         </div>
+
+                        {/* Lời thoại kịch bản AI (Hiển thị trực tiếp) */}
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-bold text-gray-700">
+                                    🎙️ Lời thoại kịch bản AI (Hiển thị phụ đề & Đọc thành tiếng):
+                                </label>
+                                <span className="text-[11px] text-gray-400 font-mono">
+                                    {selectedVoiceText.split(/\s+/).filter(Boolean).length} từ • ~{Math.round(selectedVoiceText.split(/\s+/).filter(Boolean).length / 3.2)}s đọc
+                                </span>
+                            </div>
+                            <textarea
+                                rows={4}
+                                value={selectedVoiceText}
+                                onChange={(e) => setSelectedVoiceText(e.target.value)}
+                                placeholder="Nhập hoặc để AI tạo nội dung lời thoại kịch bản..."
+                                className="w-full p-3 text-xs border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-1 focus:ring-teal-200 outline-none leading-relaxed text-gray-800 font-medium bg-slate-50/50 focus:bg-white transition-colors"
+                            />
+                            <p className="text-[11px] text-gray-400">
+                                💡 Bạn có thể sửa lời thoại trực tiếp ở trên. Sau khi sửa, bấm <strong>"🎙️ Thu Lại Giọng Đọc AI"</strong> bên dưới để giọng nói khớp ngay lập tức!
+                            </p>
+                        </div>
+
+                        {/* Bảng điều khiển Giọng đọc AI & Đồng bộ */}
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-slate-800">Giọng đọc AI:</span>
+                                    <select
+                                        value={selectedVoiceStyleId}
+                                        onChange={(e) => setSelectedVoiceStyleId(e.target.value)}
+                                        className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
+                                    >
+                                        <option value="female-genz">🌸 Nữ Gen Z (Vui tươi, chuẩn TikTok)</option>
+                                        <option value="female-sweet">🎀 Nữ Dịu Dàng (Ấm áp, tâm sự kho)</option>
+                                        <option value="female-pro">💎 Nữ Chuyên Nghiệp (Tự tin, quảng cáo)</option>
+                                        <option value="male-genz">⚡ Nam Gen Z (Năng động, trẻ trung)</option>
+                                        <option value="male-pro">👔 Nam Chuyên Nghiệp (Trầm ấm, uy tín)</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {/* Audition Button */}
+                                    <button
+                                        type="button"
+                                        onClick={handleToggleAuditionVoice}
+                                        disabled={isSynthesizingVoice}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 border ${
+                                            isAuditionPlaying
+                                                ? "bg-amber-100 text-amber-900 border-amber-300"
+                                                : "bg-white text-slate-700 hover:bg-slate-100 border-slate-200"
+                                        }`}
+                                    >
+                                        {isAuditionPlaying ? (
+                                            <>
+                                                <Pause className="w-3.5 h-3.5 text-amber-600" />
+                                                <span>Tạm dừng</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Volume2 className="w-3.5 h-3.5 text-teal-600" />
+                                                <span>Nghe thử giọng</span>
+                                            </>
+                                        )}
+                                    </button>
+
+                                    {/* Re-Synthesize Button */}
+                                    <button
+                                        type="button"
+                                        onClick={() => generateSpeechForText(selectedVoiceText, selectedVoiceStyleId)}
+                                        disabled={isSynthesizingVoice}
+                                        className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                                    >
+                                        {isSynthesizingVoice ? (
+                                            <>
+                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                <span>Đang thu giọng...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Radio className="w-3.5 h-3.5" />
+                                                <span>🎙️ Thu Lại Giọng Đọc AI</span>
+                                            </>
+                                        )}
+                                    </button>
+
+                                    {/* Upload MP3 Option */}
+                                    <button
+                                        type="button"
+                                        onClick={() => audioInputRef.current?.click()}
+                                        className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-600 rounded-lg text-xs border border-slate-200 font-medium"
+                                        title="Nạp file âm thanh MP3 từ máy tính"
+                                    >
+                                        Tải MP3 từ máy
+                                    </button>
+                                    <input
+                                        ref={audioInputRef}
+                                        type="file"
+                                        accept="audio/*,.mp3,.m4a,.wav"
+                                        onChange={handleVoiceUpload}
+                                        className="hidden"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Storyboard Guide (5 góc quay thực chiến tại kho LYHU) */}
+                        {cloneStoryboard.length > 0 && (
+                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                                <div className="flex items-center justify-between">
+                                    <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                        <Camera className="w-3.5 h-3.5 text-teal-600" />
+                                        <span>Gợi ý 5 góc quay bằng điện thoại (Quay mỗi đoạn 2.5s - 3s):</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleCopyDirectorShotlist}
+                                        className="text-[11px] font-bold text-teal-700 hover:underline flex items-center gap-1"
+                                    >
+                                        <Copy className="w-3 h-3" />
+                                        <span>Copy gửi Zalo</span>
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+                                    {cloneStoryboard.map((shot, idx) => (
+                                        <div key={idx} className="p-2 rounded-lg bg-white border border-slate-200 text-[11px] space-y-1">
+                                            <div className="font-bold text-teal-700 text-[10px]">CẢNH {idx + 1}</div>
+                                            <div className="text-slate-600 line-clamp-3 leading-snug">{shot}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* BƯỚC 3: FONT CHỮ THƯƠNG HIỆU & PHỤ ĐỀ ĐỘNG */}
@@ -3327,6 +3443,7 @@ export default function AutoVideoStudioPage() {
                 <audio ref={hiddenAudioRef} src={selectedVoiceAudioUrl || ""} />
                 <audio ref={bgmAudioRef} src={activeBgmUrl || ""} loop crossOrigin="anonymous" />
                 <audio ref={previewAudioRef} onEnded={() => setPreviewingSoundUrl(null)} />
+                <audio ref={auditionAudioRef} onEnded={() => setIsAuditionPlaying(false)} />
             </div>
         </div>
     );
