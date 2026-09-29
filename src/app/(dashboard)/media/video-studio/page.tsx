@@ -288,6 +288,8 @@ export default function AutoVideoStudioPage() {
     const [subtitleOffset, setSubtitleOffset] = useState<number>(0);
     const [customHookTitle, setCustomHookTitle] = useState("🔥 TỔNG KHO ĂN VẶT & BỘT PHÔ MAI BOYO GIÁ SỈ!");
     const [showHookTitle, setShowHookTitle] = useState(true);
+    const [hookBannerTheme, setHookBannerTheme] = useState<"red_orange" | "black_gold" | "teal_lyhu">("red_orange");
+    const [hookDuration, setHookDuration] = useState<number>(3.5);
 
     // ── DIRECTOR'S SCRIPTBOOK & PROJECT HISTORY ──
     const [directorGuide, setDirectorGuide] = useState<DirectorGuide | null>(null);
@@ -1321,33 +1323,111 @@ export default function AutoVideoStudioPage() {
             }
         }
 
-        // 2. Draw Hook Title (First 3.5s)
-        if (showHookTitle && time <= 3.5 && customHookTitle.trim()) {
+        // 2. Draw Hook Title (First 3.5s with Auto-Wrap & 100% Frame-Safe Fit)
+        if (showHookTitle && time <= hookDuration && customHookTitle.trim()) {
             ctx.save();
-            const hookY = ch * 0.16;
-            ctx.font = `900 23px ${fontFamily}`;
+
+            // Pop-in bounce animation in first 0.25s
+            let hookScale = 1.0;
+            if (time < 0.25) {
+                const t = time / 0.25;
+                hookScale = 0.85 + 0.15 * Math.sin(t * Math.PI * 0.5);
+            }
+
+            const hookCenterY = ch * 0.165;
+            const maxBadgeW = Math.min(cw * 0.90, cw - 32); // Safe width boundary
+            const maxContentW = maxBadgeW - 36; // Inner text padding
+
+            // Auto-scale font size based on text length
+            const textRaw = customHookTitle.trim();
+            let baseFontSize = 23;
+            if (textRaw.length > 55) baseFontSize = 17;
+            else if (textRaw.length > 36) baseFontSize = 19.5;
+
+            ctx.font = `900 ${baseFontSize}px ${fontFamily}`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
 
-            const titleWidth = ctx.measureText(customHookTitle).width;
-            const badgeW = titleWidth + 32;
-            const badgeH = 44;
-            const badgeX = (cw - badgeW) / 2;
+            // Multi-line word-wrapping (Guarantees text never clips horizontally)
+            const words = textRaw.split(/\s+/);
+            const lines: string[] = [];
+            let currentLine = "";
 
-            const grad = ctx.createLinearGradient(badgeX, hookY, badgeX + badgeW, hookY);
-            grad.addColorStop(0, "#DC2626");
-            grad.addColorStop(1, "#EA580C");
+            for (let i = 0; i < words.length; i++) {
+                const testLine = currentLine ? `${currentLine} ${words[i]}` : words[i];
+                const testW = ctx.measureText(testLine).width;
+                if (testW > maxContentW && currentLine) {
+                    lines.push(currentLine);
+                    currentLine = words[i];
+                } else {
+                    currentLine = testLine;
+                }
+            }
+            if (currentLine) lines.push(currentLine);
+
+            // Re-measure max line width
+            let maxLineW = 0;
+            lines.forEach((l) => {
+                const lw = ctx.measureText(l).width;
+                if (lw > maxLineW) maxLineW = lw;
+            });
+
+            const lineHeight = baseFontSize * 1.38;
+            const badgeW = Math.min(maxBadgeW, Math.max(160, maxLineW + 36));
+            const badgeH = Math.max(46, lines.length * lineHeight + 20);
+            const badgeX = (cw - badgeW) / 2;
+            const badgeY = hookCenterY - badgeH / 2;
+
+            // Apply scale from center
+            ctx.translate(cw / 2, hookCenterY);
+            ctx.scale(hookScale, hookScale);
+            ctx.translate(-cw / 2, -hookCenterY);
+
+            // Badge Background Gradient (Configurable High-Impact Themes)
+            const grad = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeW, badgeY + badgeH);
+            if (hookBannerTheme === "black_gold") {
+                grad.addColorStop(0, "#18181B");
+                grad.addColorStop(1, "#27272A");
+            } else if (hookBannerTheme === "teal_lyhu") {
+                grad.addColorStop(0, "#0F766E");
+                grad.addColorStop(1, "#00AFA9");
+            } else {
+                grad.addColorStop(0, "#DC2626");
+                grad.addColorStop(0.5, "#E11D48");
+                grad.addColorStop(1, "#EA580C");
+            }
+
+            ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+            ctx.shadowBlur = 16;
+            ctx.shadowOffsetY = 4;
             ctx.fillStyle = grad;
-            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-            ctx.shadowBlur = 12;
             ctx.beginPath();
-            ctx.roundRect(badgeX, hookY - badgeH / 2, badgeW, badgeH, 10);
+            ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 12);
             ctx.fill();
 
-            ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
-            ctx.shadowBlur = 4;
-            ctx.fillStyle = "#ffffff";
-            ctx.fillText(customHookTitle, cw / 2, hookY);
+            // Inner glowing border
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.strokeStyle = hookBannerTheme === "black_gold" ? "#FACC15" : "rgba(255, 255, 255, 0.35)";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Draw each line of text with bold outline stroke + crisp fill
+            const startTextY = badgeY + (badgeH - (lines.length - 1) * lineHeight) / 2;
+            lines.forEach((lineText, idx) => {
+                const lineY = startTextY + idx * lineHeight;
+
+                // Strong dark stroke for 100% legibility on any background
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.95)";
+                ctx.lineWidth = 4.5;
+                ctx.lineJoin = "round";
+                ctx.strokeText(lineText, cw / 2, lineY);
+
+                // High contrast text
+                ctx.fillStyle = hookBannerTheme === "black_gold" ? "#FEF08A" : "#FFFFFF";
+                ctx.fillText(lineText, cw / 2, lineY);
+            });
+
             ctx.restore();
         }
 
@@ -1412,7 +1492,14 @@ export default function AutoVideoStudioPage() {
                 ctx.translate(cw / 2 + shakeX, subY + shakeY);
                 ctx.scale(scale, scale);
 
+                const maxAllowedSubW = cw - 48;
+                let activeFontSize = fontSize;
                 ctx.font = `900 ${fontSize}px ${fontFamily}`;
+                const textW = ctx.measureText(text).width;
+                if (textW > maxAllowedSubW) {
+                    activeFontSize = Math.max(16, Math.floor(fontSize * (maxAllowedSubW / textW)));
+                    ctx.font = `900 ${activeFontSize}px ${fontFamily}`;
+                }
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
 
@@ -1536,6 +1623,8 @@ export default function AutoVideoStudioPage() {
         keyPowerWords,
         customHookTitle,
         showHookTitle,
+        hookBannerTheme,
+        hookDuration,
         showWatermark,
         enableSubtitles,
         subtitleCues
@@ -1638,6 +1727,31 @@ export default function AutoVideoStudioPage() {
         }
 
         drawCanvasFrame(validTime);
+    };
+
+    // Live update Hook Title with immediate preview on canvas
+    const handleHookTitleChange = (newTitle: string) => {
+        setCustomHookTitle(newTitle);
+        if (!isPlaying) {
+            currentTimeRef.current = 0;
+            setDisplayTime(0);
+            setTimeout(() => drawCanvasFrame(0), 10);
+        }
+    };
+
+    // Preview only the first 3.5s hook then pause cleanly
+    const handlePreviewHookOnly = () => {
+        pausePlayback();
+        currentTimeRef.current = 0;
+        setDisplayTime(0);
+        drawCanvasFrame(0);
+        startPlayback();
+        setTimeout(() => {
+            pausePlayback();
+            currentTimeRef.current = 0;
+            setDisplayTime(0);
+            drawCanvasFrame(0);
+        }, Math.max(1500, hookDuration * 1000));
     };
 
     // Main 60FPS RequestAnimationFrame Animation Loop
@@ -1771,8 +1885,8 @@ export default function AutoVideoStudioPage() {
                 bgmAudioEl.currentTime = 0;
             }
 
-            // Capture 30FPS canvas stream + mixed audio stream
-            const canvasStream = canvas.captureStream(30);
+            // Capture 60FPS canvas stream + mixed audio stream for butter-smooth export
+            const canvasStream = canvas.captureStream(60);
             const combinedTracks = [
                 ...canvasStream.getVideoTracks(),
                 ...destNode.stream.getAudioTracks()
@@ -1823,7 +1937,8 @@ export default function AutoVideoStudioPage() {
 
             const recorder = new MediaRecorder(combinedStream, {
                 mimeType: chosenMime,
-                videoBitsPerSecond: 4500000 // 4.5 Mbps optimal for mobile hardware decoding & 60fps smoothness
+                videoBitsPerSecond: 6500000, // 6.5 Mbps for pristine 60FPS mobile & desktop clarity
+                audioBitsPerSecond: 128000
             });
 
             const chunks: Blob[] = [];
@@ -1842,8 +1957,10 @@ export default function AutoVideoStudioPage() {
                 if (voiceAudioEl) voiceAudioEl.pause();
                 if (bgmAudioEl) bgmAudioEl.pause();
                 clips.forEach(c => {
-                    const v = videoElementsRef.current[c.id];
-                    if (v && !v.paused) v.pause();
+                    if (c?.id) {
+                        const v = videoElementsRef.current[c.id];
+                        if (v && !v.paused) v.pause();
+                    }
                 });
                 audioCtx.close().catch(() => {});
 
@@ -1889,40 +2006,55 @@ export default function AutoVideoStudioPage() {
                 document.body.removeChild(a);
             };
 
-            // Start Audio
-            if (voiceAudioEl) voiceAudioEl.play().catch(() => {});
-            if (bgmAudioEl) bgmAudioEl.play().catch(() => {});
+            // Pause all background clips first
+            clips.forEach((c) => {
+                if (c?.id) {
+                    const v = videoElementsRef.current[c.id];
+                    if (v && !v.paused) v.pause();
+                }
+            });
 
             // Start First Video Clip
-            const firstVid = videoElementsRef.current[clips[0].id];
+            const firstClip = clips[0];
+            const firstVid = firstClip?.id ? videoElementsRef.current[firstClip.id] : null;
             if (firstVid) {
                 firstVid.currentTime = 0;
                 firstVid.play().catch(() => {});
             }
 
+            // Start Audio
+            if (voiceAudioEl) voiceAudioEl.play().catch(() => {});
+            if (bgmAudioEl) bgmAudioEl.play().catch(() => {});
+
             recorder.start(1000); // 1-second chunks prevent container fragmentation jitter
 
-            let exportTime = 0;
-            const startTime = performance.now();
+            const exportActiveClipId = { current: firstClip?.id || null };
+            const exportStartTime = performance.now();
+            let animExportId: number;
 
-            const renderTimer = setInterval(() => {
-                // Lock export time strictly to audio playback position to ensure 100% voice-text sync!
+            const exportLoop = () => {
+                if (!isExportingRef.current) return;
+
+                const elapsed = (performance.now() - exportStartTime) / 1000;
+                let exportTime = elapsed;
+
+                // Sync strictly to voice audio if playing, avoiding any drift
                 if (voiceAudioEl && !voiceAudioEl.paused && voiceAudioEl.currentTime > 0) {
                     exportTime = voiceAudioEl.currentTime;
-                } else {
-                    exportTime = (performance.now() - startTime) / 1000;
                 }
-                currentTimeRef.current = exportTime;
+                const validExportT = (typeof exportTime === "number" && isFinite(exportTime) && exportTime >= 0) ? exportTime : 0;
+                currentTimeRef.current = validExportT;
 
-                // Sync video clips for export
+                // Seamless clip switching during export (0 decode contention)
                 if (clips.length > 1) {
-                    const switchSec = Math.max(2, clipSwitchInterval);
-                    const clipIdx = Math.floor(exportTime / switchSec) % clips.length;
-                    const curClip = clips[clipIdx];
-                    const nxtClip = clips[(clipIdx + 1) % clips.length];
-                    const timeInInt = exportTime % switchSec;
+                    const switchSec = Math.max(2, clipSwitchInterval || 2.5);
+                    const clipIdx = Math.floor(validExportT / switchSec) % clips.length;
+                    const curClip = clips[clipIdx] || clips[0];
+                    const nxtClip = clips[(clipIdx + 1) % clips.length] || curClip;
+                    const timeInInt = validExportT % switchSec;
 
-                    if (switchSec - timeInInt <= 0.45) {
+                    // Pre-roll next clip 0.35s before switch
+                    if (switchSec - timeInInt <= 0.35 && nxtClip?.id && nxtClip.id !== curClip.id) {
                         const nxtVid = videoElementsRef.current[nxtClip.id];
                         if (nxtVid && nxtVid.paused) {
                             nxtVid.currentTime = 0;
@@ -1930,30 +2062,46 @@ export default function AutoVideoStudioPage() {
                         }
                     }
 
-                    const activeVid = videoElementsRef.current[curClip.id];
-                    if (activeVid && activeVid.paused) {
-                        activeVid.play().catch(() => {});
+                    // On clip switch: PAUSE previous clip immediately to prevent GPU/CPU decode contention!
+                    if (curClip?.id && curClip.id !== exportActiveClipId.current) {
+                        if (exportActiveClipId.current) {
+                            const prevVid = videoElementsRef.current[exportActiveClipId.current];
+                            if (prevVid && !prevVid.paused) prevVid.pause();
+                        }
+                        const curVid = videoElementsRef.current[curClip.id];
+                        if (curVid) {
+                            curVid.currentTime = 0;
+                            curVid.play().catch(() => {});
+                        }
+                        exportActiveClipId.current = curClip.id;
                     }
                 }
 
                 // Dynamic Audio Ducking in export
                 if (bgmGainNode) {
-                    const isSpeaking = voiceDuration > 0 && exportTime < voiceDuration;
+                    const isSpeaking = voiceDuration > 0 && validExportT < voiceDuration;
                     bgmGainNode.gain.value = enableAudioDucking && isSpeaking
                         ? bgmVolume * 0.22
                         : bgmVolume;
                 }
 
-                drawCanvasFrame(exportTime);
+                drawCanvasFrame(validExportT);
 
-                const progress = Math.min(99, Math.round((exportTime / totalDuration) * 100));
+                const progress = Math.min(99, Math.round((validExportT / totalDuration) * 100));
                 setRenderProgress(progress);
 
-                if (exportTime >= totalDuration) {
-                    clearInterval(renderTimer);
-                    recorder.stop();
+                if (validExportT >= totalDuration) {
+                    cancelAnimationFrame(animExportId);
+                    if (recorder.state === "recording") {
+                        recorder.stop();
+                    }
+                    return;
                 }
-            }, 1000 / 30);
+
+                animExportId = requestAnimationFrame(exportLoop);
+            };
+
+            animExportId = requestAnimationFrame(exportLoop);
 
         } catch (err: any) {
             console.error("Render error:", err);
@@ -2678,19 +2826,133 @@ export default function AutoVideoStudioPage() {
                             </div>
                         </div>
 
-                        {/* Tiêu đề Hook đập mắt 3s đầu */}
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
-                                <span>🎯 Tiêu đề Hook 3s đầu (Đập mắt người xem & Giữ chân TikTok):</span>
-                                <span className="text-[10px] text-teal-600 font-semibold">Chạy chữ to nổi bật</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={customHookTitle}
-                                onChange={(e) => setCustomHookTitle(e.target.value)}
-                                placeholder="Ví dụ: 🔥 CONTAINER KHOAI MÔN CVT VỀ ĐÊM DATE MỚI TINH!"
-                                className="w-full px-3 py-2 text-xs font-bold text-amber-900 bg-amber-50/50 border border-amber-200 rounded-xl focus:border-teal-500 outline-none"
-                            />
+                        {/* Tiêu đề Hook đập mắt 3.5s đầu */}
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-white border border-amber-200/90 shadow-sm space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                    <Sparkles className="w-4 h-4 text-amber-600" />
+                                    <span>🎯 Tiêu đề giật tít Hook ({hookDuration}s đầu để giữ chân TikTok):</span>
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handlePreviewHookOnly}
+                                        className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[11px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                                        title="Bấm để phát lại 3.5 giây đầu và xem hiệu ứng chữ Hook"
+                                    >
+                                        <Play className="w-3 h-3 fill-current" />
+                                        <span>Xem thử Hook</span>
+                                    </button>
+                                    <label className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={showHookTitle}
+                                            onChange={(e) => setShowHookTitle(e.target.checked)}
+                                            className="accent-amber-600 rounded"
+                                        />
+                                        <span>Hiển thị</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {showHookTitle && (
+                                <>
+                                    <div className="space-y-1">
+                                        <textarea
+                                            rows={2}
+                                            value={customHookTitle}
+                                            onChange={(e) => handleHookTitleChange(e.target.value)}
+                                            placeholder="Nhập tiêu đề giật tít Hook 3s đầu, ví dụ: 🔥 CONTAINER KHOAI MÔN CVT VỀ ĐÊM DATE MỚI TINH!"
+                                            className="w-full p-2.5 text-xs font-bold text-amber-950 bg-white border border-amber-300 rounded-xl focus:border-amber-600 focus:ring-2 focus:ring-amber-100 outline-none leading-relaxed transition-all shadow-inner"
+                                        />
+                                        <div className="flex items-center justify-between text-[10px] text-amber-700 font-medium">
+                                            <span>💡 Nhập sửa trực tiếp ở đây — màn hình bên phải sẽ cập nhật ngay lập tức!</span>
+                                            <span className="font-mono">{customHookTitle.length} ký tự • Tự động xuống dòng vừa khung 9:16</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Gợi ý giật tít nhanh */}
+                                    <div className="space-y-1.5 pt-1">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                            Gợi ý giật tít bán lẻ / bán buôn (Nhấp chọn ăn liền):
+                                        </span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {[
+                                                "🔥 KHOAI MÔN SẤY CVT NGON GIÒN TẠI KHO LYHU!",
+                                                "🌙 11H ĐÊM KHO SỈ LYHU VẪN ĐÓNG HÀNG!",
+                                                "🧀 BỘT PHÔ MAI BOYO GIÁ SỈ TẬN XƯỞNG!",
+                                                "🦀 THANH KHOAI MÔN TRỨNG CUA CÓ GÌ MÀ HOT?",
+                                                "⚡ CẬP BẾN CONTAINER TOÀN DATE MỚI TINH!"
+                                            ].map((preset) => (
+                                                <button
+                                                    key={preset}
+                                                    type="button"
+                                                    onClick={() => handleHookTitleChange(preset)}
+                                                    className="px-2 py-1 bg-white hover:bg-amber-100/70 border border-amber-200/90 rounded-lg text-[10px] font-semibold text-slate-700 hover:text-amber-950 transition-colors cursor-pointer text-left line-clamp-1"
+                                                >
+                                                    {preset}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Tùy chỉnh màu sắc banner & thời lượng */}
+                                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-amber-200/60 text-xs">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[11px] font-semibold text-slate-600">Màu nền Banner:</span>
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setHookBannerTheme("red_orange")}
+                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                                                        hookBannerTheme === "red_orange"
+                                                            ? "bg-red-600 text-white shadow-sm"
+                                                            : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                                                    }`}
+                                                >
+                                                    Đỏ Cam TikTok
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setHookBannerTheme("black_gold")}
+                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                                                        hookBannerTheme === "black_gold"
+                                                            ? "bg-zinc-900 text-yellow-400 shadow-sm"
+                                                            : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                                                    }`}
+                                                >
+                                                    Đen Viền Vàng
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setHookBannerTheme("teal_lyhu")}
+                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                                                        hookBannerTheme === "teal_lyhu"
+                                                            ? "bg-teal-600 text-white shadow-sm"
+                                                            : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                                                    }`}
+                                                >
+                                                    Xanh LYHU
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-[11px] font-semibold text-slate-600">Thời lượng hiện:</span>
+                                            <select
+                                                value={hookDuration}
+                                                onChange={(e) => setHookDuration(parseFloat(e.target.value))}
+                                                className="px-2 py-0.5 bg-white border border-amber-200 rounded text-[11px] font-bold text-amber-900 outline-none cursor-pointer"
+                                            >
+                                                <option value={3.0}>3.0 giây</option>
+                                                <option value={3.5}>3.5 giây (Chuẩn)</option>
+                                                <option value={4.0}>4.0 giây</option>
+                                                <option value={5.0}>5.0 giây</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                         {/* Lời thoại kịch bản AI (Hiển thị trực tiếp) */}
@@ -3035,24 +3297,78 @@ export default function AutoVideoStudioPage() {
                         </div>
 
                         {/* Hook Title (3.5s đầu) */}
-                        <div className="space-y-1.5 pt-2 border-t border-gray-100 text-xs">
+                        <div className="space-y-2 pt-3 border-t border-gray-100 text-xs">
                             <div className="flex items-center justify-between">
-                                <label className="font-semibold text-gray-700">Tiêu đề giật tít Hook (Hiện ở 3.5 giây đầu để giữ chân):</label>
-                                <input
-                                    type="checkbox"
-                                    checked={showHookTitle}
-                                    onChange={(e) => setShowHookTitle(e.target.checked)}
-                                    className="accent-purple-600 rounded"
-                                />
+                                <label className="font-semibold text-gray-700 flex items-center gap-1.5">
+                                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                                    <span>Tiêu đề giật tít Hook (Hiện ở {hookDuration}s đầu để giữ chân):</span>
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handlePreviewHookOnly}
+                                        className="px-2 py-0.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <Play className="w-2.5 h-2.5 fill-current" />
+                                        <span>Xem thử Hook</span>
+                                    </button>
+                                    <input
+                                        type="checkbox"
+                                        checked={showHookTitle}
+                                        onChange={(e) => setShowHookTitle(e.target.checked)}
+                                        className="accent-amber-600 rounded"
+                                    />
+                                </div>
                             </div>
                             {showHookTitle && (
-                                <input
-                                    type="text"
-                                    value={customHookTitle}
-                                    onChange={(e) => setCustomHookTitle(e.target.value)}
-                                    placeholder="VD: 🔥 TỔNG KHO ĂN VẶT & BỘT PHÔ MAI BOYO GIÁ SỈ!"
-                                    className="w-full p-2.5 bg-slate-50 border border-gray-200 rounded-lg outline-none font-bold text-red-600 text-xs"
-                                />
+                                <div className="space-y-2">
+                                    <textarea
+                                        rows={2}
+                                        value={customHookTitle}
+                                        onChange={(e) => handleHookTitleChange(e.target.value)}
+                                        placeholder="VD: 🔥 TỔNG KHO ĂN VẶT & BỘT PHÔ MAI BOYO GIÁ SỈ!"
+                                        className="w-full p-2.5 bg-amber-50/50 border border-amber-200 rounded-lg outline-none font-bold text-amber-950 text-xs focus:border-amber-500"
+                                    />
+                                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-gray-500">Màu banner:</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setHookBannerTheme("red_orange")}
+                                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${hookBannerTheme === "red_orange" ? "bg-red-600 text-white" : "bg-gray-100 text-gray-700"}`}
+                                            >
+                                                Đỏ Cam
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setHookBannerTheme("black_gold")}
+                                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${hookBannerTheme === "black_gold" ? "bg-zinc-900 text-yellow-400" : "bg-gray-100 text-gray-700"}`}
+                                            >
+                                                Đen Vàng
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setHookBannerTheme("teal_lyhu")}
+                                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${hookBannerTheme === "teal_lyhu" ? "bg-teal-600 text-white" : "bg-gray-100 text-gray-700"}`}
+                                            >
+                                                Xanh LYHU
+                                            </button>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-gray-500">Thời lượng:</span>
+                                            <select
+                                                value={hookDuration}
+                                                onChange={(e) => setHookDuration(parseFloat(e.target.value))}
+                                                className="px-1.5 py-0.5 border border-gray-200 rounded text-[10px] font-bold"
+                                            >
+                                                <option value={3.0}>3.0s</option>
+                                                <option value={3.5}>3.5s</option>
+                                                <option value={4.0}>4.0s</option>
+                                                <option value={5.0}>5.0s</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
