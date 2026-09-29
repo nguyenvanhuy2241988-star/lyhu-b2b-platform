@@ -3,9 +3,11 @@ import { normalizeVietnamesePhonetics } from "@/lib/ttsHelper";
 import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
-// Helper: Run promise with timeout
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+// --------------- Helper: Timeout Wrapper ---------------
 function withTimeout<T>(promise: Promise<T>, ms: number, errorMsg: string): Promise<T> {
     let timer: NodeJS.Timeout;
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -14,56 +16,118 @@ function withTimeout<T>(promise: Promise<T>, ms: number, errorMsg: string): Prom
     return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
 }
 
-// --------------- Microsoft Edge Neural TTS Engine ---------------
+// --------------- 1. Google Gemini Expressive Neural Audio (Tự nhiên & Biểu cảm nhất) ---------------
 
-interface EdgeVoiceConfig {
-    voice: string;
-    rate: string;
-    pitch: string;
+interface GeminiVoiceConfig {
+    voiceName: string;
+    instruction: string;
 }
 
-const VOICE_PRESETS: Record<string, EdgeVoiceConfig> = {
+const GEMINI_VOICES: Record<string, GeminiVoiceConfig> = {
     "female-genz": {
-        voice: "vi-VN-HoaiMyNeural",
-        rate: "+12%",
-        pitch: "+15Hz"
+        voiceName: "Kore",
+        instruction: "Nói bằng tiếng Việt với giọng nữ trẻ trung, sôi động, tự nhiên, nhí nhảnh chuẩn phong cách TikTok viral bán hàng. Ngữ điệu chân thực, nhấn nhá vui vẻ."
     },
     "female-sweet": {
-        voice: "vi-VN-HoaiMyNeural",
-        rate: "+2%",
-        pitch: "+6Hz"
+        voiceName: "Aoede",
+        instruction: "Nói bằng tiếng Việt với giọng nữ dịu dàng, ấm áp, tình cảm, thân mật như người chị em tâm sự giới thiệu món ngon và hàng kho sỉ."
     },
     "female-pro": {
-        voice: "vi-VN-HoaiMyNeural",
-        rate: "+6%",
-        pitch: "+0Hz"
+        voiceName: "Leda",
+        instruction: "Nói bằng tiếng Việt với giọng nữ tự tin, chuyên nghiệp, rõ ràng, uy tín, chuẩn phong cách giới thiệu đối tác kinh doanh B2B."
     },
     "male-genz": {
-        voice: "vi-VN-NamMinhNeural",
-        rate: "+10%",
-        pitch: "+10Hz"
+        voiceName: "Puck",
+        instruction: "Nói bằng tiếng Việt với giọng nam Gen Z năng động, hóm hỉnh, thân thiện, hào hứng như đang quay video đập hộp hàng mới về."
     },
     "male-pro": {
-        voice: "vi-VN-NamMinhNeural",
-        rate: "+2%",
-        pitch: "-4Hz"
+        voiceName: "Fenrir",
+        instruction: "Nói bằng tiếng Việt với giọng nam trầm ấm, đĩnh đạc, chững chạc, tạo cảm giác tin cậy tuyệt đối cho đại lý và nhà phân phối."
     },
     "female": {
-        voice: "vi-VN-HoaiMyNeural",
-        rate: "+8%",
-        pitch: "+5Hz"
+        voiceName: "Kore",
+        instruction: "Nói bằng tiếng Việt tự nhiên, truyền cảm, nhấn nhá lôi cuốn người nghe."
     },
     "male": {
-        voice: "vi-VN-NamMinhNeural",
-        rate: "+6%",
-        pitch: "+0Hz"
+        voiceName: "Puck",
+        instruction: "Nói bằng tiếng Việt giọng nam tự nhiên, hào hứng, lôi cuốn."
     }
 };
+
+async function synthesizeWithGemini(text: string, styleKey: string): Promise<{ buffer: Buffer; mimeType: string }> {
+    if (!GEMINI_API_KEY) {
+        throw new Error("GEMINI_API_KEY is not configured");
+    }
+
+    const config = GEMINI_VOICES[styleKey] || GEMINI_VOICES["female-genz"];
+    const models = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-exp"];
+
+    const requestBody = {
+        contents: [
+            {
+                parts: [
+                    {
+                        text: `${config.instruction}\n\nĐọc chính xác nội dung kịch bản sau, không thêm bớt lời dẫn:\n"${text}"`
+                    }
+                ]
+            }
+        ],
+        generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+                voiceConfig: {
+                    prebuiltVoiceConfig: {
+                        voiceName: config.voiceName
+                    }
+                }
+            }
+        }
+    };
+
+    for (const model of models) {
+        try {
+            console.log(`[TTS] Trying Gemini Model ${model} for expressive voice (${config.voiceName})...`);
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+            
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestBody),
+                signal: AbortSignal.timeout(12000)
+            });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                console.warn(`[TTS] Gemini ${model} failed (${res.status}):`, errText.slice(0, 300));
+                continue;
+            }
+
+            const json = await res.json();
+            const parts = json?.candidates?.[0]?.content?.parts;
+            if (!parts || parts.length === 0) continue;
+
+            for (const part of parts) {
+                if (part.inlineData?.data) {
+                    const audioBuf = Buffer.from(part.inlineData.data, "base64");
+                    const mime = part.inlineData.mimeType || "audio/wav";
+                    console.log(`[TTS] Gemini Expressive Audio SUCCESS: ${audioBuf.length} bytes (${mime})`);
+                    return { buffer: audioBuf, mimeType: mime };
+                }
+            }
+        } catch (e: any) {
+            console.warn(`[TTS] Error calling Gemini model ${model}:`, e.message);
+        }
+    }
+
+    throw new Error("Gemini Audio synthesis failed across all models");
+}
+
+// --------------- 2. Microsoft Edge Neural Engine ---------------
 
 async function synthesizeWithEdgeTTS(
     text: string,
     voiceName = "vi-VN-HoaiMyNeural",
-    rate = "+0%",
+    rate = "+8%",
     pitch = "+0Hz"
 ): Promise<Buffer> {
     const edgePromise = new Promise<Buffer>(async (resolve, reject) => {
@@ -77,7 +141,7 @@ async function synthesizeWithEdgeTTS(
             result.audioStream.on("end", () => {
                 const finalBuf = Buffer.concat(chunks);
                 if (finalBuf.length === 0) {
-                    reject(new Error("MsEdgeTTS returned empty audio stream"));
+                    reject(new Error("MsEdgeTTS empty"));
                 } else {
                     resolve(finalBuf);
                 }
@@ -88,55 +152,37 @@ async function synthesizeWithEdgeTTS(
         }
     });
 
-    // Cắt timeout ở 3.5 giây để nếu máy chủ Vercel bị chặn WebSocket thì chuyển ngay sang Google TTS
-    return withTimeout(edgePromise, 3500, "Edge TTS timeout after 3.5s");
+    return withTimeout(edgePromise, 4000, "Edge TTS timeout after 4s");
 }
 
-// --------------- ElevenLabs Voice Cloning Engine ---------------
+// --------------- 3. ElevenLabs Voice Cloning Engine ---------------
 
-async function synthesizeWithElevenLabs(
-    text: string,
-    voiceId: string,
-    apiKey: string
-): Promise<Buffer> {
-    const models = ["eleven_multilingual_v2", "eleven_turbo_v2_5"];
-
-    for (const modelId of models) {
-        try {
-            console.log(`[ElevenLabs] Calling TTS with model: ${modelId}, voiceId: ${voiceId}`);
-            const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-                method: "POST",
-                headers: {
-                    "xi-api-key": apiKey,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    text,
-                    model_id: modelId,
-                    language_code: "vi",
-                    voice_settings: {
-                        stability: 0.65,
-                        similarity_boost: 0.80,
-                        style: 0.05,
-                        use_speaker_boost: true
-                    }
-                }),
-                signal: AbortSignal.timeout(8000)
-            });
-
-            if (res.ok) {
-                const arrayBuffer = await res.arrayBuffer();
-                return Buffer.from(arrayBuffer);
+async function synthesizeWithElevenLabs(text: string, voiceId: string, apiKey: string): Promise<Buffer> {
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: "POST",
+        headers: {
+            "xi-api-key": apiKey,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            text,
+            model_id: "eleven_multilingual_v2",
+            language_code: "vi",
+            voice_settings: {
+                stability: 0.65,
+                similarity_boost: 0.80,
+                style: 0.05,
+                use_speaker_boost: true
             }
-        } catch (e: any) {
-            console.warn(`[ElevenLabs] Error with model ${modelId}:`, e.message);
-        }
-    }
+        }),
+        signal: AbortSignal.timeout(9000)
+    });
 
-    throw new Error("ElevenLabs failed with all models");
+    if (!res.ok) throw new Error(`ElevenLabs error ${res.status}`);
+    return Buffer.from(await res.arrayBuffer());
 }
 
-// --------------- Google Translate High-Speed Edge TTS ---------------
+// --------------- 4. Google Translate Fast Multi-chunk Fallback ---------------
 
 function splitTextIntoChunks(text: string, maxLen = 140): string[] {
     const clean = text.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
@@ -151,25 +197,9 @@ function splitTextIntoChunks(text: string, maxLen = 140): string[] {
             current = (current + " " + sentence).trim();
         } else {
             if (current) chunks.push(current);
-            if (sentence.length > maxLen) {
-                const words = sentence.split(" ");
-                let wordChunk = "";
-                for (const w of words) {
-                    if ((wordChunk + " " + w).trim().length <= maxLen) {
-                        wordChunk = (wordChunk + " " + w).trim();
-                    } else {
-                        if (wordChunk) chunks.push(wordChunk);
-                        wordChunk = w;
-                    }
-                }
-                if (wordChunk) current = wordChunk;
-                else current = "";
-            } else {
-                current = sentence;
-            }
+            current = sentence;
         }
     }
-
     if (current) chunks.push(current);
     return chunks;
 }
@@ -178,7 +208,6 @@ async function synthesizeWithGoogleTranslate(text: string): Promise<Buffer> {
     const chunks = splitTextIntoChunks(text, 140);
     if (chunks.length === 0) throw new Error("No text chunks.");
 
-    // Fetch concurrent chunks simultaneously (takes < 600ms total)
     const chunkPromises = chunks.map(async (chunk) => {
         const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(chunk)}`;
         const res = await fetch(url, {
@@ -186,18 +215,15 @@ async function synthesizeWithGoogleTranslate(text: string): Promise<Buffer> {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                 Referer: "https://translate.google.com/"
             },
-            signal: AbortSignal.timeout(3500)
+            signal: AbortSignal.timeout(3000)
         });
 
-        if (!res.ok) {
-            throw new Error(`Google chunk failed (${res.status})`);
-        }
+        if (!res.ok) throw new Error("Chunk failed");
         return Buffer.from(await res.arrayBuffer());
     });
 
-    const audioBuffers = await Promise.all(chunkPromises);
-    if (audioBuffers.length === 0) throw new Error("All Google Translate chunks failed.");
-    return Buffer.concat(audioBuffers);
+    const buffers = await Promise.all(chunkPromises);
+    return Buffer.concat(buffers);
 }
 
 // --------------- Main Handler ---------------
@@ -205,7 +231,7 @@ async function synthesizeWithGoogleTranslate(text: string): Promise<Buffer> {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { text, voice = "female", rate, pitch, style = "female", voiceId, elevenApiKey, provider } = body;
+        const { text, voice = "female", rate, pitch, style = "female-genz", voiceId, elevenApiKey, engine } = body;
 
         if (!text || typeof text !== "string" || !text.trim()) {
             return NextResponse.json(
@@ -214,65 +240,61 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Normalize Vietnamese phonetics (LYHU -> Ly Hu, CVT -> C V T, date -> đết, container -> con ten nơ, v.v.)
         const normalizedText = normalizeVietnamesePhonetics(text);
-
-        // Determine preset configuration
-        let styleKey = style || voice || "female-genz";
-        if (styleKey.includes("HoaiMy") || (styleKey.includes("female") && !VOICE_PRESETS[styleKey])) {
-            styleKey = "female-genz";
-        }
-        if (styleKey.includes("NamMinh") || (styleKey.includes("male") && !VOICE_PRESETS[styleKey])) {
-            styleKey = "male-genz";
-        }
-
-        const preset = VOICE_PRESETS[styleKey] || VOICE_PRESETS["female-genz"];
-        const targetVoice = voice && (voice.includes("NamMinh") || voice.includes("HoaiMy")) ? voice : preset.voice;
-        const targetRate = rate || preset.rate;
-        const targetPitch = pitch || preset.pitch;
+        const styleKey = style || voice || "female-genz";
 
         let audioBuffer: Buffer | null = null;
+        let contentType = "audio/mpeg";
+
         const apiKey = elevenApiKey || process.env.ELEVENLABS_API_KEY;
 
-        // Ưu tiên 1: ElevenLabs nếu người dùng cấu hình giọng nhân bản riêng
+        // ƯU TIÊN 1: ElevenLabs nếu người dùng cấu hình Voice ID
         if (voiceId && apiKey) {
             try {
-                console.log("[TTS] Trying ElevenLabs Voice Cloning for voiceId:", voiceId);
+                console.log("[TTS] Using ElevenLabs Voice Cloning...");
                 audioBuffer = await synthesizeWithElevenLabs(normalizedText, voiceId, apiKey);
-                console.log("[TTS] ElevenLabs SUCCESS:", audioBuffer.length, "bytes");
-            } catch (elevenErr: any) {
-                console.warn("[TTS] ElevenLabs failed:", elevenErr.message);
+                contentType = "audio/mpeg";
+            } catch (e: any) {
+                console.warn("[TTS] ElevenLabs failed:", e.message);
             }
         }
 
-        // Nếu người dùng chọn Google trực tiếp hoặc ElevenLabs thất bại
+        // ƯU TIÊN 2: Google Gemini Neural Audio (Tự nhiên, cảm xúc, biểu cảm chuẩn người thật như mong đợi)
+        if (!audioBuffer && engine !== "edge") {
+            try {
+                const geminiResult = await synthesizeWithGemini(normalizedText, styleKey);
+                audioBuffer = geminiResult.buffer;
+                contentType = geminiResult.mimeType || "audio/wav";
+            } catch (geminiErr: any) {
+                console.warn("[TTS] Gemini Neural failed, trying Edge TTS:", geminiErr.message);
+            }
+        }
+
+        // ƯU TIÊN 3: Microsoft Edge Neural TTS
         if (!audioBuffer) {
-            if (provider === "google") {
-                audioBuffer = await synthesizeWithGoogleTranslate(normalizedText);
-            } else {
-                // Thử Microsoft Edge Neural TTS trước (với timeout bảo vệ 3.5s)
-                try {
-                    audioBuffer = await synthesizeWithEdgeTTS(normalizedText, targetVoice, targetRate, targetPitch);
-                    console.log("[TTS] Edge Neural TTS SUCCESS:", audioBuffer.length, "bytes");
-                } catch (edgeErr: any) {
-                    console.warn("[TTS] Edge TTS fallback triggering Google Translate:", edgeErr.message);
-                    // Lập tức fallback sang Google Translate tốc độ cao (< 600ms), không bao giờ bị 504
-                    audioBuffer = await synthesizeWithGoogleTranslate(normalizedText);
-                    console.log("[TTS] Google Translate fallback SUCCESS:", audioBuffer.length, "bytes");
-                }
+            try {
+                const targetVoice = styleKey.includes("male") ? "vi-VN-NamMinhNeural" : "vi-VN-HoaiMyNeural";
+                audioBuffer = await synthesizeWithEdgeTTS(normalizedText, targetVoice, rate || "+8%", pitch || "+0Hz");
+                contentType = "audio/mpeg";
+            } catch (edgeErr: any) {
+                console.warn("[TTS] Edge TTS failed, falling back to Google Translate fast:", edgeErr.message);
             }
         }
 
-        if (!audioBuffer || audioBuffer.length === 0) {
-            throw new Error("Không thể tạo giọng đọc audio.");
+        // ƯU TIÊN 4: Google Translate Fast Fallback (< 600ms)
+        if (!audioBuffer) {
+            audioBuffer = await synthesizeWithGoogleTranslate(normalizedText);
+            contentType = "audio/mpeg";
         }
+
+        const fileExt = contentType.includes("wav") ? "wav" : "mp3";
 
         return new NextResponse(new Uint8Array(audioBuffer), {
             status: 200,
             headers: {
-                "Content-Type": "audio/mpeg",
+                "Content-Type": contentType,
                 "Content-Length": audioBuffer.length.toString(),
-                "Content-Disposition": 'inline; filename="voiceover_lyhu.mp3"',
+                "Content-Disposition": `inline; filename="voiceover_lyhu.${fileExt}"`,
                 "Cache-Control": "public, max-age=3600"
             }
         });

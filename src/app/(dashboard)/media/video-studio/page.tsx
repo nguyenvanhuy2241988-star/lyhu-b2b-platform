@@ -271,6 +271,12 @@ export default function AutoVideoStudioPage() {
     const [voiceDuration, setVoiceDuration] = useState<number>(30);
     const [isEditingText, setIsEditingText] = useState(true);
     const [selectedVoiceStyleId, setSelectedVoiceStyleId] = useState<string>("female-genz");
+    const [selectedVoiceEngine, setSelectedVoiceEngine] = useState<"gemini" | "edge" | "elevenlabs">("gemini");
+    const [isRecordingMic, setIsRecordingMic] = useState(false);
+    const [recordingSeconds, setRecordingSeconds] = useState(0);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const recordedChunksRef = useRef<Blob[]>([]);
+    const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const [isSynthesizingVoice, setIsSynthesizingVoice] = useState(false);
     const [analyzingStepText, setAnalyzingStepText] = useState<string>("");
     const [isAuditionPlaying, setIsAuditionPlaying] = useState(false);
@@ -453,10 +459,11 @@ export default function AutoVideoStudioPage() {
         }
     };
 
-    // ── NATIVE AI SPEECH SYNTHESIS ENGINE (Google Gemini TTS / Edge Neural) ──
+    // ── NATIVE AI SPEECH SYNTHESIS ENGINE (Google Gemini Neural / Edge / ElevenLabs) ──
     const generateSpeechForText = async (
         textToSpeak: string,
-        styleId = selectedVoiceStyleId
+        styleId = selectedVoiceStyleId,
+        engineChoice = selectedVoiceEngine
     ): Promise<string | null> => {
         if (!textToSpeak || !textToSpeak.trim()) {
             alert("Vui lòng nhập kịch bản hoặc lời thoại cần thu âm!");
@@ -471,9 +478,10 @@ export default function AutoVideoStudioPage() {
                     text: textToSpeak.trim(),
                     voice: styleId.includes("male") ? "vi-VN-NamMinhNeural" : "vi-VN-HoaiMyNeural",
                     style: styleId,
+                    engine: engineChoice,
                     rate: "+8%"
                 }),
-                signal: AbortSignal.timeout(12000)
+                signal: AbortSignal.timeout(15000)
             });
 
             if (!res.ok) {
@@ -510,6 +518,64 @@ export default function AutoVideoStudioPage() {
             return null;
         } finally {
             setIsSynthesizingVoice(false);
+        }
+    };
+
+    // ── DIRECT MICROPHONE RECORDING (Voice-Over By User) ──
+    const handleStartMicRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            recordedChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    recordedChunksRef.current.push(e.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(recordedChunksRef.current, { type: "audio/webm" });
+                const url = URL.createObjectURL(audioBlob);
+                setSelectedVoiceAudioUrl(url);
+                setSelectedVoiceId("mic-recorded");
+
+                const tempAudio = new Audio(url);
+                tempAudio.onloadedmetadata = () => {
+                    if (tempAudio.duration && !isNaN(tempAudio.duration) && tempAudio.duration > 0) {
+                        setVoiceDuration(Math.ceil(tempAudio.duration) + 1);
+                    }
+                };
+
+                if (hiddenAudioRef.current) {
+                    hiddenAudioRef.current.src = url;
+                }
+
+                stream.getTracks().forEach((track) => track.stop());
+                alert("🎙️ Đã thu âm giọng nói của bạn thành công và đồng bộ vào video!");
+            };
+
+            mediaRecorder.start();
+            setIsRecordingMic(true);
+            setRecordingSeconds(0);
+            recordingIntervalRef.current = setInterval(() => {
+                setRecordingSeconds((prev) => prev + 1);
+            }, 1000);
+        } catch (err: any) {
+            console.error("Microphone error:", err);
+            alert("Không thể truy cập Microphone: " + (err.message || "Vui lòng cấp quyền micro cho trình duyệt!"));
+        }
+    };
+
+    const handleStopMicRecording = () => {
+        if (mediaRecorderRef.current && isRecordingMic) {
+            mediaRecorderRef.current.stop();
+            setIsRecordingMic(false);
+            if (recordingIntervalRef.current) {
+                clearInterval(recordingIntervalRef.current);
+                recordingIntervalRef.current = null;
+            }
         }
     };
 
@@ -2268,7 +2334,7 @@ export default function AutoVideoStudioPage() {
                             value={cloneTopic}
                             onChange={(e) => setCloneTopic(e.target.value)}
                             placeholder="Ví dụ: Hàng khoai môn CVT container về buổi đêm date mới tinh"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-xs text-slate-900 font-medium transition-all"
+                            className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-200 outline-none text-xs text-slate-900 font-medium transition-colors"
                         />
                     </div>
 
@@ -2282,7 +2348,7 @@ export default function AutoVideoStudioPage() {
                             value={cloneRefUrl}
                             onChange={(e) => setCloneRefUrl(e.target.value)}
                             placeholder="https://www.tiktok.com/@tra.my.24zone/video/..."
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-xs text-slate-800 font-mono transition-all"
+                            className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-200 outline-none text-xs text-slate-800 font-mono transition-colors"
                         />
                     </div>
 
@@ -2291,7 +2357,7 @@ export default function AutoVideoStudioPage() {
                             type="button"
                             onClick={handleCloneStyle}
                             disabled={isAnalyzingClone || isSynthesizingVoice}
-                            className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-teal-600/20 disabled:opacity-60 transition-all cursor-pointer"
+                            className="w-full py-2.5 px-4 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-none disabled:opacity-60 transition-colors cursor-pointer"
                         >
                             {isAnalyzingClone || isSynthesizingVoice ? (
                                 <>
@@ -3004,31 +3070,70 @@ export default function AutoVideoStudioPage() {
                             </p>
                         </div>
 
-                        {/* Bảng điều khiển Giọng đọc AI & Đồng bộ */}
-                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-slate-800">Giọng đọc AI:</span>
-                                    <select
-                                        value={selectedVoiceStyleId}
-                                        onChange={(e) => setSelectedVoiceStyleId(e.target.value)}
-                                        className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
-                                    >
-                                        <option value="female-genz">🌸 Nữ Gen Z (Vui tươi, chuẩn TikTok)</option>
-                                        <option value="female-sweet">🎀 Nữ Dịu Dàng (Ấm áp, tâm sự kho)</option>
-                                        <option value="female-pro">💎 Nữ Chuyên Nghiệp (Tự tin, quảng cáo)</option>
-                                        <option value="male-genz">⚡ Nam Gen Z (Năng động, trẻ trung)</option>
-                                        <option value="male-pro">👔 Nam Chuyên Nghiệp (Trầm ấm, uy tín)</option>
-                                    </select>
+                        {/* Bảng điều khiển Giọng đọc AI & Đồng bộ (Pure Flat LYHU Style) */}
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2.5">
+                                <div className="flex flex-wrap items-center gap-3">
+                                    {/* Bộ máy giọng đọc */}
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-[11px] font-bold text-slate-700">Công nghệ:</span>
+                                        <select
+                                            value={selectedVoiceEngine}
+                                            onChange={(e) => setSelectedVoiceEngine(e.target.value as any)}
+                                            className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
+                                        >
+                                            <option value="gemini">✨ Google Gemini Neural (Tự nhiên, cảm xúc)</option>
+                                            <option value="edge">🎙️ Edge Broadcast (Phát thanh viên)</option>
+                                            <option value="elevenlabs">🧬 ElevenLabs (Giọng nhân bản)</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Nhân vật giọng đọc */}
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-[11px] font-bold text-slate-700">Giọng:</span>
+                                        <select
+                                            value={selectedVoiceStyleId}
+                                            onChange={(e) => setSelectedVoiceStyleId(e.target.value)}
+                                            className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
+                                        >
+                                            <option value="female-genz">🌸 Nữ Gen Z (Vui tươi, chuẩn TikTok)</option>
+                                            <option value="female-sweet">🎀 Nữ Dịu Dàng (Ấm áp, tâm sự kho)</option>
+                                            <option value="female-pro">💎 Nữ Chuyên Nghiệp (Tự tin, quảng cáo)</option>
+                                            <option value="male-genz">⚡ Nam Gen Z (Năng động, trẻ trung)</option>
+                                            <option value="male-pro">👔 Nam Chuyên Nghiệp (Trầm ấm, uy tín)</option>
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-2">
+                                    {/* Microphone Live Recording */}
+                                    {isRecordingMic ? (
+                                        <button
+                                            type="button"
+                                            onClick={handleStopMicRecording}
+                                            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 animate-pulse cursor-pointer"
+                                        >
+                                            <Square className="w-3.5 h-3.5 fill-current" />
+                                            <span>Dừng thu mic ({recordingSeconds}s)</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={handleStartMicRecording}
+                                            className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded-lg text-xs border border-slate-200 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                                            title="Tự thu giọng thật của bạn qua micro"
+                                        >
+                                            <Mic className="w-3.5 h-3.5 text-rose-500" />
+                                            <span>Thu Mic</span>
+                                        </button>
+                                    )}
+
                                     {/* Audition Button */}
                                     <button
                                         type="button"
                                         onClick={handleToggleAuditionVoice}
                                         disabled={isSynthesizingVoice}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 border ${
+                                        className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 border cursor-pointer ${
                                             isAuditionPlaying
                                                 ? "bg-amber-100 text-amber-900 border-amber-300"
                                                 : "bg-white text-slate-700 hover:bg-slate-100 border-slate-200"
@@ -3042,7 +3147,7 @@ export default function AutoVideoStudioPage() {
                                         ) : (
                                             <>
                                                 <Volume2 className="w-3.5 h-3.5 text-teal-600" />
-                                                <span>Nghe thử giọng</span>
+                                                <span>Nghe thử</span>
                                             </>
                                         )}
                                     </button>
@@ -3050,9 +3155,9 @@ export default function AutoVideoStudioPage() {
                                     {/* Re-Synthesize Button */}
                                     <button
                                         type="button"
-                                        onClick={() => generateSpeechForText(selectedVoiceText, selectedVoiceStyleId)}
+                                        onClick={() => generateSpeechForText(selectedVoiceText, selectedVoiceStyleId, selectedVoiceEngine)}
                                         disabled={isSynthesizingVoice}
-                                        className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                                        className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 shadow-none disabled:opacity-50 cursor-pointer"
                                     >
                                         {isSynthesizingVoice ? (
                                             <>
@@ -3062,7 +3167,7 @@ export default function AutoVideoStudioPage() {
                                         ) : (
                                             <>
                                                 <Radio className="w-3.5 h-3.5" />
-                                                <span>🎙️ Thu Lại Giọng Đọc AI</span>
+                                                <span>Thu Lại Giọng AI</span>
                                             </>
                                         )}
                                     </button>
@@ -3694,15 +3799,11 @@ export default function AutoVideoStudioPage() {
                             </span>
                         </div>
 
-                        {/* Device Frame */}
-                        <div className={`relative mx-auto bg-slate-900 rounded-[32px] p-2.5 shadow-2xl border-4 border-slate-800 transition-all ${
-                            aspectRatio === "9:16" ? "max-w-[280px]" : aspectRatio === "1:1" ? "max-w-[340px]" : "max-w-[420px]"
+                        {/* Pure Flat LYHU Video Canvas Container (No 3D Phone Mockup) */}
+                        <div className={`relative mx-auto transition-all ${
+                            aspectRatio === "9:16" ? "max-w-[280px]" : aspectRatio === "1:1" ? "max-w-[340px]" : "max-w-[440px]"
                         }`}>
-                            {/* Dynamic Island */}
-                            <div className="w-16 h-3.5 bg-slate-950 rounded-full mx-auto mb-2" />
-
-                            {/* Canvas Container */}
-                            <div className={`relative overflow-hidden rounded-2xl bg-black ${
+                            <div className={`relative overflow-hidden rounded-xl border border-slate-200 bg-slate-950 ${
                                 aspectRatio === "9:16" ? "aspect-[9/16]" : aspectRatio === "16:9" ? "aspect-[16/9]" : "aspect-square"
                             }`}>
                                 <canvas
@@ -3800,12 +3901,12 @@ export default function AutoVideoStudioPage() {
                                 </div>
                             </div>
 
-                            {/* Export Button */}
+                            {/* Export Button (Pure Flat LYHU Style) */}
                             <button
                                 type="button"
                                 disabled={isRendering || clips.length === 0}
                                 onClick={handleExportVideo}
-                                className="w-full py-3.5 px-4 bg-gradient-to-r from-teal-600 via-teal-700 to-emerald-600 hover:opacity-95 active:scale-[0.99] text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-colors shadow-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                             >
                                 {isRendering ? (
                                     <>
