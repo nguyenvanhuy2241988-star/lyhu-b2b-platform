@@ -28,7 +28,12 @@ import {
     Edit3,
     Volume2,
     Music,
-    Loader2
+    Loader2,
+    Headphones,
+    Flame,
+    Copy,
+    Check,
+    ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 import { getVoiceHistory, VoiceHistoryItem } from "@/lib/voiceHistoryStore";
@@ -50,6 +55,68 @@ interface SubtitleCue {
     text: string;
 }
 
+interface TikTokTrendingSound {
+    id: string;
+    title: string;
+    author: string;
+    tag: string;
+    url: string;
+    duration: string;
+    useCase: string;
+    isHot?: boolean;
+}
+
+const TIKTOK_TRENDING_SOUNDS: TikTokTrendingSound[] = [
+    {
+        id: "tt_tramy_1",
+        title: "âm thanh gốc - Trà My 24Zone (Kể chuyện kho đêm)",
+        author: "Trà My 24Zone",
+        tag: "🔥 Đang Hot",
+        url: "/audio/bgm/warehouse_flow.mp3",
+        duration: "0:51",
+        useCase: "Video kể chuyện kho hàng đêm, đóng hàng sỉ, tự sự chân thật",
+        isHot: true
+    },
+    {
+        id: "tt_banhang_remix",
+        title: "Beat Chốt Đơn Sôi Động (Speed-up TikTok 2026)",
+        author: "TikTok Viral Sounds",
+        tag: "⚡ Bán Hàng Mạnh",
+        url: "/audio/bgm/trending.mp3",
+        duration: "0:45",
+        useCase: "Khuyến mãi, xả kho, thông báo hàng mới về cần đẩy số lượng lớn",
+        isHot: true
+    },
+    {
+        id: "tt_food_asmr",
+        title: "Vui Tươi Ăn Vặt & Review Ẩm Thực (Ngon miệng)",
+        author: "Foodie Daily Sound",
+        tag: "🍜 Review Đồ Ăn",
+        url: "/audio/bgm/food_review.mp3",
+        duration: "0:42",
+        useCase: "Review thanh khoai môn trứng cua, da cá hoàng kim, bánh tráng bơ",
+        isHot: true
+    },
+    {
+        id: "tt_lofi_pack",
+        title: "Lofi Nhẹ Nhàng Thư Giãn (Đóng Gói Đơn Hàng)",
+        author: "Chill Packing BGM",
+        tag: "📦 Đóng Hàng / Logistics",
+        url: "/audio/bgm/warehouse_flow.mp3",
+        duration: "0:48",
+        useCase: "Quay công nhân đóng thùng hàng, kiểm tem nhãn, in hóa đơn giao khách"
+    },
+    {
+        id: "tt_vinahouse_drop",
+        title: "Vinahouse Bass Căng (Nhạc Nền TikTok Hot)",
+        author: "Hot TikTok Vietnam",
+        tag: "🎧 Năng Lượng / Chốt Đơn",
+        url: "/audio/bgm/trending.mp3",
+        duration: "0:38",
+        useCase: "Video ngắn dưới 20 giây giật tít giảm giá sâu hoặc khai trương chi nhánh"
+    }
+];
+
 // Preset local royalty-free BGM tracks
 const BGM_PRESETS = [
     {
@@ -68,13 +135,28 @@ const BGM_PRESETS = [
         url: "/audio/bgm/warehouse_flow.mp3"
     },
     {
+        id: "tt_tramy_1",
+        name: "🎧 Âm thanh gốc - Trà My 24Zone (Kể chuyện kho đêm)",
+        url: "/audio/bgm/warehouse_flow.mp3"
+    },
+    {
+        id: "tt_banhang_remix",
+        name: "⚡ Beat Chốt Đơn Sôi Động (Speed-up TikTok 2026)",
+        url: "/audio/bgm/trending.mp3"
+    },
+    {
+        id: "tt_food_asmr",
+        name: "🥢 Beat Review Ẩm Thực Vui Tươi (Ngon miệng)",
+        url: "/audio/bgm/food_review.mp3"
+    },
+    {
         id: "custom",
         name: "📁 Tự tải file nhạc nền MP3 riêng từ máy tính...",
         url: ""
     },
     {
         id: "none",
-        name: "🔇 Không dùng nhạc nền (Chỉ giữ giọng đọc)",
+        name: "🔇 Không dùng nhạc nền (Chỉ giữ giọng đọc - Chuẩn đăng TikTok)",
         url: ""
     }
 ];
@@ -188,6 +270,20 @@ export default function AutoVideoStudioPage() {
     const [bgmCustomUrl, setBgmCustomUrl] = useState<string | null>(null);
     const [bgmVolume, setBgmVolume] = useState<number>(0.15); // 15% volume
     const [enableAudioDucking, setEnableAudioDucking] = useState(true);
+
+    // ── TIKTOK TRENDING SOUND STATE ──
+    const [isTikTokSoundModalOpen, setIsTikTokSoundModalOpen] = useState(false);
+    const [tiktokExtractUrl, setTiktokExtractUrl] = useState("");
+    const [isExtractingTikTokSound, setIsExtractingTikTokSound] = useState(false);
+    const [extractedSoundInfo, setExtractedSoundInfo] = useState<{
+        title: string;
+        author: string;
+        duration: number;
+        url: string;
+    } | null>(null);
+    const [previewingSoundUrl, setPreviewingSoundUrl] = useState<string | null>(null);
+    const [copiedSoundTitle, setCopiedSoundTitle] = useState<string | null>(null);
+    const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
     // ── AI STYLE CLONE STATE ──
     const [isCloneModalOpen, setIsCloneModalOpen] = useState(true);
@@ -321,7 +417,10 @@ export default function AutoVideoStudioPage() {
         if (bgmChoice === "none") return null;
         if (bgmChoice === "custom") return bgmCustomUrl;
         const found = BGM_PRESETS.find(b => b.id === bgmChoice);
-        return found?.url || null;
+        if (found) return found.url || null;
+        const foundTt = TIKTOK_TRENDING_SOUNDS.find(b => b.id === bgmChoice);
+        if (foundTt) return foundTt.url || null;
+        return null;
     }, [bgmChoice, bgmCustomUrl]);
 
     // Subtitle cues generation
@@ -579,6 +678,69 @@ export default function AutoVideoStudioPage() {
         setBgmCustomUrl(url);
         setBgmChoice("custom");
         if (bgmInputRef.current) bgmInputRef.current.value = "";
+    };
+
+    // ── TIKTOK SOUND HANDLERS ──
+    const handleExtractTikTokSound = async (overrideUrl?: string) => {
+        const urlToUse = overrideUrl || tiktokExtractUrl;
+        if (!urlToUse.trim()) {
+            alert("Vui lòng dán link video TikTok cần lấy nhạc!");
+            return;
+        }
+
+        setIsExtractingTikTokSound(true);
+        try {
+            const res = await fetch("/api/tiktok/extract-sound", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: urlToUse.trim() })
+            });
+
+            const data = await res.json();
+            if (data.success && data.sound) {
+                setExtractedSoundInfo({
+                    title: data.sound.title,
+                    author: data.sound.author,
+                    duration: data.sound.duration,
+                    url: data.sound.proxyUrl
+                });
+                setBgmCustomUrl(data.sound.proxyUrl);
+                setBgmChoice("custom");
+                alert(`✨ Đã lấy thành công nhạc nền TikTok: "${data.sound.title}" (${data.sound.author})!`);
+            } else {
+                alert("Không thể tách âm thanh: " + (data.error || "Lỗi không xác định"));
+            }
+        } catch (e: any) {
+            alert("Lỗi khi kết nối TikTok: " + e.message);
+        } finally {
+            setIsExtractingTikTokSound(false);
+        }
+    };
+
+    const handleTogglePreviewSound = (url: string) => {
+        if (!previewAudioRef.current) return;
+        if (previewingSoundUrl === url) {
+            previewAudioRef.current.pause();
+            setPreviewingSoundUrl(null);
+        } else {
+            previewAudioRef.current.src = url;
+            previewAudioRef.current.play().catch(console.error);
+            setPreviewingSoundUrl(url);
+        }
+    };
+
+    const handleApplyTikTokSound = (sound: TikTokTrendingSound) => {
+        setBgmChoice(sound.id);
+        if (previewAudioRef.current) {
+            previewAudioRef.current.pause();
+            setPreviewingSoundUrl(null);
+        }
+    };
+
+    const handleCopySoundTitle = (title: string) => {
+        navigator.clipboard.writeText(title);
+        setCopiedSoundTitle(title);
+        setTimeout(() => setCopiedSoundTitle(null), 2500);
     };
 
     // ── DRAW FRAME ON CANVAS (Hardware-accelerated) ──
@@ -1896,9 +2058,23 @@ export default function AutoVideoStudioPage() {
                                 />
                             </div>
 
-                            {/* BGM Selection */}
-                            <div className="space-y-1.5 sm:col-span-2">
-                                <label className="font-semibold text-gray-700">Nhạc nền video (BGM):</label>
+                            {/* BGM Selection Header & Quick Actions */}
+                            <div className="space-y-2 sm:col-span-2">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <label className="font-semibold text-gray-700 flex items-center gap-1.5">
+                                        <Music className="w-3.5 h-3.5 text-purple-600" />
+                                        <span>Nhạc nền video (BGM):</span>
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsTikTokSoundModalOpen(!isTikTokSoundModalOpen)}
+                                        className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-[11px] flex items-center gap-1.5 shadow-sm transition-all"
+                                    >
+                                        <Flame className="w-3.5 h-3.5 text-amber-300" />
+                                        <span>{isTikTokSoundModalOpen ? "Ẩn Kho Nhạc TikTok" : "🎵 Kho Nhạc Trend TikTok & Tách Nhạc"}</span>
+                                    </button>
+                                </div>
+
                                 <div className="flex items-center gap-2">
                                     <select
                                         value={bgmChoice}
@@ -1926,6 +2102,165 @@ export default function AutoVideoStudioPage() {
                                         className="hidden"
                                     />
                                 </div>
+
+                                {/* Extracted TikTok Sound Notice Banner if active */}
+                                {extractedSoundInfo && bgmChoice === "custom" && (
+                                    <div className="p-2.5 rounded-lg bg-purple-50 border border-purple-200 flex items-center justify-between text-xs">
+                                        <div className="flex items-center gap-2 text-purple-900">
+                                            <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0" />
+                                            <div>
+                                                <span className="font-bold">Đang dùng nhạc TikTok: </span>
+                                                <span>{extractedSoundInfo.title}</span>
+                                                <span className="text-[11px] text-purple-600 ml-1">({extractedSoundInfo.author})</span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCopySoundTitle(extractedSoundInfo.title)}
+                                            className="px-2 py-0.5 rounded bg-white border border-purple-300 hover:bg-purple-100 text-[10px] font-bold text-purple-700 flex items-center gap-1"
+                                        >
+                                            {copiedSoundTitle === extractedSoundInfo.title ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                                            <span>{copiedSoundTitle === extractedSoundInfo.title ? "Đã copy" : "Copy tên"}</span>
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* TIKTOK TRENDING SOUNDS DRAWER / PANEL */}
+                                {isTikTokSoundModalOpen && (
+                                    <div className="p-3.5 rounded-xl bg-slate-900 text-white space-y-3 shadow-lg border border-purple-800">
+                                        {/* Header */}
+                                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                                            <div className="flex items-center gap-2">
+                                                <span className="p-1 rounded-md bg-amber-400/20 text-amber-300">
+                                                    <Flame className="w-4 h-4" />
+                                                </span>
+                                                <h4 className="text-xs font-bold text-amber-300">
+                                                    Kho Nhạc Trend TikTok Việt Nam & Công Cụ Tách Âm Thanh
+                                                </h4>
+                                            </div>
+                                            <span className="text-[10px] text-gray-400">Cập nhật xu hướng</span>
+                                        </div>
+
+                                        {/* TOOL 1: EXTRACT SOUND FROM ANY TIKTOK URL */}
+                                        <div className="p-2.5 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                                            <label className="text-[11px] font-medium text-gray-300 flex items-center justify-between">
+                                                <span>⚡ Nạp link video TikTok bất kỳ để lấy nhạc nền:</span>
+                                                <span className="text-[10px] text-amber-300">Tách MP3 trực tiếp</span>
+                                            </label>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={tiktokExtractUrl}
+                                                    onChange={(e) => setTiktokExtractUrl(e.target.value)}
+                                                    placeholder="Dán link TikTok (VD: https://www.tiktok.com/@tra.my.24zone/video/...)"
+                                                    className="w-full px-2.5 py-1.5 rounded-lg bg-black/50 border border-white/20 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-400 font-mono"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleExtractTikTokSound()}
+                                                    disabled={isExtractingTikTokSound}
+                                                    className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-black font-bold text-xs whitespace-nowrap flex items-center gap-1.5 disabled:opacity-60 transition-colors"
+                                                >
+                                                    {isExtractingTikTokSound ? (
+                                                        <>
+                                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                            <span>Đang tách...</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Zap className="w-3.5 h-3.5 fill-black" />
+                                                            <span>Tách Nhạc</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* TOOL 2: CURATED TRENDING SOUNDS LIST */}
+                                        <div className="space-y-1.5">
+                                            <div className="text-[11px] font-bold text-purple-300 flex items-center justify-between">
+                                                <span>Top Âm Thanh Đang Viral Cho Bán Hàng & Đồ Ăn Vặt:</span>
+                                                <span className="text-[10px] text-gray-400">Nghe thử & Gắn nhanh</span>
+                                            </div>
+
+                                            <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                                                {TIKTOK_TRENDING_SOUNDS.map((sound) => {
+                                                    const isPlayingThis = previewingSoundUrl === sound.url;
+                                                    const isSelected = bgmChoice === sound.id;
+                                                    return (
+                                                        <div
+                                                            key={sound.id}
+                                                            className={`p-2.5 rounded-lg border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                                                                isSelected
+                                                                    ? "bg-amber-400/10 border-amber-400/80 text-white"
+                                                                    : "bg-white/5 border-white/10 hover:border-white/20 text-gray-200"
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleTogglePreviewSound(sound.url)}
+                                                                    className={`p-2 rounded-full shrink-0 transition-colors ${
+                                                                        isPlayingThis
+                                                                            ? "bg-amber-400 text-black animate-pulse"
+                                                                            : "bg-white/10 text-white hover:bg-white/20"
+                                                                    }`}
+                                                                    title={isPlayingThis ? "Tạm dừng" : "Nghe thử"}
+                                                                >
+                                                                    {isPlayingThis ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 ml-0.5" />}
+                                                                </button>
+                                                                <div className="min-w-0">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-500/30 text-purple-300">
+                                                                            {sound.tag}
+                                                                        </span>
+                                                                        <span className="font-semibold text-xs truncate text-white">
+                                                                            {sound.title}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="text-[10px] text-gray-400 truncate">
+                                                                        {sound.useCase} • <span className="font-mono text-gray-300">{sound.duration}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleCopySoundTitle(sound.title)}
+                                                                    className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-[10px] font-medium text-gray-300 flex items-center gap-1"
+                                                                    title="Copy tên âm thanh để tìm trên ứng dụng TikTok"
+                                                                >
+                                                                    {copiedSoundTitle === sound.title ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                                                                    <span>{copiedSoundTitle === sound.title ? "Đã chép" : "Copy tên"}</span>
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleApplyTikTokSound(sound)}
+                                                                    className={`px-2.5 py-1 rounded text-[10px] font-bold flex items-center gap-1 transition-colors ${
+                                                                        isSelected
+                                                                            ? "bg-amber-400 text-black"
+                                                                            : "bg-purple-600 hover:bg-purple-500 text-white"
+                                                                    }`}
+                                                                >
+                                                                    {isSelected ? "Đang chọn" : "+ Gắn vào video"}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* ALGORITHM PRO-TIP BANNER */}
+                                        <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-400/30 text-[11px] text-amber-200/90 leading-relaxed">
+                                            <strong>💡 Bí quyết đẩy Xu Hướng TikTok (Kênh Trà My 24Zone):</strong>
+                                            <p className="mt-0.5 text-gray-300 text-[10px]">
+                                                Nếu đăng lên TikTok, bạn nên chọn <strong>"🔇 Không dùng nhạc nền"</strong> trong Studio để xuất video sạch chỉ có giọng nói. Sau đó, khi đăng video trên điện thoại, bấm nút <strong>"Thêm âm thanh"</strong> của TikTok, dán tên bài hát vừa Copy ở trên, và chỉnh âm lượng nhạc còn 10-15%. Thuật toán TikTok sẽ đẩy video vào luồng xu hướng của bài hát đó và 100% không bị tắt tiếng bản quyền!
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* BGM Volume Slider */}
@@ -2144,7 +2479,8 @@ export default function AutoVideoStudioPage() {
                     />
                 ))}
                 <audio ref={hiddenAudioRef} src={selectedVoiceAudioUrl || ""} />
-                <audio ref={bgmAudioRef} src={activeBgmUrl || ""} loop />
+                <audio ref={bgmAudioRef} src={activeBgmUrl || ""} loop crossOrigin="anonymous" />
+                <audio ref={previewAudioRef} onEnded={() => setPreviewingSoundUrl(null)} />
             </div>
         </div>
     );
