@@ -668,13 +668,7 @@ export default function AutoVideoStudioPage() {
         window.speechSynthesis.speak(utterance);
     }, [selectedVoiceStyleId]);
 
-    const handleToggleAuditionVoice = () => {
-        if (typeof window !== "undefined" && "speechSynthesis" in window && window.speechSynthesis.speaking) {
-            window.speechSynthesis.cancel();
-            setIsAuditionPlaying(false);
-            return;
-        }
-
+    const handleToggleAuditionVoice = async () => {
         if (isAuditionPlaying) {
             if (auditionAudioRef.current) auditionAudioRef.current.pause();
             if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
@@ -684,19 +678,37 @@ export default function AutoVideoStudioPage() {
 
         pausePlayback();
 
-        // If user recorded via mic or uploaded a custom file, play that audio
-        if (selectedVoiceId === "mic-recorded" || selectedVoiceId === "custom-upload") {
-            if (auditionAudioRef.current && selectedVoiceAudioUrl) {
-                auditionAudioRef.current.src = selectedVoiceAudioUrl;
-                auditionAudioRef.current.currentTime = 0;
-                auditionAudioRef.current.play().catch(console.error);
+        // 1. If audio URL is already generated/available (Gemini AI, mic, custom upload), play it directly
+        if (selectedVoiceAudioUrl && auditionAudioRef.current) {
+            auditionAudioRef.current.src = selectedVoiceAudioUrl;
+            auditionAudioRef.current.currentTime = 0;
+            try {
+                await auditionAudioRef.current.play();
                 setIsAuditionPlaying(true);
                 return;
+            } catch (e) {
+                console.error("Audio playback error:", e);
             }
         }
 
-        // Always audition with the natural browser voice (Hoài My / Nam Minh)
-        speakWithBrowser(selectedVoiceText, selectedVoiceStyleId);
+        // 2. If not yet generated, synthesize with Gemini 3.8 Flash TTS and play immediately
+        if (selectedVoiceText && selectedVoiceText.trim()) {
+            const url = await generateSpeechForText(selectedVoiceText, selectedVoiceStyleId, selectedVoiceEngine);
+            if (url && auditionAudioRef.current) {
+                auditionAudioRef.current.src = url;
+                auditionAudioRef.current.currentTime = 0;
+                try {
+                    await auditionAudioRef.current.play();
+                    setIsAuditionPlaying(true);
+                    return;
+                } catch (e) {
+                    console.error("Audio playback error:", e);
+                }
+            }
+            return;
+        }
+
+        alert("Vui lòng nhập nội dung kịch bản để nghe thử giọng AI!");
     };
 
     const selectVoiceItem = (item: VoiceHistoryItem) => {
@@ -1821,17 +1833,15 @@ export default function AutoVideoStudioPage() {
 
         const currentT = currentTimeRef.current;
 
-        // 1. Play Voice Audio or Browser Natural Speech
-        if (selectedVoiceId === "mic-recorded" || selectedVoiceId === "custom-upload") {
-            if (hiddenAudioRef.current && selectedVoiceAudioUrl) {
-                if (hiddenAudioRef.current.src !== selectedVoiceAudioUrl) {
-                    hiddenAudioRef.current.src = selectedVoiceAudioUrl;
-                }
-                hiddenAudioRef.current.currentTime = currentT;
-                hiddenAudioRef.current.play().catch(() => {});
+        // 1. Play Voice Audio (Gemini AI, mic, or custom upload)
+        if (hiddenAudioRef.current && selectedVoiceAudioUrl) {
+            if (hiddenAudioRef.current.src !== selectedVoiceAudioUrl) {
+                hiddenAudioRef.current.src = selectedVoiceAudioUrl;
             }
-        } else {
-            // Live natural browser voice sync
+            hiddenAudioRef.current.currentTime = currentT;
+            hiddenAudioRef.current.play().catch(() => {});
+        } else if (selectedVoiceText && selectedVoiceText.trim()) {
+            // Live browser voice fallback only if AI audio not yet rendered
             if (typeof window !== "undefined" && "speechSynthesis" in window) {
                 if (currentT < 1.0) {
                     speakWithBrowser(selectedVoiceText, selectedVoiceStyleId);
@@ -2047,6 +2057,12 @@ export default function AutoVideoStudioPage() {
             return;
         }
 
+        // Ensure voiceover audio is synthesized before export begins
+        let activeVoiceUrl = selectedVoiceAudioUrl;
+        if (!activeVoiceUrl && selectedVoiceText && selectedVoiceText.trim()) {
+            activeVoiceUrl = await generateSpeechForText(selectedVoiceText, selectedVoiceStyleId, selectedVoiceEngine);
+        }
+
         pausePlayback();
         setIsRendering(true);
         setRenderProgress(0);
@@ -2062,9 +2078,9 @@ export default function AutoVideoStudioPage() {
 
             // 1. Voiceover Source
             let voiceAudioEl: HTMLAudioElement | null = null;
-            if (selectedVoiceAudioUrl) {
-                voiceAudioEl = new Audio(selectedVoiceAudioUrl);
-                if (!selectedVoiceAudioUrl.startsWith("blob:")) {
+            if (activeVoiceUrl) {
+                voiceAudioEl = new Audio(activeVoiceUrl);
+                if (!activeVoiceUrl.startsWith("blob:")) {
                     voiceAudioEl.crossOrigin = "anonymous";
                 }
                 const voiceSrc = audioCtx.createMediaElementSource(voiceAudioEl);
@@ -3231,9 +3247,8 @@ export default function AutoVideoStudioPage() {
                                             onChange={(e) => setSelectedVoiceEngine(e.target.value as any)}
                                             className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
                                         >
-                                            <option value="gemini">✨ Google Gemini Neural (Tự nhiên, cảm xúc)</option>
-                                            <option value="edge">🎙️ Edge Broadcast (Phát thanh viên)</option>
-                                            <option value="elevenlabs">🧬 ElevenLabs (Giọng nhân bản)</option>
+                                            <option value="gemini">✨ Gemini 3.8 Flash (Omni & Flow Speech AI)</option>
+                                            <option value="elevenlabs">🧬 ElevenLabs (Giọng nhân bản AI)</option>
                                         </select>
                                     </div>
 
@@ -3242,32 +3257,33 @@ export default function AutoVideoStudioPage() {
                                         <span className="text-[11px] font-bold text-slate-700">Giọng:</span>
                                         <select
                                             value={selectedVoiceStyleId}
-                                            onChange={(e) => {
+                                            onChange={async (e) => {
                                                 const newStyle = e.target.value;
                                                 setSelectedVoiceStyleId(newStyle);
+                                                if (auditionAudioRef.current) {
+                                                    auditionAudioRef.current.pause();
+                                                }
                                                 if (typeof window !== "undefined" && "speechSynthesis" in window) {
                                                     window.speechSynthesis.cancel();
                                                 }
                                                 setIsAuditionPlaying(false);
-                                                const isMale = newStyle.includes("male");
-                                                const greeting = isMale
-                                                    ? (newStyle === "male-pro"
-                                                        ? "Xin chào quý đối tác, đây là giọng Nam chuyên nghiệp của tổng kho LYHU."
-                                                        : "Chào cả nhà, đây là giọng Nam Gen Z trẻ trung năng động của LYHU!")
-                                                    : (newStyle === "female-sweet"
-                                                        ? "Chào bạn, đây là giọng Nữ dịu dàng, tâm sự cùng bạn tại kho LYHU."
-                                                        : (newStyle === "female-pro"
-                                                            ? "Kính chào quý khách hàng, đây là giọng Nữ đại diện thương hiệu LYHU."
-                                                            : "Hế lô mọi người! Đây là giọng Nữ Gen Z vui tươi bắt trend TikTok!"));
-                                                speakWithBrowser(greeting, newStyle);
+                                                // Tự động thu âm giọng đọc mới với Gemini 3.8 Flash và phát nghe thử
+                                                if (selectedVoiceText && selectedVoiceText.trim()) {
+                                                    const url = await generateSpeechForText(selectedVoiceText, newStyle, selectedVoiceEngine);
+                                                    if (url && auditionAudioRef.current) {
+                                                        auditionAudioRef.current.src = url;
+                                                        auditionAudioRef.current.currentTime = 0;
+                                                        auditionAudioRef.current.play().then(() => setIsAuditionPlaying(true)).catch(() => {});
+                                                    }
+                                                }
                                             }}
                                             className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
                                         >
-                                            <option value="female-genz">🌸 Nữ Gen Z (Vui tươi, chuẩn TikTok)</option>
-                                            <option value="female-sweet">🎀 Nữ Dịu Dàng (Ấm áp, tâm sự kho)</option>
-                                            <option value="female-pro">💎 Nữ Chuyên Nghiệp (Tự tin, quảng cáo)</option>
-                                            <option value="male-genz">⚡ Nam Gen Z (Năng động, trẻ trung)</option>
-                                            <option value="male-pro">👔 Nam Chuyên Nghiệp (Trầm ấm, uy tín)</option>
+                                            <option value="female-genz">🌸 Nữ Gen Z (Kore - Vui tươi, chuẩn TikTok)</option>
+                                            <option value="female-sweet">🎀 Nữ Dịu Dàng (Aoede - Ấm áp, tâm sự)</option>
+                                            <option value="female-pro">💎 Nữ Chuyên Nghiệp (Leda - Tự tin, quảng cáo)</option>
+                                            <option value="male-genz">⚡ Nam Gen Z (Puck - Năng động, trẻ trung)</option>
+                                            <option value="male-pro">👔 Nam Chuyên Nghiệp (Fenrir - Trầm ấm, uy tín)</option>
                                         </select>
                                     </div>
                                 </div>

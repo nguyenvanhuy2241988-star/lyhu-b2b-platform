@@ -1,113 +1,127 @@
 import { NextRequest, NextResponse } from "next/server";
-import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
 import { normalizeVietnamesePhonetics } from "@/lib/ttsHelper";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-// Helper timeout wrapper
-function withTimeout<T>(promise: Promise<T>, ms: number, errorMsg: string): Promise<T> {
-    return Promise.race([
-        promise,
-        new Promise<T>((_, reject) => setTimeout(() => reject(new Error(errorMsg)), ms))
-    ]);
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+// ── GEMINI 3.8 FLASH TTS (OMNI & FLOW AI SPEECH TECHNOLOGY) ──
+interface GeminiVoiceConfig {
+    voiceName: string;
+    speechInstruction: string;
 }
 
-interface VoicePreset {
-    voice: string;
-    rate: string;
-    pitch: string;
-    description: string;
-}
-
-const VOICE_PRESETS: Record<string, VoicePreset> = {
-    // Nữ Gen Z - tươi vui, nhanh nhẹn, bắt trend TikTok
+const GEMINI_VOICES: Record<string, GeminiVoiceConfig> = {
+    // Nữ Gen Z - trẻ trung, năng động, chuẩn trend TikTok
     "female-genz": {
-        voice: "vi-VN-HoaiMyNeural",
-        rate: "+10%",
-        pitch: "+8Hz",
-        description: "Nữ Gen Z vui tươi, tự nhiên, nhí nhảnh"
+        voiceName: "Kore",
+        speechInstruction: "Nói với giọng nữ Gen Z Việt Nam trẻ trung, tươi vui, năng động, hào hứng, tự nhiên như một bạn trẻ đang quay clip TikTok."
     },
-    // Nữ dịu dàng - ấm áp, chân thành, tâm sự gần gũi
+    // Nữ dịu dàng - ấm áp, tâm sự, gần gũi
     "female-sweet": {
-        voice: "vi-VN-HoaiMyNeural",
-        rate: "+2%",
-        pitch: "+4Hz",
-        description: "Nữ dịu dàng, ấm áp, tâm sự"
+        voiceName: "Aoede",
+        speechInstruction: "Nói với giọng nữ Việt Nam dịu dàng, ấm áp, nhẹ nhàng, truyền cảm như đang tâm sự thủ thỉ với người nghe."
     },
-    // Nữ chuyên nghiệp - tự tin, rành mạch, giới thiệu đối tác sỉ B2B
+    // Nữ chuyên nghiệp - tự tin, rành mạch, giới thiệu thương hiệu sỉ
     "female-pro": {
-        voice: "vi-VN-HoaiMyNeural",
-        rate: "+6%",
-        pitch: "+0Hz",
-        description: "Nữ chuyên nghiệp, uy tín"
+        voiceName: "Leda",
+        speechInstruction: "Nói với giọng nữ phát thanh viên chuyên nghiệp, tự tin, rành mạch, uy tín, chuẩn mực."
     },
-    // Nam Gen Z - năng động, trẻ trung, tự nhiên, hóm hỉnh
+    // Nam Gen Z - hóm hỉnh, trẻ trung, tự nhiên
     "male-genz": {
-        voice: "vi-VN-NamMinhNeural",
-        rate: "+8%",
-        pitch: "+6Hz",
-        description: "Nam Gen Z trẻ trung, năng động"
+        voiceName: "Puck",
+        speechInstruction: "Nói với giọng nam Gen Z Việt Nam trẻ trung, hoạt bát, dí dỏm, hào sảng, cực kỳ tự nhiên."
     },
-    // Nam chuyên nghiệp - trầm ấm, uy tín, chuẩn phát thanh viên doanh nghiệp
+    // Nam chuyên nghiệp - trầm ấm, uy tín, phát thanh viên
     "male-pro": {
-        voice: "vi-VN-NamMinhNeural",
-        rate: "+2%",
-        pitch: "-2Hz",
-        description: "Nam chuyên nghiệp, trầm ấm, phát thanh viên"
+        voiceName: "Fenrir",
+        speechInstruction: "Nói với giọng nam trầm ấm, chín chắn, phong thái đĩnh đạc, uy tín, phát thanh viên doanh nghiệp."
     },
-    // Nữ mặc định
+    // Mặc định
     "female": {
-        voice: "vi-VN-HoaiMyNeural",
-        rate: "+8%",
-        pitch: "+5Hz",
-        description: "Nữ tự nhiên chuẩn"
+        voiceName: "Kore",
+        speechInstruction: "Nói với giọng nữ Việt Nam chuẩn mực, tự nhiên, truyền cảm, dễ nghe."
     },
-    // Nam mặc định
     "male": {
-        voice: "vi-VN-NamMinhNeural",
-        rate: "+6%",
-        pitch: "+2Hz",
-        description: "Nam tự nhiên chuẩn"
+        voiceName: "Puck",
+        speechInstruction: "Nói với giọng nam Việt Nam chuẩn mực, tự nhiên, ấm áp, dễ nghe."
     }
 };
 
-async function synthesizeWithEdgeTTS(
+async function synthesizeWithGeminiTTS(
     text: string,
-    voiceName: string,
-    rate = "+6%",
-    pitch = "+0Hz"
-): Promise<Buffer> {
-    const edgePromise = new Promise<Buffer>(async (resolve, reject) => {
+    styleKey: string
+): Promise<{ buffer: Buffer; mimeType: string }> {
+    if (!GEMINI_API_KEY) {
+        throw new Error("GEMINI_API_KEY not configured");
+    }
+
+    const voiceCfg = GEMINI_VOICES[styleKey] || (styleKey.includes("male") ? GEMINI_VOICES["male-genz"] : GEMINI_VOICES["female-genz"]);
+    const promptText = `${voiceCfg.speechInstruction}\n\nĐọc chính xác đoạn văn bản sau bằng tiếng Việt, tuyệt đối không thêm lời chào hay bất kỳ từ ngữ nào khác:\n\n"${text}"`;
+
+    const models = [
+        "gemini-3.8-flash-tts",
+        "gemini-3.8-flash-lite-tts",
+        "gemini-2.5-flash-preview-tts"
+    ];
+
+    for (const model of models) {
         try {
-            console.log(`[EdgeTTS] Connecting for voice: ${voiceName}, rate: ${rate}, pitch: ${pitch}`);
-            const tts = new MsEdgeTTS();
-            await tts.setMetadata(voiceName, OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
-            const { audioStream } = tts.toStream(text, { rate, pitch });
-
-            const chunks: Buffer[] = [];
-            audioStream.on("data", (chunk: Buffer) => chunks.push(chunk));
-            audioStream.on("end", () => {
-                const finalBuf = Buffer.concat(chunks);
-                if (finalBuf.length === 0) {
-                    reject(new Error("MsEdgeTTS returned empty audio stream"));
-                } else {
-                    console.log(`[EdgeTTS] Success: ${finalBuf.length} bytes for ${voiceName}`);
-                    resolve(finalBuf);
+            console.log(`[Gemini TTS] Calling ${model} with voice ${voiceCfg.voiceName}...`);
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+            const body = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: promptText }
+                        ]
+                    }
+                ],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: {
+                                voiceName: voiceCfg.voiceName
+                            }
+                        }
+                    }
                 }
-            });
-            audioStream.on("error", (err: any) => reject(err));
-        } catch (err) {
-            reject(err);
-        }
-    });
+            };
 
-    return withTimeout(edgePromise, 4000, "Edge TTS timeout after 4s");
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+                signal: AbortSignal.timeout(20000)
+            });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                console.warn(`[Gemini TTS] ${model} failed (${res.status}):`, errText.slice(0, 200));
+                continue;
+            }
+
+            const json = await res.json();
+            const part = json.candidates?.[0]?.content?.parts?.[0];
+            if (part?.inlineData?.data) {
+                const rawBuffer = Buffer.from(part.inlineData.data, "base64");
+                const mimeType = part.inlineData.mimeType || "audio/wav";
+                console.log(`[Gemini TTS] SUCCESS with ${model}: ${rawBuffer.length} bytes, ${mimeType}`);
+                return { buffer: rawBuffer, mimeType };
+            }
+        } catch (e: any) {
+            console.warn(`[Gemini TTS] ${model} error:`, e.message);
+        }
+    }
+
+    throw new Error("Tất cả mô hình Gemini 3.8 Flash TTS đều bận hoặc không phản hồi");
 }
 
-// --------------- ElevenLabs Voice Cloning Engine ---------------
-
+// ── ELEVENLABS VOICE CLONING ENGINE ──
 async function synthesizeWithElevenLabs(text: string, voiceId: string, apiKey: string): Promise<Buffer> {
     console.log(`[ElevenLabs] Synthesizing voiceId ${voiceId}...`);
     const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -134,8 +148,7 @@ async function synthesizeWithElevenLabs(text: string, voiceId: string, apiKey: s
     return Buffer.from(await res.arrayBuffer());
 }
 
-// --------------- Google Translate Fast Fallback ---------------
-
+// ── GOOGLE TRANSLATE FALLBACK ──
 function splitTextIntoChunks(text: string, maxLen = 140): string[] {
     const clean = text.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
     if (!clean) return [];
@@ -178,12 +191,11 @@ async function synthesizeWithGoogleTranslate(text: string): Promise<Buffer> {
     return Buffer.concat(buffers);
 }
 
-// --------------- Main Handler ---------------
-
+// ── MAIN HANDLER ──
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { text, voice, rate, pitch, style = "female-genz", voiceId, elevenApiKey } = body;
+        const { text, voice, style = "female-genz", voiceId, elevenApiKey } = body;
 
         if (!text || typeof text !== "string" || !text.trim()) {
             return NextResponse.json(
@@ -194,45 +206,41 @@ export async function POST(req: NextRequest) {
 
         const normalizedText = normalizeVietnamesePhonetics(text);
 
-        // Xác định chính xác style và giới tính người nói
         let styleKey = style || "female-genz";
-        if (voice && (voice.includes("NamMinh") || voice.includes("male"))) {
+        if (voice && (voice.includes("NamMinh") || voice.includes("male") || voice.includes("Puck") || voice.includes("Fenrir"))) {
             if (!styleKey.includes("male")) styleKey = "male-genz";
         }
 
-        const preset = VOICE_PRESETS[styleKey] || VOICE_PRESETS["female-genz"];
-        const isMale = styleKey.includes("male") || (voice && (voice.includes("NamMinh") || voice.includes("male")));
-        const targetVoice = isMale ? "vi-VN-NamMinhNeural" : "vi-VN-HoaiMyNeural";
-        const targetRate = rate || preset.rate;
-        const targetPitch = pitch || preset.pitch;
-
-        console.log(`[TTS] Request: styleKey=${styleKey}, isMale=${isMale}, targetVoice=${targetVoice}`);
+        console.log(`[TTS] Request: styleKey=${styleKey}`);
 
         let audioBuffer: Buffer | null = null;
-        let engineUsed = "edge-tts";
-        let edgeError = "";
+        let mimeType = "audio/wav";
+        let engineUsed = "gemini-3.8-flash-tts";
         const apiKey = elevenApiKey || process.env.ELEVENLABS_API_KEY;
 
-        // ƯU TIÊN 1: ElevenLabs nếu người dùng cấu hình giọng nhân bản
+        // ƯU TIÊN 1: ElevenLabs nếu người dùng cấu hình giọng nhân bản Voice ID
         if (voiceId && apiKey) {
             try {
                 audioBuffer = await synthesizeWithElevenLabs(normalizedText, voiceId, apiKey);
                 engineUsed = "elevenlabs";
+                mimeType = "audio/mpeg";
             } catch (elevenErr: any) {
-                console.warn("[TTS] ElevenLabs failed, falling back to Edge Neural TTS:", elevenErr.message);
+                console.warn("[TTS] ElevenLabs failed, falling back to Gemini:", elevenErr.message);
             }
         }
 
-        // ƯU TIÊN 2: Microsoft Edge Neural TTS (Chuẩn Azure Speech: Hoài My & Nam Minh - Tự nhiên, tách bạch Nam/Nữ rõ ràng)
+        // ƯU TIÊN 2: Google Gemini 3.8 Flash TTS (Công nghệ giọng Omni & Flow tự nhiên, cảm xúc đỉnh cao)
         if (!audioBuffer) {
             try {
-                audioBuffer = await synthesizeWithEdgeTTS(normalizedText, targetVoice, targetRate, targetPitch);
-                engineUsed = "edge-tts";
-            } catch (err: any) {
-                edgeError = err.message || "Edge TTS error";
-                console.warn("[TTS] Edge TTS failed on Vercel:", edgeError, "falling back to Google Translate");
+                const geminiResult = await synthesizeWithGeminiTTS(normalizedText, styleKey);
+                audioBuffer = geminiResult.buffer;
+                mimeType = geminiResult.mimeType;
+                engineUsed = "gemini-3.8-flash-tts";
+            } catch (geminiErr: any) {
+                console.warn("[TTS] Gemini TTS error:", geminiErr.message, "falling back to Google Translate");
                 audioBuffer = await synthesizeWithGoogleTranslate(normalizedText);
                 engineUsed = "google-translate-fallback";
+                mimeType = "audio/mpeg";
             }
         }
 
@@ -243,13 +251,12 @@ export async function POST(req: NextRequest) {
         return new NextResponse(new Uint8Array(audioBuffer), {
             status: 200,
             headers: {
-                "Content-Type": "audio/mpeg",
+                "Content-Type": mimeType,
                 "Content-Length": audioBuffer.length.toString(),
-                "Content-Disposition": 'inline; filename="voiceover_lyhu.mp3"',
+                "Content-Disposition": `inline; filename="voiceover_gemini_lyhu.${mimeType.includes("wav") ? "wav" : "mp3"}"`,
                 "Cache-Control": "public, max-age=3600",
                 "X-TTS-Engine": engineUsed,
-                "X-TTS-Voice": targetVoice,
-                "X-TTS-Edge-Error": encodeURIComponent(edgeError)
+                "X-TTS-Voice": styleKey
             }
         });
     } catch (err: any) {
