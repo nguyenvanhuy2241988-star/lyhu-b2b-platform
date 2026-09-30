@@ -20,6 +20,8 @@ import {
     Wand2,
     DollarSign,
     TrendingDown,
+    ArrowRight,
+    ArrowLeft,
     Palette,
     Zap,
     Monitor,
@@ -469,7 +471,7 @@ export default function AutoVideoStudioPage() {
     const [subtitleOffset, setSubtitleOffset] = useState<number>(0);
     const [customHookTitle, setCustomHookTitle] = useState("🔥 TỔNG KHO ĂN VẶT & BỘT PHÔ MAI BOYO GIÁ SỈ!");
     const [showHookTitle, setShowHookTitle] = useState(true);
-    const [hookBannerTheme, setHookBannerTheme] = useState<"red_orange" | "black_gold" | "teal_lyhu">("red_orange");
+    const [hookBannerTheme, setHookBannerTheme] = useState<"tiktok_sticker" | "red_orange" | "black_gold" | "teal_lyhu">("tiktok_sticker");
     const [hookDuration, setHookDuration] = useState<number>(3.5);
 
     // ── DIRECTOR'S SCRIPTBOOK & PROJECT HISTORY ──
@@ -512,8 +514,17 @@ export default function AutoVideoStudioPage() {
     const [cloneTopic, setCloneTopic] = useState("Hàng khoai môn CVT container về buổi đêm date mới tinh");
     const [isAnalyzingClone, setIsAnalyzingClone] = useState(false);
     const [cloneStoryboard, setCloneStoryboard] = useState<string[]>([]);
-    // ── STUDIO TAB NAVIGATION & AI SUPERPOWERS ──
-    const [activeStudioTab, setActiveStudioTab] = useState<"copilot" | "script" | "clips" | "music" | "ai_superpowers">("copilot");
+    // ── STUDIO STEPPER & WORKFLOW ENGINE ──
+    type StudioStep = "step_script" | "step_clips" | "step_visuals" | "step_audio_export" | "copilot";
+    const [activeStudioStep, setActiveStudioStep] = useState<StudioStep>("step_script");
+    const activeStudioTab = activeStudioStep === "step_clips" ? "clips" : activeStudioStep === "step_visuals" ? "ai_superpowers" : activeStudioStep === "step_audio_export" ? "music" : activeStudioStep === "copilot" ? "copilot" : "script";
+    const setActiveStudioTab = (tab: "copilot" | "script" | "clips" | "music" | "ai_superpowers") => {
+        if (tab === "clips") setActiveStudioStep("step_clips");
+        else if (tab === "ai_superpowers") setActiveStudioStep("step_visuals");
+        else if (tab === "music") setActiveStudioStep("step_audio_export");
+        else if (tab === "copilot") setActiveStudioStep("copilot");
+        else setActiveStudioStep("step_script");
+    };
     const [bgmMode, setBgmMode] = useState<"ai_smart" | "manual_trend">("ai_smart");
 
     // ── STEP 6: AI SUPERPOWERS & CUTTING-EDGE SOUND/STAMP TOOLS ──
@@ -1753,32 +1764,30 @@ export default function AutoVideoStudioPage() {
             }
         }
 
-        // 2. Draw Hook Title (First 3.5s with Auto-Wrap & 100% Frame-Safe Fit)
+        // 2. Draw Hook Title (First 3.5s with High-Impact TikTok / CapCut Viral Aesthetic)
         if (showHookTitle && time <= hookDuration && customHookTitle.trim()) {
             ctx.save();
 
-            // Pop-in bounce animation in first 0.25s
+            // Elastic pop-in bounce animation in first 0.28s
             let hookScale = 1.0;
-            if (time < 0.25) {
-                const t = time / 0.25;
-                hookScale = 0.85 + 0.15 * Math.sin(t * Math.PI * 0.5);
+            if (time < 0.28) {
+                const t = time / 0.28;
+                hookScale = 0.82 + 0.18 * Math.sin(t * Math.PI * 0.5);
             }
 
-            const hookCenterY = ch * 0.165;
-            const maxBadgeW = Math.min(cw * 0.90, cw - 32); // Safe width boundary
-            const maxContentW = maxBadgeW - 36; // Inner text padding
+            const hookCenterY = ch * 0.17;
+            const maxBadgeW = Math.min(cw * 0.94, cw - 24);
+            const maxContentW = maxBadgeW - 32;
 
-            // Auto-scale font size based on text length
             const textRaw = customHookTitle.trim();
-            let baseFontSize = 23;
-            if (textRaw.length > 55) baseFontSize = 17;
-            else if (textRaw.length > 36) baseFontSize = 19.5;
+            let baseFontSize = 24;
+            if (textRaw.length > 55) baseFontSize = 18;
+            else if (textRaw.length > 36) baseFontSize = 21;
 
             ctx.font = `900 ${baseFontSize}px ${fontFamily}`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
 
-            // Multi-line word-wrapping (Guarantees text never clips horizontally)
             const words = textRaw.split(/\s+/);
             const lines: string[] = [];
             let currentLine = "";
@@ -1795,66 +1804,101 @@ export default function AutoVideoStudioPage() {
             }
             if (currentLine) lines.push(currentLine);
 
-            // Re-measure max line width
             let maxLineW = 0;
             lines.forEach((l) => {
                 const lw = ctx.measureText(l).width;
                 if (lw > maxLineW) maxLineW = lw;
             });
 
-            const lineHeight = baseFontSize * 1.38;
-            const badgeW = Math.min(maxBadgeW, Math.max(160, maxLineW + 36));
-            const badgeH = Math.max(46, lines.length * lineHeight + 20);
+            const lineHeight = baseFontSize * 1.36;
+            const topTagH = 20;
+            const badgeW = Math.min(maxBadgeW, Math.max(220, maxLineW + 48));
+            const badgeH = Math.max(56, lines.length * lineHeight + topTagH + 18);
             const badgeX = (cw - badgeW) / 2;
             const badgeY = hookCenterY - badgeH / 2;
 
             // Apply scale from center
             ctx.translate(cw / 2, hookCenterY);
             ctx.scale(hookScale, hookScale);
+            if (hookBannerTheme === "tiktok_sticker") {
+                ctx.rotate(-0.02); // 1.2 degree dynamic tilt
+            }
             ctx.translate(-cw / 2, -hookCenterY);
 
-            // Badge Background Gradient (Configurable High-Impact Themes)
+            // 3D Drop Shadow
+            ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
+            ctx.shadowBlur = 24;
+            ctx.shadowOffsetY = 6;
+
+            // Background Gradient by Theme
             const grad = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeW, badgeY + badgeH);
-            if (hookBannerTheme === "black_gold") {
-                grad.addColorStop(0, "#18181B");
+            if (hookBannerTheme === "tiktok_sticker") {
+                grad.addColorStop(0, "#FFE600");
+                grad.addColorStop(0.35, "#FF9900");
+                grad.addColorStop(1, "#DC2626");
+            } else if (hookBannerTheme === "black_gold") {
+                grad.addColorStop(0, "#09090B");
+                grad.addColorStop(0.5, "#18181B");
                 grad.addColorStop(1, "#27272A");
             } else if (hookBannerTheme === "teal_lyhu") {
                 grad.addColorStop(0, "#0F766E");
                 grad.addColorStop(1, "#00AFA9");
             } else {
+                // red_orange
                 grad.addColorStop(0, "#DC2626");
                 grad.addColorStop(0.5, "#E11D48");
                 grad.addColorStop(1, "#EA580C");
             }
 
-            ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
-            ctx.shadowBlur = 16;
-            ctx.shadowOffsetY = 4;
             ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 12);
+            ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 16);
             ctx.fill();
 
-            // Inner glowing border
+            // Inner glowing border / 3D rim
             ctx.shadowBlur = 0;
             ctx.shadowOffsetY = 0;
-            ctx.strokeStyle = hookBannerTheme === "black_gold" ? "#FACC15" : "rgba(255, 255, 255, 0.35)";
-            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = hookBannerTheme === "tiktok_sticker"
+                ? "#000000"
+                : (hookBannerTheme === "black_gold" ? "#FACC15" : "rgba(255, 255, 255, 0.65)");
+            ctx.lineWidth = hookBannerTheme === "tiktok_sticker" ? 3.5 : 2;
             ctx.stroke();
 
-            // Draw each line of text with bold outline stroke + crisp fill
-            const startTextY = badgeY + (badgeH - (lines.length - 1) * lineHeight) / 2;
+            // Top Mini-Badge Tag (e.g. 🔥 HOT TREND KHO SỈ)
+            const tagText = hookBannerTheme === "black_gold"
+                ? "✦ BÍ QUYẾT BÁN BUÔN"
+                : (hookBannerTheme === "teal_lyhu" ? "📦 LYHU WHOLESALE" : "🔥 XU HƯỚNG KHO SỈ");
+            ctx.font = `900 11px ${fontFamily}`;
+            const tagW = ctx.measureText(tagText).width + 18;
+            const tagX = cw / 2 - tagW / 2;
+            const tagY = badgeY + 8;
+            ctx.fillStyle = hookBannerTheme === "tiktok_sticker" ? "#000000" : "rgba(0, 0, 0, 0.45)";
+            ctx.beginPath();
+            ctx.roundRect(tagX, tagY, tagW, 18, 9);
+            ctx.fill();
+            ctx.fillStyle = hookBannerTheme === "tiktok_sticker" ? "#FFE600" : "#FFFFFF";
+            ctx.fillText(tagText, cw / 2, tagY + 9);
+
+            // Draw each line of text
+            const startTextY = badgeY + topTagH + 8 + ((badgeH - topTagH - 18) - (lines.length - 1) * lineHeight) / 2;
             lines.forEach((lineText, idx) => {
                 const lineY = startTextY + idx * lineHeight;
+                ctx.font = `900 ${baseFontSize}px ${fontFamily}`;
 
-                // Strong dark stroke for 100% legibility on any background
-                ctx.strokeStyle = "rgba(0, 0, 0, 0.95)";
-                ctx.lineWidth = 4.5;
+                // Heavy 8.5px solid black stroke
+                ctx.strokeStyle = "#000000";
+                ctx.lineWidth = 8.5;
                 ctx.lineJoin = "round";
                 ctx.strokeText(lineText, cw / 2, lineY);
 
-                // High contrast text
-                ctx.fillStyle = hookBannerTheme === "black_gold" ? "#FEF08A" : "#FFFFFF";
+                // High contrast vibrant fill
+                if (hookBannerTheme === "tiktok_sticker") {
+                    ctx.fillStyle = idx === 0 ? "#FFFFFF" : "#FFE600";
+                } else if (hookBannerTheme === "black_gold") {
+                    ctx.fillStyle = idx === 0 ? "#FFFFFF" : "#FEF08A";
+                } else {
+                    ctx.fillStyle = idx === 0 ? "#FFE600" : "#FFFFFF";
+                }
                 ctx.fillText(lineText, cw / 2, lineY);
             });
 
@@ -1864,11 +1908,11 @@ export default function AutoVideoStudioPage() {
         // 3. Draw Brand Watermark
         if (showWatermark) {
             ctx.save();
-            ctx.fillStyle = "rgba(15, 23, 42, 0.65)";
-            const badgeW = 168;
+            ctx.fillStyle = "rgba(15, 23, 42, 0.75)";
+            const badgeW = 176;
             const badgeH = 34;
-            const badgeX = 20;
-            const badgeY = 24;
+            const badgeX = 18;
+            const badgeY = 22;
             ctx.beginPath();
             ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 17);
             ctx.fill();
@@ -1887,99 +1931,146 @@ export default function AutoVideoStudioPage() {
         // 3.5. Draw Active Animated Sales Callout Sticker / Live Badge
         if (activeSalesSticker && activeSalesSticker !== "none") {
             ctx.save();
-            const pulse = 1.0 + Math.sin(validTime * 5) * 0.04;
+            const pulse = 1.0 + Math.sin(validTime * 4.5) * 0.04;
 
-            const STICKER_CONFIGS: Record<string, { title: string; subtitle: string; icon: string; bg: string; border: string; textCol: string }> = {
+            const STICKER_CONFIGS: Record<string, { title: string; subtitle: string; icon: string; bgGrad: [string, string]; border: string; subCol: string }> = {
                 freeship: {
                     title: "FREESHIP TẬN QUÁN",
-                    subtitle: "Giao nhanh nội thành & các tỉnh",
+                    subtitle: "GIAO NHANH NỘI THÀNH & TỈNH",
                     icon: "🚚",
-                    bg: "#059669",
-                    border: "#34D399",
-                    textCol: "#FFFFFF"
+                    bgGrad: ["#D97706", "#B45309"],
+                    border: "#FDE68A",
+                    subCol: "#FEF08A"
                 },
                 si_1_thung: {
                     title: "SỈ TỪ 1 THÙNG",
-                    subtitle: "Giá tận xưởng bao lời x2",
+                    subtitle: "GIÁ TẬN XƯỞNG BAO LỜI X2",
                     icon: "🏷️",
-                    bg: "#D97706",
-                    border: "#FDE68A",
-                    textCol: "#111827"
+                    bgGrad: ["#E11D48", "#BE123C"],
+                    border: "#FECDD3",
+                    subCol: "#FFE4E6"
                 },
                 san_kho: {
                     title: "SẴN KHO 1.000 THÙNG",
-                    subtitle: "Date mới tinh xuất ngay",
+                    subtitle: "DATE MỚI TINH XUẤT NGAY",
                     icon: "📦",
-                    bg: "#2563EB",
-                    border: "#93C5FD",
-                    textCol: "#FFFFFF"
+                    bgGrad: ["#2563EB", "#1D4ED8"],
+                    border: "#BFDBFE",
+                    subCol: "#DBEAFE"
                 },
                 lai_x2: {
                     title: "LÃI GẤP ĐÔI TẬN GỐC",
-                    subtitle: "Chiết khấu tối đa cho đại lý",
+                    subtitle: "CHIẾT KHẤU TỐI ĐA CHO ĐẠI LÝ",
                     icon: "💰",
-                    bg: "#DC2626",
-                    border: "#FCA5A5",
-                    textCol: "#FFFFFF"
+                    bgGrad: ["#059669", "#047857"],
+                    border: "#A7F3D0",
+                    subCol: "#D1FAE5"
                 },
                 inbox_cta: {
                     title: "INBOX NHẬN MẪU THỬ",
-                    subtitle: "Gửi mẫu ăn thử miễn phí",
+                    subtitle: "GỬI MẪU ĂN THỬ MIỄN PHÍ",
                     icon: "📲",
-                    bg: "#7C3AED",
-                    border: "#C4B5FD",
-                    textCol: "#FFFFFF"
+                    bgGrad: ["#7C3AED", "#6D28D9"],
+                    border: "#DDD6FE",
+                    subCol: "#EDE9FE"
                 }
             };
 
             const cfg = STICKER_CONFIGS[activeSalesSticker] || STICKER_CONFIGS["freeship"];
-            let stickerX = cw - 130;
-            let stickerY = 90;
+            const badgeW = Math.min(cw * 0.54, 255);
+            const badgeH = 54;
+            let stickerX = cw - badgeW / 2 - 16;
+            let stickerY = 64;
             if (stickerPosition === "top_left") {
-                stickerX = 130;
-                stickerY = 90;
+                stickerX = badgeW / 2 + 16;
+                stickerY = 64;
             } else if (stickerPosition === "bottom_right") {
-                stickerX = cw - 130;
-                stickerY = ch - 200;
+                stickerX = cw - badgeW / 2 - 16;
+                stickerY = ch - 190;
             }
 
             ctx.translate(stickerX, stickerY);
             ctx.scale(pulse, pulse);
 
-            const badgeW = 205;
-            const badgeH = 44;
+            // 3D Shadow
+            ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+            ctx.shadowBlur = 18;
+            ctx.shadowOffsetY = 4;
 
-            ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
-            ctx.shadowBlur = 12;
-
-            ctx.fillStyle = cfg.bg;
+            // Gradient Badge
+            const sGrad = ctx.createLinearGradient(-badgeW / 2, -badgeH / 2, badgeW / 2, badgeH / 2);
+            sGrad.addColorStop(0, cfg.bgGrad[0]);
+            sGrad.addColorStop(1, cfg.bgGrad[1]);
+            ctx.fillStyle = sGrad;
             ctx.beginPath();
-            ctx.roundRect(-badgeW / 2, -badgeH / 2, badgeW, badgeH, 12);
+            ctx.roundRect(-badgeW / 2, -badgeH / 2, badgeW, badgeH, 14);
             ctx.fill();
 
+            // Rim border
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.strokeStyle = cfg.border;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Top Corner "● LIVE DEAL" Tag
+            const liveTagW = 76;
+            const liveTagH = 15;
+            ctx.fillStyle = "#DC2626";
+            ctx.beginPath();
+            ctx.roundRect(badgeW / 2 - liveTagW - 8, -badgeH / 2 - 7, liveTagW, liveTagH, 7);
+            ctx.fill();
+            ctx.strokeStyle = "#FFFFFF";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Live dot
+            const liveDotAlpha = 0.5 + Math.sin(validTime * 8) * 0.5;
+            ctx.fillStyle = `rgba(255, 255, 255, ${liveDotAlpha})`;
+            ctx.beginPath();
+            ctx.arc(badgeW / 2 - liveTagW + 8, -badgeH / 2 + 0.5, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.font = "900 8.5px 'Be Vietnam Pro', sans-serif";
+            ctx.fillStyle = "#FFFFFF";
+            ctx.textAlign = "center";
+            ctx.fillText("LIVE DEAL", badgeW / 2 - liveTagW / 2 + 6, -badgeH / 2 + 0.5);
+
+            // Icon circle
+            const iconR = 17;
+            const iconCx = -badgeW / 2 + 26;
+            ctx.beginPath();
+            ctx.arc(iconCx, 0, iconR, 0, Math.PI * 2);
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fill();
             ctx.strokeStyle = cfg.border;
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Circle Icon
-            ctx.beginPath();
-            ctx.arc(-badgeW / 2 + 20, 0, 13, 0, Math.PI * 2);
-            ctx.fillStyle = "#FFFFFF";
-            ctx.fill();
-            ctx.font = "15px sans-serif";
+            ctx.font = "20px sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(cfg.icon, -badgeW / 2 + 20, 1);
+            ctx.fillText(cfg.icon, iconCx, 1);
 
-            // Title & Subtitle
-            ctx.fillStyle = cfg.textCol;
-            ctx.font = "900 11.5px 'Be Vietnam Pro', sans-serif";
+            // Text
+            const textStartX = -badgeW / 2 + 50;
             ctx.textAlign = "left";
-            ctx.fillText(cfg.title, -badgeW / 2 + 40, -3);
 
-            ctx.fillStyle = activeSalesSticker === "si_1_thung" ? "#374151" : "rgba(255, 255, 255, 0.88)";
-            ctx.font = "600 8.5px 'Be Vietnam Pro', sans-serif";
-            ctx.fillText(cfg.subtitle, -badgeW / 2 + 40, 11);
+            // Title with dark outline stroke
+            ctx.font = "900 13px 'Be Vietnam Pro', sans-serif";
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.9)";
+            ctx.lineWidth = 4;
+            ctx.strokeText(cfg.title, textStartX, -5);
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillText(cfg.title, textStartX, -5);
+
+            // Subtitle
+            ctx.font = "800 9px 'Be Vietnam Pro', sans-serif";
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.85)";
+            ctx.lineWidth = 3;
+            ctx.strokeText(cfg.subtitle, textStartX, 13);
+            ctx.fillStyle = cfg.subCol;
+            ctx.fillText(cfg.subtitle, textStartX, 13);
 
             ctx.restore();
         }
@@ -2487,6 +2578,71 @@ export default function AutoVideoStudioPage() {
             setIsGeneratingBRoll(false);
             alert("✨ AI đã bổ sung trọn bộ 6 góc quay B-Roll chuẩn Kho Sỉ B2B vào dự án của bạn!");
         }, 1200);
+    };
+
+    // Instant preview of a specific clip on canvas
+    const handlePreviewSpecificClip = (clipIdx: number) => {
+        if (!clips[clipIdx]) return;
+        pausePlayback();
+        const switchSec = Math.max(2, clipSwitchInterval || 2.5);
+        const targetTime = clipIdx * switchSec + 0.05;
+        currentTimeRef.current = targetTime;
+        setDisplayTime(targetTime);
+        handleSeek(targetTime);
+
+        const targetClip = clips[clipIdx];
+        if (targetClip?.id) {
+            const vid = videoElementsRef.current[targetClip.id];
+            if (vid) {
+                vid.currentTime = 0.5;
+                setTimeout(() => drawCanvasFrame(targetTime), 50);
+            }
+        }
+    };
+
+    // Set a B-roll clip or existing clip as opening clip #1
+    const handleSetOpeningClip = (item: typeof AI_BROLL_LIBRARY[0] | VideoClip) => {
+        const openingClip: VideoClip = {
+            id: `broll_${Date.now()}_open`,
+            name: item.name,
+            url: item.url,
+            duration: item.duration,
+            width: item.width,
+            height: item.height,
+            muted: true
+        };
+        setClips(prev => [openingClip, ...prev.filter(c => c.url !== item.url)]);
+        pausePlayback();
+        currentTimeRef.current = 0;
+        setDisplayTime(0);
+        setTimeout(() => {
+            const vid = videoElementsRef.current[openingClip.id];
+            if (vid) vid.currentTime = 0.5;
+            drawCanvasFrame(0);
+        }, 100);
+    };
+
+    // Add B-Roll clip and immediately seek/draw on canvas
+    const handleAddBRollClipAndPreview = (item: typeof AI_BROLL_LIBRARY[0]) => {
+        const newClip: VideoClip = {
+            id: `broll_${Date.now()}_${item.id}`,
+            name: item.name,
+            url: item.url,
+            duration: item.duration,
+            width: item.width,
+            height: item.height,
+            muted: true
+        };
+        setClips(prev => {
+            const existingIdx = prev.findIndex(c => c.url === item.url);
+            if (existingIdx >= 0) {
+                setTimeout(() => handlePreviewSpecificClip(existingIdx), 50);
+                return prev;
+            }
+            const updated = [...prev, newClip];
+            setTimeout(() => handlePreviewSpecificClip(updated.length - 1), 50);
+            return updated;
+        });
     };
 
     // Main 60FPS RequestAnimationFrame Animation Loop
@@ -3028,248 +3184,68 @@ export default function AutoVideoStudioPage() {
                 </div>
             </div>
 
-            {/* 🎬 LYHU AI STUDIO CREATOR CARD (Clean LYHU Brand) */}
-            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-teal-500/30 shadow-sm space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-teal-500 text-white shadow-sm">
-                            <Sparkles className="w-5 h-5 text-amber-300" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-base font-bold text-slate-900">
-                                    Tạo Kịch Bản & Đồng Bộ Giọng Đọc 1-Click
-                                </h2>
-                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
-                                    Google Gemini AI Engine
-                                </span>
-                            </div>
-                            <p className="text-xs text-slate-500">
-                                AI tự động: Viết kịch bản bán buôn → Thu giọng đọc AI tiếng Việt → Cắt nhịp 2.5s Jump-cut & Đồng bộ phụ đề 100%.
-                            </p>
-                        </div>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={() => setIsCloneModalOpen(!isCloneModalOpen)}
-                        className="text-xs text-teal-700 hover:text-teal-800 font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-200 hover:bg-teal-50 transition-colors self-start sm:self-center"
-                    >
-                        <Sliders className="w-3.5 h-3.5" />
-                        <span>{isCloneModalOpen ? "Thu gọn 3 phong cách" : "Xem 3 phong cách mẫu"}</span>
-                    </button>
-                </div>
-
-                {/* Form input row */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
-                    <div className="lg:col-span-6 space-y-1.5">
-                        <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                            <span>1. Chủ đề / Sản phẩm LYHU muốn làm video:</span>
-                            <span className="text-[11px] text-teal-600 font-normal">Khoai môn CVT • Bột phô mai • Bánh tráng</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={cloneTopic}
-                            onChange={(e) => setCloneTopic(e.target.value)}
-                            placeholder="Ví dụ: Hàng khoai môn CVT container về buổi đêm date mới tinh"
-                            className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-200 outline-none text-xs text-slate-900 font-medium transition-colors"
-                        />
-                    </div>
-
-                    <div className="lg:col-span-3 space-y-1.5">
-                        <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                            <span>2. Link TikTok mẫu (tùy chọn):</span>
-                            <span className="text-[11px] text-slate-400">Trà My 24Zone</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={cloneRefUrl}
-                            onChange={(e) => setCloneRefUrl(e.target.value)}
-                            placeholder="https://www.tiktok.com/@tra.my.24zone/video/..."
-                            className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-200 outline-none text-xs text-slate-800 font-mono transition-colors"
-                        />
-                    </div>
-
-                    <div className="lg:col-span-3">
-                        <button
-                            type="button"
-                            onClick={handleCloneStyle}
-                            disabled={isAnalyzingClone || isSynthesizingVoice}
-                            className="w-full py-2.5 px-4 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-none disabled:opacity-60 transition-colors cursor-pointer"
-                        >
-                            {isAnalyzingClone || isSynthesizingVoice ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin text-white shrink-0" />
-                                    <span className="truncate">{analyzingStepText || "AI Đang Xử Lý..."}</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Wand2 className="w-4 h-4 text-amber-300" />
-                                    <span>✨ AI Viết Kịch Bản & Thu Giọng</span>
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </div>
-
-                {/* Quick topic pills */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
-                    <span className="text-[11px] text-slate-400 font-medium">Gợi ý chủ đề nhanh:</span>
-                    {[
-                        "Hàng khoai môn CVT container về buổi đêm date mới tinh",
-                        "Bột phô mai BOYO 1kg cho quán khoai tây lắc",
-                        "Da cá trứng muối & Bánh tráng Abi Snack giá sỉ",
-                        "Chuyện kiểm hàng kho sỉ LYHU xuyên đêm kịp giao sáng mai"
-                    ].map((topic, i) => (
-                        <button
-                            key={i}
-                            type="button"
-                            onClick={() => setCloneTopic(topic)}
-                            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 text-[11px] text-slate-600 border border-slate-200 transition-colors"
-                        >
-                            {topic}
-                        </button>
-                    ))}
-                </div>
-
-                {/* 3 Quick template style cards */}
-                {isCloneModalOpen && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                        {LYHU_TEMPLATES.map((tpl) => {
-                            const isActive = activeTemplateId === tpl.id;
+            {/* 🚀 QUY TRÌNH SẢN XUẤT VIDEO 4 BƯỚC TUYẾN TÍNH CHUẨN LOGIC (Studio Production Pipeline) */}
+            <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200/90 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 overflow-x-auto py-1">
+                        {[
+                            { step: "step_script", num: "1", title: "Kịch Bản & Giọng AI", icon: FileText, badge: "Gemini 3.8" },
+                            { step: "step_clips", num: "2", title: "Chọn Cảnh & B-Roll", icon: Film, badge: `${clips.length} cảnh` },
+                            { step: "step_visuals", num: "3", title: "Tiêu Đề & Huy Hiệu", icon: Tag, badge: "Viral Badges" },
+                            { step: "step_audio_export", num: "4", title: "Âm Thanh & Xuất", icon: Music, badge: "60 FPS" },
+                        ].map((s) => {
+                            const isCurrent = activeStudioStep === s.step;
                             return (
                                 <button
-                                    key={tpl.id}
+                                    key={s.step}
                                     type="button"
-                                    onClick={() => handleApplyTemplate(tpl)}
-                                    className={`p-3 rounded-xl border text-left transition-all ${
-                                        isActive
-                                            ? "bg-teal-50/60 border-teal-500 ring-2 ring-teal-500/20 shadow-sm"
-                                            : "bg-slate-50/50 hover:bg-slate-100/70 border-slate-200"
+                                    onClick={() => setActiveStudioStep(s.step as any)}
+                                    className={`px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+                                        isCurrent
+                                            ? "bg-teal-600 text-white shadow-md shadow-teal-600/25 ring-2 ring-teal-500/20"
+                                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 bg-slate-50 border border-slate-200/80"
                                     }`}
                                 >
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs font-bold text-teal-800 flex items-center gap-1">
-                                            {tpl.badge}
-                                        </span>
-                                        {isActive && (
-                                            <span className="text-[10px] bg-teal-600 text-white px-2 py-0.2 rounded font-bold">
-                                                ĐANG CHỌN
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="text-xs font-semibold text-slate-800 mb-0.5 line-clamp-1">
-                                        {tpl.hookTitle}
-                                    </div>
-                                    <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                                        {tpl.title}
-                                    </p>
+                                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black ${
+                                        isCurrent ? "bg-white text-teal-800" : "bg-slate-200 text-slate-700"
+                                    }`}>
+                                        {s.num}
+                                    </span>
+                                    <span>{s.title}</span>
+                                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
+                                        isCurrent ? "bg-teal-700/60 text-teal-100" : "bg-slate-200/70 text-slate-600"
+                                    }`}>
+                                        {s.badge}
+                                    </span>
                                 </button>
                             );
                         })}
                     </div>
-                )}
+
+                    {/* Copilot Autonomous Assistant */}
+                    <button
+                        type="button"
+                        onClick={() => setActiveStudioStep("copilot")}
+                        className={`px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shrink-0 self-start md:self-center ${
+                            activeStudioStep === "copilot"
+                                ? "bg-purple-600 text-white shadow-md shadow-purple-600/25 ring-2 ring-purple-400"
+                                : "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                        }`}
+                    >
+                        <Bot className="w-4 h-4 text-purple-600" />
+                        <span>Trợ Lý Đạo Diễn AI</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-200 text-purple-800 font-bold">Auto</span>
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* LEFT: Controls & Setup (7 cols) */}
                 <div className="lg:col-span-7 space-y-4">
-                    {/* STUDIO WORKSPACE TAB NAVIGATION */}
-                    <div className="bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-1.5 overflow-x-auto">
-                        <button
-                            type="button"
-                            onClick={() => setActiveStudioTab("copilot")}
-                            className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
-                                activeStudioTab === "copilot"
-                                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
-                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
-                            }`}
-                        >
-                            <Bot className="w-4 h-4 shrink-0" />
-                            <span>Siêu Đạo Diễn AI</span>
-                            <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black uppercase tracking-wider ${
-                                activeStudioTab === "copilot" ? "bg-white/20 text-white" : "bg-teal-50 text-teal-700"
-                            }`}>
-                                Auto
-                            </span>
-                        </button>
 
-                        <button
-                            type="button"
-                            onClick={() => setActiveStudioTab("script")}
-                            className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
-                                activeStudioTab === "script"
-                                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
-                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
-                            }`}
-                        >
-                            <FileText className="w-4 h-4 shrink-0" />
-                            <span>Kịch Bản & Giọng AI</span>
-                            <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black uppercase tracking-wider ${
-                                activeStudioTab === "script" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
-                            }`}>
-                                Sync
-                            </span>
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setActiveStudioTab("clips")}
-                            className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
-                                activeStudioTab === "clips"
-                                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
-                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
-                            }`}
-                        >
-                            <FileVideo className="w-4 h-4 shrink-0" />
-                            <span>Góc Quay & Clip Thô</span>
-                            <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
-                                activeStudioTab === "clips" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
-                            }`}>
-                                {clips.length}
-                            </span>
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setActiveStudioTab("music")}
-                            className={`flex-1 min-w-[130px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
-                                activeStudioTab === "music"
-                                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
-                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
-                            }`}
-                        >
-                            <Music className="w-4 h-4 shrink-0" />
-                            <span>Âm Thanh & Nhạc Trend</span>
-                            <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
-                                activeStudioTab === "music" ? "bg-white/20 text-white" : "bg-amber-100 text-amber-800"
-                            }`}>
-                                🔥 Hot
-                            </span>
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setActiveStudioTab("ai_superpowers")}
-                            className={`flex-1 min-w-[140px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
-                                activeStudioTab === "ai_superpowers"
-                                    ? "bg-purple-600 text-white shadow-md shadow-purple-600/20"
-                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
-                            }`}
-                        >
-                            <Zap className="w-4 h-4 shrink-0 text-amber-400" />
-                            <span>Vũ Khí AI Đỉnh Cao</span>
-                            <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
-                                activeStudioTab === "ai_superpowers" ? "bg-white/20 text-white" : "bg-purple-100 text-purple-700"
-                            }`}>
-                                ⚡ Pro
-                            </span>
-                        </button>
-                    </div>
-
-                    {/* TAB 1: SIÊU AI ĐẠO DIỄN COPILOT */}
-                    {activeStudioTab === "copilot" && (
-                        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                    {/* TAB COPILOT: SIÊU AI ĐẠO DIỄN COPILOT */}
+                    {(activeStudioStep === "copilot" || activeStudioTab === "copilot") && (
+                        <div className="bg-white p-5 rounded-2xl border border-teal-200/90 shadow-sm space-y-4">
                             <div className="bg-gradient-to-r from-teal-700 via-teal-600 to-emerald-600 rounded-2xl p-4 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">
@@ -3285,15 +3261,28 @@ export default function AutoVideoStudioPage() {
                                         Trao đổi tự nhiên bằng tiếng Việt — AI sẽ tự suy nghĩ, đổi kịch bản, tự thu âm giọng đọc AI, nạp nhạc trend và tinh chỉnh thông số video trực tiếp vào Studio!
                                     </p>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => handleSendCopilotMessage("Em hãy tối ưu lại toàn bộ kịch bản và nhịp cắt cho video này để đạt chuẩn viral TikTok nhé!")}
-                                    disabled={isCopilotThinking}
-                                    className="px-3.5 py-2 bg-white text-teal-800 hover:bg-teal-50 font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 shrink-0 self-start sm:self-auto disabled:opacity-50"
-                                >
-                                    <Sparkles className="w-4 h-4 text-amber-500" />
-                                    <span>Tự Động Tối Ưu Video</span>
-                                </button>
+                                <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSendCopilotMessage("Em hãy tối ưu lại toàn bộ kịch bản và nhịp cắt cho video này để đạt chuẩn viral TikTok nhé!")}
+                                        disabled={isCopilotThinking}
+                                        className="px-3.5 py-2 bg-white text-teal-800 hover:bg-teal-50 font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                                    >
+                                        <Sparkles className="w-4 h-4 text-amber-500" />
+                                        <span>Tự Động Tối Ưu</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setActiveStudioStep("step_script");
+                                            setActiveStudioTab("script");
+                                        }}
+                                        className="px-3 py-2 bg-teal-800/80 hover:bg-teal-900 text-white font-semibold text-xs rounded-xl transition-all flex items-center gap-1"
+                                        title="Đóng trợ lý và quay lại các bước sản xuất"
+                                    >
+                                        <span>Đóng Trợ Lý</span>
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Quick Prompts */}
@@ -3403,492 +3392,195 @@ export default function AutoVideoStudioPage() {
                         </div>
                     )}
 
-                    {/* TAB 3: VIDEO QUAY THÔ & TỈ LỆ KHUNG HÌNH */}
-                    {activeStudioTab === "clips" && (
-                        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                <FileVideo className="w-4 h-4 text-teal-600" />
-                                1. Nạp video thô & Tỉ lệ khung hình ({clips.length} clip)
-                            </h2>
-                            <button
-                                type="button"
-                                onClick={handleLoadDemoClips}
-                                className="text-xs text-purple-600 hover:text-purple-800 hover:underline font-semibold"
-                            >
-                                + Dùng 2 clip mẫu Tổng kho LYHU
-                            </button>
-                        </div>
-
-                        {/* Aspect Ratio Selector */}
-                        <div className="grid grid-cols-3 gap-2.5">
-                            <button
-                                type="button"
-                                onClick={() => setAspectRatio("9:16")}
-                                className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
-                                    aspectRatio === "9:16"
-                                        ? "border-purple-600 bg-purple-50/60 text-purple-900 shadow-sm ring-1 ring-purple-500"
-                                        : "border-gray-200 hover:border-gray-300 text-gray-600 bg-white"
-                                }`}
-                            >
-                                <Smartphone className="w-5 h-5" />
-                                <div className="text-center">
-                                    <div className="font-bold text-xs">9:16 (Dọc)</div>
-                                    <div className="text-[10px] text-gray-400">TikTok / Reels / Shorts</div>
-                                </div>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setAspectRatio("16:9")}
-                                className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
-                                    aspectRatio === "16:9"
-                                        ? "border-purple-600 bg-purple-50/60 text-purple-900 shadow-sm ring-1 ring-purple-500"
-                                        : "border-gray-200 hover:border-gray-300 text-gray-600 bg-white"
-                                }`}
-                            >
-                                <Monitor className="w-5 h-5" />
-                                <div className="text-center">
-                                    <div className="font-bold text-xs">16:9 (Ngang)</div>
-                                    <div className="text-[10px] text-gray-400">YouTube / Web / TV</div>
-                                </div>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setAspectRatio("1:1")}
-                                className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
-                                    aspectRatio === "1:1"
-                                        ? "border-purple-600 bg-purple-50/60 text-purple-900 shadow-sm ring-1 ring-purple-500"
-                                        : "border-gray-200 hover:border-gray-300 text-gray-600 bg-white"
-                                }`}
-                            >
-                                <Square className="w-5 h-5" />
-                                <div className="text-center">
-                                    <div className="font-bold text-xs">1:1 (Vuông)</div>
-                                    <div className="text-[10px] text-gray-400">Facebook / Instagram Feed</div>
-                                </div>
-                            </button>
-                        </div>
-
-                        {/* Upload Dropzone & Button */}
-                        <div
-                            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                            onDragLeave={() => setIsDragging(false)}
-                            onDrop={handleDrop}
-                            onClick={() => fileInputRef.current?.click()}
-                            className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all ${
-                                isDragging
-                                    ? "border-purple-500 bg-purple-50 scale-[1.01]"
-                                    : "border-gray-200 hover:border-purple-400 bg-slate-50/50 hover:bg-purple-50/20"
-                            }`}
-                        >
-                            <div className="flex flex-col items-center gap-2">
-                                {isUploadingVideo ? (
-                                    <div className="flex flex-col items-center gap-2">
-                                        <Loader2 className="w-6 h-6 text-purple-600 animate-spin" />
-                                        <p className="text-xs font-semibold text-purple-700">Đang nạp video vào bộ nhớ...</p>
+                    {/* ✍️ BƯỚC 1: SOẠN KỊCH BẢN & THU GIỌNG ĐỌC AI (GEMINI 3.8 FLASH) */}
+                    {activeStudioStep === "step_script" && (
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-5">
+                            {/* Header */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="p-2 rounded-xl bg-teal-50 text-teal-700 border border-teal-200">
+                                        <FileText className="w-5 h-5 text-teal-600" />
                                     </div>
-                                ) : (
-                                    <>
-                                        <span className="p-2.5 rounded-full bg-white shadow-sm border border-gray-100">
-                                            <Upload className="w-5 h-5 text-purple-600" />
+                                    <div>
+                                        <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                            <span>Bước 1: Kịch Bản Bán Buôn & Giọng Đọc AI Đồng Bộ</span>
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-200">
+                                                Gemini 3.8 Flash
+                                            </span>
+                                        </h2>
+                                        <p className="text-xs text-slate-500">
+                                            Tự động viết lời thoại hấp dẫn chuẩn TikTok & thu âm giọng đọc tự nhiên trong 3 giây.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    {selectedVoiceAudioUrl ? (
+                                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+                                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                            <span>Đã có giọng đọc ({voiceDuration.toFixed(1)}s)</span>
                                         </span>
-                                        <p className="text-xs font-bold text-gray-800">
-                                            Kéo thả hoặc nhấp để nạp video quay thô
-                                        </p>
-                                        <p className="text-[11px] text-gray-400">
-                                            Hỗ trợ MP4, MOV, WebM • Chọn nhiều góc quay cùng lúc
-                                        </p>
+                                    ) : (
+                                        <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse">
+                                            <Radio className="w-3.5 h-3.5 text-amber-600" />
+                                            <span>Chưa thu âm giọng đọc</span>
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* 1-Click AI Script Generator Box */}
+                            <div className="p-4 rounded-xl bg-gradient-to-br from-teal-50/70 via-slate-50 to-white border border-teal-200/80 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-bold text-teal-950 flex items-center gap-1.5">
+                                        <Sparkles className="w-4 h-4 text-teal-600" />
+                                        <span>AI Viết Kịch Bản & Thu Giọng 1-Click:</span>
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCloneModalOpen(!isCloneModalOpen)}
+                                        className="text-[11px] text-teal-700 hover:text-teal-800 font-semibold flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <Sliders className="w-3 h-3" />
+                                        <span>{isCloneModalOpen ? "Thu gọn 3 phong cách" : "Xem 3 phong cách mẫu"}</span>
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                                    <input
+                                        type="text"
+                                        value={cloneTopic}
+                                        onChange={(e) => setCloneTopic(e.target.value)}
+                                        placeholder="Nhập chủ đề video (VD: Hàng khoai môn CVT container về đêm date mới tinh...)"
+                                        className="sm:col-span-8 px-3.5 py-2.5 text-xs rounded-xl border border-teal-200 bg-white focus:outline-none focus:border-teal-500 font-medium text-slate-800 shadow-inner"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleCloneStyle}
+                                        disabled={isAnalyzingClone || isSynthesizingVoice}
+                                        className="sm:col-span-4 py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                                    >
+                                        {isAnalyzingClone || isSynthesizingVoice ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                <span>{analyzingStepText || "Đang xử lý..."}</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Wand2 className="w-4 h-4 text-amber-300" />
+                                                <span>✨ AI Viết Kịch Bản & Thu Giọng</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* Quick topic pills */}
+                                <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs">
+                                    <span className="text-[11px] text-slate-400 font-medium">Gợi ý nhanh:</span>
+                                    {[
+                                        "Hàng khoai môn CVT container về buổi đêm date mới tinh",
+                                        "Bột phô mai BOYO 1kg cho quán khoai tây lắc",
+                                        "Da cá trứng muối & Bánh tráng Abi Snack giá sỉ",
+                                        "Chuyện kiểm hàng kho sỉ LYHU xuyên đêm kịp giao sáng mai"
+                                    ].map((topic, i) => (
                                         <button
+                                            key={i}
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                                            className="mt-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-sm"
+                                            onClick={() => setCloneTopic(topic)}
+                                            className="px-2.5 py-1 rounded-lg bg-white hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 text-[11px] text-slate-600 border border-slate-200 transition-colors cursor-pointer"
                                         >
-                                            + Chọn file video từ máy
+                                            {topic}
                                         </button>
-                                    </>
+                                    ))}
+                                </div>
+
+                                {/* 3 Template styles */}
+                                {isCloneModalOpen && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-teal-100">
+                                        {LYHU_TEMPLATES.map((tpl) => {
+                                            const isActive = activeTemplateId === tpl.id;
+                                            return (
+                                                <button
+                                                    key={tpl.id}
+                                                    type="button"
+                                                    onClick={() => handleApplyTemplate(tpl)}
+                                                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                                                        isActive
+                                                            ? "bg-teal-50 border-teal-500 ring-2 ring-teal-500/20 shadow-sm"
+                                                            : "bg-white hover:bg-slate-50 border-slate-200"
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className="text-[11px] font-bold text-teal-800">
+                                                            {tpl.badge}
+                                                        </span>
+                                                        {isActive && (
+                                                            <span className="text-[9px] bg-teal-600 text-white px-1.5 py-0.2 rounded font-bold">
+                                                                ĐANG DÙNG
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-xs font-bold text-slate-800 line-clamp-1">
+                                                        {tpl.hookTitle}
+                                                    </div>
+                                                    <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed mt-0.5">
+                                                        {tpl.title}
+                                                    </p>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 )}
                             </div>
-                        </div>
 
-                        {/* Hidden Native File Input */}
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="video/*,.mp4,.mov,.webm,.m4v,.mkv"
-                            multiple
-                            onChange={handleVideoUpload}
-                            className="hidden"
-                        />
-
-                        {/* Clip list */}
-                        {clips.length > 0 && (
-                            <div className="space-y-2">
-                                <span className="text-xs font-semibold text-gray-600">Thứ tự các góc quay ({clips.length} clip):</span>
-                                <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                                    {clips.map((c, idx) => {
-                                        if (!c?.id) return null;
-                                        return (
-                                            <div
-                                                key={c.id}
-                                                className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-gray-100 text-xs"
-                                            >
-                                            <div className="flex items-center gap-2 truncate">
-                                                <span className="w-5 h-5 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-[10px] shrink-0">
-                                                    {idx + 1}
-                                                </span>
-                                                <span className="font-medium text-gray-800 truncate">{c.name}</span>
-                                                <span className="text-[10px] text-gray-400 font-mono shrink-0">({c.duration.toFixed(1)}s)</span>
-                                            </div>
-
-                                            <div className="flex items-center gap-1 shrink-0">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => moveClip(idx, "up")}
-                                                    disabled={idx === 0}
-                                                    className="p-1 hover:bg-white rounded text-gray-400 hover:text-gray-700 disabled:opacity-30"
-                                                >
-                                                    <MoveUp className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => moveClip(idx, "down")}
-                                                    disabled={idx === clips.length - 1}
-                                                    className="p-1 hover:bg-white rounded text-gray-400 hover:text-gray-700 disabled:opacity-30"
-                                                >
-                                                    <MoveDown className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeClip(c.id)}
-                                                    className="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Pacing & Transitions */}
-                        <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                            {/* Script Text Editor */}
                             <div className="space-y-1.5">
                                 <div className="flex items-center justify-between">
-                                    <label className="font-semibold text-slate-700">Thời gian mỗi góc quay (Nhịp cắt):</label>
-                                    <span className="font-mono text-teal-600 font-bold">{clipSwitchInterval}s / cảnh</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min={1.5}
-                                    max={6}
-                                    step={0.5}
-                                    value={clipSwitchInterval}
-                                    onChange={(e) => setClipSwitchInterval(parseFloat(e.target.value))}
-                                    className="w-full accent-teal-600"
-                                />
-                                <div className="flex justify-between text-[10px] text-slate-400">
-                                    <span>1.5s (Dồn dập)</span>
-                                    <span>2.5s (Chuẩn TikTok)</span>
-                                    <span>5s (Chậm rãi)</span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="font-semibold text-slate-700">Hiệu ứng chuyển cảnh:</label>
-                                <select
-                                    value={transitionEffect}
-                                    onChange={(e) => setTransitionEffect(e.target.value as any)}
-                                    className="w-full p-2 border border-slate-200 rounded-lg bg-slate-50 outline-none text-xs font-semibold"
-                                >
-                                    <option value="auto">✨ Tự động luân phiên (Khuyên dùng)</option>
-                                    <option value="crossfade">🌫️ Mờ chồng (Crossfade - Mượt mà)</option>
-                                    <option value="zoom_in">🔍 Zoom đẩy khung hình (Zoom Push - Hút mắt)</option>
-                                    <option value="slide_left">➡️ Trượt ngang (Slide Left - Năng động)</option>
-                                    <option value="white_flash">💥 Chớp sáng (White Flash - Nổi bật)</option>
-                                    <option value="hard_cut">⚡ Cắt nhanh (Hard Cut - Chuẩn TikTok)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Video Color Grading Filters (LUT Presets) */}
-                        <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
-                            <div className="flex items-center justify-between">
-                                <label className="font-semibold text-slate-700 flex items-center gap-1.5">
-                                    <Palette className="w-3.5 h-3.5 text-teal-600" />
-                                    <span>Bộ lọc màu Video (LUT Color Grading):</span>
-                                </label>
-                                <span className="text-[10px] text-teal-600 font-bold bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
-                                    {VIDEO_FILTERS.find(f => f.id === videoFilterPreset)?.name}
-                                </span>
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
-                                {VIDEO_FILTERS.map((f) => (
-                                    <button
-                                        key={f.id}
-                                        type="button"
-                                        onClick={() => setVideoFilterPreset(f.id as any)}
-                                        className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold text-center transition-all cursor-pointer ${
-                                            videoFilterPreset === f.id
-                                                ? "bg-teal-600 text-white border-teal-600 shadow-sm"
-                                                : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
-                                        }`}
-                                    >
-                                        {f.name}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                    )}
-
-                    {/* TAB 2: KỊCH BẢN, GIỌNG ĐỌC AI & TYPOGRAPHY */}
-                    {activeStudioTab === "script" && (
-                    <div className="space-y-4">
-                        {/* BƯỚC 2: KỊCH BẢN & GIỌNG ĐỌC AI ĐỒNG BỘ (100% KHỚP LỜI NÓI & CHỮ) */}
-                        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-gray-100">
-                            <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                <Radio className="w-4 h-4 text-teal-600" />
-                                2. Kịch bản & Giọng đọc AI đồng bộ (100% Khớp lời nói & Chữ)
-                            </h2>
-                            <div className="flex items-center gap-2">
-                                {selectedVoiceAudioUrl ? (
-                                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                        <span>Đã khớp tiếng & chữ ({voiceDuration.toFixed(1)}s)</span>
-                                    </span>
-                                ) : (
-                                    <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                                        <Radio className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
-                                        <span>Chưa có giọng đọc</span>
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Quick AI Script Generator Bar */}
-                        <div className="p-3 rounded-xl bg-teal-50/60 border border-teal-200/80 space-y-2">
-                            <label className="text-xs font-bold text-teal-900 flex items-center gap-1.5">
-                                <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-                                <span>Tạo kịch bản viral TikTok tự động theo sản phẩm LYHU:</span>
-                            </label>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="text"
-                                    value={cloneTopic}
-                                    onChange={(e) => setCloneTopic(e.target.value)}
-                                    placeholder="Ví dụ: Hàng khoai môn CVT container về buổi đêm date mới tinh..."
-                                    className="flex-1 px-3 py-2 text-xs rounded-lg border border-teal-200 bg-white focus:outline-none focus:border-teal-500 font-medium text-slate-800"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleCloneStyle}
-                                    disabled={isAnalyzingClone}
-                                    className="px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50 shrink-0"
-                                >
-                                    {isAnalyzingClone ? (
-                                        <>
-                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                            <span>Đang tạo...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Wand2 className="w-3.5 h-3.5" />
-                                            <span>Tạo Kịch Bản</span>
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Tiêu đề Hook đập mắt 3.5s đầu */}
-                        <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-white border border-amber-200/90 shadow-sm space-y-3">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                    <Sparkles className="w-4 h-4 text-amber-600" />
-                                    <span>🎯 Tiêu đề giật tít Hook ({hookDuration}s đầu để giữ chân TikTok):</span>
-                                </label>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={handlePreviewHookOnly}
-                                        className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[11px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer active:scale-95"
-                                        title="Bấm để phát lại 3.5 giây đầu và xem hiệu ứng chữ Hook"
-                                    >
-                                        <Play className="w-3 h-3 fill-current" />
-                                        <span>Xem thử Hook</span>
-                                    </button>
-                                    <label className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={showHookTitle}
-                                            onChange={(e) => setShowHookTitle(e.target.checked)}
-                                            className="accent-amber-600 rounded"
-                                        />
-                                        <span>Hiển thị</span>
+                                    <label className="text-xs font-bold text-slate-800">
+                                        🎙️ Nội dung kịch bản lời thoại (Hiển thị phụ đề & Đọc thành tiếng):
                                     </label>
+                                    <span className="text-[11px] text-slate-500 font-mono font-medium">
+                                        {selectedVoiceText.split(/\s+/).filter(Boolean).length} từ • ~{Math.round(selectedVoiceText.split(/\s+/).filter(Boolean).length / 3.2)}s đọc
+                                    </span>
                                 </div>
+                                <textarea
+                                    rows={4}
+                                    value={selectedVoiceText}
+                                    onChange={(e) => setSelectedVoiceText(e.target.value)}
+                                    placeholder="Nhập hoặc để AI tạo nội dung lời thoại kịch bản..."
+                                    className="w-full p-3.5 text-xs border border-slate-200 rounded-xl focus:border-teal-500 focus:ring-1 focus:ring-teal-200 outline-none leading-relaxed text-slate-800 font-medium bg-slate-50/50 focus:bg-white transition-colors"
+                                />
+                                <p className="text-[11px] text-slate-400">
+                                    💡 Bạn có thể chỉnh sửa lời thoại trực tiếp ở trên. Bấm <strong>"🎙️ Thu Lại Giọng AI"</strong> để cập nhật âm thanh mới.
+                                </p>
                             </div>
 
-                            {showHookTitle && (
-                                <>
+                            {/* Voiceover Synthesis & Engine Controls */}
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3.5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                    {/* Công nghệ AI */}
                                     <div className="space-y-1">
-                                        <textarea
-                                            rows={2}
-                                            value={customHookTitle}
-                                            onChange={(e) => handleHookTitleChange(e.target.value)}
-                                            placeholder="Nhập tiêu đề giật tít Hook 3s đầu, ví dụ: 🔥 CONTAINER KHOAI MÔN CVT VỀ ĐÊM DATE MỚI TINH!"
-                                            className="w-full p-2.5 text-xs font-bold text-amber-950 bg-white border border-amber-300 rounded-xl focus:border-amber-600 focus:ring-2 focus:ring-amber-100 outline-none leading-relaxed transition-all shadow-inner"
-                                        />
-                                        <div className="flex items-center justify-between text-[10px] text-amber-700 font-medium">
-                                            <span>💡 Nhập sửa trực tiếp ở đây — màn hình bên phải sẽ cập nhật ngay lập tức!</span>
-                                            <span className="font-mono">{customHookTitle.length} ký tự • Tự động xuống dòng vừa khung 9:16</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Gợi ý giật tít nhanh */}
-                                    <div className="space-y-1.5 pt-1">
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                            Gợi ý giật tít bán lẻ / bán buôn (Nhấp chọn ăn liền):
-                                        </span>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {[
-                                                "🔥 KHOAI MÔN SẤY CVT NGON GIÒN TẠI KHO LYHU!",
-                                                "🌙 11H ĐÊM KHO SỈ LYHU VẪN ĐÓNG HÀNG!",
-                                                "🧀 BỘT PHÔ MAI BOYO GIÁ SỈ TẬN XƯỞNG!",
-                                                "🦀 THANH KHOAI MÔN TRỨNG CUA CÓ GÌ MÀ HOT?",
-                                                "⚡ CẬP BẾN CONTAINER TOÀN DATE MỚI TINH!"
-                                            ].map((preset) => (
-                                                <button
-                                                    key={preset}
-                                                    type="button"
-                                                    onClick={() => handleHookTitleChange(preset)}
-                                                    className="px-2 py-1 bg-white hover:bg-amber-100/70 border border-amber-200/90 rounded-lg text-[10px] font-semibold text-slate-700 hover:text-amber-950 transition-colors cursor-pointer text-left line-clamp-1"
-                                                >
-                                                    {preset}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Tùy chỉnh màu sắc banner & thời lượng */}
-                                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-amber-200/60 text-xs">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[11px] font-semibold text-slate-600">Màu nền Banner:</span>
-                                            <div className="flex items-center gap-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setHookBannerTheme("red_orange")}
-                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                                                        hookBannerTheme === "red_orange"
-                                                            ? "bg-red-600 text-white shadow-sm"
-                                                            : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-                                                    }`}
-                                                >
-                                                    Đỏ Cam TikTok
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setHookBannerTheme("black_gold")}
-                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                                                        hookBannerTheme === "black_gold"
-                                                            ? "bg-zinc-900 text-yellow-400 shadow-sm"
-                                                            : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-                                                    }`}
-                                                >
-                                                    Đen Viền Vàng
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setHookBannerTheme("teal_lyhu")}
-                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                                                        hookBannerTheme === "teal_lyhu"
-                                                            ? "bg-teal-600 text-white shadow-sm"
-                                                            : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-                                                    }`}
-                                                >
-                                                    Xanh LYHU
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-[11px] font-semibold text-slate-600">Thời lượng hiện:</span>
-                                            <select
-                                                value={hookDuration}
-                                                onChange={(e) => setHookDuration(parseFloat(e.target.value))}
-                                                className="px-2 py-0.5 bg-white border border-amber-200 rounded text-[11px] font-bold text-amber-900 outline-none cursor-pointer"
-                                            >
-                                                <option value={3.0}>3.0 giây</option>
-                                                <option value={3.5}>3.5 giây (Chuẩn)</option>
-                                                <option value={4.0}>4.0 giây</option>
-                                                <option value={5.0}>5.0 giây</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                        {/* Lời thoại kịch bản AI (Hiển thị trực tiếp) */}
-                        <div className="space-y-1.5">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs font-bold text-gray-700">
-                                    🎙️ Lời thoại kịch bản AI (Hiển thị phụ đề & Đọc thành tiếng):
-                                </label>
-                                <span className="text-[11px] text-gray-400 font-mono">
-                                    {selectedVoiceText.split(/\s+/).filter(Boolean).length} từ • ~{Math.round(selectedVoiceText.split(/\s+/).filter(Boolean).length / 3.2)}s đọc
-                                </span>
-                            </div>
-                            <textarea
-                                rows={4}
-                                value={selectedVoiceText}
-                                onChange={(e) => setSelectedVoiceText(e.target.value)}
-                                placeholder="Nhập hoặc để AI tạo nội dung lời thoại kịch bản..."
-                                className="w-full p-3 text-xs border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-1 focus:ring-teal-200 outline-none leading-relaxed text-gray-800 font-medium bg-slate-50/50 focus:bg-white transition-colors"
-                            />
-                            <p className="text-[11px] text-gray-400">
-                                💡 Bạn có thể sửa lời thoại trực tiếp ở trên. Sau khi sửa, bấm <strong>"🎙️ Thu Lại Giọng Đọc AI"</strong> bên dưới để giọng nói khớp ngay lập tức!
-                            </p>
-                        </div>
-
-                        {/* Bảng điều khiển Giọng đọc AI & Đồng bộ (Pure Flat LYHU Style) */}
-                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                            <div className="flex flex-wrap items-center justify-between gap-2.5">
-                                <div className="flex flex-wrap items-center gap-3">
-                                    {/* Bộ máy giọng đọc */}
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-[11px] font-bold text-slate-700">Công nghệ:</span>
+                                        <label className="text-[11px] font-bold text-slate-700">Công nghệ AI TTS:</label>
                                         <select
                                             value={selectedVoiceEngine}
                                             onChange={(e) => setSelectedVoiceEngine(e.target.value as any)}
-                                            className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
+                                            className="w-full px-2.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
                                         >
                                             <option value="gemini">✨ Gemini 3.8 Flash (Omni & Flow Speech AI)</option>
                                             <option value="elevenlabs">🧬 ElevenLabs (Giọng nhân bản AI)</option>
                                         </select>
                                     </div>
 
-                                    {/* Nhân vật giọng đọc */}
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-[11px] font-bold text-slate-700">Giọng:</span>
+                                    {/* Giọng đọc */}
+                                    <div className="space-y-1">
+                                        <label className="text-[11px] font-bold text-slate-700">Giọng đọc tiếng Việt:</label>
                                         <select
                                             value={selectedVoiceStyleId}
                                             onChange={async (e) => {
                                                 const newStyle = e.target.value;
                                                 setSelectedVoiceStyleId(newStyle);
-                                                if (auditionAudioRef.current) {
-                                                    auditionAudioRef.current.pause();
-                                                }
-                                                if (typeof window !== "undefined" && "speechSynthesis" in window) {
-                                                    window.speechSynthesis.cancel();
-                                                }
+                                                if (auditionAudioRef.current) auditionAudioRef.current.pause();
                                                 setIsAuditionPlaying(false);
-                                                // Tự động thu âm giọng đọc mới với Gemini 3.8 Flash và phát nghe thử
                                                 if (selectedVoiceText && selectedVoiceText.trim()) {
                                                     const url = await generateSpeechForText(selectedVoiceText, newStyle, selectedVoiceEngine);
                                                     if (url && auditionAudioRef.current) {
@@ -3898,7 +3590,7 @@ export default function AutoVideoStudioPage() {
                                                     }
                                                 }
                                             }}
-                                            className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
+                                            className="w-full px-2.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
                                         >
                                             <option value="female-genz">🌸 Nữ Gen Z (Kore - Vui tươi, chuẩn TikTok)</option>
                                             <option value="female-sweet">🎀 Nữ Dịu Dàng (Aoede - Ấm áp, tâm sự)</option>
@@ -3907,225 +3599,891 @@ export default function AutoVideoStudioPage() {
                                             <option value="male-pro">👔 Nam Chuyên Nghiệp (Fenrir - Trầm ấm, uy tín)</option>
                                         </select>
                                     </div>
-                                </div>
 
-                                <div className="flex flex-wrap items-center gap-2">
-                                    {/* Microphone Live Recording */}
-                                    {isRecordingMic ? (
-                                        <button
-                                            type="button"
-                                            onClick={handleStopMicRecording}
-                                            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 animate-pulse cursor-pointer"
-                                        >
-                                            <Square className="w-3.5 h-3.5 fill-current" />
-                                            <span>Dừng thu mic ({recordingSeconds}s)</span>
-                                        </button>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={handleStartMicRecording}
-                                            className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded-lg text-xs border border-slate-200 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                                            title="Tự thu giọng thật của bạn qua micro"
-                                        >
-                                            <Mic className="w-3.5 h-3.5 text-rose-500" />
-                                            <span>Thu Mic</span>
-                                        </button>
-                                    )}
-
-                                    {/* Audition Button */}
-                                    <button
-                                        type="button"
-                                        onClick={handleToggleAuditionVoice}
-                                        disabled={isSynthesizingVoice}
-                                        className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 border cursor-pointer ${
-                                            isAuditionPlaying
-                                                ? "bg-amber-100 text-amber-900 border-amber-300"
-                                                : "bg-white text-slate-700 hover:bg-slate-100 border-slate-200"
-                                        }`}
-                                    >
-                                        {isAuditionPlaying ? (
-                                            <>
-                                                <Pause className="w-3.5 h-3.5 text-amber-600" />
-                                                <span>Tạm dừng</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Volume2 className="w-3.5 h-3.5 text-teal-600" />
-                                                <span>Nghe thử</span>
-                                            </>
-                                        )}
-                                    </button>
-
-                                    {/* Re-Synthesize Button */}
-                                    <button
-                                        type="button"
-                                        onClick={() => generateSpeechForText(selectedVoiceText, selectedVoiceStyleId, selectedVoiceEngine)}
-                                        disabled={isSynthesizingVoice}
-                                        className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 shadow-none disabled:opacity-50 cursor-pointer"
-                                    >
-                                        {isSynthesizingVoice ? (
-                                            <>
-                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                <span>Đang thu giọng...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Radio className="w-3.5 h-3.5" />
-                                                <span>Thu Lại Giọng AI</span>
-                                            </>
-                                        )}
-                                    </button>
-
-                                    {/* Upload MP3 Option */}
-                                    <button
-                                        type="button"
-                                        onClick={() => audioInputRef.current?.click()}
-                                        className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-600 rounded-lg text-xs border border-slate-200 font-medium"
-                                        title="Nạp file âm thanh MP3 từ máy tính"
-                                    >
-                                        Tải MP3 từ máy
-                                    </button>
-                                    <input
-                                        ref={audioInputRef}
-                                        type="file"
-                                        accept="audio/*,.mp3,.m4a,.wav"
-                                        onChange={handleVoiceUpload}
-                                        className="hidden"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Storyboard Guide (5 góc quay thực chiến tại kho LYHU) */}
-                        {cloneStoryboard.length > 0 && (
-                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
-                                <div className="flex items-center justify-between">
-                                    <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                        <Camera className="w-3.5 h-3.5 text-teal-600" />
-                                        <span>Gợi ý 5 góc quay bằng điện thoại (Quay mỗi đoạn 2.5s - 3s):</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={handleCopyDirectorShotlist}
-                                        className="text-[11px] font-bold text-teal-700 hover:underline flex items-center gap-1"
-                                    >
-                                        <Copy className="w-3 h-3" />
-                                        <span>Copy gửi Zalo</span>
-                                    </button>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
-                                    {cloneStoryboard.map((shot, idx) => (
-                                        <div key={idx} className="p-2 rounded-lg bg-white border border-slate-200 text-[11px] space-y-1">
-                                            <div className="font-bold text-teal-700 text-[10px]">CẢNH {idx + 1}</div>
-                                            <div className="text-slate-600 line-clamp-3 leading-snug">{shot}</div>
+                                    {/* Tốc độ đọc */}
+                                    <div className="space-y-1">
+                                        <label className="text-[11px] font-bold text-slate-700">Tốc độ nhịp nói ({voiceSpeedMultiplier}x):</label>
+                                        <div className="grid grid-cols-4 gap-1">
+                                            {[
+                                                { speed: 0.85, label: "0.85x" },
+                                                { speed: 1.0, label: "1.0x" },
+                                                { speed: 1.15, label: "1.15x 🔥" },
+                                                { speed: 1.25, label: "1.25x" }
+                                            ].map((item) => (
+                                                <button
+                                                    key={item.speed}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setVoiceSpeedMultiplier(item.speed);
+                                                        if (hiddenAudioRef.current) hiddenAudioRef.current.playbackRate = item.speed;
+                                                    }}
+                                                    className={`py-1.5 px-1 rounded-lg text-[11px] font-bold transition-all text-center ${
+                                                        voiceSpeedMultiplier === item.speed
+                                                            ? "bg-teal-600 text-white shadow-sm"
+                                                            : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                                                    }`}
+                                                >
+                                                    {item.label}
+                                                </button>
+                                            ))}
                                         </div>
-                                    ))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
 
-                    {/* BƯỚC 3: FONT CHỮ THƯƠNG HIỆU & PHỤ ĐỀ ĐỘNG */}
-                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-                        <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                            <Palette className="w-4 h-4 text-purple-600" />
-                            3. Font chữ thương hiệu & Phụ đề động
-                        </h2>
+                                {/* Control Action Buttons */}
+                                <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-slate-200/80">
+                                    <div className="flex items-center gap-2">
+                                        {/* Mic Recording */}
+                                        {isRecordingMic ? (
+                                            <button
+                                                type="button"
+                                                onClick={handleStopMicRecording}
+                                                className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 animate-pulse cursor-pointer shadow-sm"
+                                            >
+                                                <Square className="w-3.5 h-3.5 fill-current" />
+                                                <span>Dừng thu mic ({recordingSeconds}s)</span>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={handleStartMicRecording}
+                                                className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl text-xs border border-slate-200 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                                                title="Tự thu giọng thật qua micro"
+                                            >
+                                                <Mic className="w-3.5 h-3.5 text-rose-500" />
+                                                <span>Thu Mic Trực Tiếp</span>
+                                            </button>
+                                        )}
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                            {/* Font Family Selection */}
-                            <div className="space-y-1.5">
-                                <label className="font-semibold text-gray-700">Kiểu Font chữ hiển thị:</label>
-                                <select
-                                    value={fontFamily}
-                                    onChange={(e) => setFontFamily(e.target.value)}
-                                    className="w-full p-2 border border-gray-200 rounded-lg bg-slate-50 outline-none text-xs font-semibold"
-                                >
-                                    <option value="'Be Vietnam Pro', sans-serif">Be Vietnam Pro (Chuẩn Thương Hiệu LYHU)</option>
-                                    <option value="Montserrat, sans-serif">Montserrat (Hiện đại TikTok & Reels)</option>
-                                    <option value="'Arial Black', Impact, sans-serif">Arial Black / Impact (Dày dặn, bán hàng mạnh)</option>
-                                    <option value="'Roboto', sans-serif">Roboto (Chuẩn đài truyền hình, đĩnh đạc)</option>
-                                    <option value="'Segoe UI', Tahoma, sans-serif">Segoe UI (Thanh lịch, hiện đại)</option>
-                                </select>
-                            </div>
-
-                            {/* Subtitle Style & Color */}
-                            <div className="space-y-1.5">
-                                <label className="font-semibold text-gray-700">Màu sắc & Phong cách phụ đề:</label>
-                                <div className="flex items-center gap-2">
-                                    <select
-                                        value={subtitleStyle}
-                                        onChange={(e) => setSubtitleStyle(e.target.value as any)}
-                                        className="w-full p-2 border border-gray-200 rounded-lg bg-slate-50 outline-none text-xs font-semibold"
-                                    >
-                                        <option value="tiktok_stroke">Viền đen đậm (TikTok Viral)</option>
-                                        <option value="neon_glow">Phát sáng Neon (Gen Z)</option>
-                                        <option value="pill_dark">Hộp nền tối mờ (Chuyên nghiệp)</option>
-                                        <option value="clean_shadow">Đổ bóng mờ tối giản</option>
-                                    </select>
-                                    {/* Color Picker */}
-                                    <div className="flex items-center gap-1 shrink-0">
+                                        {/* Upload MP3 */}
+                                        <button
+                                            type="button"
+                                            onClick={() => audioInputRef.current?.click()}
+                                            className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl text-xs border border-slate-200 font-semibold flex items-center gap-1.5 cursor-pointer"
+                                        >
+                                            <span>Tải MP3 từ máy</span>
+                                        </button>
                                         <input
-                                            type="color"
-                                            value={textColor}
-                                            onChange={(e) => setTextColor(e.target.value)}
-                                            className="w-8 h-8 rounded border border-gray-200 cursor-pointer p-0.5"
-                                            title="Tự chọn màu chữ tùy ý"
+                                            ref={audioInputRef}
+                                            type="file"
+                                            accept="audio/*,.mp3,.m4a,.wav"
+                                            onChange={handleVoiceUpload}
+                                            className="hidden"
                                         />
                                     </div>
+
+                                    <div className="flex items-center gap-2">
+                                        {/* Audition */}
+                                        <button
+                                            type="button"
+                                            onClick={handleToggleAuditionVoice}
+                                            disabled={isSynthesizingVoice}
+                                            className={`px-3 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border cursor-pointer ${
+                                                isAuditionPlaying
+                                                    ? "bg-amber-100 text-amber-900 border-amber-300"
+                                                    : "bg-white text-slate-700 hover:bg-slate-100 border-slate-200"
+                                            }`}
+                                        >
+                                            {isAuditionPlaying ? (
+                                                <>
+                                                    <Pause className="w-3.5 h-3.5 text-amber-600" />
+                                                    <span>Tạm dừng</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Volume2 className="w-3.5 h-3.5 text-teal-600" />
+                                                    <span>Nghe thử giọng</span>
+                                                </>
+                                            )}
+                                        </button>
+
+                                        {/* Re-Synthesize */}
+                                        <button
+                                            type="button"
+                                            onClick={() => generateSpeechForText(selectedVoiceText, selectedVoiceStyleId, selectedVoiceEngine)}
+                                            disabled={isSynthesizingVoice}
+                                            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer"
+                                        >
+                                            {isSynthesizingVoice ? (
+                                                <>
+                                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                    <span>Đang thu giọng...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Radio className="w-3.5 h-3.5" />
+                                                    <span>🎙️ Thu Lại Giọng AI</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Kinetic Typography Dropdown */}
-                            <div className="space-y-1.5 sm:col-span-2">
-                                <label className="font-semibold text-gray-700 flex items-center justify-between">
-                                    <span className="flex items-center gap-1">
-                                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                                        <span>Hiệu ứng chữ sáng tạo (Kinetic Typography):</span>
-                                    </span>
-                                    <span className="text-[10px] text-purple-600 font-bold">Chuẩn Viral TikTok</span>
-                                </label>
-                                <select
-                                    value={textAnimationEffect}
-                                    onChange={(e) => setTextAnimationEffect(e.target.value as any)}
-                                    className="w-full p-2.5 border border-purple-200 rounded-lg bg-purple-50/40 outline-none text-xs font-bold text-purple-900 shadow-sm"
-                                >
-                                    <option value="tiktok_pop">🔥 Nảy chữ từng từ CapCut (TikTok Pop Bounce - Khuyên dùng)</option>
-                                    <option value="karaoke_glow">🌟 Karaoke Neon Glow (Tô sáng & Chấm nhịp theo giọng đọc)</option>
-                                    <option value="bicolor_punch">🎨 CapCut 2 Màu Tương Phản (Vàng Chanh + Trắng Sành Điệu)</option>
-                                    <option value="fire_shake">⚡ Dynamic Slam & Shake (Đập dứt khoát & Rung năng lượng)</option>
-                                    <option value="box_pill">🏷️ Gen Z Dark Badge (Hộp bo góc CapCut Pro viền vàng)</option>
-                                    <option value="clean_fade">✨ Chữ nét căng viền đen dày (Classic Bold Stroke)</option>
-                                </select>
-                            </div>
+                            {/* Storyboard shotlist guide */}
+                            {cloneStoryboard.length > 0 && (
+                                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                            <Camera className="w-3.5 h-3.5 text-teal-600" />
+                                            <span>Gợi ý 5 góc quay điện ảnh (2.5s - 3s/cảnh):</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleCopyDirectorShotlist}
+                                            className="text-[11px] font-bold text-teal-700 hover:underline flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <Copy className="w-3 h-3" />
+                                            <span>Copy gửi Zalo</span>
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+                                        {cloneStoryboard.map((shot, idx) => (
+                                            <div key={idx} className="p-2 rounded-lg bg-white border border-slate-200 text-[11px] space-y-0.5">
+                                                <div className="font-bold text-teal-700 text-[10px]">CẢNH {idx + 1}</div>
+                                                <div className="text-slate-600 line-clamp-3 leading-snug">{shot}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
-                            {/* Power Words Highlight Tags */}
-                            <div className="space-y-2 sm:col-span-2 p-3 rounded-xl bg-slate-50 border border-gray-200">
-                                <div className="flex items-center justify-between">
-                                    <label className="font-semibold text-gray-800 flex items-center gap-1.5">
-                                        <Flame className="w-3.5 h-3.5 text-amber-500" />
-                                        <span>Từ khóa đắt giá (AI tự động gắn Badge & làm nổi bật chữ):</span>
-                                    </label>
+                            {/* Navigation to Next Step */}
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                                <span className="text-xs text-slate-400">
+                                    Bước 1 / 4 • Tiếp theo: Chọn góc quay & Footage B-roll
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveStudioStep("step_clips")}
+                                    className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-teal-600/20 cursor-pointer transition-all active:scale-95"
+                                >
+                                    <span>Tiếp tục: Bước 2 - Chọn Cảnh & B-Roll</span>
+                                    <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 🎬 BƯỚC 2: CHỌN CẢNH QUAY & KHO B-ROLL ĐIỆN ẢNH THỰC TẾ */}
+                    {activeStudioStep === "step_clips" && (
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-5">
+                            {/* Header */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="p-2 rounded-xl bg-purple-50 text-purple-700 border border-purple-200">
+                                        <Film className="w-5 h-5 text-purple-600" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                            <span>Bước 2: Chọn Cảnh Quay & Kho B-Roll Điện Ảnh</span>
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-800 border border-purple-200">
+                                                {clips.length} Cảnh Trong Timeline
+                                            </span>
+                                        </h2>
+                                        <p className="text-xs text-slate-500">
+                                            Bấm vào bất kỳ cảnh nào để xem thử trực tiếp trên màn hình xem trước.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
                                     <button
                                         type="button"
-                                        onClick={handleScanPowerWords}
-                                        className="text-[11px] text-purple-700 hover:text-purple-900 font-bold flex items-center gap-1 bg-purple-100 hover:bg-purple-200 px-2 py-0.5 rounded-lg transition-colors"
+                                        onClick={handleLoadDemoClips}
+                                        className="text-xs text-purple-700 hover:text-purple-800 font-bold px-3 py-1.5 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors cursor-pointer"
                                     >
-                                        <Sparkles className="w-3 h-3" />
-                                        <span>AI Quét Từ Khóa</span>
+                                        + Nạp 2 clip mẫu Tổng kho LYHU
                                     </button>
                                 </div>
-                                <div className="flex flex-wrap items-center gap-1.5">
-                                    {keyPowerWords.map((pw, i) => (
-                                        <span
-                                            key={i}
-                                            className="px-2 py-0.5 rounded-md bg-amber-400 text-black text-[10px] font-black flex items-center gap-1 shadow-sm"
+                            </div>
+
+                            {/* Aspect Ratio & Pacing Controls */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+                                {/* Aspect Ratio */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-slate-700">Tỉ lệ khung hình:</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setAspectRatio("9:16")}
+                                            className={`p-2 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                                                aspectRatio === "9:16"
+                                                    ? "border-teal-600 bg-teal-50 text-teal-900 shadow-sm ring-1 ring-teal-500 font-bold"
+                                                    : "border-slate-200 hover:border-slate-300 text-slate-600 bg-white"
+                                            }`}
                                         >
-                                            <span>🔥 {pw}</span>
-                                        </span>
+                                            <Smartphone className="w-4 h-4" />
+                                            <span className="text-[11px]">9:16 (TikTok)</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setAspectRatio("16:9")}
+                                            className={`p-2 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                                                aspectRatio === "16:9"
+                                                    ? "border-teal-600 bg-teal-50 text-teal-900 shadow-sm ring-1 ring-teal-500 font-bold"
+                                                    : "border-slate-200 hover:border-slate-300 text-slate-600 bg-white"
+                                            }`}
+                                        >
+                                            <Monitor className="w-4 h-4" />
+                                            <span className="text-[11px]">16:9 (Ngang)</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setAspectRatio("1:1")}
+                                            className={`p-2 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                                                aspectRatio === "1:1"
+                                                    ? "border-teal-600 bg-teal-50 text-teal-900 shadow-sm ring-1 ring-teal-500 font-bold"
+                                                    : "border-slate-200 hover:border-slate-300 text-slate-600 bg-white"
+                                            }`}
+                                        >
+                                            <Square className="w-4 h-4" />
+                                            <span className="text-[11px]">1:1 (Vuông)</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Nhịp cắt Pacing */}
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-bold text-slate-700">Nhịp đổi góc quay (Pacing):</label>
+                                        <span className="font-mono text-teal-600 font-bold text-xs">{clipSwitchInterval}s / cảnh</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min={1.5}
+                                        max={5.0}
+                                        step={0.5}
+                                        value={clipSwitchInterval}
+                                        onChange={(e) => setClipSwitchInterval(parseFloat(e.target.value))}
+                                        className="w-full accent-teal-600 mt-2"
+                                    />
+                                    <div className="flex justify-between text-[10px] text-slate-400">
+                                        <span>1.5s (Hối hả)</span>
+                                        <span className="text-teal-600 font-bold">2.5s (Chuẩn TikTok)</span>
+                                        <span>5s (Chậm rãi)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 🎞️ DÀN CẢNH TIMELINE CLIPS STRIP (Click to preview on canvas) */}
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                        <Clapperboard className="w-4 h-4 text-purple-600" />
+                                        <span>Dàn Cảnh Video Hiện Tại ({clips.length} góc quay):</span>
+                                    </span>
+                                    <span className="text-[11px] text-slate-400">Bấm "Xem Thử" để phát ngay góc quay đó</span>
+                                </div>
+
+                                {clips.length === 0 ? (
+                                    <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50 space-y-2">
+                                        <Film className="w-8 h-8 text-slate-400 mx-auto" />
+                                        <p className="text-xs font-semibold text-slate-600">Chưa có cảnh nào trong video.</p>
+                                        <p className="text-[11px] text-slate-400">Chọn thêm các cảnh B-Roll có sẵn bên dưới hoặc nạp video của bạn!</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                        {clips.map((c, idx) => {
+                                            if (!c?.id) return null;
+                                            const activeClipIndex = clips.length > 0 ? Math.floor(displayTime / Math.max(1.5, clipSwitchInterval || 2.5)) % clips.length : 0;
+                                            const isCurrentlyPlayingThis = activeClipIndex === idx;
+                                            return (
+                                                <div
+                                                    key={c.id}
+                                                    className={`flex items-center justify-between p-2.5 rounded-xl border transition-all text-xs ${
+                                                        isCurrentlyPlayingThis
+                                                            ? "bg-teal-50/80 border-teal-400 ring-2 ring-teal-300 shadow-sm"
+                                                            : "bg-white border-slate-200 hover:border-slate-300"
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-2.5 truncate">
+                                                        <span className={`w-6 h-6 rounded-lg font-black flex items-center justify-center text-[11px] shrink-0 ${
+                                                            isCurrentlyPlayingThis ? "bg-teal-600 text-white" : "bg-purple-100 text-purple-700"
+                                                        }`}>
+                                                            #{idx + 1}
+                                                        </span>
+                                                        <div className="truncate">
+                                                            <div className="font-bold text-slate-800 truncate flex items-center gap-1.5">
+                                                                <span>{c.name}</span>
+                                                                {idx === 0 && (
+                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-amber-100 text-amber-800 font-bold">Mở đầu</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-400 font-mono">
+                                                                Thời lượng: {c.duration.toFixed(1)}s • Góc quay {idx + 1}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                        {/* Click-to-preview Button */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handlePreviewSpecificClip(idx)}
+                                                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
+                                                                isCurrentlyPlayingThis
+                                                                    ? "bg-teal-600 text-white"
+                                                                    : "bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-700"
+                                                            }`}
+                                                            title="Xem trước cảnh này trên màn hình video"
+                                                        >
+                                                            <Eye className="w-3.5 h-3.5" />
+                                                            <span>{isCurrentlyPlayingThis ? "Đang Hiện" : "Xem Thử"}</span>
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => moveClip(idx, "up")}
+                                                            disabled={idx === 0}
+                                                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 cursor-pointer"
+                                                            title="Đưa lên trước"
+                                                        >
+                                                            <MoveUp className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => moveClip(idx, "down")}
+                                                            disabled={idx === clips.length - 1}
+                                                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 cursor-pointer"
+                                                            title="Đưa xuống sau"
+                                                        >
+                                                            <MoveDown className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeClip(c.id)}
+                                                            className="p-1 hover:bg-red-50 rounded text-slate-400 hover:text-red-600 cursor-pointer"
+                                                            title="Xóa cảnh này"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 🎥 KHO B-ROLL ĐIỆN ẢNH LYHU (6 Cảnh có sẵn) */}
+                            <div className="border border-purple-200/80 rounded-2xl p-4 space-y-3.5 bg-gradient-to-br from-purple-50/40 via-white to-slate-50">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-purple-100">
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <Film className="w-4 h-4 text-purple-600" />
+                                            <h3 className="font-bold text-xs text-slate-900">
+                                                Kho B-Roll Điện Ảnh Sẵn Có ({AI_BROLL_LIBRARY.length} Cảnh Kho Thực Tế)
+                                            </h3>
+                                        </div>
+                                        <p className="text-[11px] text-slate-500 mt-0.5">
+                                            Nhấn <strong>"Xem Ngay"</strong> để hiện trên màn hình, hoặc <strong>"Làm Mở Đầu (#1)"</strong> để đặt làm 3 giây đầu tiên.
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerateAIBRoll}
+                                        disabled={isGeneratingBRoll}
+                                        className="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-60 cursor-pointer self-start sm:self-auto shadow-sm"
+                                    >
+                                        {isGeneratingBRoll ? (
+                                            <>
+                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                <span>AI Đang Nạp Cảnh...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                                                <span>+ Thêm Trọn Bộ B-Roll</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                    {AI_BROLL_LIBRARY.map((item) => {
+                                        const isAlreadyAdded = clips.some(c => c.url === item.url);
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                className={`p-3 rounded-xl border transition-all flex flex-col justify-between gap-2.5 bg-white ${
+                                                    isAlreadyAdded ? "border-purple-300 ring-1 ring-purple-200 shadow-sm" : "border-slate-200 hover:border-purple-200"
+                                                }`}
+                                            >
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
+                                                            {item.tag}
+                                                        </span>
+                                                        <span className="text-[10px] font-mono text-slate-400">
+                                                            {item.duration}s • HD
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs font-semibold text-slate-800 line-clamp-2 leading-snug">
+                                                        {item.name}
+                                                    </p>
+                                                </div>
+
+                                                <div className="space-y-1.5 pt-1 border-t border-slate-100">
+                                                    <div className="grid grid-cols-2 gap-1.5">
+                                                        {/* Xem ngay button */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleAddBRollClipAndPreview(item)}
+                                                            className="py-1 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                                                            title="Xem thử cảnh này trên màn hình"
+                                                        >
+                                                            <Eye className="w-3 h-3 text-purple-600" />
+                                                            <span>Xem Ngay</span>
+                                                        </button>
+
+                                                        {/* Đặt làm mở đầu */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleSetOpeningClip(item)}
+                                                            className="py-1 px-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                                                            title="Đặt cảnh này làm 3 giây mở đầu của video"
+                                                        >
+                                                            <span>⭐ Mở Đầu (#1)</span>
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Thêm vào dàn cảnh button */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleAddBRollClipAndPreview(item)}
+                                                        className={`w-full py-1.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                                                            isAlreadyAdded
+                                                                ? "bg-purple-100 text-purple-900 border border-purple-200"
+                                                                : "bg-purple-600 hover:bg-purple-700 text-white shadow-sm"
+                                                        }`}
+                                                    >
+                                                        {isAlreadyAdded ? (
+                                                            <>
+                                                                <Check className="w-3.5 h-3.5 text-purple-700" />
+                                                                <span>Đã Trong Video (Bấm Để Xem)</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Plus className="w-3.5 h-3.5" />
+                                                                <span>+ Thêm & Xem Cảnh Này</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Upload Dropzone */}
+                            <div
+                                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                onDragLeave={() => setIsDragging(false)}
+                                onDrop={handleDrop}
+                                onClick={() => fileInputRef.current?.click()}
+                                className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+                                    isDragging
+                                        ? "border-teal-500 bg-teal-50 scale-[1.01]"
+                                        : "border-slate-200 hover:border-teal-400 bg-slate-50/50 hover:bg-teal-50/20"
+                                }`}
+                            >
+                                <div className="flex flex-col items-center gap-1.5">
+                                    {isUploadingVideo ? (
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Loader2 className="w-6 h-6 text-teal-600 animate-spin" />
+                                            <p className="text-xs font-semibold text-teal-700">Đang nạp video vào bộ nhớ...</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <span className="p-2 rounded-full bg-white shadow-sm border border-slate-200">
+                                                <Upload className="w-4 h-4 text-teal-600" />
+                                            </span>
+                                            <p className="text-xs font-bold text-slate-800">
+                                                Kéo thả hoặc nhấp để tải thêm video quay thô từ điện thoại / máy tính
+                                            </p>
+                                            <p className="text-[11px] text-slate-400">
+                                                Hỗ trợ MP4, MOV, WebM • Tự động co giãn theo tỉ lệ {aspectRatio}
+                                            </p>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Hidden file input */}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="video/*,.mp4,.mov,.webm,.m4v,.mkv"
+                                multiple
+                                onChange={handleVideoUpload}
+                                className="hidden"
+                            />
+
+                            {/* Video Filter LUTs */}
+                            <div className="pt-2 border-t border-slate-100 space-y-2 text-xs">
+                                <div className="flex items-center justify-between">
+                                    <label className="font-semibold text-slate-700 flex items-center gap-1.5">
+                                        <Palette className="w-3.5 h-3.5 text-teal-600" />
+                                        <span>Bộ lọc màu Video (LUT Color Grading):</span>
+                                    </label>
+                                    <span className="text-[10px] text-teal-700 font-bold bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                                        {VIDEO_FILTERS.find(f => f.id === videoFilterPreset)?.name}
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                                    {VIDEO_FILTERS.map((f) => (
+                                        <button
+                                            key={f.id}
+                                            type="button"
+                                            onClick={() => setVideoFilterPreset(f.id as any)}
+                                            className={`px-2 py-1.5 rounded-lg border text-xs font-semibold text-center transition-all cursor-pointer ${
+                                                videoFilterPreset === f.id
+                                                    ? "bg-teal-600 text-white border-teal-600 shadow-sm"
+                                                    : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
+                                            }`}
+                                        >
+                                            {f.name}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
+
+                            {/* Navigation Buttons */}
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveStudioStep("step_script")}
+                                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer transition-colors"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                    <span>Quay lại Bước 1: Kịch bản</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveStudioStep("step_visuals")}
+                                    className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-teal-600/20 cursor-pointer transition-all active:scale-95"
+                                >
+                                    <span>Tiếp tục: Bước 3 - Tiêu Đề Hook & Huy Hiệu</span>
+                                    <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 🎨 BƯỚC 3: TIÊU ĐỀ HOOK, HUY HIỆU BÁN HÀNG & PHỤ ĐỀ ĐỘNG */}
+                    {activeStudioStep === "step_visuals" && (
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-5">
+                            {/* Header */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="p-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-200">
+                                        <Tag className="w-5 h-5 text-amber-600" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                            <span>Bước 3: Tiêu Đề Hook & Huy Hiệu Bán Hàng</span>
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+                                                Chuẩn Viral TikTok
+                                            </span>
+                                        </h2>
+                                        <p className="text-xs text-slate-500">
+                                            Tiêu đề đập mắt 3.5s đầu, Huy hiệu chốt đơn nhấp nháy đỏ, và Phụ đề động khớp 100% tiếng nói.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={handlePreviewHookOnly}
+                                    className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer self-start sm:self-auto active:scale-95"
+                                >
+                                    <Play className="w-3.5 h-3.5 fill-current" />
+                                    <span>Xem Thử Hook 3.5s Đầu</span>
+                                </button>
+                            </div>
+
+                            {/* 🎯 SECTION 1: TIÊU ĐỀ HOOK 3.5S ĐẦU (VIRAL HOOK BANNER) */}
+                            <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50/80 via-orange-50/30 to-white border border-amber-200/90 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                        <Sparkles className="w-4 h-4 text-amber-600" />
+                                        <span>Tiêu đề giật tít Hook ({hookDuration}s đầu để giữ chân TikTok):</span>
+                                    </label>
+                                    <label className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={showHookTitle}
+                                            onChange={(e) => setShowHookTitle(e.target.checked)}
+                                            className="accent-amber-600 rounded"
+                                        />
+                                        <span>Bật Tiêu Đề Hook</span>
+                                    </label>
+                                </div>
+
+                                {showHookTitle && (
+                                    <>
+                                        <textarea
+                                            rows={2}
+                                            value={customHookTitle}
+                                            onChange={(e) => handleHookTitleChange(e.target.value)}
+                                            placeholder="Nhập tiêu đề Hook 3s đầu, ví dụ: 🔥 CONTAINER KHOAI MÔN CVT VỀ ĐÊM DATE MỚI TINH!"
+                                            className="w-full p-3 text-xs font-bold text-amber-950 bg-white border border-amber-300 rounded-xl focus:border-amber-600 focus:ring-2 focus:ring-amber-100 outline-none leading-relaxed transition-all shadow-inner"
+                                        />
+
+                                        {/* Presets giật tít */}
+                                        <div className="space-y-1.5">
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                Gợi ý mẫu Hook bán buôn (Nhấp chọn ăn liền):
+                                            </span>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {VIRAL_HOOK_PRESETS.map((v, i) => (
+                                                    <button
+                                                        key={i}
+                                                        type="button"
+                                                        onClick={() => handleHookTitleChange(v.text)}
+                                                        className="px-2.5 py-1 bg-white hover:bg-amber-100 border border-amber-200/90 rounded-lg text-[10px] font-semibold text-slate-700 hover:text-amber-950 transition-colors cursor-pointer text-left line-clamp-1"
+                                                    >
+                                                        {v.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* 4 Phong cách Hook Banner */}
+                                        <div className="pt-2 border-t border-amber-200/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="font-semibold text-slate-700">Phong cách Hook:</span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setHookBannerTheme("tiktok_sticker")}
+                                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                                            hookBannerTheme === "tiktok_sticker"
+                                                                ? "bg-amber-400 text-slate-950 border border-amber-500 shadow-sm ring-1 ring-amber-400"
+                                                                : "bg-white text-slate-700 border border-amber-200 hover:bg-amber-50"
+                                                        }`}
+                                                    >
+                                                        ✨ Nhãn TikTok Viền 8.5px
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setHookBannerTheme("red_orange")}
+                                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                                            hookBannerTheme === "red_orange"
+                                                                ? "bg-red-600 text-white shadow-sm"
+                                                                : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                                                        }`}
+                                                    >
+                                                        Đỏ Cam
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setHookBannerTheme("black_gold")}
+                                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                                            hookBannerTheme === "black_gold"
+                                                                ? "bg-zinc-900 text-yellow-400 shadow-sm"
+                                                                : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                                                        }`}
+                                                    >
+                                                        Đen Vàng B2B
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setHookBannerTheme("teal_lyhu")}
+                                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                                            hookBannerTheme === "teal_lyhu"
+                                                                ? "bg-teal-600 text-white shadow-sm"
+                                                                : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                                                        }`}
+                                                    >
+                                                        Xanh LYHU
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="font-semibold text-slate-700">Thời lượng hiện:</span>
+                                                <select
+                                                    value={hookDuration}
+                                                    onChange={(e) => setHookDuration(parseFloat(e.target.value))}
+                                                    className="px-2.5 py-1 bg-white border border-amber-300 rounded-lg text-[11px] font-bold text-amber-950 outline-none cursor-pointer"
+                                                >
+                                                    <option value={3.0}>3.0s</option>
+                                                    <option value={3.5}>3.5s (Chuẩn TikTok)</option>
+                                                    <option value={4.0}>4.0s</option>
+                                                    <option value={5.0}>5.0s</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* 🏷️ SECTION 2: HUY HIỆU LIVESTREAM & CALLOUT CHỐT ĐƠN */}
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200/80">
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <Tag className="w-4 h-4 text-purple-600" />
+                                            <h3 className="font-bold text-xs text-slate-900">
+                                                Huy Hiệu Chốt Đơn Trực Tiếp (Live Sales Sticker)
+                                            </h3>
+                                        </div>
+                                        <p className="text-[11px] text-slate-500 mt-0.5">
+                                            Sticker động có chấm đỏ beacon <code>● LIVE DEAL</code> nhấp nháy, kích thích chủ quán nhắn lấy sỉ ngay.
+                                        </p>
+                                    </div>
+
+                                    {/* Position Selector */}
+                                    <div className="flex items-center gap-1.5 text-xs">
+                                        <span className="text-slate-500 font-semibold">Vị trí:</span>
+                                        <div className="flex rounded-lg border border-slate-200 bg-white p-0.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => setStickerPosition("top_right")}
+                                                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors cursor-pointer ${
+                                                    stickerPosition === "top_right" ? "bg-purple-600 text-white" : "text-slate-600 hover:text-slate-900"
+                                                }`}
+                                            >
+                                                Trên Phải
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setStickerPosition("top_left")}
+                                                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors cursor-pointer ${
+                                                    stickerPosition === "top_left" ? "bg-purple-600 text-white" : "text-slate-600 hover:text-slate-900"
+                                                }`}
+                                            >
+                                                Trên Trái
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setStickerPosition("bottom_right")}
+                                                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors cursor-pointer ${
+                                                    stickerPosition === "bottom_right" ? "bg-purple-600 text-white" : "text-slate-600 hover:text-slate-900"
+                                                }`}
+                                            >
+                                                Dưới Phải
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                                    {[
+                                        { id: "freeship", label: "🚚 FREESHIP TẬN QUÁN", sub: "Miễn phí ship", color: "border-amber-500 bg-amber-50 text-amber-900" },
+                                        { id: "si_1_thung", label: "📦 SỈ TỪ 1 THÙNG", sub: "Giá gốc xưởng", color: "border-yellow-500 bg-yellow-50 text-yellow-900" },
+                                        { id: "san_kho", label: "🏭 SẴN KHO 1000 THÙNG", sub: "Giao ngay 2h", color: "border-rose-500 bg-rose-50 text-rose-900" },
+                                        { id: "lai_x2", label: "📈 LÃI GẤP ĐÔI", sub: "Bán chạy nhất", color: "border-emerald-500 bg-emerald-50 text-emerald-900" },
+                                        { id: "inbox_cta", label: "💬 NHẬN MẪU THỬ", sub: "Thử miễn phí", color: "border-teal-500 bg-teal-50 text-teal-900" },
+                                        { id: "none", label: "🚫 TẮT HUY HIỆU", sub: "Không gắn", color: "border-slate-300 bg-slate-50 text-slate-600" }
+                                    ].map((stk) => {
+                                        const isSelected = activeSalesSticker === stk.id;
+                                        return (
+                                            <button
+                                                key={stk.id}
+                                                type="button"
+                                                onClick={() => setActiveSalesSticker(stk.id)}
+                                                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                                                    isSelected
+                                                        ? `${stk.color} ring-2 ring-purple-500 font-bold shadow-sm`
+                                                        : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                                                }`}
+                                            >
+                                                <div className="text-[11px] font-bold line-clamp-1">{stk.label}</div>
+                                                <div className="text-[10px] text-slate-500 mt-0.5">{stk.sub}</div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* 📝 SECTION 3: FONT CHỮ THƯƠNG HIỆU & PHỤ ĐỀ ĐỘNG (KINETIC TYPOGRAPHY) */}
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-4">
+                                <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                                    <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                                        <Palette className="w-4 h-4 text-purple-600" />
+                                        <span>Phụ Đề Động & Hiệu Ứng Nhảy Chữ (100% Khớp Lời Nói)</span>
+                                    </h3>
+                                    <label className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={enableSubtitles}
+                                            onChange={(e) => setEnableSubtitles(e.target.checked)}
+                                            className="accent-purple-600 rounded"
+                                        />
+                                        <span>Bật Phụ Đề</span>
+                                    </label>
+                                </div>
+
+                                {enableSubtitles && (
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                                            {/* Font chữ */}
+                                            <div className="space-y-1.5">
+                                                <label className="font-semibold text-slate-700">Kiểu Font chữ hiển thị:</label>
+                                                <select
+                                                    value={fontFamily}
+                                                    onChange={(e) => setFontFamily(e.target.value)}
+                                                    className="w-full p-2 border border-slate-200 rounded-lg bg-white outline-none text-xs font-semibold text-slate-800"
+                                                >
+                                                    <option value="'Be Vietnam Pro', sans-serif">Be Vietnam Pro (Chuẩn Thương Hiệu LYHU)</option>
+                                                    <option value="Montserrat, sans-serif">Montserrat (Hiện đại TikTok & Reels)</option>
+                                                    <option value="'Arial Black', Impact, sans-serif">Arial Black / Impact (Dày dặn, bán hàng mạnh)</option>
+                                                    <option value="'Roboto', sans-serif">Roboto (Chuẩn đài truyền hình, đĩnh đạc)</option>
+                                                    <option value="'Segoe UI', Tahoma, sans-serif">Segoe UI (Thanh lịch, hiện đại)</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Phong cách phụ đề */}
+                                            <div className="space-y-1.5">
+                                                <label className="font-semibold text-slate-700">Màu sắc & Phong cách phụ đề:</label>
+                                                <div className="flex items-center gap-2">
+                                                    <select
+                                                        value={subtitleStyle}
+                                                        onChange={(e) => setSubtitleStyle(e.target.value as any)}
+                                                        className="w-full p-2 border border-slate-200 rounded-lg bg-white outline-none text-xs font-semibold text-slate-800"
+                                                    >
+                                                        <option value="tiktok_stroke">Viền đen đậm (TikTok Viral)</option>
+                                                        <option value="neon_glow">Phát sáng Neon (Gen Z)</option>
+                                                        <option value="pill_dark">Hộp nền tối mờ (Chuyên nghiệp)</option>
+                                                        <option value="clean_shadow">Đổ bóng mờ tối giản</option>
+                                                    </select>
+                                                    <input
+                                                        type="color"
+                                                        value={textColor}
+                                                        onChange={(e) => setTextColor(e.target.value)}
+                                                        className="w-8 h-8 rounded border border-slate-200 cursor-pointer p-0.5 shrink-0"
+                                                        title="Chọn màu chữ tùy ý"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Kinetic Typography Dropdown */}
+                                            <div className="space-y-1.5 sm:col-span-2">
+                                                <label className="font-semibold text-slate-700 flex items-center justify-between">
+                                                    <span className="flex items-center gap-1">
+                                                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                                                        <span>Hiệu ứng chữ sáng tạo (Kinetic Typography):</span>
+                                                    </span>
+                                                    <span className="text-[10px] text-purple-600 font-bold">Chuẩn Viral TikTok</span>
+                                                </label>
+                                                <select
+                                                    value={textAnimationEffect}
+                                                    onChange={(e) => setTextAnimationEffect(e.target.value as any)}
+                                                    className="w-full p-2.5 border border-purple-200 rounded-lg bg-white outline-none text-xs font-bold text-purple-900 shadow-sm"
+                                                >
+                                                    <option value="tiktok_pop">🔥 Nảy chữ từng từ CapCut (TikTok Pop Bounce - Khuyên dùng)</option>
+                                                    <option value="karaoke_glow">🌟 Karaoke Neon Glow (Tô sáng & Chấm nhịp theo giọng đọc)</option>
+                                                    <option value="bicolor_punch">🎨 CapCut 2 Màu Tương Phản (Vàng Chanh + Trắng Sành Điệu)</option>
+                                                    <option value="fire_shake">⚡ Dynamic Slam & Shake (Đập dứt khoát & Rung năng lượng)</option>
+                                                    <option value="box_pill">🏷️ Gen Z Dark Badge (Hộp bo góc CapCut Pro viền vàng)</option>
+                                                    <option value="clean_fade">✨ Chữ nét căng viền đen dày (Classic Bold Stroke)</option>
+                                                </select>
+                                            </div>
 
                             {/* Subtitle Sync Offset Slider & Quick Nudge Buttons */}
                             <div className="space-y-2 sm:col-span-2 p-3 rounded-xl bg-purple-50/40 border border-purple-200">
@@ -4275,519 +4633,341 @@ export default function AutoVideoStudioPage() {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                )}
+            </div>
 
-                        {/* Hook Title (3.5s đầu) */}
-                        <div className="space-y-2 pt-3 border-t border-gray-100 text-xs">
-                            <div className="flex items-center justify-between">
-                                <label className="font-semibold text-gray-700 flex items-center gap-1.5">
-                                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                                    <span>Tiêu đề giật tít Hook (Hiện ở {hookDuration}s đầu để giữ chân):</span>
-                                </label>
+                            {/* Navigation Buttons */}
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveStudioStep("step_clips")}
+                                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer transition-colors"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                    <span>Quay lại Bước 2: Chọn Cảnh</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveStudioStep("step_audio_export")}
+                                    className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-teal-600/20 cursor-pointer transition-all active:scale-95"
+                                >
+                                    <span>Tiếp tục: Bước 4 - Âm Thanh & Xuất Video</span>
+                                    <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 🔊 BƯỚC 4: ÂM THANH XU HƯỚNG, FOLEY SFX & XUẤT BẢN VIDEO 60 FPS */}
+                    {(activeStudioStep === "step_audio_export" || activeStudioTab === "music") && (
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-5">
+                            {/* Header Bước 4 */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="p-2 rounded-xl bg-teal-50 text-teal-700 border border-teal-200">
+                                        <Music className="w-5 h-5 text-teal-600" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                            <span>Bước 4: Âm Thanh Xu Hướng, Foley SFX & Xuất Video</span>
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-200">
+                                                60 FPS Chuẩn Mượt
+                                            </span>
+                                        </h2>
+                                        <p className="text-xs text-slate-500">
+                                            Phối nhạc nền TikTok, âm thanh Foley 0ms độ trễ, kiểm tra điểm thuật toán và xuất bản video.
+                                        </p>
+                                    </div>
+                                </div>
+
                                 <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={handlePreviewHookOnly}
-                                        className="px-2 py-0.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer"
-                                    >
-                                        <Play className="w-2.5 h-2.5 fill-current" />
-                                        <span>Xem thử Hook</span>
-                                    </button>
-                                    <input
-                                        type="checkbox"
-                                        checked={showHookTitle}
-                                        onChange={(e) => setShowHookTitle(e.target.checked)}
-                                        className="accent-amber-600 rounded"
-                                    />
+                                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+                                        <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                                        <span>Điểm Viral: {viralityScore.overall}/100 🌟</span>
+                                    </span>
                                 </div>
                             </div>
-                            {showHookTitle && (
-                                <div className="space-y-2">
-                                    <textarea
-                                        rows={2}
-                                        value={customHookTitle}
-                                        onChange={(e) => handleHookTitleChange(e.target.value)}
-                                        placeholder="VD: 🔥 TỔNG KHO ĂN VẶT & BỘT PHÔ MAI BOYO GIÁ SỈ!"
-                                        className="w-full p-2.5 bg-amber-50/50 border border-amber-200 rounded-lg outline-none font-bold text-amber-950 text-xs focus:border-amber-500"
-                                    />
 
-                                    {/* 1-Click Viral Hook Presets */}
-                                    <div className="space-y-1">
-                                        <div className="text-[11px] font-bold text-amber-800 flex items-center gap-1">
-                                            <Sparkles className="w-3 h-3 text-amber-600" />
-                                            <span>Gợi ý Hook Triệu View (Bấm để áp dụng ngay):</span>
+                            {/* 🎵 SECTION 1: NHẠC NỀN VIDEO (TIKTOK DUAL-MODE) */}
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200">
+                                    <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                                        <Music className="w-4 h-4 text-teal-600" />
+                                        <span>Nhạc Nền Video (2 Lựa chọn Chuyên Nghiệp)</span>
+                                    </h3>
+                                    <span className="text-[11px] font-bold text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-0.5 rounded-full">
+                                        {bgmMode === "ai_smart" ? "🤖 AI Tự Động Phối Nhạc" : "🔥 Radar Trend TikTok"}
+                                    </span>
+                                </div>
+
+                                {/* DUAL MODE SELECTOR BUTTONS */}
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setBgmMode("ai_smart")}
+                                        className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
+                                            bgmMode === "ai_smart"
+                                                ? "border-teal-600 bg-teal-50/70 text-teal-900 shadow-sm ring-1 ring-teal-500"
+                                                : "border-slate-200 hover:border-slate-300 text-slate-600 bg-white"
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-1.5 font-bold text-xs">
+                                            <Wand2 className="w-4 h-4 text-teal-600" />
+                                            <span>Lựa chọn A: AI Tự Phối Nhạc</span>
                                         </div>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {VIRAL_HOOK_PRESETS.map((v, i) => (
-                                                <button
-                                                    key={i}
-                                                    type="button"
-                                                    onClick={() => handleHookTitleChange(v.text)}
-                                                    className={`px-2 py-1 rounded-md text-[10px] font-semibold border transition-all cursor-pointer ${
-                                                        customHookTitle === v.text
-                                                            ? "bg-amber-500 text-white border-amber-600 shadow-sm"
-                                                            : "bg-white hover:bg-amber-50 text-slate-700 border-amber-200"
-                                                    }`}
-                                                >
-                                                    {v.label}
-                                                </button>
-                                            ))}
+                                        <span className="text-[10px] text-slate-500">
+                                            AI quét nội dung kịch bản & tự chọn nhạc hợp mood
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setBgmMode("manual_trend")}
+                                        className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
+                                            bgmMode === "manual_trend"
+                                                ? "border-teal-600 bg-teal-50/70 text-teal-900 shadow-sm ring-1 ring-teal-500"
+                                                : "border-slate-200 hover:border-slate-300 text-slate-600 bg-white"
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-1.5 font-bold text-xs">
+                                            <Flame className="w-4 h-4 text-amber-500" />
+                                            <span>Lựa chọn B: Radar Trend TikTok</span>
                                         </div>
-                                    </div>
-                                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                                        <div className="flex items-center gap-1">
-                                            <span className="text-gray-500">Màu banner:</span>
+                                        <span className="text-[10px] text-slate-500">
+                                            Bảng xếp hạng âm thanh viral & công cụ bóc tách nhạc
+                                        </span>
+                                    </button>
+                                </div>
+
+                                {/* SUB-SECTION 1: AI SMART SOUND MATCHING */}
+                                {bgmMode === "ai_smart" && (
+                                    <div className="p-4 rounded-xl bg-gradient-to-br from-teal-50/80 via-white to-emerald-50/50 border border-teal-200/80 space-y-3">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="space-y-1">
+                                                <h4 className="text-xs font-bold text-teal-900 flex items-center gap-1.5">
+                                                    <Bot className="w-4 h-4 text-teal-600" />
+                                                    <span>Thuật Toán AI Smart Sound Match:</span>
+                                                </h4>
+                                                <p className="text-[11px] text-slate-600 leading-relaxed">
+                                                    AI tự động phân tích tâm trạng kịch bản hiện tại ({selectedVoiceText.length} ký tự), nhận diện các yếu tố: <em>kho hàng đêm, sỉ số lượng lớn, ẩm thực giòn rụm</em> để đề xuất bản nhạc giữ chân người xem tốt nhất.
+                                                </p>
+                                            </div>
                                             <button
                                                 type="button"
-                                                onClick={() => setHookBannerTheme("red_orange")}
-                                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${hookBannerTheme === "red_orange" ? "bg-red-600 text-white" : "bg-gray-100 text-gray-700"}`}
+                                                onClick={handleAiMatchMusic}
+                                                className="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 shrink-0 transition-all cursor-pointer"
                                             >
-                                                Đỏ Cam
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setHookBannerTheme("black_gold")}
-                                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${hookBannerTheme === "black_gold" ? "bg-zinc-900 text-yellow-400" : "bg-gray-100 text-gray-700"}`}
-                                            >
-                                                Đen Vàng
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setHookBannerTheme("teal_lyhu")}
-                                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${hookBannerTheme === "teal_lyhu" ? "bg-teal-600 text-white" : "bg-gray-100 text-gray-700"}`}
-                                            >
-                                                Xanh LYHU
+                                                <Wand2 className="w-3.5 h-3.5" />
+                                                <span>Quét & Phối Nhạc Ngay</span>
                                             </button>
                                         </div>
-                                        <div className="flex items-center gap-1">
-                                            <span className="text-gray-500">Thời lượng:</span>
+
+                                        {/* Current Selected Track Preview */}
+                                        <div className="p-3 bg-white rounded-xl border border-teal-200 flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <span className="p-2 rounded-lg bg-teal-50 text-teal-600">
+                                                    <Music className="w-4 h-4" />
+                                                </span>
+                                                <div className="min-w-0">
+                                                    <div className="text-[10px] text-slate-400 font-semibold uppercase">Đang áp dụng vào video:</div>
+                                                    <div className="text-xs font-bold text-slate-800 truncate">
+                                                        {BGM_PRESETS.find(b => b.id === bgmChoice)?.name || TIKTOK_TRENDING_SOUNDS.find(b => b.id === bgmChoice)?.title || bgmChoice}
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <select
-                                                value={hookDuration}
-                                                onChange={(e) => setHookDuration(parseFloat(e.target.value))}
-                                                className="px-1.5 py-0.5 border border-gray-200 rounded text-[10px] font-bold"
+                                                value={bgmChoice}
+                                                onChange={(e) => setBgmChoice(e.target.value)}
+                                                className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-slate-50 outline-none max-w-[200px]"
                                             >
-                                                <option value={3.0}>3.0s</option>
-                                                <option value={3.5}>3.5s</option>
-                                                <option value={4.0}>4.0s</option>
-                                                <option value={5.0}>5.0s</option>
+                                                {BGM_PRESETS.map(b => (
+                                                    <option key={b.id} value={b.id}>{b.name}</option>
+                                                ))}
+                                                {TIKTOK_TRENDING_SOUNDS.map(b => (
+                                                    <option key={b.id} value={b.id}>{b.title}</option>
+                                                ))}
                                             </select>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    </div>
-                    )}
+                                )}
 
-                    {/* TAB 4: ÂM THANH & NHẠC NỀN VIDEO (TIKTOK DUAL-MODE) */}
-                    {activeStudioTab === "music" && (
-                        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
-                                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                    <Music className="w-4 h-4 text-teal-600" />
-                                    <span>Âm thanh & Nhạc nền Video (2 Lựa chọn Chuyên Nghiệp)</span>
-                                </h2>
-                                <span className="text-[11px] font-bold text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-0.5 rounded-full">
-                                    {bgmMode === "ai_smart" ? "🤖 AI Tự Động Phối Nhạc" : "🔥 Radar Trend TikTok"}
-                                </span>
-                            </div>
-
-                        {/* DUAL MODE SELECTOR BUTTONS */}
-                        <div className="grid grid-cols-2 gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setBgmMode("ai_smart")}
-                                className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
-                                    bgmMode === "ai_smart"
-                                        ? "border-teal-600 bg-teal-50/70 text-teal-900 shadow-sm ring-1 ring-teal-500"
-                                        : "border-slate-200 hover:border-slate-300 text-slate-600 bg-white"
-                                }`}
-                            >
-                                <div className="flex items-center gap-1.5 font-bold text-xs">
-                                    <Wand2 className="w-4 h-4 text-teal-600" />
-                                    <span>Lựa chọn A: AI Tự Phối Nhạc</span>
-                                </div>
-                                <span className="text-[10px] text-slate-500">
-                                    AI quét nội dung kịch bản & tự chọn nhạc hợp mood
-                                </span>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setBgmMode("manual_trend")}
-                                className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
-                                    bgmMode === "manual_trend"
-                                        ? "border-teal-600 bg-teal-50/70 text-teal-900 shadow-sm ring-1 ring-teal-500"
-                                        : "border-slate-200 hover:border-slate-300 text-slate-600 bg-white"
-                                }`}
-                            >
-                                <div className="flex items-center gap-1.5 font-bold text-xs">
-                                    <Flame className="w-4 h-4 text-amber-500" />
-                                    <span>Lựa chọn B: Radar Trend TikTok</span>
-                                </div>
-                                <span className="text-[10px] text-slate-500">
-                                    Bảng xếp hạng âm thanh viral & công cụ bóc tách nhạc
-                                </span>
-                            </button>
-                        </div>
-
-                        {/* SUB-SECTION 1: AI SMART SOUND MATCHING */}
-                        {bgmMode === "ai_smart" && (
-                            <div className="p-4 rounded-xl bg-gradient-to-br from-teal-50/80 via-white to-emerald-50/50 border border-teal-200/80 space-y-3">
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="space-y-1">
-                                        <h4 className="text-xs font-bold text-teal-900 flex items-center gap-1.5">
-                                            <Bot className="w-4 h-4 text-teal-600" />
-                                            <span>Thuật Toán AI Smart Sound Match:</span>
-                                        </h4>
-                                        <p className="text-[11px] text-slate-600 leading-relaxed">
-                                            AI tự động phân tích tâm trạng kịch bản hiện tại ({selectedVoiceText.length} ký tự), nhận diện các yếu tố: <em>kho hàng đêm, sỉ số lượng lớn, ẩm thực giòn rụm</em> để đề xuất bản nhạc giữ chân người xem tốt nhất.
-                                        </p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={handleAiMatchMusic}
-                                        className="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 shrink-0 transition-all"
-                                    >
-                                        <Wand2 className="w-3.5 h-3.5" />
-                                        <span>Quét & Phối Nhạc Ngay</span>
-                                    </button>
-                                </div>
-
-                                {/* Current Selected Track Preview */}
-                                <div className="p-3 bg-white rounded-xl border border-teal-200 flex items-center justify-between gap-3">
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                        <span className="p-2 rounded-lg bg-teal-50 text-teal-600">
-                                            <Music className="w-4 h-4" />
-                                        </span>
-                                        <div className="min-w-0">
-                                            <div className="text-[10px] text-slate-400 font-semibold uppercase">Đang áp dụng vào video:</div>
-                                            <div className="text-xs font-bold text-slate-800 truncate">
-                                                {BGM_PRESETS.find(b => b.id === bgmChoice)?.name || TIKTOK_TRENDING_SOUNDS.find(b => b.id === bgmChoice)?.title || bgmChoice}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <select
-                                        value={bgmChoice}
-                                        onChange={(e) => setBgmChoice(e.target.value)}
-                                        className="p-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-slate-50 outline-none max-w-[200px]"
-                                    >
-                                        {BGM_PRESETS.map(b => (
-                                            <option key={b.id} value={b.id}>{b.name}</option>
-                                        ))}
-                                        {TIKTOK_TRENDING_SOUNDS.map(b => (
-                                            <option key={b.id} value={b.id}>{b.title}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* SUB-SECTION 2: RADAR TREND TIKTOK & BÓC TÁCH LINK */}
-                        {bgmMode === "manual_trend" && (
-                            <div className="space-y-3">
-                                {/* TOOL 1: EXTRACT SOUND FROM ANY TIKTOK URL */}
-                                <div className="p-3.5 rounded-xl bg-slate-900 text-white space-y-2.5 shadow-sm">
-                                    <label className="text-xs font-bold text-amber-300 flex items-center justify-between">
-                                        <span className="flex items-center gap-1.5">
-                                            <Zap className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                                            <span>Bóc tách âm thanh trực tiếp từ link TikTok:</span>
-                                        </span>
-                                        <span className="text-[10px] text-slate-400">Trích xuất MP3</span>
-                                    </label>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="text"
-                                            value={tiktokExtractUrl}
-                                            onChange={(e) => setTiktokExtractUrl(e.target.value)}
-                                            placeholder="Dán link TikTok (VD: https://www.tiktok.com/@tra.my.24zone/video/...)"
-                                            className="flex-1 px-3 py-2 rounded-lg bg-black/60 border border-white/20 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => handleExtractTikTokSound()}
-                                            disabled={isExtractingTikTokSound}
-                                            className="px-3.5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-black font-bold text-xs whitespace-nowrap flex items-center gap-1.5 disabled:opacity-60 transition-colors"
-                                        >
-                                            {isExtractingTikTokSound ? (
-                                                <>
-                                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                    <span>Đang tách...</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Zap className="w-3.5 h-3.5 fill-black" />
-                                                    <span>Tách Nhạc</span>
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* TOOL 2: RADAR TIKTOK TRENDING SOUNDS LIST */}
-                                <div className="space-y-2">
-                                    <div className="text-xs font-bold text-slate-800 flex items-center justify-between">
-                                        <span className="flex items-center gap-1.5">
-                                            <Flame className="w-4 h-4 text-amber-500" />
-                                            <span>Top Âm Thanh Đang Viral Cho Bán Hàng & Đồ Ăn Vặt:</span>
-                                        </span>
-                                        <span className="text-[10px] text-slate-400">Nghe thử & Gắn nhanh</span>
-                                    </div>
-
-                                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                                        {TIKTOK_TRENDING_SOUNDS.map((sound) => {
-                                            const isPlayingThis = previewingSoundUrl === sound.url;
-                                            const isSelected = bgmChoice === sound.id;
-                                            return (
-                                                <div
-                                                    key={sound.id}
-                                                    className={`p-2.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
-                                                        isSelected
-                                                            ? "bg-teal-50 border-teal-500 text-teal-950 shadow-sm"
-                                                            : "bg-slate-50/70 border-slate-200 hover:border-slate-300 text-slate-800"
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center gap-2.5 min-w-0">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleTogglePreviewSound(sound.url)}
-                                                            className={`p-2 rounded-full shrink-0 transition-colors ${
-                                                                isPlayingThis
-                                                                    ? "bg-teal-600 text-white animate-pulse"
-                                                                    : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
-                                                            }`}
-                                                            title={isPlayingThis ? "Tạm dừng" : "Nghe thử"}
-                                                        >
-                                                            {isPlayingThis ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 ml-0.5" />}
-                                                        </button>
-                                                        <div className="min-w-0">
-                                                            <div className="flex items-center gap-1.5">
-                                                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900">
-                                                                    {sound.tag}
-                                                                </span>
-                                                                <span className="font-semibold text-xs truncate text-slate-900">
-                                                                    {sound.title}
-                                                                </span>
-                                                            </div>
-                                                            <div className="text-[10px] text-slate-500 truncate">
-                                                                {sound.useCase} • <span className="font-mono text-slate-400">{sound.duration}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleCopySoundTitle(sound.title)}
-                                                            className="px-2 py-1 rounded bg-white hover:bg-slate-100 text-[10px] font-medium text-slate-600 flex items-center gap-1 border border-slate-200"
-                                                            title="Copy tên âm thanh để tìm trên ứng dụng TikTok"
-                                                        >
-                                                            {copiedSoundTitle === sound.title ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                                                            <span>{copiedSoundTitle === sound.title ? "Đã chép" : "Copy tên"}</span>
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleApplyTikTokSound(sound)}
-                                                            className={`px-2.5 py-1 rounded text-[10px] font-bold flex items-center gap-1 transition-colors ${
-                                                                isSelected
-                                                                    ? "bg-teal-600 text-white"
-                                                                    : "bg-slate-200 hover:bg-teal-600 hover:text-white text-slate-800"
-                                                            }`}
-                                                        >
-                                                            {isSelected ? "Đang chọn" : "+ Gắn vào video"}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* ALGORITHM PRO-TIP BANNER */}
-                                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-400/30 text-[11px] text-amber-900 leading-relaxed">
-                                    <strong>💡 Bí quyết đẩy Xu Hướng TikTok (Kênh Trà My 24Zone):</strong>
-                                    <p className="mt-0.5 text-slate-700 text-[10px]">
-                                        Nếu đăng lên TikTok, bạn nên chọn <strong>"🔇 Không dùng nhạc nền"</strong> trong Studio để xuất video sạch chỉ có giọng nói. Sau đó, khi đăng video trên điện thoại, bấm nút <strong>"Thêm âm thanh"</strong> của TikTok, dán tên bài hát vừa Copy ở trên, và chỉnh âm lượng nhạc còn 10-15%. Thuật toán TikTok sẽ đẩy video vào luồng xu hướng của bài hát đó và 100% không bị tắt tiếng bản quyền!
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* BGM Volume Slider */}
-                        {bgmChoice !== "none" && (
-                            <div className="pt-3 border-t border-slate-100 space-y-1.5">
-                                <div className="flex items-center justify-between text-xs">
-                                    <label className="font-semibold text-slate-700">Âm lượng nhạc nền:</label>
-                                    <span className="font-mono text-teal-600 font-bold">{Math.round(bgmVolume * 100)}%</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min={0.05}
-                                    max={0.5}
-                                    step={0.02}
-                                    value={bgmVolume}
-                                    onChange={(e) => setBgmVolume(parseFloat(e.target.value))}
-                                    className="w-full accent-teal-600"
-                                />
-                            </div>
-                        )}
-
-                        {/* Audio Ducking & Watermark */}
-                        <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={enableAudioDucking}
-                                    onChange={(e) => setEnableAudioDucking(e.target.checked)}
-                                    className="accent-teal-600 rounded"
-                                />
-                                <span className="text-slate-700 font-medium">Tự động giảm nhạc nền khi có tiếng nói (Audio Ducking)</span>
-                            </label>
-
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={showWatermark}
-                                    onChange={(e) => setShowWatermark(e.target.checked)}
-                                    className="accent-teal-600 rounded"
-                                />
-                                <span className="text-slate-700 font-medium">Gắn logo LYHU! Tổng Kho Sỉ B2B</span>
-                            </label>
-                        </div>
-                    </div>
-                    )}
-
-                    {/* TAB 5: VŨ KHÍ AI STUDIO ĐỈNH CAO THẾ GIỚI */}
-                    {activeStudioTab === "ai_superpowers" && (
-                        <div className="bg-white p-5 rounded-2xl border border-purple-200/80 shadow-sm space-y-6">
-                            {/* Pro Banner */}
-                            <div className="bg-gradient-to-r from-purple-800 via-purple-700 to-indigo-800 rounded-2xl p-5 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div className="space-y-1.5">
-                                    <div className="flex items-center gap-2">
-                                        <span className="p-1.5 bg-white/20 rounded-xl backdrop-blur-sm">
-                                            <Zap className="w-5 h-5 text-amber-300" />
-                                        </span>
-                                        <h2 className="font-black text-sm tracking-tight">Vũ Khí AI Studio Đỉnh Cao (Pro AI Superpowers)</h2>
-                                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-sm">
-                                            Pro CapCut & Runway AI
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-purple-100 max-w-xl leading-relaxed">
-                                        Bộ công cụ AI thế hệ mới: Kho B-Roll điện ảnh, Bộ âm thanh Foley SFX 0ms độ trễ, Huy hiệu livestream chốt đơn, và Trợ lý tối ưu giữ chân thuật toán TikTok & Reels.
-                                    </p>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={handleBoostVirality}
-                                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-slate-950 font-black text-xs flex items-center gap-2 shadow-md shadow-amber-900/30 whitespace-nowrap self-start sm:self-center transition-all transform active:scale-95 cursor-pointer"
-                                >
-                                    <Flame className="w-4 h-4 fill-slate-950" />
-                                    <span>1-Click Lên 99 Điểm Xu Hướng</span>
-                                </button>
-                            </div>
-
-                            {/* TOOL 1: 🎥 AI B-ROLL & CINEMATIC FOOTAGE LIBRARY */}
-                            <div className="border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-3.5 bg-slate-50/50">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200/80">
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <Film className="w-4 h-4 text-purple-600" />
-                                            <h3 className="font-bold text-xs text-slate-900">
-                                                Kho B-Roll Điện Ảnh & Phóng Sự Kho Hàng B2B ({AI_BROLL_LIBRARY.length} Cảnh)
-                                            </h3>
-                                        </div>
-                                        <p className="text-[11px] text-slate-500 mt-0.5">
-                                            Clip độ phân giải cao chuẩn kho sỉ LYHU, xe container xuất hàng, và cận cảnh giòn rụm giúp giữ chân người xem.
-                                        </p>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={handleGenerateAIBRoll}
-                                        disabled={isGeneratingBRoll}
-                                        className="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-60 cursor-pointer self-start sm:self-auto"
-                                    >
-                                        {isGeneratingBRoll ? (
-                                            <>
-                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                <span>AI Đang Nạp Cảnh...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                                                <span>+ Thêm Trọn Bộ B-Roll</span>
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                    {AI_BROLL_LIBRARY.map((item) => {
-                                        const isAlreadyAdded = clips.some(c => c.url === item.url);
-                                        return (
-                                            <div
-                                                key={item.id}
-                                                className={`p-3 rounded-xl border transition-all flex flex-col justify-between gap-2.5 bg-white ${
-                                                    isAlreadyAdded ? "border-purple-300 ring-1 ring-purple-200 shadow-sm" : "border-slate-200 hover:border-purple-200"
-                                                }`}
-                                            >
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
-                                                            {item.tag}
-                                                        </span>
-                                                        <span className="text-[10px] font-mono text-slate-400">
-                                                            {item.duration}s • HD
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-xs font-semibold text-slate-800 line-clamp-2 leading-snug">
-                                                        {item.name}
-                                                    </p>
-                                                </div>
-
+                                {/* SUB-SECTION 2: RADAR TREND TIKTOK & BÓC TÁCH LINK */}
+                                {bgmMode === "manual_trend" && (
+                                    <div className="space-y-3">
+                                        {/* TOOL 1: EXTRACT SOUND FROM ANY TIKTOK URL */}
+                                        <div className="p-3.5 rounded-xl bg-slate-900 text-white space-y-2.5 shadow-sm">
+                                            <label className="text-xs font-bold text-amber-300 flex items-center justify-between">
+                                                <span className="flex items-center gap-1.5">
+                                                    <Zap className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                                    <span>Bóc tách âm thanh trực tiếp từ link TikTok:</span>
+                                                </span>
+                                                <span className="text-[10px] text-slate-400">Trích xuất MP3</span>
+                                            </label>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={tiktokExtractUrl}
+                                                    onChange={(e) => setTiktokExtractUrl(e.target.value)}
+                                                    placeholder="Dán link TikTok (VD: https://www.tiktok.com/@tra.my.24zone/video/...)"
+                                                    className="flex-1 px-3 py-2 rounded-lg bg-black/60 border border-white/20 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono"
+                                                />
                                                 <button
                                                     type="button"
-                                                    disabled={isAlreadyAdded}
-                                                    onClick={() => {
-                                                        const newClip: VideoClip = {
-                                                            id: `broll_${Date.now()}_${item.id}`,
-                                                            name: item.name,
-                                                            url: item.url,
-                                                            duration: item.duration,
-                                                            width: item.width,
-                                                            height: item.height,
-                                                            muted: true
-                                                        };
-                                                        setClips(prev => [...prev, newClip]);
-                                                    }}
-                                                    className={`w-full py-1.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors ${
-                                                        isAlreadyAdded
-                                                            ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                                                            : "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
-                                                    }`}
+                                                    onClick={() => handleExtractTikTokSound()}
+                                                    disabled={isExtractingTikTokSound}
+                                                    className="px-3.5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-black font-bold text-xs whitespace-nowrap flex items-center gap-1.5 disabled:opacity-60 transition-colors cursor-pointer"
                                                 >
-                                                    {isAlreadyAdded ? (
+                                                    {isExtractingTikTokSound ? (
                                                         <>
-                                                            <Check className="w-3.5 h-3.5 text-purple-600" />
-                                                            <span>Đã Thêm Vào Dàn Cảnh</span>
+                                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                            <span>Đang tách...</span>
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <Plus className="w-3.5 h-3.5 text-purple-600" />
-                                                            <span>Thêm Cảnh Này</span>
+                                                            <Zap className="w-3.5 h-3.5 fill-black" />
+                                                            <span>Tách Nhạc</span>
                                                         </>
                                                     )}
                                                 </button>
                                             </div>
-                                        );
-                                    })}
+                                        </div>
+
+                                        {/* TOOL 2: RADAR TIKTOK TRENDING SOUNDS LIST */}
+                                        <div className="space-y-2">
+                                            <div className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                                                <span className="flex items-center gap-1.5">
+                                                    <Flame className="w-4 h-4 text-amber-500" />
+                                                    <span>Top Âm Thanh Đang Viral Cho Bán Hàng & Đồ Ăn Vặt:</span>
+                                                </span>
+                                                <span className="text-[10px] text-slate-400">Nghe thử & Gắn nhanh</span>
+                                            </div>
+
+                                            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                                {TIKTOK_TRENDING_SOUNDS.map((sound) => {
+                                                    const isPlayingThis = previewingSoundUrl === sound.url;
+                                                    const isSelected = bgmChoice === sound.id;
+                                                    return (
+                                                        <div
+                                                            key={sound.id}
+                                                            className={`p-2.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                                                                isSelected
+                                                                    ? "bg-teal-50 border-teal-500 text-teal-950 shadow-sm"
+                                                                    : "bg-slate-50/70 border-slate-200 hover:border-slate-300 text-slate-800"
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleTogglePreviewSound(sound.url)}
+                                                                    className={`p-2 rounded-full shrink-0 transition-colors cursor-pointer ${
+                                                                        isPlayingThis
+                                                                            ? "bg-teal-600 text-white animate-pulse"
+                                                                            : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                                                                    }`}
+                                                                    title={isPlayingThis ? "Tạm dừng" : "Nghe thử"}
+                                                                >
+                                                                    {isPlayingThis ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 ml-0.5" />}
+                                                                </button>
+                                                                <div className="min-w-0">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900">
+                                                                            {sound.tag}
+                                                                        </span>
+                                                                        <span className="font-semibold text-xs truncate text-slate-900">
+                                                                            {sound.title}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="text-[10px] text-slate-500 truncate">
+                                                                        {sound.useCase} • <span className="font-mono text-slate-400">{sound.duration}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleCopySoundTitle(sound.title)}
+                                                                    className="px-2 py-1 rounded bg-white hover:bg-slate-100 text-[10px] font-medium text-slate-600 flex items-center gap-1 border border-slate-200 cursor-pointer"
+                                                                    title="Copy tên âm thanh để tìm trên ứng dụng TikTok"
+                                                                >
+                                                                    {copiedSoundTitle === sound.title ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                                                                    <span>{copiedSoundTitle === sound.title ? "Đã chép" : "Copy tên"}</span>
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleApplyTikTokSound(sound)}
+                                                                    className={`px-2.5 py-1 rounded text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer ${
+                                                                        isSelected
+                                                                            ? "bg-teal-600 text-white"
+                                                                            : "bg-slate-200 hover:bg-teal-600 hover:text-white text-slate-800"
+                                                                    }`}
+                                                                >
+                                                                    {isSelected ? "Đang chọn" : "+ Gắn vào video"}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* ALGORITHM PRO-TIP BANNER */}
+                                        <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-400/30 text-[11px] text-amber-900 leading-relaxed">
+                                            <strong>💡 Bí quyết đẩy Xu Hướng TikTok (Kênh Trà My 24Zone):</strong>
+                                            <p className="mt-0.5 text-slate-700 text-[10px]">
+                                                Nếu đăng lên TikTok, bạn nên chọn <strong>"🔇 Không dùng nhạc nền"</strong> trong Studio để xuất video sạch chỉ có giọng nói. Sau đó, khi đăng video trên điện thoại, bấm nút <strong>"Thêm âm thanh"</strong> của TikTok, dán tên bài hát vừa Copy ở trên, và chỉnh âm lượng nhạc còn 10-15%. Thuật toán TikTok sẽ đẩy video vào luồng xu hướng của bài hát đó và 100% không bị tắt tiếng bản quyền!
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* BGM Volume Slider */}
+                                {bgmChoice !== "none" && (
+                                    <div className="pt-3 border-t border-slate-200 space-y-1.5">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <label className="font-semibold text-slate-700">Âm lượng nhạc nền:</label>
+                                            <span className="font-mono text-teal-600 font-bold">{Math.round(bgmVolume * 100)}%</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min={0.05}
+                                            max={0.5}
+                                            step={0.02}
+                                            value={bgmVolume}
+                                            onChange={(e) => setBgmVolume(parseFloat(e.target.value))}
+                                            className="w-full accent-teal-600"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Audio Ducking & Watermark */}
+                                <div className="pt-2 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={enableAudioDucking}
+                                            onChange={(e) => setEnableAudioDucking(e.target.checked)}
+                                            className="accent-teal-600 rounded"
+                                        />
+                                        <span className="text-slate-700 font-medium">Tự động giảm nhạc nền khi có tiếng nói (Audio Ducking)</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={showWatermark}
+                                            onChange={(e) => setShowWatermark(e.target.checked)}
+                                            className="accent-teal-600 rounded"
+                                        />
+                                        <span className="text-slate-700 font-medium">Gắn logo LYHU! Tổng Kho Sỉ B2B</span>
+                                    </label>
                                 </div>
                             </div>
 
-                            {/* TOOL 2: 🔊 STUDIO SOUND DESIGN & FOLEY FX ENGINE */}
-                            <div className="border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4 bg-slate-50/50">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
+                            {/* 🔊 SECTION 2: HỆ THỐNG HIỆU ỨNG FOLEY SFX (Web Audio 0ms Latency) */}
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3.5">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 border-b border-slate-200">
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <Volume2 className="w-4 h-4 text-purple-600" />
@@ -4840,7 +5020,7 @@ export default function AutoVideoStudioPage() {
                                         <button
                                             type="button"
                                             onClick={() => handleAuditionSfx("whoosh")}
-                                            className="w-full py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+                                            className="w-full py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
                                         >
                                             <Volume2 className="w-3 h-3 text-purple-600" />
                                             <span>Nghe Thử</span>
@@ -4868,7 +5048,7 @@ export default function AutoVideoStudioPage() {
                                         <button
                                             type="button"
                                             onClick={() => handleAuditionSfx("ding")}
-                                            className="w-full py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+                                            className="w-full py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
                                         >
                                             <Volume2 className="w-3 h-3 text-purple-600" />
                                             <span>Nghe Thử</span>
@@ -4896,7 +5076,7 @@ export default function AutoVideoStudioPage() {
                                         <button
                                             type="button"
                                             onClick={() => handleAuditionSfx("kaching")}
-                                            className="w-full py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+                                            className="w-full py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
                                         >
                                             <Volume2 className="w-3 h-3 text-purple-600" />
                                             <span>Nghe Thử</span>
@@ -4924,7 +5104,7 @@ export default function AutoVideoStudioPage() {
                                         <button
                                             type="button"
                                             onClick={() => handleAuditionSfx("boom")}
-                                            className="w-full py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
+                                            className="w-full py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
                                         >
                                             <Volume2 className="w-3 h-3 text-purple-600" />
                                             <span>Nghe Thử</span>
@@ -4933,97 +5113,25 @@ export default function AutoVideoStudioPage() {
                                 </div>
                             </div>
 
-                            {/* TOOL 3: 🏷️ HUY HIỆU LIVESTREAM CHỐT ĐƠN & SALES CALLOUT STICKERS */}
-                            <div className="border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-3.5 bg-slate-50/50">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200/80">
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <Tag className="w-4 h-4 text-purple-600" />
-                                            <h3 className="font-bold text-xs text-slate-900">
-                                                Huy Hiệu Chốt Đơn Trực Tiếp Trên Video (Live Sales Sticker)
-                                            </h3>
-                                        </div>
-                                        <p className="text-[11px] text-slate-500 mt-0.5">
-                                            Sticker động chớp nháy màu cam/vàng/đỏ chuẩn phong cách TikTok Shop, kích thích chủ quán bấm inbox ngay.
-                                        </p>
-                                    </div>
-
-                                    {/* Position Selector */}
-                                    <div className="flex items-center gap-1 text-[11px]">
-                                        <span className="text-slate-500 font-medium">Vị trí:</span>
-                                        <div className="flex rounded-lg border border-slate-200 bg-white p-0.5">
-                                            <button
-                                                type="button"
-                                                onClick={() => setStickerPosition("top_right")}
-                                                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
-                                                    stickerPosition === "top_right" ? "bg-purple-600 text-white" : "text-slate-600 hover:text-slate-900"
-                                                }`}
-                                            >
-                                                Trên Phải
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setStickerPosition("top_left")}
-                                                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
-                                                    stickerPosition === "top_left" ? "bg-purple-600 text-white" : "text-slate-600 hover:text-slate-900"
-                                                }`}
-                                            >
-                                                Trên Trái
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setStickerPosition("bottom_right")}
-                                                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${
-                                                    stickerPosition === "bottom_right" ? "bg-purple-600 text-white" : "text-slate-600 hover:text-slate-900"
-                                                }`}
-                                            >
-                                                Dưới Phải
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
-                                    {[
-                                        { id: "freeship", label: "🚚 FREESHIP TẬN QUÁN", sub: "Miễn phí ship", color: "border-amber-500 bg-amber-50 text-amber-900" },
-                                        { id: "si_1_thung", label: "📦 SỈ TỪ 1 THÙNG", sub: "Giá gốc xưởng", color: "border-yellow-500 bg-yellow-50 text-yellow-900" },
-                                        { id: "san_kho", label: "🏭 SẴN KHO 1000 THÙNG", sub: "Giao ngay 2h", color: "border-rose-500 bg-rose-50 text-rose-900" },
-                                        { id: "lai_x2", label: "📈 LÃI GẤP ĐÔI", sub: "Bán chạy nhất", color: "border-emerald-500 bg-emerald-50 text-emerald-900" },
-                                        { id: "inbox_cta", label: "💬 NHẬN MẪU THỬ", sub: "Thử miễn phí", color: "border-teal-500 bg-teal-50 text-teal-900" },
-                                        { id: "none", label: "🚫 TẮT HUY HIỆU", sub: "Không gắn", color: "border-slate-300 bg-slate-50 text-slate-600" }
-                                    ].map((stk) => {
-                                        const isSelected = activeSalesSticker === stk.id;
-                                        return (
-                                            <button
-                                                key={stk.id}
-                                                type="button"
-                                                onClick={() => setActiveSalesSticker(stk.id)}
-                                                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                                                    isSelected
-                                                        ? `${stk.color} ring-2 ring-purple-500 font-bold shadow-sm`
-                                                        : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
-                                                }`}
-                                            >
-                                                <div className="text-[11px] font-bold line-clamp-1">{stk.label}</div>
-                                                <div className="text-[10px] text-slate-500 mt-0.5">{stk.sub}</div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* TOOL 4: 📊 AI VIRALITY & RETENTION INSPECTOR */}
-                            <div className="border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4 bg-slate-50/50">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200/80">
+                            {/* 📊 SECTION 3: BỘ MÁY KIỂM TRA ĐIỂM GIỮ CHÂN THUẬT TOÁN (VIRALITY & RETENTION RADAR) */}
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3.5">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200">
                                     <div className="flex items-center gap-2">
                                         <Gauge className="w-4 h-4 text-purple-600" />
                                         <h3 className="font-bold text-xs text-slate-900">
                                             Bộ Máy Kiểm Tra Điểm Giữ Chân Thuật Toán (Virality & Retention Radar)
                                         </h3>
                                     </div>
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                                        Tổng Điểm AI: {viralityScore.overall}/100 🌟
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={handleBoostVirality}
+                                            className="px-3 py-1 rounded-lg bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                                        >
+                                            <Flame className="w-3.5 h-3.5 fill-slate-950" />
+                                            <span>1-Click Lên 99 Điểm Xu Hướng</span>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -5065,53 +5173,45 @@ export default function AutoVideoStudioPage() {
                                 </div>
                             </div>
 
-                            {/* TOOL 5: ⚡ TURBO VOICE SPEED SELECTOR */}
-                            <div className="border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-3 bg-slate-50/50">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Zap className="w-4 h-4 text-purple-600" />
-                                        <h3 className="font-bold text-xs text-slate-900">
-                                            Tốc Độ Đọc Turbo Pace (Chuẩn Nhịp Giữ Chân TikTok)
-                                        </h3>
-                                    </div>
-                                    <span className="text-[11px] font-mono font-bold text-purple-700">
-                                        Đang chọn: {voiceSpeedMultiplier}x
-                                    </span>
-                                </div>
+                            {/* 🚀 NAVIGATION & BIG PROMINENT EXPORT BUTTON */}
+                            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setActiveStudioStep("step_visuals");
+                                    }}
+                                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                    <span>Quay lại Bước 3: Tiêu Đề & Huy Hiệu</span>
+                                </button>
 
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                                    {[
-                                        { speed: 0.85, label: "0.85x", desc: "Chậm rãi, phóng sự sâu lắng" },
-                                        { speed: 1.0, label: "1.0x (Chuẩn)", desc: "Tự nhiên, nhịp điệu gốc" },
-                                        { speed: 1.15, label: "1.15x 🔥 TikTok", desc: "Tăng 35% tỷ lệ xem hết" },
-                                        { speed: 1.25, label: "1.25x ⚡ Thần Tốc", desc: "Dồn dập xả kho chốt đơn" }
-                                    ].map((item) => {
-                                        const isSelected = voiceSpeedMultiplier === item.speed;
-                                        return (
-                                            <button
-                                                key={item.speed}
-                                                type="button"
-                                                onClick={() => {
-                                                    setVoiceSpeedMultiplier(item.speed);
-                                                    if (hiddenAudioRef.current) {
-                                                        hiddenAudioRef.current.playbackRate = item.speed;
-                                                    }
-                                                }}
-                                                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                                                    isSelected
-                                                        ? "border-purple-600 bg-purple-50 text-purple-950 ring-2 ring-purple-400 font-bold shadow-sm"
-                                                        : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
-                                                }`}
-                                            >
-                                                <div className="text-xs font-bold">{item.label}</div>
-                                                <div className="text-[10px] text-slate-500 mt-0.5">{item.desc}</div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (isRendering) return;
+                                        handleExportVideo();
+                                    }}
+                                    disabled={isRendering}
+                                    className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-teal-600 via-teal-500 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-teal-600/25 cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    {isRendering ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                            <span>Đang Xuất ({renderProgress}%)...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Download className="w-4 h-4 text-white" />
+                                            <span>🚀 BẮT ĐẦU XUẤT VIDEO 60 FPS SIÊU MƯỢT</span>
+                                        </>
+                                    )}
+                                </button>
                             </div>
                         </div>
                     )}
+
+                    {/* END OF 4-STEP PRODUCTION PIPELINE */}
                 </div>
 
                 {/* RIGHT: Live Video Canvas & Export (5 cols) */}
