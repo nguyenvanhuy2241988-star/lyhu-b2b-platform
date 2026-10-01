@@ -392,7 +392,7 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
             order_discount_percent: o.order_discount_percent || 0,
             receiverPhone: o.receiver_phone || o.customer?.phone,
             receiverAddress: o.receiver_address || o.customer?.old_address || o.customer?.address,
-            creatorName: o.creator_name,
+            creatorName: o.creator_name || o.creator?.full_name || o.telesales_user_name || undefined,
             // Shipping & Packing
             shippingCarrier: o.shipping_carrier,
             trackingCode: o.tracking_code,
@@ -452,7 +452,7 @@ export const addOrderSupabase = async (orderData: any, token?: string) => {
             lead_id: orderData.lead_id || orderData.leadId,
             customer_id: orderData.customer_id || orderData.customerId,
             customer_name: orderData.customerName || "Khách hàng",
-            telesales_user_id: orderData.telesalesUserId,
+            telesales_user_id: orderData.telesalesUserId || orderData.telesales_user_id,
             status: orderData.status || 'pending',
             total_amount: orderData.totalAmount,
             source: orderData.source || 'CUSTOMER',
@@ -589,6 +589,14 @@ export const addOrderSupabase = async (orderData: any, token?: string) => {
                 }
             } catch (err) {
                 console.error("[addOrderSupabase] Bonus check failed:", err);
+            }
+        }
+
+        if (order) {
+            const creatorName = orderData.creatorName || orderData.creator_name;
+            if (creatorName) {
+                order.creatorName = creatorName;
+                order.creator_name = creatorName;
             }
         }
 

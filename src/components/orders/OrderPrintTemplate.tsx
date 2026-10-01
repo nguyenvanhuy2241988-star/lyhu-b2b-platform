@@ -47,7 +47,7 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
                     <h2 className="text-2xl font-bold uppercase text-[#00AFA9] whitespace-nowrap">ĐƠN ĐẶT HÀNG</h2>
                     <p className="text-base font-bold text-gray-800 mt-1">Mã đơn: {order.readableId || order.id}</p>
                     <p className="text-sm text-gray-600">Ngày tạo: {formatDate(order.createdAt)}</p>
-                    {order.creatorName && <p className="text-sm text-gray-600">Người tạo: <span className="font-semibold">{order.creatorName}</span></p>}
+                    <p className="text-sm text-gray-600">Người tạo: <span className="font-semibold text-gray-800">{order.creatorName || (order as any).creator_name || (order as any).telesales_user_name || (order as any).creator?.full_name || (order as any).user?.full_name || (order as any).user?.name || 'Nhân viên kinh doanh'}</span></p>
                     <div className="mt-2 inline-block px-3 py-1 border border-gray-300 rounded text-sm font-semibold">
                         {order.status === 'delivered' ? 'Đã giao hàng' :
                             order.status === 'cancelled' ? 'Đã hủy' : 'Đơn hàng mới'}
@@ -205,12 +205,14 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
             {/* Footer / Signatures */}
             <div className="grid grid-cols-2 gap-8 text-center text-sm mt-8 page-break-inside-avoid">
                 <div>
-                    <p className="font-bold mb-16 uppercase text-gray-700">Người lập phiếu</p>
-                    <p className="italic text-gray-500">(Ký, ghi rõ họ tên)</p>
+                    <p className="font-bold mb-12 uppercase text-gray-700">Người lập phiếu</p>
+                    <p className="italic text-gray-500 text-xs mb-8">(Ký, ghi rõ họ tên)</p>
+                    <p className="font-bold text-gray-800 text-sm tracking-wide">{order.creatorName || (order as any).creator_name || (order as any).telesales_user_name || (order as any).creator?.full_name || (order as any).user?.full_name || (order as any).user?.name || 'Nhân viên kinh doanh'}</p>
                 </div>
                 <div>
-                    <p className="font-bold mb-16 uppercase text-gray-700">Khách hàng xác nhận</p>
-                    <p className="italic text-gray-500">(Ký, nhận đủ hàng)</p>
+                    <p className="font-bold mb-12 uppercase text-gray-700">Khách hàng xác nhận</p>
+                    <p className="italic text-gray-500 text-xs mb-8">(Ký, nhận đủ hàng)</p>
+                    <p className="font-bold text-gray-800 text-sm tracking-wide">{order.customerName || ''}</p>
                 </div>
             </div>
 

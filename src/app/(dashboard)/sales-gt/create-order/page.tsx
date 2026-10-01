@@ -268,6 +268,7 @@ export default function GTCreateOrderPage() {
             customerName: selectedOutlet.name,
             source: "SALES_GT",
             telesalesUserId: user?.id,
+            creatorName: user?.full_name || user?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '',
             outlet_id: selectedOutlet.id,
             items: orderItems.map(item => ({
                 sku: item.product.sku || "N/A",

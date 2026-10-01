@@ -101,16 +101,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 try {
                     const { data: profile } = await supabase
                         .from("profiles")
-                        .select("role, can_use_bot_center")
+                        .select("role, can_use_bot_center, full_name")
                         .eq("id", currentSession.user.id)
                         .maybeSingle();
 
                     const fetchedRole = (profile?.role ?? "customer").toLowerCase();
                     setRole(fetchedRole);
 
-                    // FIXED: Update localStorage with the fetched role so next time we can restore it from cache
+                    const resolvedName = profile?.full_name || currentSession.user.user_metadata?.full_name || currentSession.user.user_metadata?.name || currentSession.user.email?.split('@')[0] || '';
+
+                    // FIXED: Update localStorage with the fetched role and name so next time we can restore it from cache
                     if (typeof window !== "undefined") {
-                        const updatedUser = { ...userObj, role: fetchedRole, can_use_bot_center: profile?.can_use_bot_center ?? false };
+                        const updatedUser = { 
+                            ...userObj, 
+                            role: fetchedRole, 
+                            can_use_bot_center: profile?.can_use_bot_center ?? false,
+                            name: resolvedName,
+                            full_name: resolvedName
+                        };
                         setUser(updatedUser);
                         localStorage.setItem("lyhu_user", JSON.stringify(updatedUser));
                     }

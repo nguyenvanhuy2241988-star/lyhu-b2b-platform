@@ -3,6 +3,7 @@ import { X, Calendar, User, MapPin, ShoppingBag, CreditCard, Printer, Image as I
 import { Order } from "@/lib/ordersStore";
 import { OrderPrintTemplate } from "./OrderPrintTemplate";
 import { ShippingInfoPanel } from "./ShippingInfoPanel";
+import { supabase } from "@/lib/supabaseClient";
 import html2canvas from "html2canvas";
 
 interface OrderDetailsModalProps {
@@ -11,10 +12,11 @@ interface OrderDetailsModalProps {
     onClose: () => void;
 }
 
-export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
+export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalProps) {
     const [settings, setSettings] = useState<any>(null);
     const [isSyncing, setIsSyncing] = useState(false);
     const [localMisaStatus, setLocalMisaStatus] = useState<any>(null); // To update UI immediately without reload
+    const [creatorName, setCreatorName] = useState<string>("");
 
     // Sync Misa Handler
     const handleSyncMisa = async () => {
@@ -109,10 +111,32 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                     }
                 })
                 .catch(err => console.error("Failed to fetch settings for print:", err));
+
+            // Resolve Creator Name
+            const existingName = order.creatorName || order.creator_name || order.creator?.full_name || order.telesales_user_name || order.user?.full_name || order.user?.name;
+            if (existingName) {
+                setCreatorName(existingName);
+            } else {
+                const creatorId = order.telesales_user_id || order.telesalesUserId || order.created_by;
+                if (creatorId) {
+                    supabase
+                        .from("profiles")
+                        .select("full_name, email")
+                        .eq("id", creatorId)
+                        .maybeSingle()
+                        .then(({ data }: { data: any }) => {
+                            if (data) {
+                                const resolved = data.full_name || (data.email ? data.email.split('@')[0] : '');
+                                if (resolved) setCreatorName(resolved);
+                            }
+                        })
+                        .catch((err: any) => console.error("Failed to fetch creator profile:", err));
+                }
+            }
         }
     }, [order]);
 
-    if (!order) return null;
+    if (!order || (isOpen !== undefined && !isOpen)) return null;
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
@@ -221,6 +245,17 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                                     <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Ngày đặt hàng</p>
                                     <p className="text-sm font-semibold text-slate-900 capitalize">
                                         {formatDate(order.createdAt)}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-50 rounded-lg">
+                                    <User className="w-5 h-5 text-blue-600" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Người lên đơn</p>
+                                    <p className="text-sm font-semibold text-slate-900">
+                                        {creatorName || order.creatorName || order.creator_name || order.telesales_user_name || 'Nhân viên kinh doanh'}
                                     </p>
                                 </div>
                             </div>
@@ -425,7 +460,13 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
 
             {/* Print Template (Hidden in screen, Visible in Print) */}
             <div className="hidden print:block">
-                <OrderPrintTemplate order={order} settings={settings} />
+                <OrderPrintTemplate
+                    order={{
+                        ...order,
+                        creatorName: creatorName || order.creatorName || order.creator_name || order.telesales_user_name || 'Nhân viên kinh doanh'
+                    }}
+                    settings={settings}
+                />
             </div>
         </>
     );

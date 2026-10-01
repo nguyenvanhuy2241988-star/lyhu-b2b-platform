@@ -497,6 +497,7 @@ function SaleAdminCreateOrderContent() {
                 customerName: selectedCustomer.name,
                 source: "SALES",
                 telesalesUserId: userId,
+                creatorName: user?.full_name || user?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '',
                 items: orderItems.map((item) => ({
                     sku: item.product.sku || "N/A",
                     name: item.product.name,
