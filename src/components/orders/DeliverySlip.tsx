@@ -24,7 +24,10 @@ export default function DeliverySlip({ order, paperSize = 'A4', onClose }: Deliv
     };
 
     const items = order.items || [];
-    const subtotal = items.reduce((s, i) => s + (i.subtotal || (i.unitPrice || 0) * (i.quantity || 0)), 0);
+    const subtotal = items.reduce((s: number, i: any) => s + (i.subtotal || ((i.unitPrice || i.price || 0) * (i.quantity || 0))), 0);
+    const vatAmt = order.vat || 0;
+    const vatPct = (order as any).vat_rate || (subtotal > 0 && vatAmt > 0 ? Number((vatAmt / subtotal * 100).toFixed(1)) : 0);
+    const creatorName = order.creatorName || (order as any).creator_name || (order as any).telesales_user_name || (order as any).creator?.full_name || (order as any).user?.full_name || (order as any).user?.name || '—';
 
     return (
         <>
@@ -128,18 +131,23 @@ export default function DeliverySlip({ order, paperSize = 'A4', onClose }: Deliv
                                 </tr>
                             </thead>
                             <tbody>
-                                {items.map((item, idx) => {
-                                    const lineTotal = item.subtotal || (item.unitPrice || item.price || 0) * (item.quantity || 0);
+                                {items.map((item: any, idx) => {
+                                    const itemPrice = item.unitPrice || item.price || 0;
+                                    const itemQty = item.quantity || 1;
+                                    const lineTotal = item.subtotal || (itemPrice * itemQty);
+                                    const productName = item.product?.name || item.name || 'Sản phẩm';
+                                    const productSku = item.product?.sku || item.sku;
+                                    const isGift = item.isGift || item.is_gift;
                                     return (
                                         <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
                                             <td className="px-3 py-2 text-center border-b border-slate-200">{idx + 1}</td>
                                             <td className="px-3 py-2 border-b border-slate-200">
-                                                <p className="font-semibold text-slate-800">{item.name || '—'}</p>
-                                                {item.sku && <p className="text-[10px] text-slate-400">SKU: {item.sku}</p>}
-                                                {item.isGift && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 rounded font-semibold">🎁 Quà tặng</span>}
+                                                <p className="font-semibold text-slate-800">{productName}</p>
+                                                {productSku && <p className="text-[10px] text-slate-400 font-mono">SKU: {productSku}</p>}
+                                                {isGift && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 rounded font-semibold">🎁 Quà tặng</span>}
                                             </td>
-                                            <td className="px-3 py-2 text-center border-b border-slate-200 font-semibold">{item.quantity}</td>
-                                            <td className="px-3 py-2 text-right border-b border-slate-200">{formatPrice(item.unitPrice || item.price || 0)}</td>
+                                            <td className="px-3 py-2 text-center border-b border-slate-200 font-semibold">{itemQty}</td>
+                                            <td className="px-3 py-2 text-right border-b border-slate-200">{formatPrice(itemPrice)}</td>
                                             <td className="px-3 py-2 text-right border-b border-slate-200 font-semibold">{formatPrice(lineTotal)}</td>
                                         </tr>
                                     );
@@ -149,26 +157,26 @@ export default function DeliverySlip({ order, paperSize = 'A4', onClose }: Deliv
 
                         {/* Totals */}
                         <div className="flex justify-end mb-8">
-                            <div className="w-[260px] space-y-2">
+                            <div className="w-[280px] space-y-2 text-sm">
                                 <div className="flex justify-between text-slate-600">
-                                    <span>Tạm tính:</span>
+                                    <span>Tạm tính tiền hàng:</span>
                                     <span className="font-semibold">{formatPrice(subtotal)}</span>
                                 </div>
-                                {order.shippingFee && order.shippingFee > 0 && (
+                                {order.shippingFee && order.shippingFee > 0 ? (
                                     <div className="flex justify-between text-slate-600">
                                         <span>Phí vận chuyển:</span>
                                         <span className="font-semibold">{formatPrice(order.shippingFee)}</span>
                                     </div>
-                                )}
-                                {order.vat && order.vat > 0 && (
+                                ) : null}
+                                {vatAmt > 0 && (
                                     <div className="flex justify-between text-slate-600">
-                                        <span>VAT ({order.vat}%):</span>
-                                        <span className="font-semibold">{formatPrice(subtotal * order.vat / 100)}</span>
+                                        <span>VAT {vatPct > 0 ? `(${vatPct}%)` : ''}:</span>
+                                        <span className="font-semibold text-slate-700">+{formatPrice(vatAmt)}</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between pt-2 border-t-2 border-slate-800 text-slate-900">
                                     <span className="font-bold text-base">TỔNG CỘNG:</span>
-                                    <span className="font-extrabold text-base">{formatPrice(order.totalAmount)}</span>
+                                    <span className="font-extrabold text-base text-primary-700">{formatPrice(order.totalAmount)}</span>
                                 </div>
                             </div>
                         </div>
@@ -185,7 +193,7 @@ export default function DeliverySlip({ order, paperSize = 'A4', onClose }: Deliv
                         <div className="grid grid-cols-3 gap-8 pt-6 border-t border-slate-300 mt-8">
                             <div className="text-center">
                                 <p className="font-bold text-slate-700 mb-1">Người tạo đơn</p>
-                                <p className="text-xs text-slate-400 mb-12">{order.creatorName || '—'}</p>
+                                <p className="text-xs text-slate-700 font-semibold mb-12">{creatorName}</p>
                                 <div className="border-t border-dashed border-slate-300 pt-1">
                                     <p className="text-[10px] text-slate-400">(Ký và ghi rõ họ tên)</p>
                                 </div>

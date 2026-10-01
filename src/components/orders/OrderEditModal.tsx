@@ -236,7 +236,7 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess, shippingOnly
                                 {items.map((item, idx) => (
                                     <div key={idx} className="flex gap-2 items-center p-2 border rounded bg-white">
                                         <div className="flex-1">
-                                            <div className="font-medium text-sm">{item.name || "Sản phẩm"}</div>
+                                            <div className="font-medium text-sm">{(item as any).product?.name || item.name || "Sản phẩm"}</div>
                                             <div className="text-xs text-slate-500">{new Intl.NumberFormat('vi-VN').format(item.price || item.unitPrice || 0)}đ</div>
                                         </div>
                                         <div className="flex items-center gap-2">
