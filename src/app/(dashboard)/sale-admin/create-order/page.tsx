@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Product } from "@/mocks/data";
 import { fetchCustomers, Customer, fetchDealItems } from "@/lib/crmDealsStore";
 import { loadProducts } from "@/lib/supabase/products";
-import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, Building, Gift, Tag, FileText, Search, Filter, ArrowUpDown, Eye, EyeOff, Package } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, Building, Gift, Tag, FileText, Search, Filter, ArrowUpDown, Eye, EyeOff, Package, Clock, AlertCircle, Calendar } from "lucide-react";
 import { addOrderSupabase, updateOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClient } from "@/lib/supabaseClient";
@@ -28,6 +28,7 @@ interface OrderItem {
     discountValue: number; // The input value (e.g. 10 for 10% or 10000 for 10k)
     isGift: boolean;
     price: number; // Override price
+    isPreOrder?: boolean; // Tạm hết tồn kho, đặt trước
 }
 
 function SaleAdminCreateOrderContent() {
@@ -229,6 +230,7 @@ function SaleAdminCreateOrderContent() {
     const [orderDiscountPercent, setOrderDiscountPercent] = useState<number>(0); // Order-level discount %
     const [orderNote, setOrderNote] = useState<string>("");
     const [paymentMethod, setPaymentMethod] = useState<string>("COD");
+    const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<string>("");
 
     // UI state
     const [currentStep, setCurrentStep] = useState(1);
@@ -282,16 +284,16 @@ function SaleAdminCreateOrderContent() {
         // Check total quantity in cart + adding
         const currentQtyInOrder = orderItems.reduce((sum, item) => item.product.id === product.id ? sum + item.quantity : sum, 0);
         const available = inventory[product.id] ?? 0;
-
-        if (currentQtyInOrder + quantityToAdd > available) {
-            alert(`Kho chỉ còn ${available} sản phẩm! (Đã chọn: ${currentQtyInOrder})`);
-            return;
-        }
+        const targetTotalQty = currentQtyInOrder + quantityToAdd;
 
         if (existingItemIndex !== -1) {
             const existingItem = orderItems[existingItemIndex];
             const newItems = [...orderItems];
-            newItems[existingItemIndex] = { ...existingItem, quantity: existingItem.quantity + quantityToAdd };
+            newItems[existingItemIndex] = { 
+                ...existingItem, 
+                quantity: targetTotalQty,
+                isPreOrder: targetTotalQty > available
+            };
             setOrderItems(newItems);
         } else {
             setOrderItems((prev) => [
@@ -303,7 +305,8 @@ function SaleAdminCreateOrderContent() {
                     discount: 0,
                     discountType: 'amount',
                     discountValue: 0,
-                    isGift: false
+                    isGift: false,
+                    isPreOrder: quantityToAdd > available
                 }
             ]);
         }
@@ -319,12 +322,11 @@ function SaleAdminCreateOrderContent() {
             const newQuantity = Math.max(1, item.quantity + delta);
             const available = inventory[item.product.id] ?? 0;
 
-            if (newQuantity > available) {
-                alert(`Kho chỉ còn ${available} sản phẩm!`);
-                return prev;
-            }
-
-            newItems[index] = { ...item, quantity: newQuantity };
+            newItems[index] = { 
+                ...item, 
+                quantity: newQuantity,
+                isPreOrder: newQuantity > available
+            };
             return newItems;
         });
     };
@@ -336,12 +338,11 @@ function SaleAdminCreateOrderContent() {
             const newQuantity = Math.max(1, value);
             const available = inventory[item.product.id] ?? 0;
 
-            if (newQuantity > available) {
-                alert(`Kho chỉ còn ${available} sản phẩm!`);
-                return prev;
-            }
-
-            newItems[index] = { ...item, quantity: newQuantity };
+            newItems[index] = { 
+                ...item, 
+                quantity: newQuantity,
+                isPreOrder: newQuantity > available
+            };
             return newItems;
         });
     };
@@ -444,6 +445,24 @@ function SaleAdminCreateOrderContent() {
 
         const total = calculateTotal();
 
+        const preOrderItems = orderItems.filter(i => i.isPreOrder || i.quantity > (inventory[i.product.id] ?? 0));
+        let combinedNoteParts: string[] = [];
+        if (expectedDeliveryDate) {
+            const dateStr = new Date(expectedDeliveryDate).toLocaleDateString("vi-VN");
+            combinedNoteParts.push(`[Hẹn giao: ${dateStr}]`);
+        }
+        if (preOrderItems.length > 0) {
+            combinedNoteParts.push(`[Có ${preOrderItems.length} mã đặt trước/chờ kho]`);
+        }
+        if (orderNote.trim()) {
+            combinedNoteParts.push(orderNote.trim());
+        } else if (dealInfo) {
+            combinedNoteParts.push(`Đơn hàng từ cơ hội: ${dealInfo.title}`);
+        } else {
+            combinedNoteParts.push("Đơn hàng tạo bởi Sales");
+        }
+        const finalNote = combinedNoteParts.join(" ");
+
         if (editOrderId) {
             // UDPATE ORDER
             const res = await updateOrderSupabase(editOrderId, {
@@ -461,7 +480,7 @@ function SaleAdminCreateOrderContent() {
                 vat: totalVAT,
                 vat_rate: vatRate,
                 order_discount_percent: orderDiscountPercent,
-                notes: orderNote,
+                notes: finalNote,
                 paymentMethod: paymentMethod
             }, session?.access_token);
 
@@ -493,7 +512,7 @@ function SaleAdminCreateOrderContent() {
                 })),
                 totalAmount: total,
                 status: "pending",
-                notes: orderNote || (dealInfo ? `Đơn hàng từ cơ hội: ${dealInfo.title}` : "Đơn hàng tạo bởi Telesales"),
+                notes: finalNote,
                 vat: totalVAT,
                 vat_rate: vatRate,
                 order_discount_percent: orderDiscountPercent,
@@ -505,11 +524,12 @@ function SaleAdminCreateOrderContent() {
                 console.log("Created telesales order:", newOrder);
 
                 // 2. Success message
-                alert("✅ Tạo đơn hàng thành công & Đã giữ hàng!");
+                alert("✅ Tạo đơn hàng thành công!");
 
                 // 3. Reset and Redirect
                 setSelectedCustomer(null);
                 setOrderItems([]);
+                setExpectedDeliveryDate("");
                 setCurrentStep(1);
                 router.push("/sale-admin/orders");
             } else {
@@ -525,6 +545,7 @@ function SaleAdminCreateOrderContent() {
         setVatRate(0);
         setOrderDiscountPercent(0);
         setOrderNote("");
+        setExpectedDeliveryDate("");
         setPaymentMethod("COD");
         setCurrentStep(1);
     };
@@ -883,16 +904,18 @@ function SaleAdminCreateOrderContent() {
                                                             <td className="px-3 py-3 text-center">
                                                                 <button
                                                                     onClick={() => handleAddProduct(product, inputValue)}
-                                                                    disabled={isOutOfStock}
-                                                                    className={`px-3 py-1.5 rounded-md font-medium text-xs flex items-center gap-1 mx-auto transition-all ${isOutOfStock
-                                                                        ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                                                                        : inOrderCount > 0
-                                                                            ? "bg-[#00AFA9] text-white hover:bg-[#009690] shadow-sm"
+                                                                    className={`px-3 py-1.5 rounded-md font-medium text-xs flex items-center gap-1 mx-auto transition-all ${inOrderCount > 0
+                                                                        ? isOutOfStock
+                                                                            ? "bg-amber-600 text-white hover:bg-amber-700 shadow-sm"
+                                                                            : "bg-[#00AFA9] text-white hover:bg-[#009690] shadow-sm"
+                                                                        : isOutOfStock
+                                                                            ? "bg-amber-50 text-amber-700 border border-amber-300 hover:bg-amber-100"
                                                                             : "bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-[#00AFA9]"
                                                                         }`}
+                                                                    title={isOutOfStock ? "Sản phẩm tạm hết kho - Bấm để đặt trước gửi khách" : "Thêm vào giỏ"}
                                                                 >
-                                                                    <Plus className="w-3.5 h-3.5" />
-                                                                    Thêm
+                                                                    {isOutOfStock ? <Clock className="w-3.5 h-3.5 text-amber-600" /> : <Plus className="w-3.5 h-3.5" />}
+                                                                    {isOutOfStock ? "Đặt trước" : "Thêm"}
                                                                 </button>
                                                             </td>
                                                         </tr>
@@ -954,9 +977,14 @@ function SaleAdminCreateOrderContent() {
                                                         {/* Item header: name + subtotal + delete */}
                                                         <div className="flex items-start justify-between gap-2 mb-2">
                                                             <div className="flex-1 min-w-0">
-                                                                <div className="flex items-center gap-1.5">
+                                                                <div className="flex items-center gap-1.5 flex-wrap">
                                                                     {item.isGift && <span className="px-1 py-0.5 bg-emerald-100 text-emerald-700 text-[9px] font-bold uppercase rounded">Tặng</span>}
                                                                     <h4 className="font-medium text-slate-900 text-xs truncate">{item.product.name}</h4>
+                                                                    {(item.isPreOrder || item.quantity > (inventory[item.product.id] ?? 0)) && (
+                                                                        <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-semibold rounded shrink-0" title={`Tồn kho hiện tại: ${inventory[item.product.id] ?? 0}`}>
+                                                                            Đặt trước (Kho: {inventory[item.product.id] ?? 0})
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-1.5 shrink-0">
@@ -1056,6 +1084,67 @@ function SaleAdminCreateOrderContent() {
                                     {/* Cart Footer: Note, Payment, Summary, Actions */}
                                     {orderItems.length > 0 && (
                                         <div className="border-t border-slate-200 p-4 space-y-3">
+                                            {/* Pre-order Notice if any item has quantity > stock */}
+                                            {orderItems.some(i => i.isPreOrder || i.quantity > (inventory[i.product.id] ?? 0)) && (
+                                                <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 flex items-start gap-2">
+                                                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                                    <div className="space-y-0.5">
+                                                        <p className="font-semibold text-amber-800">Đơn có sản phẩm đặt trước (kho tạm hết)</p>
+                                                        <p className="text-[11px] text-amber-700 leading-relaxed">
+                                                            Kế toán vẫn đẩy MISA bình thường. Doanh số sale chỉ ghi nhận khi giao thành công.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Expected Delivery Date */}
+                                            <div>
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                                                        <Calendar className="w-3.5 h-3.5 text-[#00AFA9]" /> Hẹn ngày giao hàng (Dự kiến)
+                                                    </label>
+                                                    {expectedDeliveryDate && (
+                                                        <button 
+                                                            onClick={() => setExpectedDeliveryDate("")}
+                                                            className="text-[10px] text-slate-400 hover:text-red-500"
+                                                        >
+                                                            Xóa
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <input
+                                                    type="date"
+                                                    className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] text-slate-700"
+                                                    value={expectedDeliveryDate}
+                                                    onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                                                    min={new Date().toISOString().split('T')[0]}
+                                                />
+                                                <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                                                    <span className="text-[10px] text-slate-400">Chọn nhanh:</span>
+                                                    {[2, 3, 5, 7].map(days => {
+                                                        const d = new Date();
+                                                        d.setDate(d.getDate() + days);
+                                                        const yyyy = d.getFullYear();
+                                                        const mm = String(d.getMonth() + 1).padStart(2, '0');
+                                                        const dd = String(d.getDate()).padStart(2, '0');
+                                                        const val = `${yyyy}-${mm}-${dd}`;
+                                                        return (
+                                                            <button
+                                                                key={days}
+                                                                type="button"
+                                                                onClick={() => setExpectedDeliveryDate(val)}
+                                                                className={`px-1.5 py-0.5 text-[10px] rounded border transition-colors ${expectedDeliveryDate === val
+                                                                    ? "bg-[#00AFA9] text-white border-[#00AFA9]"
+                                                                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                                                                    }`}
+                                                            >
+                                                                +{days} ngày
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+
                                             {/* Note */}
                                             <div>
                                                 <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">

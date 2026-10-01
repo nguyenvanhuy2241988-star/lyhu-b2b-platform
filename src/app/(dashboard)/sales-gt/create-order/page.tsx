@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Product } from "@/mocks/data";
 import { loadProducts } from "@/lib/supabase/products";
-import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, Store, Gift, Search, Filter, ArrowUpDown, Eye, EyeOff, Package, Loader2, FileText, Building } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, Store, Gift, Search, Filter, ArrowUpDown, Eye, EyeOff, Package, Loader2, FileText, Building, Clock, AlertCircle, Calendar } from "lucide-react";
 import { addOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClient } from "@/lib/supabaseClient";
@@ -30,6 +30,7 @@ interface OrderItem {
     discountValue: number;
     isGift: boolean;
     price: number;
+    isPreOrder?: boolean;
 }
 
 export default function GTCreateOrderPage() {
@@ -49,6 +50,7 @@ export default function GTCreateOrderPage() {
     const [selectedOutlet, setSelectedOutlet] = useState<Outlet | null>(null);
     const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
     const [orderNote, setOrderNote] = useState("");
+    const [expectedDeliveryDate, setExpectedDeliveryDate] = useState("");
     const [currentStep, setCurrentStep] = useState(1);
     const [submitting, setSubmitting] = useState(false);
     const [vatRate, setVatRate] = useState<number>(0);
@@ -141,20 +143,26 @@ export default function GTCreateOrderPage() {
         const existingIdx = orderItems.findIndex(item => item.product.id === product.id && !item.isGift);
         const currentQty = orderItems.reduce((sum, item) => item.product.id === product.id ? sum + item.quantity : sum, 0);
         const available = inventory[product.id] ?? 0;
-
-        if (currentQty + qty > available) {
-            alert(`Kho chỉ còn ${available} sản phẩm! (Đã chọn: ${currentQty})`);
-            return;
-        }
+        const targetTotalQty = currentQty + qty;
 
         if (existingIdx !== -1) {
             const newItems = [...orderItems];
-            newItems[existingIdx] = { ...newItems[existingIdx], quantity: newItems[existingIdx].quantity + qty };
+            newItems[existingIdx] = { 
+                ...newItems[existingIdx], 
+                quantity: targetTotalQty,
+                isPreOrder: targetTotalQty > available
+            };
             setOrderItems(newItems);
         } else {
             setOrderItems(prev => [...prev, {
-                product, quantity: qty, price: product.wholesalePrice || 0,
-                discount: 0, discountType: 'amount', discountValue: 0, isGift: false
+                product, 
+                quantity: qty, 
+                price: product.wholesalePrice || 0,
+                discount: 0, 
+                discountType: 'amount', 
+                discountValue: 0, 
+                isGift: false,
+                isPreOrder: qty > available
             }]);
         }
         setProductQuantities(prev => ({ ...prev, [product.id]: 1 }));
@@ -165,11 +173,12 @@ export default function GTCreateOrderPage() {
             const newItems = [...prev];
             const item = newItems[index];
             const newQty = Math.max(1, item.quantity + delta);
-            if (newQty > (inventory[item.product.id] ?? 0)) {
-                alert(`Kho chỉ còn ${inventory[item.product.id] ?? 0} sản phẩm!`);
-                return prev;
-            }
-            newItems[index] = { ...item, quantity: newQty };
+            const available = inventory[item.product.id] ?? 0;
+            newItems[index] = { 
+                ...item, 
+                quantity: newQty,
+                isPreOrder: newQty > available
+            };
             return newItems;
         });
     };
@@ -181,11 +190,12 @@ export default function GTCreateOrderPage() {
             const newItems = [...prev];
             const item = newItems[index];
             const newQty = Math.max(1, value);
-            if (newQty > (inventory[item.product.id] ?? 0)) {
-                alert(`Kho chỉ còn ${inventory[item.product.id] ?? 0} sản phẩm!`);
-                return prev;
-            }
-            newItems[index] = { ...item, quantity: newQty };
+            const available = inventory[item.product.id] ?? 0;
+            newItems[index] = { 
+                ...item, 
+                quantity: newQty,
+                isPreOrder: newQty > available
+            };
             return newItems;
         });
     };
@@ -237,6 +247,22 @@ export default function GTCreateOrderPage() {
         if (!selectedOutlet || orderItems.length === 0) return;
         setSubmitting(true);
 
+        const preOrderItems = orderItems.filter(i => i.isPreOrder || i.quantity > (inventory[i.product.id] ?? 0));
+        let combinedNoteParts: string[] = [];
+        if (expectedDeliveryDate) {
+            const dateStr = new Date(expectedDeliveryDate).toLocaleDateString("vi-VN");
+            combinedNoteParts.push(`[Hẹn giao: ${dateStr}]`);
+        }
+        if (preOrderItems.length > 0) {
+            combinedNoteParts.push(`[Có ${preOrderItems.length} mã đặt trước/chờ kho]`);
+        }
+        if (orderNote.trim()) {
+            combinedNoteParts.push(orderNote.trim());
+        } else {
+            combinedNoteParts.push(`Đơn GT - ${selectedOutlet.name}`);
+        }
+        const finalNote = combinedNoteParts.join(" ");
+
         const res = await addOrderSupabase({
             customerId: null,
             customerName: selectedOutlet.name,
@@ -258,7 +284,7 @@ export default function GTCreateOrderPage() {
             })),
             totalAmount: finalTotal,
             status: "pending",
-            notes: orderNote || `Đơn GT - ${selectedOutlet.name}`,
+            notes: finalNote,
             vat: totalVAT,
             vat_rate: vatRate,
             order_discount_percent: orderDiscountPercent,
@@ -284,6 +310,7 @@ export default function GTCreateOrderPage() {
         setSelectedOutlet(null);
         setOrderItems([]);
         setOrderNote("");
+        setExpectedDeliveryDate("");
         setVatRate(0);
         setOrderDiscountPercent(0);
         setPaymentMethod("COD");
@@ -532,7 +559,7 @@ export default function GTCreateOrderPage() {
                                                     const bc = brandColors[product.brand || "LHU"] || "bg-slate-500";
 
                                                     return (
-                                                        <tr key={product.id} className={`hover:bg-slate-50 transition-colors ${isOutOfStock ? 'opacity-40' : ''}`}>
+                                                        <tr key={product.id} className="hover:bg-slate-50 transition-colors">
                                                             <td className="px-4 py-2.5">
                                                                 <div className="flex items-center gap-2">
                                                                     <span className={`${bc} text-white text-[10px] font-bold px-1.5 py-0.5 rounded`}>
@@ -569,10 +596,15 @@ export default function GTCreateOrderPage() {
                                                             <td className="px-3 py-2.5 text-center">
                                                                 <button
                                                                     onClick={() => handleAddProduct(product, qty)}
-                                                                    disabled={isOutOfStock}
-                                                                    className="text-xs font-semibold text-[#00AFA9] hover:text-[#009b95] disabled:text-slate-300 disabled:cursor-not-allowed flex items-center gap-1 mx-auto"
+                                                                    className={`text-xs font-semibold flex items-center gap-1 mx-auto px-2 py-1 rounded transition-colors ${
+                                                                        isOutOfStock 
+                                                                            ? "text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200" 
+                                                                            : "text-[#00AFA9] hover:text-[#009b95] hover:bg-teal-50"
+                                                                    }`}
+                                                                    title={isOutOfStock ? "Sản phẩm tạm hết kho - Đặt trước" : "Thêm vào giỏ"}
                                                                 >
-                                                                    <Plus className="w-3.5 h-3.5" /> Thêm
+                                                                    {isOutOfStock ? <Clock className="w-3.5 h-3.5 text-amber-600" /> : <Plus className="w-3.5 h-3.5" />}
+                                                                    {isOutOfStock ? "Đặt trước" : "Thêm"}
                                                                 </button>
                                                                 {inOrder > 0 && (
                                                                     <span className="text-[10px] text-[#00AFA9] font-medium block mt-0.5">Đã thêm: {inOrder}</span>
@@ -595,7 +627,7 @@ export default function GTCreateOrderPage() {
                                             const bc = brandColors[product.brand || "LHU"] || "bg-slate-500 text-white";
 
                                             return (
-                                                <div key={product.id} className={`p-3.5 sm:p-4 hover:bg-slate-50 transition-colors ${isOutOfStock ? 'opacity-40' : ''}`}>
+                                                <div key={product.id} className="p-3.5 sm:p-4 hover:bg-slate-50 transition-colors">
                                                     <div className="flex items-start justify-between gap-2 mb-2">
                                                         <div className="flex items-start gap-2 flex-1 min-w-0">
                                                             <span className={`${bc} text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 shrink-0`}>
@@ -633,10 +665,15 @@ export default function GTCreateOrderPage() {
                                                             )}
                                                             <button
                                                                 onClick={() => handleAddProduct(product, qty)}
-                                                                disabled={isOutOfStock}
-                                                                className="text-xs font-bold bg-[#00AFA9] text-white px-3.5 py-1.5 rounded-xl hover:bg-[#009b95] disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
+                                                                className={`text-xs font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-1 transition-colors ${
+                                                                    isOutOfStock
+                                                                        ? "bg-amber-600 text-white hover:bg-amber-700"
+                                                                        : "bg-[#00AFA9] text-white hover:bg-[#009b95]"
+                                                                }`}
+                                                                title={isOutOfStock ? "Sản phẩm tạm hết kho - Đặt trước" : "Thêm vào giỏ"}
                                                             >
-                                                                <Plus className="w-3.5 h-3.5" /> Thêm
+                                                                {isOutOfStock ? <Clock className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                                                                {isOutOfStock ? "Đặt trước" : "Thêm"}
                                                             </button>
                                                         </div>
                                                     </div>
@@ -676,9 +713,14 @@ export default function GTCreateOrderPage() {
                                                 {/* Item header: name + subtotal + delete */}
                                                 <div className="flex items-start justify-between gap-2 mb-2">
                                                     <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-1.5">
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
                                                             {item.isGift && <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-bold uppercase rounded">Tặng</span>}
                                                             <h4 className="font-semibold text-slate-900 text-xs truncate">{item.product.name}</h4>
+                                                            {(item.isPreOrder || item.quantity > (inventory[item.product.id] ?? 0)) && (
+                                                                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-semibold rounded shrink-0" title={`Tồn kho: ${inventory[item.product.id] ?? 0}`}>
+                                                                    Đặt trước (Kho: {inventory[item.product.id] ?? 0})
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-1.5 shrink-0">
@@ -754,6 +796,67 @@ export default function GTCreateOrderPage() {
                                 {/* Cart Footer: Note, Payment, Summary, Actions */}
                                 {orderItems.length > 0 && (
                                     <div className="border-t border-slate-200 p-3.5 sm:p-4 space-y-3">
+                                        {/* Pre-order Notice if any item has quantity > stock */}
+                                        {orderItems.some(i => i.isPreOrder || i.quantity > (inventory[i.product.id] ?? 0)) && (
+                                            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 flex items-start gap-2">
+                                                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                                <div className="space-y-0.5">
+                                                    <p className="font-semibold text-amber-800">Đơn có sản phẩm đặt trước (kho tạm hết)</p>
+                                                    <p className="text-[11px] text-amber-700 leading-relaxed">
+                                                        Kế toán vẫn đẩy MISA bình thường. Doanh số sale chỉ ghi nhận khi giao thành công.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Expected Delivery Date */}
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                                                    <Calendar className="w-3.5 h-3.5 text-[#00AFA9]" /> Hẹn ngày giao hàng (Dự kiến)
+                                                </label>
+                                                {expectedDeliveryDate && (
+                                                    <button 
+                                                        onClick={() => setExpectedDeliveryDate("")}
+                                                        className="text-[10px] text-slate-400 hover:text-red-500"
+                                                    >
+                                                        Xóa
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <input
+                                                type="date"
+                                                className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-[#00AFA9] text-slate-700"
+                                                value={expectedDeliveryDate}
+                                                onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                                                min={new Date().toISOString().split('T')[0]}
+                                            />
+                                            <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                                                <span className="text-[10px] text-slate-400">Chọn nhanh:</span>
+                                                {[2, 3, 5, 7].map(days => {
+                                                    const d = new Date();
+                                                    d.setDate(d.getDate() + days);
+                                                    const yyyy = d.getFullYear();
+                                                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                                                    const dd = String(d.getDate()).padStart(2, '0');
+                                                    const val = `${yyyy}-${mm}-${dd}`;
+                                                    return (
+                                                        <button
+                                                            key={days}
+                                                            type="button"
+                                                            onClick={() => setExpectedDeliveryDate(val)}
+                                                            className={`px-1.5 py-0.5 text-[10px] rounded border transition-colors ${expectedDeliveryDate === val
+                                                                ? "bg-[#00AFA9] text-white border-[#00AFA9]"
+                                                                : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                                                                }`}
+                                                        >
+                                                            +{days} ngày
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
                                         {/* Note */}
                                         <div>
                                             <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 mb-1">
