@@ -15,7 +15,9 @@ import {
     Plus,
     Palette,
     ArrowLeft,
-    ArrowRight
+    ArrowRight,
+    Sparkles,
+    Wand2
 } from "lucide-react";
 import { VideoClip, BRollItem } from "../../types";
 import { AI_BROLL_LIBRARY, VIDEO_FILTERS } from "../../lib/constants";
@@ -43,6 +45,8 @@ interface Step2ClipsProps {
     handleAddBRoll: (item: any) => void;
     videoFilterPreset: string;
     setVideoFilterPreset: (f: string) => void;
+    onTriggerAutoEdit?: () => void;
+    isAutoEditing?: boolean;
     onPrev: () => void;
     onNext: () => void;
 }
@@ -70,6 +74,8 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
     handleAddBRoll,
     videoFilterPreset,
     setVideoFilterPreset,
+    onTriggerAutoEdit,
+    isAutoEditing = false,
     onPrev,
     onNext
 }) => {
@@ -94,7 +100,19 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                    {onTriggerAutoEdit && (
+                        <button
+                            type="button"
+                            onClick={onTriggerAutoEdit}
+                            disabled={clips.length < 2 || isAutoEditing}
+                            className="flex items-center gap-1.5 text-xs text-white font-bold px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                            title="AI xem trực quan các ảnh/video và tự động sắp xếp theo kịch bản"
+                        >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>{isAutoEditing ? "Đang cắt dựng..." : "✨ AI Cắt Dựng"}</span>
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={handleLoadDemoClips}
@@ -240,6 +258,38 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                 onChange={handleVideoUpload}
                 className="hidden"
             />
+
+            {/* Smart AI Auto-Edit Banner */}
+            {clips.length >= 2 && onTriggerAutoEdit && (
+                <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-teal-50/90 via-primary-50/70 to-emerald-50/80 border border-primary-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-start sm:items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-primary-500 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5 sm:mt-0">
+                            <Sparkles className="w-4 h-4" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                <span>AI Đạo Diễn Cắt Dựng Tự Động (Smart Auto-Edit)</span>
+                                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-primary-100 text-primary-800">
+                                    Multimodal Vision
+                                </span>
+                            </p>
+                            <p className="text-[11px] text-slate-600 leading-snug">
+                                AI tự "xem" toàn bộ ảnh & video thô, chọn góc quay đắt giá nhất làm Hook mở đầu và xếp timeline khớp với kịch bản lời nói.
+                            </p>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={onTriggerAutoEdit}
+                        disabled={isAutoEditing}
+                        className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold transition-all shadow-sm shrink-0 cursor-pointer disabled:opacity-60"
+                    >
+                        <Wand2 className="w-3.5 h-3.5" />
+                        <span>{isAutoEditing ? "Đang xử lý thị giác..." : "Bấm AI Cắt Dựng Ngay"}</span>
+                    </button>
+                </div>
+            )}
 
             {/* Timeline Clips Strip */}
             <div className="space-y-2">

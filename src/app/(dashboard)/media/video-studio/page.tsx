@@ -88,6 +88,8 @@ import { drawFullStudioCanvas } from "./components/canvas/renderers";
 import { ClipPreviewModal } from "./components/modals/ClipPreviewModal";
 import { ProjectHistoryModal } from "./components/modals/ProjectHistoryModal";
 import { DirectorHubModal } from "./components/modals/DirectorHubModal";
+import { AutoEditModal } from "./components/modals/AutoEditModal";
+import { runSmartAutoEdit, AutoEditResult } from "./lib/autoEditService";
 import {
     StudioStepper,
     Step1Script,
@@ -146,6 +148,14 @@ export default function AutoVideoStudioPage() {
     const [isProjectHistoryOpen, setIsProjectHistoryOpen] = useState(false);
     const [isDirectorHubOpen, setIsDirectorHubOpen] = useState(false);
     const [isSavingProject, setIsSavingProject] = useState(false);
+
+    // ── AI SMART AUTO-EDIT STATE ──
+    const [isAutoEditModalOpen, setIsAutoEditModalOpen] = useState(false);
+    const [isAutoEditing, setIsAutoEditing] = useState(false);
+    const [autoEditProgressStep, setAutoEditProgressStep] = useState<string>("");
+    const [autoEditProgressPercent, setAutoEditProgressPercent] = useState<number>(0);
+    const [autoEditResult, setAutoEditResult] = useState<AutoEditResult | null>(null);
+    const [previousClipsBeforeAutoEdit, setPreviousClipsBeforeAutoEdit] = useState<VideoClip[] | null>(null);
 
     // ── STEP 4: Transitions & Pacing ──
     const [transitionEffect, setTransitionEffect] = useState<"auto" | "crossfade" | "zoom_in" | "slide_left" | "white_flash" | "hard_cut">("auto");
@@ -1689,6 +1699,65 @@ export default function AutoVideoStudioPage() {
         });
     };
 
+    // ── AI SMART AUTO-EDIT HANDLERS ──
+    const handleTriggerAutoEdit = async () => {
+        if (clips.length < 2) {
+            alert("Cần ít nhất 2 video hoặc ảnh để AI có thể phân tích và sắp xếp thứ tự cắt dựng!");
+            return;
+        }
+        setIsAutoEditModalOpen(true);
+        setIsAutoEditing(true);
+        setAutoEditProgressStep("Đang chuẩn bị trích xuất khung hình từ các video & ảnh...");
+        setAutoEditProgressPercent(10);
+        setAutoEditResult(null);
+
+        try {
+            const result = await runSmartAutoEdit({
+                clips,
+                script: selectedVoiceText,
+                hookTitle: customHookTitle,
+                clipSwitchInterval,
+                totalDuration,
+                existingMediaElements: videoElementsRef.current,
+                onProgress: (step, percent) => {
+                    setAutoEditProgressStep(step);
+                    setAutoEditProgressPercent(percent);
+                }
+            });
+
+            setAutoEditResult(result);
+            setIsAutoEditing(false);
+        } catch (err: any) {
+            setIsAutoEditing(false);
+            setAutoEditProgressStep("Gặp lỗi: " + (err?.message || "Không thể cắt dựng tự động."));
+        }
+    };
+
+    const handleApplyAutoEdit = () => {
+        if (!autoEditResult) return;
+        setPreviousClipsBeforeAutoEdit([...clips]);
+        setClips(autoEditResult.orderedClips);
+        if (autoEditResult.suggestedPacing && autoEditResult.suggestedPacing !== clipSwitchInterval) {
+            setClipSwitchInterval(autoEditResult.suggestedPacing);
+        }
+        setIsAutoEditModalOpen(false);
+        pausePlayback();
+        currentTimeRef.current = 0;
+        setDisplayTime(0);
+        setTimeout(() => drawCanvasFrame(0), 100);
+    };
+
+    const handleRevertAutoEdit = () => {
+        if (previousClipsBeforeAutoEdit) {
+            setClips(previousClipsBeforeAutoEdit);
+            setPreviousClipsBeforeAutoEdit(null);
+            pausePlayback();
+            currentTimeRef.current = 0;
+            setDisplayTime(0);
+            setTimeout(() => drawCanvasFrame(0), 100);
+        }
+    };
+
     // Main 60FPS RequestAnimationFrame Animation Loop
     useEffect(() => {
         if (!isPlaying || isExportingRef.current) return;
@@ -2457,6 +2526,8 @@ export default function AutoVideoStudioPage() {
                             handleAddBRoll={handleAddBRollClipAndPreview}
                             videoFilterPreset={videoFilterPreset}
                             setVideoFilterPreset={setVideoFilterPreset}
+                            onTriggerAutoEdit={handleTriggerAutoEdit}
+                            isAutoEditing={isAutoEditing}
                             onPrev={() => setActiveStudioStep("step_script")}
                             onNext={() => setActiveStudioStep("step_visuals")}
                         />
@@ -2737,6 +2808,20 @@ export default function AutoVideoStudioPage() {
                 currentScript={selectedVoiceText}
                 onCopyShotlist={handleCopyDirectorShotlist}
                 onApplyGuide={(guide) => setDirectorGuide(guide)}
+            />
+
+            {/* MODAL 3: AI ĐẠO DIỄN TỰ ĐỘNG CẮT DỰNG (SMART AUTO-EDIT) */}
+            <AutoEditModal
+                isOpen={isAutoEditModalOpen}
+                onClose={() => setIsAutoEditModalOpen(false)}
+                isLoading={isAutoEditing}
+                progressStep={autoEditProgressStep}
+                progressPercent={autoEditProgressPercent}
+                result={autoEditResult}
+                originalClips={clips}
+                onApply={handleApplyAutoEdit}
+                onRevert={handleRevertAutoEdit}
+                canRevert={!!previousClipsBeforeAutoEdit}
             />
 
             {/* Hidden media elements for canvas sync */}
