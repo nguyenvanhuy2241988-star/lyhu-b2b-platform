@@ -376,7 +376,13 @@ export const Step1Script: React.FC<Step1ScriptProps> = ({
                         <label className="text-[11px] font-bold text-slate-700">Giọng đọc tiếng Việt:</label>
                         <select
                             value={selectedVoiceStyleId}
-                            onChange={(e) => setSelectedVoiceStyleId(e.target.value)}
+                            onChange={(e) => {
+                                const newStyle = e.target.value;
+                                setSelectedVoiceStyleId(newStyle);
+                                if (selectedVoiceText && selectedVoiceText.trim()) {
+                                    generateSpeechForText(selectedVoiceText, newStyle, selectedVoiceEngine);
+                                }
+                            }}
                             className="w-full px-2.5 py-2 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-primary-500"
                         >
                             <option value="female-genz">Nữ Gen Z (Kore - Cuốn hút, tự nhiên chuẩn TikTok Creator)</option>

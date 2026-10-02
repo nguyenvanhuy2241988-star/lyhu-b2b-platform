@@ -218,19 +218,20 @@ async function synthesizeWithGeminiTTS(
     const voiceName = voiceMapping[styleKey] || (styleKey.includes("male") ? "Puck" : "Kore");
 
     const promptPrefixes: Record<string, string> = {
-        "female-genz": "Nói bằng tiếng Việt với phong cách trẻ trung, hào hứng, tự nhiên chuẩn TikTok creator:",
-        "female-sweet": "Nói bằng tiếng Việt với phong cách nhẹ nhàng, ấm áp, tâm sự truyền cảm:",
-        "female-pro": "Nói bằng tiếng Việt với phong cách tự tin, rõ ràng, đĩnh đạc và uy tín:",
-        "male-genz": "Nói bằng tiếng Việt với giọng nam trẻ trung, năng động, dứt khoát:",
-        "male-pro": "Nói bằng tiếng Việt với giọng nam trầm ấm, phát thanh viên chuyên nghiệp:"
+        "female-genz": "Nói với giọng nữ Gen Z Việt Nam trẻ trung, tươi vui, năng động, hào hứng, tự nhiên như một bạn trẻ đang quay clip TikTok.",
+        "female-sweet": "Nói với giọng nữ Việt Nam dịu dàng, ấm áp, nhẹ nhàng, truyền cảm như đang tâm sự thủ thỉ với người nghe.",
+        "female-pro": "Nói với giọng nữ phát thanh viên chuyên nghiệp, tự tin, rành mạch, uy tín, chuẩn mực.",
+        "male-genz": "Nói với giọng nam Gen Z Việt Nam trẻ trung, hoạt bát, dí dỏm, hào sảng, cực kỳ tự nhiên.",
+        "male-pro": "Nói với giọng nam trầm ấm, chín chắn, phong thái đĩnh đạc, uy tín, phát thanh viên doanh nghiệp."
     };
-    const instruction = promptPrefixes[styleKey] || "Nói bằng tiếng Việt rõ ràng, truyền cảm và tự nhiên:";
-    const fullPrompt = `${instruction}\n\n${text.trim()}`;
+    const instruction = promptPrefixes[styleKey] || "Nói với giọng đọc tự nhiên, chuẩn mực, truyền cảm và rõ ràng:";
+    const fullPrompt = `${instruction}\n\nĐọc chính xác đoạn văn bản sau bằng tiếng Việt, tuyệt đối không thêm lời chào hay bất kỳ từ ngữ nào khác:\n\n"${text.trim()}"`;
 
     const endpoints = [
-        { name: "gemini-2.0-flash (v1beta)", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}` },
-        { name: "gemini-2.0-flash (v1alpha)", url: `https://generativelanguage.googleapis.com/v1alpha/models/gemini-2.0-flash:generateContent?key=${apiKey}` },
-        { name: "gemini-2.5-flash (v1beta)", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}` }
+        { name: "gemini-3.8-flash-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=${apiKey}` },
+        { name: "gemini-3.8-flash-lite-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-lite-tts:generateContent?key=${apiKey}` },
+        { name: "gemini-2.5-flash-preview-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}` },
+        { name: "gemini-2.5-flash", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}` }
     ];
 
     let lastError = "";
