@@ -93,7 +93,11 @@ export function renderVideoFrame({
                 ctx.filter = foundFilter.filter;
             }
         }
-        ctx.drawImage(videoEl, dx, dy, dw, dh);
+        try {
+            ctx.drawImage(videoEl, dx, dy, dw, dh);
+        } catch {
+            // Safe fallback if crossOrigin or tainted frame occurs
+        }
         ctx.restore();
     };
 
