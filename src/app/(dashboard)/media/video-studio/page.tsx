@@ -264,6 +264,18 @@ const LYHU_TEMPLATES: LyhuTemplate[] = [
         bgm: "trending_upbeat",
         textColor: "#FACC15",
         subtitleStyle: "tiktok_stroke"
+    },
+    {
+        id: "abi_snack_uhi",
+        badge: "🍘 Abi Snack & UHi",
+        title: "Bánh tráng Abi Snack & Kẹo UHi Hàn Quốc độc quyền cho đại lý & mini mart",
+        hookTitle: "🍘 TỔNG KHO BÁNH TRÁNG ABI & KẸO UHi GIÁ SỈ!",
+        script: "Chủ quán ăn vặt, tiệm tạp hóa và mini mart đang tìm nguồn bánh tráng chuẩn vị cùng kẹo nhập khẩu Hàn Quốc thì xem hết video này nha! LYHU phân phối độc quyền dòng bánh tráng Abi Snack đậm vị giòn rụm và các dòng kẹo dẻo UHi thơm ngon chính ngạch. Date mới tinh vừa về kho, chính sách chiết khấu đại lý tốt nhất thị trường. Nhắn liền cho LYHU để nhận mẫu thử và bảng giá sỉ sập sàn nhé!",
+        pacing: 2.5,
+        transition: "auto",
+        bgm: "trending_upbeat",
+        textColor: "#F43F5E",
+        subtitleStyle: "tiktok_stroke"
     }
 ];
 
@@ -485,8 +497,11 @@ export default function AutoVideoStudioPage() {
     const [transitionEffect, setTransitionEffect] = useState<"auto" | "crossfade" | "zoom_in" | "slide_left" | "white_flash" | "hard_cut">("auto");
     const [clipSwitchInterval, setClipSwitchInterval] = useState<number>(2.5); // 2.5s per shot (Nhịp cắt 24Zone)
     const [showWatermark, setShowWatermark] = useState(true);
-    const [activeTemplateId, setActiveTemplateId] = useState<string | null>("kho_dem");
+    const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
     const [videoFilterPreset, setVideoFilterPreset] = useState<string>("vibrant");
+
+    // ── PREVIEW FOOTAGE MODAL STATE ──
+    const [previewingClip, setPreviewingClip] = useState<VideoClip | null>(null);
 
     // ── STEP 5: Background Music (BGM) ──
     const [bgmChoice, setBgmChoice] = useState<string>("trending_upbeat");
@@ -508,9 +523,10 @@ export default function AutoVideoStudioPage() {
     const [copiedSoundTitle, setCopiedSoundTitle] = useState<string | null>(null);
     const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
-    // ── AI STYLE CLONE STATE ──
+    // ── AI SCRIPT & STYLE CLONE STATE ──
+    const [scriptInputMode, setScriptInputMode] = useState<"ai_prompt" | "clone_link" | "templates">("ai_prompt");
     const [isCloneModalOpen, setIsCloneModalOpen] = useState(true);
-    const [cloneRefUrl, setCloneRefUrl] = useState("https://www.tiktok.com/@tra.my.24zone/video/7653479957431061778");
+    const [cloneRefUrl, setCloneRefUrl] = useState("");
     const [cloneTopic, setCloneTopic] = useState("Hàng khoai môn CVT container về buổi đêm date mới tinh");
     const [isAnalyzingClone, setIsAnalyzingClone] = useState(false);
     const [cloneStoryboard, setCloneStoryboard] = useState<string[]>([]);
@@ -1150,26 +1166,29 @@ export default function AutoVideoStudioPage() {
         }, 50);
     };
 
-    const handleCloneStyle = async () => {
-        if (!cloneTopic.trim()) {
+    const handleCloneStyle = async (forcedTopic?: string, forcedUrl?: string) => {
+        const topicToUse = (typeof forcedTopic === "string" ? forcedTopic : cloneTopic).trim();
+        if (!topicToUse) {
             alert("Vui lòng nhập chủ đề sản phẩm của bạn!");
             return;
         }
 
+        const urlToUse = (typeof forcedUrl === "string" ? forcedUrl : cloneRefUrl).trim();
         setIsAnalyzingClone(true);
-        setAnalyzingStepText("1/2 Đạo diễn AI đang phân tích kịch bản & 5 góc quay...");
+        setAnalyzingStepText(urlToUse ? "1/2 Đang bóc tách phong cách TikTok & soạn kịch bản..." : "1/2 Đạo diễn AI đang sáng tạo kịch bản bán buôn chuẩn TikTok...");
         try {
             const res = await fetch("/api/ai/clone-video-style", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    referenceUrl: cloneRefUrl.trim(),
-                    userTopic: cloneTopic.trim()
+                    referenceUrl: urlToUse,
+                    userTopic: topicToUse
                 })
             });
 
             const data = await res.json();
             if (data.success) {
+                setActiveTemplateId(null); // Luôn chuyển sang kịch bản tùy chỉnh của user, không dính template
                 const newHook = data.hookTitle || customHookTitle;
                 const newScript = data.script || selectedVoiceText;
                 setCustomHookTitle(newHook);
@@ -1424,6 +1443,7 @@ export default function AutoVideoStudioPage() {
                 for (const act of actions) {
                     if (act.type === "update_script" && act.payload?.script) {
                         setSelectedVoiceText(act.payload.script);
+                        setActiveTemplateId(null); // Reset badge template cũ
                         appliedLabels.push("Cập nhật kịch bản");
                         if (act.payload.triggerTTS !== false) {
                             generateSpeechForText(act.payload.script, selectedVoiceStyleId);
@@ -1533,6 +1553,17 @@ export default function AutoVideoStudioPage() {
             copy.splice(targetIndex, 0, item);
             return copy;
         });
+    };
+
+    const moveClipToIndex = (fromIndex: number, toIndex: number) => {
+        if (toIndex < 0 || toIndex >= clips.length || fromIndex === toIndex) return;
+        setClips(prev => {
+            const copy = [...prev];
+            const [moved] = copy.splice(fromIndex, 1);
+            copy.splice(toIndex, 0, moved);
+            return copy;
+        });
+        setTimeout(() => handlePreviewSpecificClip(toIndex), 80);
     };
 
     const handleVoiceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -3429,116 +3460,224 @@ export default function AutoVideoStudioPage() {
                                 </div>
                             </div>
 
-                            {/* 1-Click AI Script Generator Box */}
-                            <div className="p-4 rounded-xl bg-gradient-to-br from-teal-50/70 via-slate-50 to-white border border-teal-200/80 space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold text-teal-950 flex items-center gap-1.5">
+                            {/* 3-in-1 AI Script Creation Suite */}
+                            <div className="p-4 rounded-xl bg-gradient-to-br from-teal-50/70 via-slate-50 to-white border border-teal-200/80 space-y-3.5">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                    <div className="flex items-center gap-1.5">
                                         <Sparkles className="w-4 h-4 text-teal-600" />
-                                        <span>AI Viết Kịch Bản & Thu Giọng 1-Click:</span>
-                                    </label>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsCloneModalOpen(!isCloneModalOpen)}
-                                        className="text-[11px] text-teal-700 hover:text-teal-800 font-semibold flex items-center gap-1 cursor-pointer"
-                                    >
-                                        <Sliders className="w-3 h-3" />
-                                        <span>{isCloneModalOpen ? "Thu gọn 3 phong cách" : "Xem 3 phong cách mẫu"}</span>
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
-                                    <input
-                                        type="text"
-                                        value={cloneTopic}
-                                        onChange={(e) => setCloneTopic(e.target.value)}
-                                        placeholder="Nhập chủ đề video (VD: Hàng khoai môn CVT container về đêm date mới tinh...)"
-                                        className="sm:col-span-8 px-3.5 py-2.5 text-xs rounded-xl border border-teal-200 bg-white focus:outline-none focus:border-teal-500 font-medium text-slate-800 shadow-inner"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleCloneStyle}
-                                        disabled={isAnalyzingClone || isSynthesizingVoice}
-                                        className="sm:col-span-4 py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                                    >
-                                        {isAnalyzingClone || isSynthesizingVoice ? (
-                                            <>
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                <span>{analyzingStepText || "Đang xử lý..."}</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Wand2 className="w-4 h-4 text-amber-300" />
-                                                <span>✨ AI Viết Kịch Bản & Thu Giọng</span>
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-
-                                {/* Quick topic pills */}
-                                <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs">
-                                    <span className="text-[11px] text-slate-400 font-medium">Gợi ý nhanh:</span>
-                                    {[
-                                        "Hàng khoai môn CVT container về buổi đêm date mới tinh",
-                                        "Bột phô mai BOYO 1kg cho quán khoai tây lắc",
-                                        "Da cá trứng muối & Bánh tráng Abi Snack giá sỉ",
-                                        "Chuyện kiểm hàng kho sỉ LYHU xuyên đêm kịp giao sáng mai"
-                                    ].map((topic, i) => (
+                                        <label className="text-xs font-bold text-teal-950">
+                                            Chọn Phương Thức Tạo Kịch Bản:
+                                        </label>
+                                    </div>
+                                    <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-teal-200/80 shadow-sm self-start sm:self-auto">
                                         <button
-                                            key={i}
                                             type="button"
-                                            onClick={() => setCloneTopic(topic)}
-                                            className="px-2.5 py-1 rounded-lg bg-white hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 text-[11px] text-slate-600 border border-slate-200 transition-colors cursor-pointer"
+                                            onClick={() => setScriptInputMode("ai_prompt")}
+                                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                                scriptInputMode === "ai_prompt"
+                                                    ? "bg-teal-600 text-white shadow-xs"
+                                                    : "text-slate-600 hover:text-teal-700 hover:bg-teal-50"
+                                            }`}
                                         >
-                                            {topic}
+                                            ✨ AI Theo Chủ Đề
                                         </button>
-                                    ))}
+                                        <button
+                                            type="button"
+                                            onClick={() => setScriptInputMode("clone_link")}
+                                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                                scriptInputMode === "clone_link"
+                                                    ? "bg-teal-600 text-white shadow-xs"
+                                                    : "text-slate-600 hover:text-teal-700 hover:bg-teal-50"
+                                            }`}
+                                        >
+                                            🔗 Phân Tích Link Mẫu
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setScriptInputMode("templates")}
+                                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                                scriptInputMode === "templates"
+                                                    ? "bg-teal-600 text-white shadow-xs"
+                                                    : "text-slate-600 hover:text-teal-700 hover:bg-teal-50"
+                                            }`}
+                                        >
+                                            📋 Mẫu Chuẩn LYHU
+                                        </button>
+                                    </div>
                                 </div>
 
-                                {/* 3 Template styles */}
-                                {isCloneModalOpen && (
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-teal-100">
-                                        {LYHU_TEMPLATES.map((tpl) => {
-                                            const isActive = activeTemplateId === tpl.id;
-                                            return (
+                                {/* TAB 1: AI Viết Theo Sản Phẩm / Ý Tưởng */}
+                                {scriptInputMode === "ai_prompt" && (
+                                    <div className="space-y-2.5">
+                                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                                            <input
+                                                type="text"
+                                                value={cloneTopic}
+                                                onChange={(e) => setCloneTopic(e.target.value)}
+                                                placeholder="Nhập chủ đề video (VD: Giao hàng cho siêu thị Ohmee, Bột phô mai Boyo lắc khoai...)"
+                                                className="sm:col-span-8 px-3.5 py-2.5 text-xs rounded-xl border border-teal-200 bg-white focus:outline-none focus:border-teal-500 font-medium text-slate-800 shadow-inner"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleCloneStyle(cloneTopic, "")}
+                                                disabled={isAnalyzingClone || isSynthesizingVoice}
+                                                className="sm:col-span-4 py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                                            >
+                                                {isAnalyzingClone || isSynthesizingVoice ? (
+                                                    <>
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                        <span>{analyzingStepText || "Đang xử lý..."}</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Wand2 className="w-4 h-4 text-amber-300" />
+                                                        <span>✨ AI Viết Kịch Bản & Thu Giọng</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+
+                                        {/* Quick topic pills */}
+                                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-xs">
+                                            <span className="text-[11px] text-slate-400 font-medium">Gợi ý sản phẩm LYHU:</span>
+                                            {[
+                                                { label: "🧀 Bột Phô Mai BOYO 1kg", topic: "Bột phô mai BOYO 1kg cho quán khoai tây lắc và gà rán giòn rụm" },
+                                                { label: "🍠 Khoai Môn CVT Độc Quyền", topic: "Thanh khoai môn CVT tẩm vị nhập khẩu độc quyền cho quán Karaoke và siêu thị" },
+                                                { label: "🍘 Bánh Tráng Abi Snack", topic: "Bánh tráng Abi Snack bơ mỡ hành và da cá hoàng kim giá sỉ miền Bắc" },
+                                                { label: "🍬 Kẹo UHi Hàn Quốc", topic: "Kẹo UHi các loại nhập khẩu chính ngạch Hàn Quốc cho mini mart và đại lý" },
+                                                { label: "🚚 Giao Hàng Siêu Thị Ohmee", topic: "Vlog giao chuyến hàng lớn cho chuỗi siêu thị Ohmee date mới cứng" },
+                                                { label: "🌙 Đêm Kho Sỉ Đóng Hàng", topic: "Chuyện kiểm hàng kho sỉ LYHU xuyên đêm kịp giao sáng mai" }
+                                            ].map((item, i) => (
                                                 <button
-                                                    key={tpl.id}
+                                                    key={i}
                                                     type="button"
-                                                    onClick={() => handleApplyTemplate(tpl)}
-                                                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                                                        isActive
-                                                            ? "bg-teal-50 border-teal-500 ring-2 ring-teal-500/20 shadow-sm"
-                                                            : "bg-white hover:bg-slate-50 border-slate-200"
-                                                    }`}
+                                                    onClick={() => {
+                                                        setCloneTopic(item.topic);
+                                                        handleCloneStyle(item.topic, "");
+                                                    }}
+                                                    className="px-2.5 py-1 rounded-lg bg-white hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 text-[11px] text-slate-600 border border-slate-200 transition-colors cursor-pointer"
                                                 >
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <span className="text-[11px] font-bold text-teal-800">
-                                                            {tpl.badge}
-                                                        </span>
-                                                        {isActive && (
-                                                            <span className="text-[9px] bg-teal-600 text-white px-1.5 py-0.2 rounded font-bold">
-                                                                ĐANG DÙNG
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-xs font-bold text-slate-800 line-clamp-1">
-                                                        {tpl.hookTitle}
-                                                    </div>
-                                                    <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed mt-0.5">
-                                                        {tpl.title}
-                                                    </p>
+                                                    {item.label}
                                                 </button>
-                                            );
-                                        })}
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* TAB 2: Phân Tích & Học Phong Cách Từ Link Video Mẫu */}
+                                {scriptInputMode === "clone_link" && (
+                                    <div className="space-y-2.5 p-3 rounded-xl bg-teal-50/50 border border-teal-200">
+                                        <div className="text-[11px] text-teal-900 font-semibold flex items-center gap-1.5">
+                                            <ExternalLink className="w-3.5 h-3.5 text-teal-600" />
+                                            <span>Dán link TikTok hoặc Reels có giọng điệu hoặc phong cách bạn muốn học hỏi:</span>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                                            <input
+                                                type="url"
+                                                value={cloneRefUrl}
+                                                onChange={(e) => setCloneRefUrl(e.target.value)}
+                                                placeholder="Dán link video tham khảo (VD: https://www.tiktok.com/@tra.my.24zone/video/...)"
+                                                className="sm:col-span-6 px-3 py-2 text-xs rounded-xl border border-teal-200 bg-white font-medium text-slate-800 focus:outline-none focus:border-teal-500 shadow-inner"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={cloneTopic}
+                                                onChange={(e) => setCloneTopic(e.target.value)}
+                                                placeholder="Sản phẩm LYHU áp dụng (VD: Khoai môn CVT, Bột phô mai BOYO...)"
+                                                className="sm:col-span-6 px-3 py-2 text-xs rounded-xl border border-teal-200 bg-white font-medium text-slate-800 focus:outline-none focus:border-teal-500 shadow-inner"
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between pt-1">
+                                            <p className="text-[10px] text-slate-500">
+                                                💡 AI sẽ tự động phân tích caption, cách giật hook và nhịp cắt của video mẫu để viết lại cho LYHU.
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleCloneStyle(cloneTopic, cloneRefUrl)}
+                                                disabled={isAnalyzingClone || isSynthesizingVoice || !cloneRefUrl.trim()}
+                                                className="py-2 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                                            >
+                                                {isAnalyzingClone ? (
+                                                    <>
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                        <span>{analyzingStepText || "Đang bóc tách video..."}</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Wand2 className="w-4 h-4 text-amber-300" />
+                                                        <span>🔍 Phân Tích & Viết Lại Kịch Bản</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* TAB 3: Chọn Từ Kho Kịch Bản Mẫu Sẵn Có */}
+                                {scriptInputMode === "templates" && (
+                                    <div className="space-y-2">
+                                        <p className="text-[11px] text-slate-500">
+                                            Chọn 1 trong các kịch bản thực chiến chuẩn hóa cho các sản phẩm chủ lực của LYHU:
+                                        </p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                                            {LYHU_TEMPLATES.map((tpl) => {
+                                                const isActive = activeTemplateId === tpl.id;
+                                                return (
+                                                    <button
+                                                        key={tpl.id}
+                                                        type="button"
+                                                        onClick={() => handleApplyTemplate(tpl)}
+                                                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                                                            isActive
+                                                                ? "bg-teal-50 border-teal-500 ring-2 ring-teal-500/20 shadow-sm"
+                                                                : "bg-white hover:bg-slate-50 border-slate-200"
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <span className="text-[11px] font-bold text-teal-800">
+                                                                {tpl.badge}
+                                                            </span>
+                                                            {isActive ? (
+                                                                <span className="text-[9px] bg-teal-600 text-white px-1.5 py-0.2 rounded font-bold">
+                                                                    ĐANG DÙNG
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[9px] text-slate-400 group-hover:text-teal-600">
+                                                                    Áp dụng
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-xs font-bold text-slate-800 line-clamp-1">
+                                                            {tpl.hookTitle}
+                                                        </div>
+                                                        <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed mt-0.5">
+                                                            {tpl.title}
+                                                        </p>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 )}
                             </div>
 
                             {/* Script Text Editor */}
                             <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold text-slate-800">
-                                        🎙️ Nội dung kịch bản lời thoại (Hiển thị phụ đề & Đọc thành tiếng):
-                                    </label>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-xs font-bold text-slate-800">
+                                            🎙️ Lời thoại kịch bản:
+                                        </label>
+                                        {activeTemplateId ? (
+                                            <span className="text-[10px] bg-teal-100 text-teal-800 border border-teal-200 px-2 py-0.5 rounded-full font-bold">
+                                                Đang dùng mẫu: {LYHU_TEMPLATES.find(t => t.id === activeTemplateId)?.badge || activeTemplateId}
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full font-bold">
+                                                ✨ Kịch bản tùy chỉnh / AI tạo riêng
+                                            </span>
+                                        )}
+                                    </div>
                                     <span className="text-[11px] text-slate-500 font-mono font-medium">
                                         {selectedVoiceText.split(/\s+/).filter(Boolean).length} từ • ~{Math.round(selectedVoiceText.split(/\s+/).filter(Boolean).length / 3.2)}s đọc
                                     </span>
@@ -3546,7 +3685,10 @@ export default function AutoVideoStudioPage() {
                                 <textarea
                                     rows={4}
                                     value={selectedVoiceText}
-                                    onChange={(e) => setSelectedVoiceText(e.target.value)}
+                                    onChange={(e) => {
+                                        setSelectedVoiceText(e.target.value);
+                                        setActiveTemplateId(null); // Gõ nội dung thì tự động thành kịch bản tùy chỉnh
+                                    }}
                                     placeholder="Nhập hoặc để AI tạo nội dung lời thoại kịch bản..."
                                     className="w-full p-3.5 text-xs border border-slate-200 rounded-xl focus:border-teal-500 focus:ring-1 focus:ring-teal-200 outline-none leading-relaxed text-slate-800 font-medium bg-slate-50/50 focus:bg-white transition-colors"
                                 />
@@ -3866,24 +4008,94 @@ export default function AutoVideoStudioPage() {
                                 </div>
                             </div>
 
-                            {/* 🎞️ DÀN CẢNH TIMELINE CLIPS STRIP (Click to preview on canvas) */}
+                            {/* 📤 KHU VỰC TẢI VIDEO THÔ TỪ ĐIỆN THOẠI / MÁY TÍNH (ĐƯA LÊN TRÊN ĐỂ TIỆN THAO TÁC) */}
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
+                                    <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                        <Upload className="w-4 h-4 text-teal-600" />
+                                        <span>Tải Lên Video Quay Thô (Footage):</span>
+                                    </label>
+                                    <span className="text-[11px] text-slate-500 font-mono">
+                                        {clips.length} clip trong dàn cảnh • Ước tính {(clips.length * clipSwitchInterval).toFixed(1)}s video
+                                    </span>
+                                </div>
+
+                                <div
+                                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                    onDragLeave={() => setIsDragging(false)}
+                                    onDrop={handleDrop}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+                                        isDragging
+                                            ? "border-teal-500 bg-teal-50 scale-[1.01]"
+                                            : "border-teal-200 hover:border-teal-500 bg-teal-50/20 hover:bg-teal-50/40"
+                                    }`}
+                                >
+                                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                                        {isUploadingVideo ? (
+                                            <div className="flex items-center gap-2">
+                                                <Loader2 className="w-5 h-5 text-teal-600 animate-spin" />
+                                                <p className="text-xs font-bold text-teal-700">Đang nạp video vào bộ nhớ...</p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <span className="p-2.5 rounded-xl bg-teal-600 text-white shadow-sm shrink-0">
+                                                    <Upload className="w-4 h-4" />
+                                                </span>
+                                                <div className="text-left sm:flex-1">
+                                                    <p className="text-xs font-bold text-slate-800">
+                                                        Kéo thả hoặc nhấp để tải thêm clip quay thô từ điện thoại / máy tính
+                                                    </p>
+                                                    <p className="text-[11px] text-slate-400">
+                                                        Hỗ trợ MP4, MOV, WebM • Chọn nhiều video cùng lúc • Tự động co giãn theo tỉ lệ {aspectRatio}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        fileInputRef.current?.click();
+                                                    }}
+                                                    className="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors cursor-pointer shrink-0"
+                                                >
+                                                    + Chọn Tệp Video
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Hidden file input */}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="video/*,.mp4,.mov,.webm,.m4v,.mkv"
+                                multiple
+                                onChange={handleVideoUpload}
+                                className="hidden"
+                            />
+
+                            {/* 🎞️ DÀN CẢNH TIMELINE CLIPS STRIP (Xem trực tiếp & Sắp xếp thứ tự) */}
+                            <div className="space-y-2.5">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                                     <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                                         <Clapperboard className="w-4 h-4 text-purple-600" />
-                                        <span>Dàn Cảnh Video Hiện Tại ({clips.length} góc quay):</span>
+                                        <span>Dàn Cảnh Video Hiện Tại ({clips.length} Cảnh Quay - Sắp Xếp Trực Tiếp):</span>
                                     </span>
-                                    <span className="text-[11px] text-slate-400">Bấm "Xem Thử" để phát ngay góc quay đó</span>
+                                    <span className="text-[11px] text-slate-400">
+                                        Bấm vào hình để xem video thô • Đổi thứ tự cảnh 1, 2, 3 bằng menu hoặc mũi tên
+                                    </span>
                                 </div>
 
                                 {clips.length === 0 ? (
                                     <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50 space-y-2">
                                         <Film className="w-8 h-8 text-slate-400 mx-auto" />
                                         <p className="text-xs font-semibold text-slate-600">Chưa có cảnh nào trong video.</p>
-                                        <p className="text-[11px] text-slate-400">Chọn thêm các cảnh B-Roll có sẵn bên dưới hoặc nạp video của bạn!</p>
+                                        <p className="text-[11px] text-slate-400">Hãy bấm tải video ở trên hoặc chọn thêm các cảnh B-Roll mẫu bên dưới!</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                                         {clips.map((c, idx) => {
                                             if (!c?.id) return null;
                                             const activeClipIndex = clips.length > 0 ? Math.floor(displayTime / Math.max(1.5, clipSwitchInterval || 2.5)) % clips.length : 0;
@@ -3891,53 +4103,110 @@ export default function AutoVideoStudioPage() {
                                             return (
                                                 <div
                                                     key={c.id}
-                                                    className={`flex items-center justify-between p-2.5 rounded-xl border transition-all text-xs ${
+                                                    className={`p-3 rounded-xl border transition-all text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                                                         isCurrentlyPlayingThis
-                                                            ? "bg-teal-50/80 border-teal-400 ring-2 ring-teal-300 shadow-sm"
-                                                            : "bg-white border-slate-200 hover:border-slate-300"
+                                                            ? "bg-purple-50/70 border-purple-400 ring-2 ring-purple-300 shadow-sm"
+                                                            : "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
                                                     }`}
                                                 >
-                                                    <div className="flex items-center gap-2.5 truncate">
-                                                        <span className={`w-6 h-6 rounded-lg font-black flex items-center justify-center text-[11px] shrink-0 ${
-                                                            isCurrentlyPlayingThis ? "bg-teal-600 text-white" : "bg-purple-100 text-purple-700"
-                                                        }`}>
-                                                            #{idx + 1}
-                                                        </span>
-                                                        <div className="truncate">
-                                                            <div className="font-bold text-slate-800 truncate flex items-center gap-1.5">
-                                                                <span>{c.name}</span>
-                                                                {idx === 0 && (
-                                                                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-amber-100 text-amber-800 font-bold">Mở đầu</span>
-                                                                )}
+                                                    {/* Video Thumbnail & Info */}
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        {/* Thumbnail Preview with Play Overlay */}
+                                                        <div
+                                                            onClick={() => setPreviewingClip(c)}
+                                                            className="relative group/thumb cursor-pointer shrink-0 rounded-xl overflow-hidden border border-slate-200 bg-black w-20 h-16 sm:w-24 sm:h-16 flex items-center justify-center shadow-xs"
+                                                            title="Nhấn để xem trước toàn bộ video thô này"
+                                                        >
+                                                            <video
+                                                                src={c.url}
+                                                                preload="metadata"
+                                                                muted
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                            <div className="absolute inset-0 bg-black/35 group-hover/thumb:bg-black/15 flex items-center justify-center transition-all">
+                                                                <span className="p-1 rounded-full bg-white/90 text-purple-700 shadow-sm group-hover/thumb:scale-110 transition-transform">
+                                                                    <Play className="w-3.5 h-3.5 fill-purple-600" />
+                                                                </span>
                                                             </div>
-                                                            <div className="text-[10px] text-slate-400 font-mono">
-                                                                Thời lượng: {c.duration.toFixed(1)}s • Góc quay {idx + 1}
+                                                            <span className="absolute bottom-1 right-1 text-[9px] font-mono font-bold bg-black/70 text-white px-1 rounded">
+                                                                {c.duration.toFixed(0)}s
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Text Info */}
+                                                        <div className="min-w-0 flex-1 space-y-1">
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <span className={`px-2 py-0.5 rounded-md font-black text-[10px] ${
+                                                                    idx === 0
+                                                                        ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                                                        : "bg-purple-100 text-purple-800"
+                                                                }`}>
+                                                                    {idx === 0 ? "⭐ CẢNH #1 (MỞ ĐẦU HOOK)" : `CẢNH #${idx + 1}`}
+                                                                </span>
+                                                                <span className="text-[10px] text-slate-400 font-mono">
+                                                                    Xuất hiện từ: {(idx * clipSwitchInterval).toFixed(1)}s
+                                                                </span>
+                                                            </div>
+                                                            <div className="font-bold text-slate-800 text-xs truncate" title={c.name}>
+                                                                {c.name}
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-400 flex items-center gap-2">
+                                                                <span>Thời lượng gốc: {c.duration.toFixed(1)}s</span>
+                                                                <span>•</span>
+                                                                <span>Kích thước: {c.width || 1080}x{c.height || 1920}</span>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex items-center gap-1.5 shrink-0">
-                                                        {/* Click-to-preview Button */}
+                                                    {/* Control Actions & Reorder */}
+                                                    <div className="flex items-center gap-1.5 shrink-0 justify-end flex-wrap pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                                        {/* Nút Xem Video Thô */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setPreviewingClip(c)}
+                                                            className="px-2.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer transition-colors shadow-xs"
+                                                            title="Mở trình phát video để xem trực tiếp video thô này"
+                                                        >
+                                                            <Play className="w-3 h-3 fill-white" />
+                                                            <span>Xem Video</span>
+                                                        </button>
+
+                                                        {/* Nút Xem Trên Canvas Ghép */}
                                                         <button
                                                             type="button"
                                                             onClick={() => handlePreviewSpecificClip(idx)}
-                                                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
+                                                            className={`px-2 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
                                                                 isCurrentlyPlayingThis
                                                                     ? "bg-teal-600 text-white"
                                                                     : "bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-700"
                                                             }`}
-                                                            title="Xem trước cảnh này trên màn hình video"
+                                                            title="Xem cảnh này trên màn hình video thành phẩm"
                                                         >
-                                                            <Eye className="w-3.5 h-3.5" />
-                                                            <span>{isCurrentlyPlayingThis ? "Đang Hiện" : "Xem Thử"}</span>
+                                                            <Eye className="w-3 h-3" />
+                                                            <span className="hidden sm:inline">{isCurrentlyPlayingThis ? "Đang Hiện" : "Màn Ghép"}</span>
                                                         </button>
 
+                                                        {/* Dropdown Đổi Thứ Tự Cảnh */}
+                                                        <select
+                                                            value={idx}
+                                                            onChange={(e) => moveClipToIndex(idx, Number(e.target.value))}
+                                                            className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none hover:border-purple-300 cursor-pointer"
+                                                            title="Đổi trực tiếp thứ tự xuất hiện của cảnh này"
+                                                        >
+                                                            {clips.map((_, i) => (
+                                                                <option key={i} value={i}>
+                                                                    {i === 0 ? "Vị trí: Cảnh #1 (Mở Đầu)" : `Vị trí: Cảnh #${i + 1}`}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+
+                                                        {/* Nút Lên / Xuống */}
                                                         <button
                                                             type="button"
                                                             onClick={() => moveClip(idx, "up")}
                                                             disabled={idx === 0}
-                                                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 cursor-pointer"
-                                                            title="Đưa lên trước"
+                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 disabled:opacity-30 cursor-pointer border border-slate-200"
+                                                            title="Đưa lên trước 1 cảnh"
                                                         >
                                                             <MoveUp className="w-3.5 h-3.5" />
                                                         </button>
@@ -3945,16 +4214,30 @@ export default function AutoVideoStudioPage() {
                                                             type="button"
                                                             onClick={() => moveClip(idx, "down")}
                                                             disabled={idx === clips.length - 1}
-                                                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 cursor-pointer"
-                                                            title="Đưa xuống sau"
+                                                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 disabled:opacity-30 cursor-pointer border border-slate-200"
+                                                            title="Đưa xuống sau 1 cảnh"
                                                         >
                                                             <MoveDown className="w-3.5 h-3.5" />
                                                         </button>
+
+                                                        {/* Nút Đặt Làm Mở Đầu */}
+                                                        {idx !== 0 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => moveClipToIndex(idx, 0)}
+                                                                className="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold cursor-pointer transition-colors"
+                                                                title="Đưa cảnh này lên làm 3 giây mở đầu của video"
+                                                            >
+                                                                ⭐ Mở Đầu
+                                                            </button>
+                                                        )}
+
+                                                        {/* Nút Xóa */}
                                                         <button
                                                             type="button"
                                                             onClick={() => removeClip(c.id)}
-                                                            className="p-1 hover:bg-red-50 rounded text-slate-400 hover:text-red-600 cursor-pointer"
-                                                            title="Xóa cảnh này"
+                                                            className="p-1.5 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600 cursor-pointer border border-slate-200"
+                                                            title="Xóa cảnh này khỏi video"
                                                         >
                                                             <Trash2 className="w-3.5 h-3.5" />
                                                         </button>
@@ -3977,7 +4260,7 @@ export default function AutoVideoStudioPage() {
                                             </h3>
                                         </div>
                                         <p className="text-[11px] text-slate-500 mt-0.5">
-                                            Nhấn <strong>"Xem Ngay"</strong> để hiện trên màn hình, hoặc <strong>"Làm Mở Đầu (#1)"</strong> để đặt làm 3 giây đầu tiên.
+                                            Nhấn <strong>"Xem Ngay"</strong> để xem video thô, hoặc <strong>"Làm Mở Đầu (#1)"</strong> để đặt làm 3 giây đầu tiên.
                                         </p>
                                     </div>
 
@@ -4030,12 +4313,12 @@ export default function AutoVideoStudioPage() {
                                                         {/* Xem ngay button */}
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleAddBRollClipAndPreview(item)}
+                                                            onClick={() => setPreviewingClip(item as any)}
                                                             className="py-1 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
-                                                            title="Xem thử cảnh này trên màn hình"
+                                                            title="Xem trước video cảnh này"
                                                         >
                                                             <Eye className="w-3 h-3 text-purple-600" />
-                                                            <span>Xem Ngay</span>
+                                                            <span>Xem Video</span>
                                                         </button>
 
                                                         {/* Đặt làm mở đầu */}
@@ -4062,12 +4345,12 @@ export default function AutoVideoStudioPage() {
                                                         {isAlreadyAdded ? (
                                                             <>
                                                                 <Check className="w-3.5 h-3.5 text-purple-700" />
-                                                                <span>Đã Trong Video (Bấm Để Xem)</span>
+                                                                <span>Đã Trong Video (Xem Trên Canvas)</span>
                                                             </>
                                                         ) : (
                                                             <>
                                                                 <Plus className="w-3.5 h-3.5" />
-                                                                <span>+ Thêm & Xem Cảnh Này</span>
+                                                                <span>+ Thêm Vào Dàn Cảnh</span>
                                                             </>
                                                         )}
                                                     </button>
@@ -4077,50 +4360,6 @@ export default function AutoVideoStudioPage() {
                                     })}
                                 </div>
                             </div>
-
-                            {/* Upload Dropzone */}
-                            <div
-                                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                                onDragLeave={() => setIsDragging(false)}
-                                onDrop={handleDrop}
-                                onClick={() => fileInputRef.current?.click()}
-                                className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
-                                    isDragging
-                                        ? "border-teal-500 bg-teal-50 scale-[1.01]"
-                                        : "border-slate-200 hover:border-teal-400 bg-slate-50/50 hover:bg-teal-50/20"
-                                }`}
-                            >
-                                <div className="flex flex-col items-center gap-1.5">
-                                    {isUploadingVideo ? (
-                                        <div className="flex flex-col items-center gap-2">
-                                            <Loader2 className="w-6 h-6 text-teal-600 animate-spin" />
-                                            <p className="text-xs font-semibold text-teal-700">Đang nạp video vào bộ nhớ...</p>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <span className="p-2 rounded-full bg-white shadow-sm border border-slate-200">
-                                                <Upload className="w-4 h-4 text-teal-600" />
-                                            </span>
-                                            <p className="text-xs font-bold text-slate-800">
-                                                Kéo thả hoặc nhấp để tải thêm video quay thô từ điện thoại / máy tính
-                                            </p>
-                                            <p className="text-[11px] text-slate-400">
-                                                Hỗ trợ MP4, MOV, WebM • Tự động co giãn theo tỉ lệ {aspectRatio}
-                                            </p>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Hidden file input */}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="video/*,.mp4,.mov,.webm,.m4v,.mkv"
-                                multiple
-                                onChange={handleVideoUpload}
-                                className="hidden"
-                            />
 
                             {/* Video Filter LUTs */}
                             <div className="pt-2 border-t border-slate-100 space-y-2 text-xs">
@@ -5374,6 +5613,98 @@ export default function AutoVideoStudioPage() {
                     </div>
                 </div>
             </div>
+
+            {/* MODAL 0: TRÌNH PHÁT XEM TRỰC TIẾP TỪNG VIDEO THÔ & SẮP XẾP */}
+            {previewingClip && (
+                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+                    <div className="max-w-3xl w-full bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="p-3.5 sm:p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950 text-white">
+                            <div className="flex items-center gap-2.5 truncate">
+                                <span className="p-2 rounded-xl bg-purple-600 text-white shadow-sm">
+                                    <Film className="w-4 h-4" />
+                                </span>
+                                <div className="truncate">
+                                    <h3 className="font-bold text-white text-xs sm:text-sm truncate">
+                                        {previewingClip.name}
+                                    </h3>
+                                    <p className="text-[10px] text-slate-400 font-mono">
+                                        Thời lượng: {previewingClip.duration.toFixed(1)}s • Độ phân giải: {previewingClip.width || 1080}x{previewingClip.height || 1920}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setPreviewingClip(null)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Video Player */}
+                        <div className="flex-1 bg-black flex items-center justify-center p-2 min-h-[300px]">
+                            <video
+                                src={previewingClip.url}
+                                controls
+                                autoPlay
+                                playsInline
+                                className="max-h-[62vh] max-w-full rounded-lg shadow-inner bg-black object-contain"
+                            />
+                        </div>
+
+                        {/* Quick Actions Footer */}
+                        <div className="p-3 sm:p-4 border-t border-slate-800 bg-slate-950 flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        handleSetOpeningClip(previewingClip);
+                                        setPreviewingClip(null);
+                                    }}
+                                    className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                                >
+                                    <span>⭐ Đặt Làm Mở Đầu (#1)</span>
+                                </button>
+                                {(() => {
+                                    const idx = clips.findIndex(c => c.url === previewingClip.url || c.id === previewingClip.id);
+                                    if (idx < 0) return null;
+                                    return (
+                                        <div className="flex items-center gap-1.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => moveClip(idx, "up")}
+                                                disabled={idx === 0}
+                                                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                                            >
+                                                <MoveUp className="w-3.5 h-3.5" />
+                                                <span>Lên Trước</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => moveClip(idx, "down")}
+                                                disabled={idx === clips.length - 1}
+                                                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                                            >
+                                                <MoveDown className="w-3.5 h-3.5" />
+                                                <span>Xuống Sau</span>
+                                            </button>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setPreviewingClip(null)}
+                                className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors cursor-pointer"
+                            >
+                                Đóng Xem Thử
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* MODAL 1: SỔ TAY KỊCH BẢN & LỊCH SỬ DỰ ÁN VIDEO (PERSISTENT STORE) */}
             {isProjectHistoryOpen && (
