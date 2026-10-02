@@ -91,8 +91,8 @@ async function synthesizeWithEdgeTTS(
     return new Promise((resolve, reject) => {
         const chunks: Buffer[] = [];
         const timer = setTimeout(() => {
-            reject(new Error("Quá thời gian kết nối máy chủ giọng đọc Edge Neural TTS (15s)."));
-        }, 15000);
+            reject(new Error("Quá thời gian kết nối máy chủ giọng đọc Edge Neural TTS (35s)."));
+        }, 35000);
 
         audioStream.on("data", (chunk: Buffer) => {
             chunks.push(chunk);
@@ -214,7 +214,7 @@ async function synthesizeWithGeminiTTS(
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body),
-                signal: AbortSignal.timeout(30000)
+                signal: AbortSignal.timeout(6000)
             });
 
             if (!res.ok) {

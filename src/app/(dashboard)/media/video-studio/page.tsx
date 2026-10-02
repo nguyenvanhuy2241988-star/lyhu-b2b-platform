@@ -380,7 +380,7 @@ export default function AutoVideoStudioPage() {
                     geminiApiKey: typeof window !== "undefined" ? localStorage.getItem("GEMINI_API_KEY") || undefined : undefined,
                     elevenApiKey: typeof window !== "undefined" ? localStorage.getItem("ELEVENLABS_API_KEY") || undefined : undefined
                 }),
-                signal: AbortSignal.timeout(45000)
+                signal: AbortSignal.timeout(60000)
             });
 
             if (!res.ok) {
@@ -417,7 +417,12 @@ export default function AutoVideoStudioPage() {
             return url;
         } catch (err: any) {
             console.error("Lỗi tạo giọng đọc AI:", err);
-            alert("Không thể tạo giọng đọc: " + err.message);
+            const isTimeout = err?.name === "TimeoutError" || err?.message?.includes("timed out") || err?.message?.includes("timeout");
+            if (isTimeout) {
+                alert("Quá thời gian kết nối tạo giọng đọc (kịch bản dài hoặc mạng quốc tế đang chậm). Vui lòng bấm thử lại lần nữa!");
+            } else {
+                alert("Không thể tạo giọng đọc: " + (err?.message || "Đã xảy ra lỗi không xác định."));
+            }
             return null;
         } finally {
             setIsSynthesizingVoice(false);
