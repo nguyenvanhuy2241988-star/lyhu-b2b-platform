@@ -365,9 +365,9 @@ export const Step1Script: React.FC<Step1ScriptProps> = ({
                             onChange={(e) => setSelectedVoiceEngine(e.target.value as any)}
                             className="w-full px-2.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-primary-500"
                         >
-                            <option value="gemini">Google Gemini Flash Audio (Kore, Aoede, Puck, Fenrir)</option>
-                            <option value="elevenlabs">ElevenLabs Multilingual v2 (Voice Cloning)</option>
-                            <option value="edge">Microsoft Studio Neural (Hoài My & Nam Minh)</option>
+                            <option value="gemini">Google Gemini Omni Audio (Kore, Aoede, Puck, Fenrir - Đỉnh cao cảm xúc)</option>
+                            <option value="elevenlabs">ElevenLabs Multilingual v2 (Flow Engine - Nhân bản giọng nói)</option>
+                            <option value="edge">Microsoft Studio Neural (Hoài My & Nam Minh - Dự phòng kết nối)</option>
                         </select>
                     </div>
 
@@ -379,11 +379,11 @@ export const Step1Script: React.FC<Step1ScriptProps> = ({
                             onChange={(e) => setSelectedVoiceStyleId(e.target.value)}
                             className="w-full px-2.5 py-2 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-primary-500"
                         >
-                            <option value="female-genz">Nữ Gen Z (Kore / Hoài My - Cuốn hút, chuẩn TikTok)</option>
-                            <option value="female-sweet">Nữ Dịu Dàng (Aoede - Ấm áp, tâm sự, truyền cảm)</option>
-                            <option value="female-pro">Nữ Chuyên Nghiệp (Leda - Rõ ràng, tin cậy, đĩnh đạc)</option>
-                            <option value="male-genz">Nam Gen Z (Puck / Nam Minh - Năng động, dứt khoát)</option>
-                            <option value="male-pro">Nam Chuyên Nghiệp (Fenrir - Trầm ấm, phát thanh viên)</option>
+                            <option value="female-genz">Nữ Gen Z (Kore - Cuốn hút, tự nhiên chuẩn TikTok Creator)</option>
+                            <option value="female-sweet">Nữ Dịu Dàng (Aoede - Ấm áp, tâm sự, truyền cảm xúc)</option>
+                            <option value="female-pro">Nữ Chuyên Nghiệp (Leda - Rõ ràng, tin cậy, bán buôn B2B)</option>
+                            <option value="male-genz">Nam Gen Z (Puck - Năng động, hài hước, dứt khoát)</option>
+                            <option value="male-pro">Nam Chuyên Nghiệp (Fenrir - Trầm ấm, uy tín, phát thanh viên)</option>
                         </select>
                     </div>
 

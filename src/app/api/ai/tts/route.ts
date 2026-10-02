@@ -169,6 +169,16 @@ async function synthesizeWithGeminiTTS(
     };
     const voiceName = voiceMapping[styleKey] || (styleKey.includes("male") ? "Puck" : "Kore");
 
+    const promptPrefixes: Record<string, string> = {
+        "female-genz": "Nói bằng tiếng Việt với phong cách trẻ trung, hào hứng, tự nhiên chuẩn TikTok creator:",
+        "female-sweet": "Nói bằng tiếng Việt với phong cách nhẹ nhàng, ấm áp, tâm sự truyền cảm:",
+        "female-pro": "Nói bằng tiếng Việt với phong cách tự tin, rõ ràng, đĩnh đạc và uy tín:",
+        "male-genz": "Nói bằng tiếng Việt với giọng nam trẻ trung, năng động, dứt khoát:",
+        "male-pro": "Nói bằng tiếng Việt với giọng nam trầm ấm, phát thanh viên chuyên nghiệp:"
+    };
+    const instruction = promptPrefixes[styleKey] || "Nói bằng tiếng Việt rõ ràng, truyền cảm và tự nhiên:";
+    const fullPrompt = `${instruction}\n\n${text.trim()}`;
+
     const endpoints = [
         { name: "gemini-2.0-flash (v1beta)", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}` },
         { name: "gemini-2.0-flash (v1alpha)", url: `https://generativelanguage.googleapis.com/v1alpha/models/gemini-2.0-flash:generateContent?key=${apiKey}` },
@@ -185,7 +195,7 @@ async function synthesizeWithGeminiTTS(
                 contents: [
                     {
                         role: "user",
-                        parts: [{ text: text.trim() }]
+                        parts: [{ text: fullPrompt }]
                     }
                 ],
                 generationConfig: {
