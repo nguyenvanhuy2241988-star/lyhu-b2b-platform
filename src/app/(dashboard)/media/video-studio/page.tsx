@@ -408,17 +408,31 @@ export default function AutoVideoStudioPage() {
             setSelectedVoiceAudioUrl(url);
             setSelectedVoiceId("ai-generated");
 
-            // Measure exact audio duration
-            const tempAudio = new Audio(url);
-            tempAudio.onloadedmetadata = () => {
-                if (tempAudio.duration && !isNaN(tempAudio.duration) && tempAudio.duration > 0) {
-                    setVoiceDuration(tempAudio.duration);
+            // Measure exact audio duration with Web Audio API for 100% precision
+            try {
+                const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+                if (AudioCtxClass) {
+                    const ctx = new AudioCtxClass();
+                    const arrayBuf = await blob.arrayBuffer();
+                    const audioBuf = await ctx.decodeAudioData(arrayBuf);
+                    if (audioBuf.duration && isFinite(audioBuf.duration) && audioBuf.duration > 0) {
+                        setVoiceDuration(audioBuf.duration);
+                    }
+                    ctx.close().catch(() => {});
                 }
-            };
+            } catch (_) {
+                const tempAudio = new Audio(url);
+                tempAudio.onloadedmetadata = () => {
+                    if (tempAudio.duration && isFinite(tempAudio.duration) && tempAudio.duration > 0) {
+                        setVoiceDuration(tempAudio.duration);
+                    }
+                };
+            }
 
             // Update hidden audio element for video playback
             if (hiddenAudioRef.current) {
                 hiddenAudioRef.current.src = url;
+                hiddenAudioRef.current.load();
             }
             // Update audition audio element
             if (auditionAudioRef.current) {
@@ -460,15 +474,36 @@ export default function AutoVideoStudioPage() {
                 setSelectedVoiceAudioUrl(url);
                 setSelectedVoiceId("mic-recorded");
 
+                const exactSec = recordingSeconds || 10;
                 const tempAudio = new Audio(url);
                 tempAudio.onloadedmetadata = () => {
-                    if (tempAudio.duration && !isNaN(tempAudio.duration) && tempAudio.duration > 0) {
+                    if (tempAudio.duration && isFinite(tempAudio.duration) && tempAudio.duration > 0) {
                         setVoiceDuration(tempAudio.duration);
+                    } else {
+                        setVoiceDuration(exactSec);
                     }
                 };
 
+                try {
+                    const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+                    if (AudioCtxClass) {
+                        const ctx = new AudioCtxClass();
+                        audioBlob.arrayBuffer().then(buf => ctx.decodeAudioData(buf)).then(audioBuf => {
+                            if (audioBuf.duration && isFinite(audioBuf.duration) && audioBuf.duration > 0) {
+                                setVoiceDuration(audioBuf.duration);
+                            }
+                            ctx.close().catch(() => {});
+                        }).catch(() => {
+                            setVoiceDuration(exactSec);
+                        });
+                    }
+                } catch (_) {
+                    setVoiceDuration(exactSec);
+                }
+
                 if (hiddenAudioRef.current) {
                     hiddenAudioRef.current.src = url;
+                    hiddenAudioRef.current.load();
                 }
 
                 stream.getTracks().forEach((track) => track.stop());
@@ -649,15 +684,16 @@ export default function AutoVideoStudioPage() {
         if (!selectedVoiceText.trim() || voiceDuration <= 0) return [];
 
         const sentences = selectedVoiceText.split(/(?<=[.!?,;:\n])\s+/).filter(s => s.trim().length > 0);
-        const phrases: { text: string; weight: number; words: string[] }[] = [];
+        const phrases: { text: string; weight: number; words: string[]; pauseType: "period" | "comma" | "none" }[] = [];
 
         sentences.forEach(s => {
             const rawWords = s.trim().split(/\s+/).filter(Boolean);
             if (rawWords.length <= 4) {
                 const hasComma = /[,;:]/.test(s);
                 const hasPeriod = /[.!?\n]/.test(s);
-                const weight = rawWords.length * 1.0 + (hasComma ? 0.35 : 0) + (hasPeriod ? 0.65 : 0);
-                phrases.push({ text: rawWords.join(" "), weight, words: rawWords });
+                const pauseType = hasPeriod ? "period" : hasComma ? "comma" : "none";
+                const weight = rawWords.length * 1.0 + (hasPeriod ? 0.65 : hasComma ? 0.35 : 0);
+                phrases.push({ text: rawWords.join(" "), weight, words: rawWords, pauseType });
             } else {
                 for (let i = 0; i < rawWords.length; i += 4) {
                     const chunk = rawWords.slice(i, i + 4);
@@ -665,8 +701,9 @@ export default function AutoVideoStudioPage() {
                     const isLastChunk = i + 4 >= rawWords.length;
                     const hasComma = isLastChunk && /[,;:]/.test(s);
                     const hasPeriod = isLastChunk && /[.!?\n]/.test(s);
-                    const weight = chunk.length * 1.0 + (hasComma ? 0.35 : 0) + (hasPeriod ? 0.65 : 0);
-                    phrases.push({ text: chunkText, weight, words: chunk });
+                    const pauseType = hasPeriod ? "period" : hasComma ? "comma" : "none";
+                    const weight = chunk.length * 1.0 + (hasPeriod ? 0.65 : hasComma ? 0.35 : 0);
+                    phrases.push({ text: chunkText, weight, words: chunk, pauseType });
                 }
             }
         });
@@ -683,8 +720,15 @@ export default function AutoVideoStudioPage() {
             const start = Math.max(0, currentStartTime + subtitleOffset);
             const end = Math.min(effectiveVoiceDuration, start + phraseDur);
 
-            // Compute exact sub-second timestamps for each word
-            const wordSlice = phraseDur / Math.max(1, phrase.words.length);
+            // Separate speaking cadence from punctuation pause so words finish speaking when the voice stops
+            const pauseSeconds = phrase.pauseType === "period"
+                ? Math.min(0.45, phraseDur * 0.25)
+                : phrase.pauseType === "comma"
+                    ? Math.min(0.22, phraseDur * 0.15)
+                    : 0;
+            const speakingDur = Math.max(0.2, phraseDur - pauseSeconds);
+            const wordSlice = speakingDur / Math.max(1, phrase.words.length);
+
             const words = phrase.words.map((w, wIdx) => ({
                 word: w,
                 start: start + wIdx * wordSlice,
@@ -1784,11 +1828,21 @@ export default function AutoVideoStudioPage() {
             const delta = (now - lastTime) / 1000;
             lastTime = now;
 
-            const nextTime = currentTimeRef.current + delta;
+            let nextTime = currentTimeRef.current + delta;
+
+            // ── HARDWARE AUDIO CLOCK MASTER SYNC ──
+            // Whenever voice audio is actively playing, synchronize directly to audio.currentTime!
+            // This guarantees 0ms drift between what is spoken and what text/subtitles are displayed!
+            const voiceAudio = hiddenAudioRef.current;
+            if (voiceAudio && !voiceAudio.paused && !voiceAudio.ended && isFinite(voiceAudio.currentTime) && voiceAudio.currentTime > 0) {
+                nextTime = voiceAudio.currentTime / (voiceSpeedMultiplier || 1.0);
+            }
+
             currentTimeRef.current = nextTime;
 
-            // Loop back when totalDuration ends
-            if (nextTime >= totalDuration) {
+            // Loop back when totalDuration ends or voice completes
+            const effectiveTotalDuration = Math.max(1, totalDuration);
+            if (nextTime >= effectiveTotalDuration || (voiceAudio && voiceAudio.ended && nextTime >= (voiceDuration / (voiceSpeedMultiplier || 1.0)))) {
                 pausePlayback();
                 currentTimeRef.current = 0;
                 setDisplayTime(0);
@@ -2877,7 +2931,29 @@ export default function AutoVideoStudioPage() {
                         />
                     );
                 })}
-                <audio ref={hiddenAudioRef} src={selectedVoiceAudioUrl || ""} />
+                <audio
+                    ref={hiddenAudioRef}
+                    src={selectedVoiceAudioUrl || ""}
+                    preload="auto"
+                    onLoadedMetadata={(e) => {
+                        const audioEl = e.currentTarget;
+                        if (audioEl.duration && isFinite(audioEl.duration) && audioEl.duration > 0) {
+                            setVoiceDuration(audioEl.duration);
+                        }
+                    }}
+                    onDurationChange={(e) => {
+                        const audioEl = e.currentTarget;
+                        if (audioEl.duration && isFinite(audioEl.duration) && audioEl.duration > 0) {
+                            setVoiceDuration(audioEl.duration);
+                        }
+                    }}
+                    onCanPlayThrough={(e) => {
+                        const audioEl = e.currentTarget;
+                        if (audioEl.duration && isFinite(audioEl.duration) && audioEl.duration > 0) {
+                            setVoiceDuration(audioEl.duration);
+                        }
+                    }}
+                />
                 <audio ref={bgmAudioRef} src={activeBgmUrl || ""} loop crossOrigin="anonymous" />
                 <audio ref={previewAudioRef} onEnded={() => setPreviewingSoundUrl(null)} />
                 <audio ref={auditionAudioRef} onEnded={() => setIsAuditionPlaying(false)} />
