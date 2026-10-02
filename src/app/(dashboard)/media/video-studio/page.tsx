@@ -1415,7 +1415,7 @@ export default function AutoVideoStudioPage() {
                 hiddenAudioRef.current.src = selectedVoiceAudioUrl;
             }
             hiddenAudioRef.current.playbackRate = voiceSpeedMultiplier || 1.0;
-            hiddenAudioRef.current.currentTime = currentT;
+            hiddenAudioRef.current.currentTime = currentT * (voiceSpeedMultiplier || 1.0);
             hiddenAudioRef.current.play().catch(() => {});
         } else if (selectedVoiceText && selectedVoiceText.trim()) {
             // Live browser voice fallback only if AI audio not yet rendered
@@ -1482,7 +1482,7 @@ export default function AutoVideoStudioPage() {
         setDisplayTime(validTime);
 
         if (hiddenAudioRef.current) {
-            hiddenAudioRef.current.currentTime = validTime;
+            hiddenAudioRef.current.currentTime = validTime * (voiceSpeedMultiplier || 1.0);
         }
         if (bgmAudioRef.current) {
             bgmAudioRef.current.currentTime = validTime % (bgmAudioRef.current.duration || 60);

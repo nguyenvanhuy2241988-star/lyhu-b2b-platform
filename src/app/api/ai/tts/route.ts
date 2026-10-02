@@ -351,20 +351,17 @@ export async function POST(req: NextRequest) {
                 mimeType = geminiResult.mimeType;
                 engineUsed = `gemini-${geminiResult.modelUsed}`;
             } catch (geminiErr: any) {
-                console.warn("[TTS] Gemini Audio unavailable, using high-speed audio fallback:", geminiErr.message);
+                console.warn("[TTS] Gemini Audio unavailable, synthesizing with Studio Neural Voice:", geminiErr.message);
                 try {
-                    // Thử Edge Neural trong tối đa 2.5s (tránh treo WebSocket trên Vercel Serverless)
-                    const edgePromise = synthesizeWithEdgeTTS(normalizedText, styleKey, Number(rateMultiplier) || 1.0);
-                    const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Edge WebSocket timeout")), 2500));
-                    const edgeResult = await Promise.race([edgePromise, timeoutPromise]);
+                    const edgeResult = await synthesizeWithEdgeTTS(normalizedText, styleKey, Number(rateMultiplier) || 1.0);
                     audioBuffer = edgeResult.buffer;
                     mimeType = edgeResult.mimeType;
                     engineUsed = "studio-neural-hoaimy-namminh";
                 } catch (edgeErr: any) {
-                    console.log("[TTS] Fast-fallback to Google High-Speed Audio (<600ms)");
+                    console.error("[TTS] Studio Neural failed, using emergency backup:", edgeErr.message);
                     audioBuffer = await synthesizeWithGoogleTTS(normalizedText);
                     mimeType = "audio/mpeg";
-                    engineUsed = "google-fast-audio";
+                    engineUsed = "emergency-backup";
                 }
             }
         }
