@@ -371,6 +371,16 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                                 }`}>
                                                     {c.mediaType === "image" ? "📸 ẢNH" : "🎬 VIDEO"}
                                                 </span>
+                                                {c.role && (
+                                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                                        {c.role}
+                                                    </span>
+                                                )}
+                                                {typeof c.trimStart === "number" && c.trimStart > 0 && (
+                                                    <span className="text-[9px] text-emerald-700 font-mono bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200 font-semibold">
+                                                        ✂️ Bỏ {c.trimStart.toFixed(1)}s đầu
+                                                    </span>
+                                                )}
                                                 {isCurrentlyPlayingThis && (
                                                     <span className="text-[10px] font-bold text-primary-700 bg-primary-100 px-1.5 rounded">
                                                         Đang phát
@@ -380,6 +390,11 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                             <p className="font-semibold text-slate-800 text-xs truncate max-w-xs" title={c.name}>
                                                 {c.name}
                                             </p>
+                                            {c.matchedSentence && (
+                                                <p className="text-[10px] text-slate-500 italic truncate max-w-xs sm:max-w-md">
+                                                    🗣️ "{c.matchedSentence}"
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
 

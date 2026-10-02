@@ -1,4 +1,5 @@
 import { VideoClip } from "../../../types";
+import { getActiveClipAtTime } from "../../../lib/clipTimingHelper";
 
 export interface VideoRendererOptions {
     canvas: HTMLCanvasElement;
@@ -43,18 +44,16 @@ export function renderVideoFrame({
         return;
     }
 
-    const switchSec = Math.max(2, clipSwitchInterval || 2.5);
-    const rawIdx = Math.floor(validTime / switchSec);
-    const clipIdx = (isFinite(rawIdx) && clips.length > 0) ? (Math.abs(rawIdx) % clips.length) : 0;
-    const currentClip = clips[clipIdx] || clips[0];
-    if (!currentClip) return;
+    const activeInfo = getActiveClipAtTime(clips, validTime, clipSwitchInterval);
+    if (!activeInfo) return;
+    const { activeClip: currentClip, clipIdx, clipDuration, progressInClip } = activeInfo;
     const nextClipIdx = clips.length > 0 ? (clipIdx + 1) % clips.length : 0;
     const nextClip = clips[nextClipIdx] || currentClip;
 
-    const timeInInterval = validTime % switchSec;
+    const remainingInClip = clipDuration * (1 - progressInClip);
     const transitionWindow = 0.45;
-    const isNearTransition = switchSec - timeInInterval <= transitionWindow && clips.length > 1;
-    const transitionFactor = isNearTransition ? (switchSec - timeInInterval) / transitionWindow : 1.0;
+    const isNearTransition = remainingInClip <= transitionWindow && clips.length > 1;
+    const transitionFactor = isNearTransition ? remainingInClip / transitionWindow : 1.0;
 
     const currentVid = currentClip?.id ? videoElements[currentClip.id] : null;
     const nextVid = nextClip?.id ? videoElements[nextClip.id] : null;
@@ -70,7 +69,7 @@ export function renderVideoFrame({
         activeTrans = transPool[clipIdx % transPool.length];
     }
 
-    const zoomProgress = (validTime % switchSec) / switchSec;
+    const zoomProgress = progressInClip;
 
     const isElementReady = (el: HTMLVideoElement | HTMLImageElement | null): boolean => {
         if (!el) return false;

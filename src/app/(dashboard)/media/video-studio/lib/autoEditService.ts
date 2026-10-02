@@ -1,4 +1,19 @@
-import { VideoClip } from "../types";
+import { VideoClip, SubtitleCue } from "../types";
+
+export interface InputKeyframe {
+    label: string;
+    timestamp: number;
+    base64: string;
+}
+
+export interface CuratedClipItem {
+    clipId: string;
+    trimStart: number;
+    duration: number;
+    role: string;
+    matchedSentence: string;
+    reason: string;
+}
 
 export interface AutoEditDirectorNote {
     clipId: string;
@@ -7,68 +22,99 @@ export interface AutoEditDirectorNote {
 }
 
 export interface AutoEditResult {
-    orderedClips: VideoClip[];
+    curatedClips: VideoClip[];
+    backupClips: VideoClip[];
+    orderedClips: VideoClip[]; // All clips with curated first, then backup
     summary: string;
     directorNotes: AutoEditDirectorNote[];
     suggestedPacing: number;
 }
 
 /**
- * Capture a lightweight JPEG base64 thumbnail from an Image or Video clip
+ * Capture a lightweight base64 frame from an image or video at a given timestamp
  */
-export async function captureClipThumbnail(clip: VideoClip, existingMediaEl?: HTMLVideoElement | HTMLImageElement | null): Promise<string | null> {
-    try {
+async function captureVideoFrameAtTime(
+    videoUrl: string,
+    targetTime: number
+): Promise<string | null> {
+    return new Promise((resolve) => {
+        const video = document.createElement("video");
+        video.crossOrigin = "anonymous";
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = "auto";
+
         const canvas = document.createElement("canvas");
-        const maxDim = 480;
+        const maxDim = 400;
 
-        // CASE 1: Image clip
-        if (clip.mediaType === "image") {
-            return new Promise((resolve) => {
-                if (existingMediaEl && existingMediaEl instanceof HTMLImageElement && existingMediaEl.naturalWidth > 0) {
-                    const nw = existingMediaEl.naturalWidth || 480;
-                    const nh = existingMediaEl.naturalHeight || 480;
-                    const scale = Math.min(maxDim / nw, maxDim / nh, 1);
-                    canvas.width = Math.round(nw * scale);
-                    canvas.height = Math.round(nh * scale);
-                    const ctx = canvas.getContext("2d");
-                    if (ctx) {
-                        ctx.drawImage(existingMediaEl, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL("image/jpeg", 0.75));
-                        return;
-                    }
-                }
+        let timer: any = null;
+        const cleanup = () => {
+            if (timer) clearTimeout(timer);
+            video.pause();
+            video.removeAttribute("src");
+            video.load();
+        };
 
-                const img = new Image();
-                img.crossOrigin = "anonymous";
-                img.onload = () => {
-                    const nw = img.naturalWidth || 480;
-                    const nh = img.naturalHeight || 480;
-                    const scale = Math.min(maxDim / nw, maxDim / nh, 1);
-                    canvas.width = Math.round(nw * scale);
-                    canvas.height = Math.round(nh * scale);
-                    const ctx = canvas.getContext("2d");
-                    if (ctx) {
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL("image/jpeg", 0.75));
-                    } else {
-                        resolve(null);
-                    }
-                };
-                img.onerror = () => resolve(null);
-                img.src = clip.url;
-                setTimeout(() => resolve(null), 3000);
-            });
-        }
+        timer = setTimeout(() => {
+            cleanup();
+            resolve(null);
+        }, 3500);
 
-        // CASE 2: Video clip
-        return new Promise((resolve) => {
-            // Check if existing element is already loaded and playable
-            if (existingMediaEl && existingMediaEl instanceof HTMLVideoElement && existingMediaEl.videoWidth > 0 && existingMediaEl.readyState >= 2) {
-                const vw = existingMediaEl.videoWidth || 480;
-                const vh = existingMediaEl.videoHeight || 480;
-                const scale = Math.min(maxDim / vw, maxDim / vh, 1);
-                canvas.width = Math.round(vw * scale);
-                canvas.height = Math.round(vh * scale);
+        video.onloadedmetadata = () => {
+            const safeTime = Math.min(Math.max(0.1, targetTime), Math.max(0.1, (video.duration || 5) - 0.2));
+            video.currentTime = safeTime;
+        };
+
+        video.onseeked = () => {
+            const vw = video.videoWidth || 360;
+            const vh = video.videoHeight || 640;
+            const scale = Math.min(maxDim / vw, maxDim / vh, 1);
+            canvas.width = Math.round(vw * scale);
+            canvas.height = Math.round(vh * scale);
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+                cleanup();
+                resolve(dataUrl);
+            } else {
+                cleanup();
+                resolve(null);
+            }
+        };
+
+        video.onerror = () => {
+            cleanup();
+            resolve(null);
+        };
+
+        video.src = videoUrl;
+    });
+}
+
+/**
+ * Capture multi-keyframes for a single clip
+ */
+export async function captureMultiKeyframesForClip(
+    clip: VideoClip,
+    existingMediaEl?: HTMLVideoElement | HTMLImageElement | null
+): Promise<InputKeyframe[]> {
+    const frames: InputKeyframe[] = [];
+    const maxDim = 400;
+
+    // CASE 1: Image clip -> 1 frame
+    if (clip.mediaType === "image") {
+        const canvas = document.createElement("canvas");
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+
+        const b64: string | null = await new Promise((resolve) => {
+            if (existingMediaEl && existingMediaEl instanceof HTMLImageElement && existingMediaEl.naturalWidth > 0) {
+                const nw = existingMediaEl.naturalWidth || 360;
+                const nh = existingMediaEl.naturalHeight || 360;
+                const scale = Math.min(maxDim / nw, maxDim / nh, 1);
+                canvas.width = Math.round(nw * scale);
+                canvas.height = Math.round(nh * scale);
                 const ctx = canvas.getContext("2d");
                 if (ctx) {
                     ctx.drawImage(existingMediaEl, 0, 0, canvas.width, canvas.height);
@@ -77,65 +123,108 @@ export async function captureClipThumbnail(clip: VideoClip, existingMediaEl?: HT
                 }
             }
 
-            const video = document.createElement("video");
-            video.crossOrigin = "anonymous";
-            video.muted = true;
-            video.playsInline = true;
-            video.preload = "auto";
-
-            let timer: any = null;
-            const cleanup = () => {
-                if (timer) clearTimeout(timer);
-                video.pause();
-                video.removeAttribute("src");
-                video.load();
-            };
-
-            timer = setTimeout(() => {
-                cleanup();
-                resolve(null);
-            }, 4000);
-
-            video.onloadeddata = () => {
-                const targetTime = Math.min(1.0, Math.max(0.2, (clip.duration || 5) * 0.15));
-                video.currentTime = targetTime;
-            };
-
-            video.onseeked = () => {
-                const vw = video.videoWidth || 480;
-                const vh = video.videoHeight || 480;
-                const scale = Math.min(maxDim / vw, maxDim / vh, 1);
-                canvas.width = Math.round(vw * scale);
-                canvas.height = Math.round(vh * scale);
+            img.onload = () => {
+                const nw = img.naturalWidth || 360;
+                const nh = img.naturalHeight || 360;
+                const scale = Math.min(maxDim / nw, maxDim / nh, 1);
+                canvas.width = Math.round(nw * scale);
+                canvas.height = Math.round(nh * scale);
                 const ctx = canvas.getContext("2d");
                 if (ctx) {
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    const dataUrl = canvas.toDataURL("image/jpeg", 0.75);
-                    cleanup();
-                    resolve(dataUrl);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL("image/jpeg", 0.75));
                 } else {
-                    cleanup();
                     resolve(null);
                 }
             };
-
-            video.onerror = () => {
-                cleanup();
-                resolve(null);
-            };
-
-            video.src = clip.url;
+            img.onerror = () => resolve(null);
+            img.src = clip.url;
+            setTimeout(() => resolve(null), 3000);
         });
-    } catch {
-        return null;
+
+        if (b64) {
+            frames.push({
+                label: "Ảnh chụp tĩnh",
+                timestamp: 0,
+                base64: b64
+            });
+        }
+        return frames;
     }
+
+    // CASE 2: Video clip -> Extract 3 keyframes across duration (Beginning, Middle, End)
+    const dur = Math.max(2, clip.duration || 8);
+    const samplePoints = [
+        { label: "Đầu clip", time: Math.min(1.2, dur * 0.15) },
+        { label: "Giữa clip (Hành động)", time: dur * 0.5 },
+        { label: "Cuối clip", time: Math.max(1.5, dur * 0.85) }
+    ];
+
+    for (const pt of samplePoints) {
+        try {
+            const b64 = await captureVideoFrameAtTime(clip.url, pt.time);
+            if (b64) {
+                frames.push({
+                    label: pt.label,
+                    timestamp: pt.time,
+                    base64: b64
+                });
+            }
+        } catch {
+            // Ignore single frame error
+        }
+    }
+
+    return frames;
 }
 
 /**
- * Execute Full AI Smart Auto-Edit:
- * 1. Capture visual keyframes from all clips/photos
- * 2. Send to Gemini Multimodal
- * 3. Receive re-ordered timeline and director insights
+ * Splits script text or subtitle cues into clean sentence beats with allocated durations
+ */
+export function buildSentenceBeats(
+    script: string,
+    totalDuration: number,
+    subtitleCues?: SubtitleCue[]
+): { index: number; text: string; targetDuration: number }[] {
+    // If cues are already timed
+    if (subtitleCues && subtitleCues.length > 0) {
+        return subtitleCues.map((cue, idx) => ({
+            index: idx,
+            text: cue.text.trim(),
+            targetDuration: Math.max(1.5, cue.end - cue.start)
+        }));
+    }
+
+    // Split text by punctuation marks: . ! ? ; \n
+    const rawSentences = (script || "")
+        .split(/(?<=[.!?;\n])\s+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 5);
+
+    if (rawSentences.length === 0) {
+        return [{
+            index: 0,
+            text: (script || "Video tổng kho sỉ LYHU").trim(),
+            targetDuration: totalDuration || 25
+        }];
+    }
+
+    const totalChars = rawSentences.reduce((sum, s) => sum + s.length, 0);
+    const validTotalDur = Math.max(10, totalDuration || 25);
+
+    return rawSentences.map((sentence, idx) => {
+        const ratio = sentence.length / (totalChars || 1);
+        const allocated = Math.max(2.0, Math.min(6.5, ratio * validTotalDur));
+        return {
+            index: idx,
+            text: sentence,
+            targetDuration: Math.round(allocated * 10) / 10
+        };
+    });
+}
+
+/**
+ * Execute Full Cinematic Smart Auto-Edit
  */
 export async function runSmartAutoEdit({
     clips,
@@ -143,6 +232,7 @@ export async function runSmartAutoEdit({
     hookTitle,
     clipSwitchInterval,
     totalDuration,
+    subtitleCues,
     existingMediaElements,
     onProgress
 }: {
@@ -151,6 +241,7 @@ export async function runSmartAutoEdit({
     hookTitle: string;
     clipSwitchInterval: number;
     totalDuration: number;
+    subtitleCues?: SubtitleCue[];
     existingMediaElements?: { [key: string]: any };
     onProgress?: (step: string, percent: number) => void;
 }): Promise<AutoEditResult> {
@@ -158,35 +249,37 @@ export async function runSmartAutoEdit({
         throw new Error("Không có clip hoặc ảnh nào để cắt dựng.");
     }
 
-    onProgress?.("Đang trích xuất khung hình thị giác từ các cảnh quay...", 15);
+    onProgress?.("Đang quét phân tích đa khung hình (Multi-Keyframe Vision)...", 10);
 
-    // Extract keyframes concurrently with concurrency limit 4
-    const itemsWithThumbnails: {
+    const sentenceBeats = buildSentenceBeats(script, totalDuration, subtitleCues);
+
+    // Extract multi-keyframes for each clip
+    const itemsWithFrames: {
         id: string;
         name: string;
         mediaType: "video" | "image";
         duration: number;
-        thumbnailBase64?: string;
+        frames: InputKeyframe[];
     }[] = [];
 
     const total = clips.length;
     for (let i = 0; i < total; i++) {
         const c = clips[i];
         const existingEl = existingMediaElements ? existingMediaElements[c.id] : null;
-        const thumb = await captureClipThumbnail(c, existingEl);
-        itemsWithThumbnails.push({
+        const frames = await captureMultiKeyframesForClip(c, existingEl);
+        itemsWithFrames.push({
             id: c.id,
             name: c.name,
             mediaType: c.mediaType || "video",
-            duration: c.duration || clipSwitchInterval,
-            thumbnailBase64: thumb || undefined
+            duration: c.duration || 10,
+            frames
         });
 
-        const progressPercent = Math.round(15 + ((i + 1) / total) * 45);
-        onProgress?.(`Đã quét thị giác (${i + 1}/${total}): ${c.name.slice(0, 20)}...`, progressPercent);
+        const progressPercent = Math.round(10 + ((i + 1) / total) * 50);
+        onProgress?.(`Đã quét thị giác (${i + 1}/${total}): ${c.name.slice(0, 22)}...`, progressPercent);
     }
 
-    onProgress?.("AI Đạo Diễn đang xem xét kịch bản và phân bổ cảnh quay...", 70);
+    onProgress?.("Đạo diễn AI đang đối chiếu kịch bản, tìm khoảnh khắc vàng (Trim) & lọc cảnh tinh hoa...", 65);
 
     const res = await fetch("/api/ai/video-auto-edit", {
         method: "POST",
@@ -196,7 +289,8 @@ export async function runSmartAutoEdit({
             hookTitle,
             clipSwitchInterval,
             totalDuration,
-            items: itemsWithThumbnails
+            sentences: sentenceBeats,
+            items: itemsWithFrames
         })
     });
 
@@ -206,26 +300,43 @@ export async function runSmartAutoEdit({
     }
 
     const data = await res.json();
-    onProgress?.("Hoàn tất cắt dựng và đồng bộ timeline!", 100);
+    onProgress?.("Hoàn tất cắt gọt In-point và đồng bộ timeline!", 100);
 
-    const orderedIds: string[] = data.orderedClipIds || [];
-    const clipMap = new Map<string, VideoClip>(clips.map(c => [c.id, c]));
+    const curatedTimeline: CuratedClipItem[] = data.curatedTimeline || [];
+    const clipMap = new Map<string, VideoClip>(clips.map(c => [c.id, { ...c }]));
 
-    const reorderedClips: VideoClip[] = [];
-    orderedIds.forEach(id => {
-        const found = clipMap.get(id);
-        if (found) {
-            reorderedClips.push(found);
-            clipMap.delete(id);
+    const curatedClips: VideoClip[] = [];
+    curatedTimeline.forEach(item => {
+        const base = clipMap.get(item.clipId);
+        if (base) {
+            curatedClips.push({
+                ...base,
+                trimStart: item.trimStart || 0,
+                duration: item.duration || clipSwitchInterval,
+                role: item.role,
+                matchedSentence: item.matchedSentence,
+                isAiSelected: true
+            });
+            clipMap.delete(item.clipId);
         }
     });
 
-    // Add any remaining clips that were not in orderedIds
-    clipMap.forEach(c => reorderedClips.push(c));
+    // Backup clips (surplus clips not used in main timeline)
+    const backupClips: VideoClip[] = [];
+    clipMap.forEach(c => {
+        backupClips.push({
+            ...c,
+            isAiSelected: false
+        });
+    });
+
+    const orderedClips = [...curatedClips, ...backupClips];
 
     return {
-        orderedClips: reorderedClips,
-        summary: data.summary || "Đạo diễn AI đã tự động sắp xếp lại các cảnh quay.",
+        curatedClips,
+        backupClips,
+        orderedClips,
+        summary: data.summary || "Đạo diễn AI đã hoàn thành cắt dựng.",
         directorNotes: data.directorNotes || [],
         suggestedPacing: data.suggestedPacing || clipSwitchInterval
     };

@@ -90,6 +90,7 @@ import { ProjectHistoryModal } from "./components/modals/ProjectHistoryModal";
 import { DirectorHubModal } from "./components/modals/DirectorHubModal";
 import { AutoEditModal } from "./components/modals/AutoEditModal";
 import { runSmartAutoEdit, AutoEditResult } from "./lib/autoEditService";
+import { getActiveClipAtTime } from "./lib/clipTimingHelper";
 import {
     StudioStepper,
     Step1Script,
@@ -1471,15 +1472,14 @@ export default function AutoVideoStudioPage() {
 
         // 3. Play Active Video Clip
         if (clips.length > 0) {
-            const switchSec = Math.max(2, clipSwitchInterval || 2.5);
             const validT = (typeof currentT === "number" && isFinite(currentT) && currentT >= 0) ? currentT : 0;
-            const clipIdx = Math.floor(validT / switchSec) % clips.length;
-            const activeClip = clips[clipIdx] || clips[0];
-            if (activeClip?.id) {
+            const activeInfo = getActiveClipAtTime(clips, validT, clipSwitchInterval);
+            if (activeInfo?.activeClip?.id) {
+                const activeClip = activeInfo.activeClip;
                 const activeVid = videoElementsRef.current[activeClip.id];
                 if (activeVid && typeof activeVid.play === "function") {
-                    const localT = (validT % switchSec) % Math.max(1, activeClip.duration || 15);
-                    activeVid.currentTime = isFinite(localT) ? localT : 0;
+                    const localT = isFinite(activeInfo.localT) ? activeInfo.localT : (activeClip.trimStart || 0);
+                    activeVid.currentTime = localT;
                     activeVid.play().catch(() => {});
                     lastActiveClipIdRef.current = activeClip.id;
                 }
@@ -1524,10 +1524,9 @@ export default function AutoVideoStudioPage() {
         }
 
         if (clips.length > 0) {
-            const switchSec = Math.max(2, clipSwitchInterval || 2.5);
-            const clipIdx = Math.floor(validTime / switchSec) % clips.length;
-            const activeClip = clips[clipIdx] || clips[0];
-            if (activeClip?.id) {
+            const activeInfo = getActiveClipAtTime(clips, validTime, clipSwitchInterval);
+            if (activeInfo?.activeClip?.id) {
+                const activeClip = activeInfo.activeClip;
                 const activeVid = videoElementsRef.current[activeClip.id];
 
                 clips.forEach(c => {
@@ -1537,8 +1536,8 @@ export default function AutoVideoStudioPage() {
                 });
 
                 if (activeVid && typeof activeVid.play === "function") {
-                    const localT = (validTime % switchSec) % Math.max(1, activeClip.duration || 15);
-                    activeVid.currentTime = isFinite(localT) ? localT : 0;
+                    const localT = isFinite(activeInfo.localT) ? activeInfo.localT : (activeClip.trimStart || 0);
+                    activeVid.currentTime = localT;
                     if (isPlaying && activeVid.paused) activeVid.play().catch(() => {});
                 }
                 lastActiveClipIdRef.current = activeClip.id;
@@ -1707,7 +1706,7 @@ export default function AutoVideoStudioPage() {
         }
         setIsAutoEditModalOpen(true);
         setIsAutoEditing(true);
-        setAutoEditProgressStep("Đang chuẩn bị trích xuất khung hình từ các video & ảnh...");
+        setAutoEditProgressStep("Đang quét đa khung hình thị giác (Multi-Keyframe Vision)...");
         setAutoEditProgressPercent(10);
         setAutoEditResult(null);
 
@@ -1718,6 +1717,7 @@ export default function AutoVideoStudioPage() {
                 hookTitle: customHookTitle,
                 clipSwitchInterval,
                 totalDuration,
+                subtitleCues,
                 existingMediaElements: videoElementsRef.current,
                 onProgress: (step, percent) => {
                     setAutoEditProgressStep(step);
@@ -1733,7 +1733,21 @@ export default function AutoVideoStudioPage() {
         }
     };
 
-    const handleApplyAutoEdit = () => {
+    const handleApplyCuratedAutoEdit = () => {
+        if (!autoEditResult) return;
+        setPreviousClipsBeforeAutoEdit([...clips]);
+        setClips(autoEditResult.curatedClips);
+        if (autoEditResult.suggestedPacing && autoEditResult.suggestedPacing !== clipSwitchInterval) {
+            setClipSwitchInterval(autoEditResult.suggestedPacing);
+        }
+        setIsAutoEditModalOpen(false);
+        pausePlayback();
+        currentTimeRef.current = 0;
+        setDisplayTime(0);
+        setTimeout(() => drawCanvasFrame(0), 100);
+    };
+
+    const handleApplyAllAutoEdit = () => {
         if (!autoEditResult) return;
         setPreviousClipsBeforeAutoEdit([...clips]);
         setClips(autoEditResult.orderedClips);
@@ -1833,36 +1847,38 @@ export default function AutoVideoStudioPage() {
                 }
             } catch (_) {}
 
-            // Seamless clip switching
+            // Seamless clip switching factoring in custom duration & trimStart
             if (clips.length > 1) {
-                const switchSec = Math.max(2, clipSwitchInterval || 2.5);
                 const validT = (typeof nextTime === "number" && isFinite(nextTime) && nextTime >= 0) ? nextTime : 0;
-                const clipIdx = Math.floor(validT / switchSec) % clips.length;
-                const currentClip = clips[clipIdx] || clips[0];
-                const nextClipIdx = (clipIdx + 1) % clips.length;
-                const nextClip = clips[nextClipIdx] || currentClip;
-                const timeInInterval = validT % switchSec;
+                const activeInfo = getActiveClipAtTime(clips, validT, clipSwitchInterval);
+                if (activeInfo) {
+                    const currentClip = activeInfo.activeClip;
+                    const nextClipIdx = (activeInfo.clipIdx + 1) % clips.length;
+                    const nextClip = clips[nextClipIdx] || currentClip;
+                    const remainingInClip = activeInfo.clipDuration * (1 - activeInfo.progressInClip);
 
-                // Pre-roll next clip 0.45s before switch
-                if (switchSec - timeInInterval <= 0.45 && nextClip?.id) {
-                    const nextVid = videoElementsRef.current[nextClip.id];
-                    if (nextVid && typeof nextVid.play === "function" && nextVid.paused) {
-                        nextVid.currentTime = 0;
-                        nextVid.play().catch(() => {});
+                    // Pre-roll next clip 0.45s before switch
+                    if (remainingInClip <= 0.45 && nextClip?.id && nextClip.id !== currentClip.id) {
+                        const nextVid = videoElementsRef.current[nextClip.id];
+                        if (nextVid && typeof nextVid.play === "function" && nextVid.paused) {
+                            nextVid.currentTime = nextClip.trimStart || 0;
+                            nextVid.play().catch(() => {});
+                        }
                     }
-                }
 
-                // If active clip transitioned, pause previous
-                if (currentClip?.id && currentClip.id !== lastActiveClipIdRef.current) {
-                    if (lastActiveClipIdRef.current) {
-                        const prevVid = videoElementsRef.current[lastActiveClipIdRef.current];
-                        if (prevVid && typeof prevVid.pause === "function" && !prevVid.paused) prevVid.pause();
+                    // If active clip transitioned, pause previous
+                    if (currentClip?.id && currentClip.id !== lastActiveClipIdRef.current) {
+                        if (lastActiveClipIdRef.current) {
+                            const prevVid = videoElementsRef.current[lastActiveClipIdRef.current];
+                            if (prevVid && typeof prevVid.pause === "function" && !prevVid.paused) prevVid.pause();
+                        }
+                        const activeVid = videoElementsRef.current[currentClip.id];
+                        if (activeVid && typeof activeVid.play === "function") {
+                            activeVid.currentTime = isFinite(activeInfo.localT) ? activeInfo.localT : (currentClip.trimStart || 0);
+                            if (activeVid.paused) activeVid.play().catch(() => {});
+                        }
+                        lastActiveClipIdRef.current = currentClip.id;
                     }
-                    const activeVid = videoElementsRef.current[currentClip.id];
-                    if (activeVid && typeof activeVid.play === "function" && activeVid.paused) {
-                        activeVid.play().catch(() => {});
-                    }
-                    lastActiveClipIdRef.current = currentClip.id;
                 }
             }
 
@@ -2117,33 +2133,34 @@ export default function AutoVideoStudioPage() {
 
                 // Seamless clip switching during export (0 decode contention)
                 if (clips.length > 1) {
-                    const switchSec = Math.max(2, clipSwitchInterval || 2.5);
-                    const clipIdx = Math.floor(validExportT / switchSec) % clips.length;
-                    const curClip = clips[clipIdx] || clips[0];
-                    const nxtClip = clips[(clipIdx + 1) % clips.length] || curClip;
-                    const timeInInt = validExportT % switchSec;
+                    const activeInfo = getActiveClipAtTime(clips, validExportT, clipSwitchInterval);
+                    if (activeInfo) {
+                        const curClip = activeInfo.activeClip;
+                        const nxtClip = clips[(activeInfo.clipIdx + 1) % clips.length] || curClip;
+                        const remainingInClip = activeInfo.clipDuration * (1 - activeInfo.progressInClip);
 
-                    // Pre-roll next clip 0.35s before switch
-                    if (switchSec - timeInInt <= 0.35 && nxtClip?.id && nxtClip.id !== curClip.id) {
-                        const nxtVid = videoElementsRef.current[nxtClip.id];
-                        if (nxtVid && typeof nxtVid.play === "function" && nxtVid.paused) {
-                            nxtVid.currentTime = 0;
-                            nxtVid.play().catch(() => {});
+                        // Pre-roll next clip 0.35s before switch
+                        if (remainingInClip <= 0.35 && nxtClip?.id && nxtClip.id !== curClip.id) {
+                            const nxtVid = videoElementsRef.current[nxtClip.id];
+                            if (nxtVid && typeof nxtVid.play === "function" && nxtVid.paused) {
+                                nxtVid.currentTime = nxtClip.trimStart || 0;
+                                nxtVid.play().catch(() => {});
+                            }
                         }
-                    }
 
-                    // On clip switch: PAUSE previous clip immediately to prevent GPU/CPU decode contention!
-                    if (curClip?.id && curClip.id !== exportActiveClipId.current) {
-                        if (exportActiveClipId.current) {
-                            const prevVid = videoElementsRef.current[exportActiveClipId.current];
-                            if (prevVid && typeof prevVid.pause === "function" && !prevVid.paused) prevVid.pause();
+                        // On clip switch: PAUSE previous clip immediately to prevent GPU/CPU decode contention!
+                        if (curClip?.id && curClip.id !== exportActiveClipId.current) {
+                            if (exportActiveClipId.current) {
+                                const prevVid = videoElementsRef.current[exportActiveClipId.current];
+                                if (prevVid && typeof prevVid.pause === "function" && !prevVid.paused) prevVid.pause();
+                            }
+                            const curVid = videoElementsRef.current[curClip.id];
+                            if (curVid && typeof curVid.play === "function") {
+                                curVid.currentTime = isFinite(activeInfo.localT) ? activeInfo.localT : (curClip.trimStart || 0);
+                                curVid.play().catch(() => {});
+                            }
+                            exportActiveClipId.current = curClip.id;
                         }
-                        const curVid = videoElementsRef.current[curClip.id];
-                        if (curVid && typeof curVid.play === "function") {
-                            curVid.currentTime = 0;
-                            curVid.play().catch(() => {});
-                        }
-                        exportActiveClipId.current = curClip.id;
                     }
                 }
 
@@ -2819,7 +2836,8 @@ export default function AutoVideoStudioPage() {
                 progressPercent={autoEditProgressPercent}
                 result={autoEditResult}
                 originalClips={clips}
-                onApply={handleApplyAutoEdit}
+                onApplyCurated={handleApplyCuratedAutoEdit}
+                onApplyAll={handleApplyAllAutoEdit}
                 onRevert={handleRevertAutoEdit}
                 canRevert={!!previousClipsBeforeAutoEdit}
             />

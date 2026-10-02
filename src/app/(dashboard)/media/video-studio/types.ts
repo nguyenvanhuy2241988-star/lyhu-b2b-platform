@@ -8,6 +8,11 @@ export interface VideoClip {
     height: number;
     muted: boolean;
     mediaType?: "video" | "image";
+    trimStart?: number; // in-point in seconds for raw video
+    trimEnd?: number;   // out-point in seconds
+    role?: string;      // e.g. "Hook 3s đầu", "Chứng minh chất lượng", "CTA"
+    matchedSentence?: string; // Dialogue sentence this clip illustrates
+    isAiSelected?: boolean;   // Whether AI curated this scene for timeline
 }
 
 export interface SubtitleCue {
