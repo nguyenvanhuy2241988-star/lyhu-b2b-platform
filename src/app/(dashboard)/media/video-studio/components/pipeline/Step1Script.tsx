@@ -374,11 +374,11 @@ export const Step1Script: React.FC<Step1ScriptProps> = ({
                         <select
                             value={selectedVoiceEngine}
                             onChange={(e) => setSelectedVoiceEngine(e.target.value as any)}
-                            className="w-full px-2.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
+                            className="w-full px-2.5 py-2 text-xs font-semibold rounded-lg border border-teal-300 bg-white text-teal-950 outline-none focus:border-teal-500 font-bold"
                         >
-                            <option value="edge">🎙️ Studio Neural Voice (Hoài My & Nam Minh - Chuẩn 100%)</option>
-                            <option value="gemini">✨ Google Gemini TTS (Nếu có API Key)</option>
-                            <option value="elevenlabs">🧬 ElevenLabs (Giọng nhân bản AI)</option>
+                            <option value="gemini">✨ Google Gemini Flash Audio (Kore, Aoede, Puck, Fenrir - Đỉnh Cao AI)</option>
+                            <option value="elevenlabs">🧬 ElevenLabs Voice Cloning (Giọng Nhân Bản AI)</option>
+                            <option value="edge">🎙️ Microsoft Edge Neural (Dự Phòng)</option>
                         </select>
                     </div>
 
@@ -388,13 +388,13 @@ export const Step1Script: React.FC<Step1ScriptProps> = ({
                         <select
                             value={selectedVoiceStyleId}
                             onChange={(e) => setSelectedVoiceStyleId(e.target.value)}
-                            className="w-full px-2.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
+                            className="w-full px-2.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500 font-medium"
                         >
-                            <option value="female-genz">🌸 Nữ Gen Z (Hoài My - Vui tươi, chuẩn TikTok)</option>
-                            <option value="female-sweet">🎀 Nữ Dịu Dàng (Hoài My - Ấm áp, tâm sự)</option>
-                            <option value="female-pro">💎 Nữ Chuyên Nghiệp (Hoài My - Rõ ràng, tin cậy)</option>
-                            <option value="male-genz">⚡ Nam Gen Z (Nam Minh - Năng động, dứt khoát)</option>
-                            <option value="male-pro">👔 Nam Chuyên Nghiệp (Nam Minh - Trầm ấm, uy tín)</option>
+                            <option value="female-genz">🌸 Nữ Gen Z (Kore - Vui tươi, cuốn hút, chuẩn TikTok)</option>
+                            <option value="female-sweet">🎀 Nữ Dịu Dàng (Aoede - Ấm áp, tâm sự, truyền cảm)</option>
+                            <option value="female-pro">💎 Nữ Chuyên Nghiệp (Leda - Rõ ràng, tin cậy, đĩnh đạc)</option>
+                            <option value="male-genz">⚡ Nam Gen Z (Puck - Năng động, dứt khoát, bắt tai)</option>
+                            <option value="male-pro">👔 Nam Chuyên Nghiệp (Fenrir - Trầm ấm, uy tín, phát thanh viên)</option>
                         </select>
                     </div>
 

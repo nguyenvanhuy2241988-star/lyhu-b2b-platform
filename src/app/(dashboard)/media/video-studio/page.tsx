@@ -114,7 +114,7 @@ export default function AutoVideoStudioPage() {
     const [voiceDuration, setVoiceDuration] = useState<number>(30);
     const [isEditingText, setIsEditingText] = useState(true);
     const [selectedVoiceStyleId, setSelectedVoiceStyleId] = useState<string>("female-genz");
-    const [selectedVoiceEngine, setSelectedVoiceEngine] = useState<"gemini" | "edge" | "elevenlabs">("edge");
+    const [selectedVoiceEngine, setSelectedVoiceEngine] = useState<"gemini" | "edge" | "elevenlabs">("gemini");
     const [isRecordingMic, setIsRecordingMic] = useState(false);
     const [recordingSeconds, setRecordingSeconds] = useState(0);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -376,7 +376,9 @@ export default function AutoVideoStudioPage() {
                     voice: styleId,
                     style: styleId,
                     engine: engineChoice,
-                    rateMultiplier: voiceSpeedMultiplier || 1.0
+                    rateMultiplier: voiceSpeedMultiplier || 1.0,
+                    geminiApiKey: typeof window !== "undefined" ? localStorage.getItem("GEMINI_API_KEY") || undefined : undefined,
+                    elevenApiKey: typeof window !== "undefined" ? localStorage.getItem("ELEVENLABS_API_KEY") || undefined : undefined
                 }),
                 signal: AbortSignal.timeout(45000)
             });
