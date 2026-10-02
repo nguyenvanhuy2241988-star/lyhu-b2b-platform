@@ -74,22 +74,22 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
     onNext
 }) => {
     return (
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-5">
+        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 space-y-4">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-purple-50 text-purple-700 border border-purple-200">
-                        <Film className="w-5 h-5 text-purple-600" />
+                    <div className="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 border border-primary-200 flex items-center justify-center">
+                        <Film className="w-4 h-4" />
                     </div>
                     <div>
                         <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                            <span>Bước 2: Chọn Cảnh Quay & Kho B-Roll Điện Ảnh</span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-800 border border-purple-200">
-                                {clips.length} Cảnh Trong Timeline
+                            <span>Bước 2: Chọn Cảnh Quay & Kho B-Roll LYHU</span>
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary-50 text-primary-700 border border-primary-200">
+                                {clips.length} cảnh trong timeline
                             </span>
                         </h2>
                         <p className="text-xs text-slate-500">
-                            Bấm vào bất kỳ cảnh nào để xem thử trực tiếp hoặc sắp xếp thứ tự cảnh 1, 2, 3...
+                            Quản lý các đoạn video, sắp xếp thứ tự và nạp các thước phim quay kho thực tế.
                         </p>
                     </div>
                 </div>
@@ -98,54 +98,54 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                     <button
                         type="button"
                         onClick={handleLoadDemoClips}
-                        className="text-xs text-purple-700 hover:text-purple-800 font-bold px-3 py-1.5 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors cursor-pointer"
+                        className="text-xs text-primary-700 hover:text-primary-800 font-semibold px-3 py-1.5 rounded-lg border border-primary-200 hover:bg-primary-50 transition-colors cursor-pointer"
                     >
-                        + Nạp 3 clip mẫu Tổng kho LYHU
+                        + Nạp 3 clip mẫu LYHU
                     </button>
                 </div>
             </div>
 
             {/* Aspect Ratio & Pacing Controls */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-lg bg-slate-50 border border-slate-200">
                 {/* Aspect Ratio */}
                 <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700">Tỉ lệ khung hình:</label>
+                    <label className="text-xs font-bold text-slate-700">Tỉ lệ khung hình video:</label>
                     <div className="grid grid-cols-3 gap-2">
                         <button
                             type="button"
                             onClick={() => setAspectRatio("9:16")}
-                            className={`p-2 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                            className={`p-2 rounded-lg border flex flex-col items-center gap-1 transition-colors cursor-pointer ${
                                 aspectRatio === "9:16"
-                                    ? "border-teal-600 bg-teal-50 text-teal-900 shadow-sm ring-1 ring-teal-500 font-bold"
-                                    : "border-slate-200 hover:border-slate-300 text-slate-600 bg-white"
+                                    ? "border-primary-500 bg-primary-500 text-white font-bold"
+                                    : "border-slate-200 hover:bg-slate-100 text-slate-700 bg-white"
                             }`}
                         >
                             <Smartphone className="w-4 h-4" />
-                            <span className="text-[11px]">9:16 (TikTok)</span>
+                            <span className="text-[11px]">9:16 (Dọc TikTok)</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => setAspectRatio("16:9")}
-                            className={`p-2 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                            className={`p-2 rounded-lg border flex flex-col items-center gap-1 transition-colors cursor-pointer ${
                                 aspectRatio === "16:9"
-                                    ? "border-teal-600 bg-teal-50 text-teal-900 shadow-sm ring-1 ring-teal-500 font-bold"
-                                    : "border-slate-200 hover:border-slate-300 text-slate-600 bg-white"
+                                    ? "border-primary-500 bg-primary-500 text-white font-bold"
+                                    : "border-slate-200 hover:bg-slate-100 text-slate-700 bg-white"
                             }`}
                         >
                             <Monitor className="w-4 h-4" />
-                            <span className="text-[11px]">16:9 (Ngang)</span>
+                            <span className="text-[11px]">16:9 (Ngang Web)</span>
                         </button>
                         <button
                             type="button"
                             onClick={() => setAspectRatio("1:1")}
-                            className={`p-2 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                            className={`p-2 rounded-lg border flex flex-col items-center gap-1 transition-colors cursor-pointer ${
                                 aspectRatio === "1:1"
-                                    ? "border-teal-600 bg-teal-50 text-teal-900 shadow-sm ring-1 ring-teal-500 font-bold"
-                                    : "border-slate-200 hover:border-slate-300 text-slate-600 bg-white"
+                                    ? "border-primary-500 bg-primary-500 text-white font-bold"
+                                    : "border-slate-200 hover:bg-slate-100 text-slate-700 bg-white"
                             }`}
                         >
                             <Square className="w-4 h-4" />
-                            <span className="text-[11px]">1:1 (Vuông)</span>
+                            <span className="text-[11px]">1:1 (Vuông Feed)</span>
                         </button>
                     </div>
                 </div>
@@ -154,7 +154,7 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                 <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                         <label className="text-xs font-bold text-slate-700">Nhịp đổi góc quay (Pacing):</label>
-                        <span className="font-mono text-teal-600 font-bold text-xs">{clipSwitchInterval}s / cảnh</span>
+                        <span className="font-mono text-primary-700 font-bold text-xs">{clipSwitchInterval}s / cảnh</span>
                     </div>
                     <input
                         type="range"
@@ -163,12 +163,12 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                         step={0.5}
                         value={clipSwitchInterval}
                         onChange={(e) => setClipSwitchInterval(parseFloat(e.target.value))}
-                        className="w-full accent-teal-600 mt-2"
+                        className="w-full accent-primary-600 mt-2"
                     />
-                    <div className="flex justify-between text-[10px] text-slate-400">
-                        <span>1.5s (Hối hả)</span>
-                        <span className="text-teal-600 font-bold">2.5s (Chuẩn TikTok)</span>
-                        <span>5s (Chậm rãi)</span>
+                    <div className="flex justify-between text-[10px] text-slate-500">
+                        <span>1.5s (Nhanh)</span>
+                        <span className="text-primary-700 font-semibold">2.5s (Chuẩn TikTok)</span>
+                        <span>5.0s (Chậm)</span>
                     </div>
                 </div>
             </div>
@@ -177,11 +177,11 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                        <Upload className="w-4 h-4 text-teal-600" />
+                        <Upload className="w-4 h-4 text-primary-600" />
                         <span>Tải Lên Video Quay Thô (Footage):</span>
                     </label>
                     <span className="text-[11px] text-slate-500 font-mono">
-                        {clips.length} clip trong dàn cảnh • Ước tính {(clips.length * clipSwitchInterval).toFixed(1)}s video
+                        {clips.length} clip • {(clips.length * clipSwitchInterval).toFixed(1)}s video
                     </span>
                 </div>
 
@@ -190,29 +190,29 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                     onDragLeave={() => setIsDragging(false)}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
-                    className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+                    className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
                         isDragging
-                            ? "border-teal-500 bg-teal-50 scale-[1.01]"
-                            : "border-teal-200 hover:border-teal-500 bg-teal-50/20 hover:bg-teal-50/40"
+                            ? "border-primary-500 bg-primary-50"
+                            : "border-slate-300 hover:border-primary-400 bg-slate-50 hover:bg-primary-50/30"
                     }`}
                 >
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                         {isUploadingVideo ? (
                             <div className="flex items-center gap-2">
-                                <Loader2 className="w-5 h-5 text-teal-600 animate-spin" />
-                                <p className="text-xs font-bold text-teal-700">Đang nạp video vào bộ nhớ...</p>
+                                <Loader2 className="w-4 h-4 text-primary-600 animate-spin" />
+                                <p className="text-xs font-semibold text-primary-800">Đang nạp video vào bộ nhớ...</p>
                             </div>
                         ) : (
                             <>
-                                <span className="p-2.5 rounded-xl bg-teal-600 text-white shadow-sm shrink-0">
+                                <span className="p-2 rounded-lg bg-primary-500 text-white shrink-0">
                                     <Upload className="w-4 h-4" />
                                 </span>
                                 <div className="text-left sm:flex-1">
                                     <p className="text-xs font-bold text-slate-800">
-                                        Kéo thả hoặc nhấp để tải thêm clip quay thô từ điện thoại / máy tính
+                                        Kéo thả hoặc nhấp để tải thêm clip quay thô từ máy
                                     </p>
-                                    <p className="text-[11px] text-slate-400">
-                                        Hỗ trợ MP4, MOV, WebM • Chọn nhiều video cùng lúc • Tự động co giãn theo tỉ lệ {aspectRatio}
+                                    <p className="text-[11px] text-slate-500">
+                                        Hỗ trợ MP4, MOV, WebM • Chọn nhiều video cùng lúc • Tự động khớp tỉ lệ {aspectRatio}
                                     </p>
                                 </div>
                                 <button
@@ -221,7 +221,7 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                         e.stopPropagation();
                                         fileInputRef.current?.click();
                                     }}
-                                    className="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors cursor-pointer shrink-0"
+                                    className="px-3.5 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shrink-0"
                                 >
                                     + Chọn Tệp Video
                                 </button>
@@ -242,22 +242,22 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
             />
 
             {/* Timeline Clips Strip */}
-            <div className="space-y-2.5">
+            <div className="space-y-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                        <Clapperboard className="w-4 h-4 text-purple-600" />
-                        <span>Dàn Cảnh Video Hiện Tại ({clips.length} Cảnh Quay - Sắp Xếp Trực Tiếp):</span>
+                        <Clapperboard className="w-4 h-4 text-primary-600" />
+                        <span>Danh Sách Cảnh Quay ({clips.length} Cảnh Trong Timeline):</span>
                     </span>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-[11px] text-slate-500">
                         Bấm vào hình để xem video thô • Đổi thứ tự cảnh 1, 2, 3 bằng menu hoặc mũi tên
                     </span>
                 </div>
 
                 {clips.length === 0 ? (
-                    <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50 space-y-2">
-                        <Film className="w-8 h-8 text-slate-400 mx-auto" />
-                        <p className="text-xs font-semibold text-slate-600">Chưa có cảnh nào trong video.</p>
-                        <p className="text-[11px] text-slate-400">Hãy bấm tải video ở trên hoặc chọn thêm các cảnh B-Roll mẫu bên dưới!</p>
+                    <div className="p-6 text-center border border-dashed border-slate-200 rounded-lg bg-slate-50 space-y-1.5">
+                        <Film className="w-6 h-6 text-slate-400 mx-auto" />
+                        <p className="text-xs font-semibold text-slate-700">Chưa có cảnh nào trong video.</p>
+                        <p className="text-[11px] text-slate-500">Hãy bấm tải video ở trên hoặc chọn thêm các cảnh B-Roll bên dưới.</p>
                     </div>
                 ) : (
                     <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
@@ -268,19 +268,18 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                             return (
                                 <div
                                     key={c.id}
-                                    className={`p-3 rounded-xl border transition-all text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                                    className={`p-2.5 rounded-lg border transition-colors text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
                                         isCurrentlyPlayingThis
-                                            ? "bg-purple-50/70 border-purple-400 ring-2 ring-purple-300 shadow-sm"
-                                            : "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
+                                            ? "bg-primary-50 border-primary-400"
+                                            : "bg-white border-slate-200 hover:border-slate-300"
                                     }`}
                                 >
                                     {/* Video Thumbnail & Info */}
                                     <div className="flex items-center gap-3 min-w-0">
-                                        {/* Thumbnail Preview with Play Overlay */}
                                         <div
                                             onClick={() => setPreviewingClip(c)}
-                                            className="relative group/thumb cursor-pointer shrink-0 rounded-xl overflow-hidden border border-slate-200 bg-black w-20 h-16 sm:w-24 sm:h-16 flex items-center justify-center shadow-xs"
-                                            title="Nhấn để xem trước toàn bộ video thô này"
+                                            className="relative group/thumb cursor-pointer shrink-0 rounded-lg overflow-hidden border border-slate-200 bg-slate-900 w-20 h-14 flex items-center justify-center"
+                                            title="Xem trước clip thô này"
                                         >
                                             <video
                                                 src={c.url}
@@ -288,9 +287,9 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                                 muted
                                                 className="w-full h-full object-cover"
                                             />
-                                            <div className="absolute inset-0 bg-black/35 group-hover/thumb:bg-black/15 flex items-center justify-center transition-all">
-                                                <span className="p-1 rounded-full bg-white/90 text-purple-700 shadow-sm group-hover/thumb:scale-110 transition-transform">
-                                                    <Play className="w-3.5 h-3.5 fill-purple-600" />
+                                            <div className="absolute inset-0 bg-black/30 group-hover/thumb:bg-black/10 flex items-center justify-center transition-colors">
+                                                <span className="p-1 rounded-full bg-white/90 text-primary-600">
+                                                    <Play className="w-3 h-3 fill-primary-600" />
                                                 </span>
                                             </div>
                                             <span className="absolute bottom-1 right-1 text-[9px] font-mono font-bold bg-black/70 text-white px-1 rounded">
@@ -298,69 +297,51 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                             </span>
                                         </div>
 
-                                        {/* Text Info */}
-                                        <div className="min-w-0 flex-1 space-y-1">
-                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                <span className={`px-2 py-0.5 rounded-md font-black text-[10px] ${
+                                        <div className="min-w-0 flex-1 space-y-0.5">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
                                                     idx === 0
-                                                        ? "bg-amber-100 text-amber-900 border border-amber-300"
-                                                        : "bg-purple-100 text-purple-800"
+                                                        ? "bg-primary-500 text-white"
+                                                        : "bg-slate-100 text-slate-700 border border-slate-200"
                                                 }`}>
-                                                    {idx === 0 ? "⭐ CẢNH #1 (MỞ ĐẦU HOOK)" : `CẢNH #${idx + 1}`}
+                                                    {idx === 0 ? "CẢNH #1 (MỞ ĐẦU)" : `CẢNH #${idx + 1}`}
                                                 </span>
-                                                <span className="text-[10px] text-slate-400 font-mono">
-                                                    Xuất hiện từ: {(idx * clipSwitchInterval).toFixed(1)}s
-                                                </span>
+                                                {isCurrentlyPlayingThis && (
+                                                    <span className="text-[10px] font-bold text-primary-700 bg-primary-100 px-1.5 rounded">
+                                                        Đang phát
+                                                    </span>
+                                                )}
                                             </div>
-                                            <div className="font-bold text-slate-800 text-xs truncate" title={c.name}>
+                                            <p className="font-semibold text-slate-800 text-xs truncate max-w-xs" title={c.name}>
                                                 {c.name}
-                                            </div>
-                                            <div className="text-[10px] text-slate-400 flex items-center gap-2">
-                                                <span>Thời lượng gốc: {c.duration.toFixed(1)}s</span>
-                                                <span>•</span>
-                                                <span>Kích thước: {c.width || 1080}x{c.height || 1920}</span>
-                                            </div>
+                                            </p>
                                         </div>
                                     </div>
 
-                                    {/* Control Actions & Reorder */}
-                                    <div className="flex items-center gap-1.5 shrink-0 justify-end flex-wrap pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                                        {/* Nút Xem Video Thô */}
-                                        <button
-                                            type="button"
-                                            onClick={() => setPreviewingClip(c)}
-                                            className="px-2.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer transition-colors shadow-xs"
-                                            title="Mở trình phát video để xem trực tiếp video thô này"
-                                        >
-                                            <Play className="w-3 h-3 fill-white" />
-                                            <span>Xem Video</span>
-                                        </button>
-
-                                        {/* Nút Xem Trên Canvas Ghép */}
+                                    {/* Actions & Ordering */}
+                                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                                         <button
                                             type="button"
                                             onClick={() => handlePreviewSpecificClip(idx)}
-                                            className={`px-2 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
+                                            className={`px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1 border transition-colors cursor-pointer ${
                                                 isCurrentlyPlayingThis
-                                                    ? "bg-teal-600 text-white"
-                                                    : "bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-700"
+                                                    ? "bg-primary-500 text-white border-primary-500"
+                                                    : "bg-white text-slate-700 hover:bg-slate-50 border-slate-200"
                                             }`}
-                                            title="Xem cảnh này trên màn hình video thành phẩm"
                                         >
                                             <Eye className="w-3 h-3" />
-                                            <span className="hidden sm:inline">{isCurrentlyPlayingThis ? "Đang Hiện" : "Màn Ghép"}</span>
+                                            <span>Xem Thử</span>
                                         </button>
 
                                         {/* Dropdown Đổi Thứ Tự Cảnh */}
                                         <select
                                             value={idx}
                                             onChange={(e) => moveClipToIndex(idx, Number(e.target.value))}
-                                            className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none hover:border-purple-300 cursor-pointer"
-                                            title="Đổi trực tiếp thứ tự xuất hiện của cảnh này"
+                                            className="px-2 py-1 bg-white border border-slate-200 rounded-md text-xs font-semibold text-slate-700 outline-none hover:border-primary-400 cursor-pointer"
                                         >
                                             {clips.map((_, i) => (
                                                 <option key={i} value={i}>
-                                                    {i === 0 ? "Vị trí: Cảnh #1 (Mở Đầu)" : `Vị trí: Cảnh #${i + 1}`}
+                                                    {i === 0 ? "Vị trí #1 (Đầu)" : `Vị trí #${i + 1}`}
                                                 </option>
                                             ))}
                                         </select>
@@ -370,7 +351,7 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                             type="button"
                                             onClick={() => moveClip(idx, "up")}
                                             disabled={idx === 0}
-                                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 disabled:opacity-30 cursor-pointer"
+                                            className="p-1 rounded-md border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-30 cursor-pointer"
                                             title="Đẩy lên trước"
                                         >
                                             <MoveUp className="w-3.5 h-3.5" />
@@ -379,7 +360,7 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                             type="button"
                                             onClick={() => moveClip(idx, "down")}
                                             disabled={idx === clips.length - 1}
-                                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 disabled:opacity-30 cursor-pointer"
+                                            className="p-1 rounded-md border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-30 cursor-pointer"
                                             title="Đẩy xuống sau"
                                         >
                                             <MoveDown className="w-3.5 h-3.5" />
@@ -390,10 +371,9 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                             <button
                                                 type="button"
                                                 onClick={() => handleSetOpeningClip(c)}
-                                                className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
-                                                title="Đưa cảnh này lên làm Cảnh #1 mở đầu video"
+                                                className="px-2 py-1 bg-primary-50 hover:bg-primary-100 text-primary-800 border border-primary-200 rounded-md text-[10px] font-semibold transition-colors cursor-pointer"
                                             >
-                                                ⭐ Đặt Đầu
+                                                Đặt Đầu
                                             </button>
                                         )}
 
@@ -401,7 +381,7 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                         <button
                                             type="button"
                                             onClick={() => removeClip(c.id)}
-                                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
+                                            className="p-1 rounded-md text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
                                             title="Xóa cảnh này"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
@@ -415,30 +395,30 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
             </div>
 
             {/* B-Roll Warehouse Library */}
-            <div className="p-4 rounded-xl bg-purple-50/50 border border-purple-100 space-y-3">
+            <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
                 <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
-                        <Film className="w-4 h-4 text-purple-600" />
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <Film className="w-4 h-4 text-primary-600" />
                         <span>Kho B-Roll Thực Tế LYHU (Bấm để thêm vào video):</span>
                     </span>
-                    <span className="text-[11px] text-purple-700 font-medium">B-Roll quay sẵn bản quyền</span>
+                    <span className="text-[11px] text-slate-500">B-Roll quay sẵn có bản quyền</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                     {AI_BROLL_LIBRARY.map((item) => (
                         <div
                             key={item.id}
-                            className="p-2.5 rounded-xl bg-white border border-purple-200/80 hover:border-purple-400 transition-all text-xs flex flex-col justify-between gap-2 shadow-2xs group"
+                            className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-primary-400 transition-colors text-xs flex flex-col justify-between gap-2"
                         >
                             <div className="space-y-1">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-800">
+                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary-50 text-primary-800 border border-primary-200">
                                         {item.tag}
                                     </span>
                                     <span className="text-[10px] text-slate-400 font-mono">
                                         {item.duration}s
                                     </span>
                                 </div>
-                                <p className="font-bold text-slate-800 text-xs line-clamp-2 group-hover:text-purple-700 transition-colors">
+                                <p className="font-semibold text-slate-800 text-xs line-clamp-2">
                                     {item.name}
                                 </p>
                             </div>
@@ -454,15 +434,15 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                         height: item.height,
                                         muted: true
                                     })}
-                                    className="p-1.5 rounded-lg text-slate-500 hover:text-purple-700 hover:bg-purple-50 transition-colors cursor-pointer"
+                                    className="p-1 rounded-md text-slate-600 hover:text-primary-700 hover:bg-slate-50 transition-colors cursor-pointer border border-slate-200"
                                     title="Xem thử clip B-roll này"
                                 >
-                                    <Play className="w-3.5 h-3.5" />
+                                    <Play className="w-3 h-3" />
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => handleAddBRoll(item)}
-                                    className="flex-1 py-1 px-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                                    className="flex-1 py-1 px-2 rounded-md bg-primary-500 hover:bg-primary-600 text-white font-semibold text-[11px] flex items-center justify-center gap-1 transition-colors cursor-pointer"
                                 >
                                     <Plus className="w-3 h-3" />
                                     <span>Thêm Cảnh Này</span>
@@ -474,46 +454,46 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
             </div>
 
             {/* Video Filters LUT */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Palette className="w-4 h-4 text-teal-600" />
-                    <span>Bộ Lọc Màu Điện Ảnh (LUT Color Grading):</span>
+                    <Palette className="w-4 h-4 text-primary-600" />
+                    <span>Bộ Lọc Màu Video (LUT Color Grading):</span>
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                    {VIDEO_FILTERS.map((f) => (
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                    {VIDEO_FILTERS.map((filt) => (
                         <button
-                            key={f.id}
+                            key={filt.id}
                             type="button"
-                            onClick={() => setVideoFilterPreset(f.id)}
-                            className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${
-                                videoFilterPreset === f.id
-                                    ? "bg-teal-600 text-white shadow-sm ring-1 ring-teal-500"
+                            onClick={() => setVideoFilterPreset(filt.id)}
+                            className={`p-2 rounded-lg border text-center transition-colors cursor-pointer text-xs ${
+                                videoFilterPreset === filt.id
+                                    ? "bg-primary-500 text-white border-primary-500 font-bold"
                                     : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                             }`}
                         >
-                            {f.name}
+                            <span>{filt.name}</span>
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Navigation Buttons */}
+            {/* Navigation buttons */}
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                 <button
                     type="button"
                     onClick={onPrev}
-                    className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold text-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Quay lại Bước 1: Kịch bản</span>
                 </button>
                 <button
                     type="button"
                     onClick={onNext}
-                    className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-teal-600/20 cursor-pointer transition-all active:scale-95"
+                    className="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
                     <span>Tiếp tục: Bước 3 - Tiêu Đề & Huy Hiệu</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-3.5 h-3.5" />
                 </button>
             </div>
         </div>

@@ -169,18 +169,18 @@ async function synthesizeWithGeminiTTS(
     };
     const voiceName = voiceMapping[styleKey] || (styleKey.includes("male") ? "Puck" : "Kore");
 
-    const models = [
-        "gemini-2.0-flash",
-        "gemini-2.5-flash",
-        "gemini-2.0-flash-exp"
+    const endpoints = [
+        { name: "gemini-2.0-flash (v1beta)", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}` },
+        { name: "gemini-2.0-flash (v1alpha)", url: `https://generativelanguage.googleapis.com/v1alpha/models/gemini-2.0-flash:generateContent?key=${apiKey}` },
+        { name: "gemini-2.5-flash (v1beta)", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}` }
     ];
 
     let lastError = "";
 
-    for (const model of models) {
+    for (const ep of endpoints) {
         try {
-            console.log(`[Gemini TTS] Requesting model ${model} with voice ${voiceName}...`);
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            console.log(`[Gemini TTS] Requesting ${ep.name} with voice ${voiceName}...`);
+            const url = ep.url;
             const body = {
                 contents: [
                     {
@@ -209,7 +209,7 @@ async function synthesizeWithGeminiTTS(
 
             if (!res.ok) {
                 const errText = await res.text();
-                lastError = `Model ${model} (${res.status}): ${errText.slice(0, 150)}`;
+                lastError = `${ep.name} (${res.status}): ${errText.slice(0, 150)}`;
                 console.warn(`[Gemini TTS] ${lastError}`);
                 continue;
             }
@@ -220,11 +220,11 @@ async function synthesizeWithGeminiTTS(
                 return {
                     buffer: Buffer.from(part.inlineData.data, "base64"),
                     mimeType: part.inlineData.mimeType || "audio/wav",
-                    modelUsed: model
+                    modelUsed: ep.name
                 };
             }
         } catch (e: any) {
-            lastError = `Model ${model}: ${e.message}`;
+            lastError = `${ep.name}: ${e.message}`;
             console.warn(`[Gemini TTS] ${lastError}`);
         }
     }
@@ -287,10 +287,20 @@ export async function POST(req: NextRequest) {
 
         // ƯU TIÊN 2: GOOGLE GEMINI FLASH AUDIO (MẶC ĐỊNH SỐ 1 - GIỌNG AI TIÊN TIẾN NHẤT)
         if (!audioBuffer && (engine === "gemini" || !engine)) {
-            const geminiResult = await synthesizeWithGeminiTTS(normalizedText, styleKey, geminiApiKey);
-            audioBuffer = geminiResult.buffer;
-            mimeType = geminiResult.mimeType;
-            engineUsed = `gemini-${geminiResult.modelUsed}`;
+            try {
+                const geminiResult = await synthesizeWithGeminiTTS(normalizedText, styleKey, geminiApiKey);
+                audioBuffer = geminiResult.buffer;
+                mimeType = geminiResult.mimeType;
+                engineUsed = `gemini-${geminiResult.modelUsed}`;
+            } catch (geminiErr: any) {
+                console.warn("[TTS] Gemini Audio REST endpoint unavailable, switching to Studio Neural Voice:", geminiErr.message);
+                // Tự động chuyển tiếp sang Studio Neural Voice (Azure Neural: Hoài My & Nam Minh)
+                // Đảm bảo video studio luôn thu âm thành công 100%, không bao giờ bị popup 404 gián đoạn!
+                const edgeResult = await synthesizeWithEdgeTTS(normalizedText, styleKey, Number(rateMultiplier) || 1.0);
+                audioBuffer = edgeResult.buffer;
+                mimeType = edgeResult.mimeType;
+                engineUsed = "studio-neural-hoaimy-namminh";
+            }
         }
 
         // ƯU TIÊN 3: Microsoft Edge (Chỉ dùng khi người dùng chủ động chọn engine "edge")

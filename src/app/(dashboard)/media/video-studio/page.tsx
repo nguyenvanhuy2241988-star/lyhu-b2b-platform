@@ -2115,86 +2115,88 @@ export default function AutoVideoStudioPage() {
     return (
         <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
                 <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                        <span className="p-2 rounded-xl bg-purple-50 text-purple-600">
-                            <Film className="w-6 h-6" />
-                        </span>
-                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                            Studio Dựng Video AI (Auto Cut & Subtitles)
-                        </h1>
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-sm">
-                            ✦ MP4 Pro & TikTok Edition
-                        </span>
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-lg bg-primary-50 text-primary-600 border border-primary-200 flex items-center justify-center">
+                            <Film className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                                <span>Studio Dựng Video B2B LYHU</span>
+                                <span className="px-2 py-0.5 rounded text-xs font-semibold bg-primary-50 text-primary-800 border border-primary-200">
+                                    Auto Cut & Subtitles
+                                </span>
+                            </h1>
+                            <p className="text-xs text-slate-500">
+                                Cắt ghép góc quay tự động, khớp giọng đọc AI, chèn phụ đề động & xuất MP4 chuẩn TikTok/Reels.
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-sm text-gray-500 pl-11">
-                        Cắt ghép góc quay tự động, khớp nhịp giọng đọc, phụ đề động thương hiệu & xuất MP4 chỉ với ~85đ/video!
-                    </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
                     <button
                         type="button"
                         onClick={() => setIsProjectHistoryOpen(true)}
-                        className="px-3.5 py-2 rounded-xl bg-purple-50 text-purple-700 text-xs font-bold hover:bg-purple-100 transition-colors flex items-center gap-1.5 border border-purple-200"
+                        className="px-3 py-1.5 rounded-lg bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors flex items-center gap-1.5 border border-slate-200 cursor-pointer"
                     >
-                        <FolderOpen className="w-3.5 h-3.5 text-purple-600" />
-                        <span>Sổ Tay & Lịch Sử ({videoProjects.length})</span>
+                        <FolderOpen className="w-3.5 h-3.5 text-primary-600" />
+                        <span>Lịch Sử ({videoProjects.length})</span>
                     </button>
 
                     <button
                         type="button"
                         onClick={() => setIsDirectorHubOpen(true)}
-                        className="px-3.5 py-2 rounded-xl bg-amber-50 text-amber-800 text-xs font-bold hover:bg-amber-100 transition-colors flex items-center gap-1.5 border border-amber-200"
+                        className="px-3 py-1.5 rounded-lg bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors flex items-center gap-1.5 border border-slate-200 cursor-pointer"
                     >
-                        <Clapperboard className="w-3.5 h-3.5 text-amber-600" />
-                        <span>Bảng Phân Cảnh Đạo Diễn</span>
+                        <Clapperboard className="w-3.5 h-3.5 text-primary-600" />
+                        <span>Bảng Phân Cảnh</span>
                     </button>
 
                     <button
                         type="button"
                         onClick={handleManualSaveProject}
                         disabled={isSavingProject}
-                        className="px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-lg bg-primary-500 text-white text-xs font-bold hover:bg-primary-600 transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                     >
-                        <Save className="w-3.5 h-3.5 text-amber-400" />
+                        <Save className="w-3.5 h-3.5" />
                         <span>{isSavingProject ? "Đang lưu..." : "Lưu Dự Án"}</span>
                     </button>
 
                     <Link
                         href="/media/voice-studio"
-                        className="px-3.5 py-2 rounded-xl bg-teal-50 text-[#00AFA9] text-xs font-bold hover:bg-teal-100 transition-colors flex items-center gap-1.5 border border-teal-200"
+                        className="px-3 py-1.5 rounded-lg bg-white text-primary-700 text-xs font-semibold hover:bg-primary-50 transition-colors flex items-center gap-1.5 border border-primary-200"
                     >
-                        <Wand2 className="w-3.5 h-3.5" />
+                        <Wand2 className="w-3.5 h-3.5 text-primary-600" />
                         <span>Lồng Tiếng AI</span>
                     </Link>
                 </div>
             </div>
 
             {/* COMPACT FINANCIAL / SAVINGS BANNER */}
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-1.5 text-slate-700 font-medium">
-                        <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                        <span>Chi phí video này: <strong className="text-teal-700 font-mono font-bold">~{estimatedCurrentVideoCost} VNĐ</strong></span>
+                        <span className="w-2 h-2 rounded-full bg-primary-500" />
+                        <span>Chi phí ước tính: <strong className="text-primary-800 font-mono font-bold">~{estimatedCurrentVideoCost} VNĐ</strong></span>
                         <span className="text-[10px] text-slate-400 font-normal">(Phân tích: 35đ • Lồng tiếng: {ttsCost}đ • Render: 0đ)</span>
                     </div>
                     <span className="hidden sm:inline text-slate-300">•</span>
                     <div className="text-slate-600 flex items-center gap-1.5">
-                        <span>Tháng này: <strong className="font-mono text-slate-800">{totalCostSpent.toLocaleString("vi-VN")} VNĐ</strong> ({totalVideosCreated} video)</span>
+                        <span>Đã tạo tháng này: <strong className="font-mono text-slate-800">{totalCostSpent.toLocaleString("vi-VN")} VNĐ</strong> ({totalVideosCreated} video)</span>
                         <button
                             type="button"
                             onClick={handleResetBudgetTracker}
-                            className="text-[10px] text-slate-400 hover:text-slate-600 underline"
+                            className="text-[10px] text-slate-400 hover:text-slate-600 underline cursor-pointer"
                         >
                             Đặt lại
                         </button>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 text-emerald-700 font-semibold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 text-xs">
-                    <TrendingDown className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Tiết kiệm ~{totalSavings.toLocaleString("vi-VN")} VNĐ (98.5% so với thuê ngoài / CapCut Pro)</span>
+                <div className="flex items-center gap-1.5 text-primary-800 font-semibold bg-primary-50 px-2.5 py-1 rounded-md border border-primary-200 text-xs">
+                    <TrendingDown className="w-3.5 h-3.5 text-primary-600" />
+                    <span>Tiết kiệm ~{totalSavings.toLocaleString("vi-VN")} VNĐ so với thuê ngoài</span>
                 </div>
             </div>
 
@@ -2214,20 +2216,18 @@ export default function AutoVideoStudioPage() {
 
                     {/* TAB COPILOT: SIÊU AI ĐẠO DIỄN COPILOT */}
                     {(activeStudioStep === "copilot" || activeStudioTab === "copilot") && (
-                        <div className="bg-white p-5 rounded-2xl border border-teal-200/90 shadow-sm space-y-4">
-                            <div className="bg-gradient-to-r from-teal-700 via-teal-600 to-emerald-600 rounded-2xl p-4 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 space-y-4">
+                            <div className="bg-primary-500 rounded-xl p-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">
-                                        <span className="p-1.5 bg-white/20 rounded-xl backdrop-blur-sm">
-                                            <Bot className="w-5 h-5 text-amber-300" />
-                                        </span>
-                                        <h2 className="font-black text-sm tracking-tight">Siêu AI Đạo Diễn LYHU (Autonomous Copilot)</h2>
-                                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-400 text-slate-950 shadow-sm">
-                                            Gemini 2.5 Flash
+                                        <Bot className="w-5 h-5 text-white" />
+                                        <h2 className="font-bold text-sm">Trợ Lý AI Đạo Diễn LYHU (Autonomous Copilot)</h2>
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white text-primary-800">
+                                            AI Assistant
                                         </span>
                                     </div>
-                                    <p className="text-xs text-teal-100 leading-relaxed max-w-xl">
-                                        Trao đổi tự nhiên bằng tiếng Việt — AI sẽ tự suy nghĩ, đổi kịch bản, tự thu âm giọng đọc AI, nạp nhạc trend và tinh chỉnh thông số video trực tiếp vào Studio!
+                                    <p className="text-xs text-primary-50 leading-relaxed max-w-xl">
+                                        Trao đổi trực tiếp bằng tiếng Việt — AI sẽ tự tối ưu kịch bản, gợi ý nhịp cắt và nạp âm thanh vào Studio.
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
@@ -2235,9 +2235,9 @@ export default function AutoVideoStudioPage() {
                                         type="button"
                                         onClick={() => handleSendCopilotMessage("Em hãy tối ưu lại toàn bộ kịch bản và nhịp cắt cho video này để đạt chuẩn viral TikTok nhé!")}
                                         disabled={isCopilotThinking}
-                                        className="px-3.5 py-2 bg-white text-teal-800 hover:bg-teal-50 font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                                        className="px-3 py-1.5 bg-white text-primary-800 hover:bg-primary-50 font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
                                     >
-                                        <Sparkles className="w-4 h-4 text-amber-500" />
+                                        <Sparkles className="w-3.5 h-3.5 text-primary-600" />
                                         <span>Tự Động Tối Ưu</span>
                                     </button>
                                     <button
@@ -2246,7 +2246,7 @@ export default function AutoVideoStudioPage() {
                                             setActiveStudioStep("step_script");
                                             setActiveStudioTab("script");
                                         }}
-                                        className="px-3 py-2 bg-teal-800/80 hover:bg-teal-900 text-white font-semibold text-xs rounded-xl transition-all flex items-center gap-1"
+                                        className="px-3 py-1.5 bg-primary-700 hover:bg-primary-800 text-white font-semibold text-xs rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                                         title="Đóng trợ lý và quay lại các bước sản xuất"
                                     >
                                         <span>Đóng Trợ Lý</span>
@@ -2256,23 +2256,23 @@ export default function AutoVideoStudioPage() {
 
                             {/* Quick Prompts */}
                             <div className="space-y-1.5">
-                                <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
-                                    <Sparkles className="w-3 h-3 text-amber-500" />
+                                <span className="text-[11px] font-semibold text-slate-600 flex items-center gap-1">
+                                    <Sparkles className="w-3 h-3 text-primary-600" />
                                     <span>Gợi ý lệnh đạo diễn 1 chạm:</span>
                                 </span>
                                 <div className="flex flex-wrap gap-1.5">
                                     {[
-                                        "🔥 Viết kịch bản khoai môn CVT container về đêm vibe hối hả chốt sỉ",
-                                        "🎀 Đổi sang giọng Nữ dịu dàng, nhịp cắt 3.5s và nhạc lofi tâm sự",
-                                        "⚡ Đổi giọng Nam Gen Z, nhịp cắt 2s dồn dập, đẩy nhạc Vinahouse",
-                                        "🎯 Viết lại Hook 3 giây đầu giữ chân người xem và quét từ khóa vàng"
+                                        "Viết kịch bản khoai môn CVT container về kho sỉ",
+                                        "Đổi sang giọng Nữ dịu dàng, nhịp cắt 3.5s và nhạc lofi",
+                                        "Đổi giọng Nam Gen Z, nhịp cắt 2s dồn dập, đẩy nhạc trend",
+                                        "Viết lại Hook 3 giây đầu giữ chân người xem"
                                     ].map((prompt, idx) => (
                                         <button
                                             key={idx}
                                             type="button"
                                             onClick={() => handleSendCopilotMessage(prompt)}
                                             disabled={isCopilotThinking}
-                                            className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 border border-slate-200/80 text-[11px] font-semibold text-slate-700 transition-all text-left disabled:opacity-50"
+                                            className="px-2.5 py-1 rounded-md bg-slate-50 hover:bg-primary-50 hover:text-primary-800 hover:border-primary-300 border border-slate-200 text-[11px] font-medium text-slate-700 transition-colors text-left disabled:opacity-50 cursor-pointer"
                                         >
                                             {prompt}
                                         </button>
@@ -2578,14 +2578,14 @@ export default function AutoVideoStudioPage() {
                                 step={0.1}
                                 value={displayTime}
                                 onChange={(e) => handleSeek(parseFloat(e.target.value))}
-                                className="w-full accent-teal-600 h-1.5 bg-gray-200 rounded-lg cursor-pointer"
+                                className="w-full accent-primary-600 h-1.5 bg-slate-200 rounded cursor-pointer"
                             />
 
                             <div className="flex items-center justify-center gap-3">
                                 <button
                                     type="button"
                                     onClick={() => handleSeek(0)}
-                                    className="p-2 text-gray-500 hover:text-gray-900 hover:bg-slate-100 rounded-full"
+                                    className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md cursor-pointer"
                                     title="Phát lại từ đầu"
                                 >
                                     <RotateCcw className="w-4 h-4" />
@@ -2594,7 +2594,7 @@ export default function AutoVideoStudioPage() {
                                 <button
                                     type="button"
                                     onClick={togglePlay}
-                                    className="w-11 h-11 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white rounded-full flex items-center justify-center shadow-md transition-all"
+                                    className="w-10 h-10 bg-primary-500 hover:bg-primary-600 text-white rounded-full flex items-center justify-center transition-colors cursor-pointer"
                                 >
                                     {isPlaying ? <Pause className="w-5 h-5 fill-white" /> : <Play className="w-5 h-5 fill-white ml-0.5" />}
                                 </button>
@@ -2602,28 +2602,28 @@ export default function AutoVideoStudioPage() {
                         </div>
 
                         {/* Export Format Selection */}
-                        <div className="pt-2 border-t border-gray-100 space-y-2">
+                        <div className="pt-2 border-t border-slate-100 space-y-2">
                             <div className="flex items-center justify-between text-xs">
-                                <span className="font-semibold text-gray-700">Định dạng xuất video:</span>
-                                <div className="flex items-center gap-1.5">
+                                <span className="font-semibold text-slate-700">Định dạng xuất video:</span>
+                                <div className="flex items-center gap-1">
                                     <button
                                         type="button"
                                         onClick={() => setExportFormat("mp4")}
-                                        className={`px-2.5 py-1 rounded-lg border font-bold text-xs transition-colors ${
+                                        className={`px-2.5 py-1 rounded-md border font-semibold text-xs transition-colors cursor-pointer ${
                                             exportFormat === "mp4"
-                                                ? "bg-teal-600 text-white border-teal-600 shadow-sm"
-                                                : "bg-slate-50 text-gray-600 border-gray-200 hover:border-gray-300"
+                                                ? "bg-primary-500 text-white border-primary-500"
+                                                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                                         }`}
                                     >
-                                        MP4 (Chuẩn phổ thông)
+                                        MP4 (Phổ thông)
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setExportFormat("webm")}
-                                        className={`px-2.5 py-1 rounded-lg border font-bold text-xs transition-colors ${
+                                        className={`px-2.5 py-1 rounded-md border font-semibold text-xs transition-colors cursor-pointer ${
                                             exportFormat === "webm"
-                                                ? "bg-teal-600 text-white border-teal-600 shadow-sm"
-                                                : "bg-slate-50 text-gray-600 border-gray-200 hover:border-gray-300"
+                                                ? "bg-primary-500 text-white border-primary-500"
+                                                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                                         }`}
                                     >
                                         WEBM (Nhẹ)
@@ -2636,7 +2636,7 @@ export default function AutoVideoStudioPage() {
                                 type="button"
                                 disabled={isRendering || clips.length === 0}
                                 onClick={handleExportVideo}
-                                className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-colors shadow-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                className="w-full py-2.5 px-4 bg-primary-500 hover:bg-primary-600 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                             >
                                 {isRendering ? (
                                     <>
@@ -2645,7 +2645,7 @@ export default function AutoVideoStudioPage() {
                                     </>
                                 ) : (
                                     <>
-                                        <Sparkles className="w-4 h-4 text-amber-300" />
+                                        <Sparkles className="w-4 h-4 text-white" />
                                         <span>XUẤT VIDEO {exportFormat.toUpperCase()} TỰ ĐỘNG (~{estimatedCurrentVideoCost}đ)</span>
                                     </>
                                 )}

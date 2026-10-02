@@ -30,15 +30,15 @@ export const StudioStepper: React.FC<StudioStepperProps> = ({
         {
             step: "step_script",
             num: "1",
-            title: "Kịch Bản & Giọng AI",
+            title: "Kịch Bản & Lồng Tiếng",
             icon: FileText,
-            badge: hasVoice ? "Đã có giọng" : hasScript ? "Đã có lời" : "Gemini 3.8",
+            badge: hasVoice ? "Đã có giọng" : hasScript ? "Đã có kịch bản" : "AI Studio",
             isDone: hasScript && hasVoice
         },
         {
             step: "step_clips",
             num: "2",
-            title: "Chọn Cảnh & B-Roll",
+            title: "Góc Quay & B-Roll",
             icon: Film,
             badge: `${clipsCount} cảnh`,
             isDone: clipsCount > 0
@@ -46,15 +46,15 @@ export const StudioStepper: React.FC<StudioStepperProps> = ({
         {
             step: "step_visuals",
             num: "3",
-            title: "Tiêu Đề & Huy Hiệu",
+            title: "Tiêu Đề & Phụ Đề",
             icon: Tag,
-            badge: "Viral Badges",
+            badge: "Huy hiệu sỉ",
             isDone: clipsCount > 0
         },
         {
             step: "step_audio_export",
             num: "4",
-            title: "Âm Thanh & Xuất",
+            title: "Âm Thanh & Xuất Video",
             icon: Music,
             badge: isExportReady ? "Sẵn sàng" : "60 FPS",
             isDone: false
@@ -62,9 +62,10 @@ export const StudioStepper: React.FC<StudioStepperProps> = ({
     ];
 
     return (
-        <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200/90 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div className="flex items-center gap-2 overflow-x-auto py-1">
+        <div className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+                {/* 4 Pipeline Steps */}
+                <div className="flex items-center gap-1.5 overflow-x-auto">
                     {steps.map((s) => {
                         const isCurrent = activeStudioStep === s.step;
                         return (
@@ -72,37 +73,37 @@ export const StudioStepper: React.FC<StudioStepperProps> = ({
                                 key={s.step}
                                 type="button"
                                 onClick={() => setActiveStudioStep(s.step)}
-                                className={`px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+                                className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer whitespace-nowrap border ${
                                     isCurrent
-                                        ? "bg-teal-600 text-white shadow-md shadow-teal-600/25 ring-2 ring-teal-500/20"
+                                        ? "bg-primary-500 text-white border-primary-500 font-bold"
                                         : s.isDone
-                                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200/80 hover:bg-emerald-100/70"
-                                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 bg-slate-50 border border-slate-200/80"
+                                        ? "bg-primary-50 text-primary-800 border-primary-200 hover:bg-primary-100"
+                                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900"
                                 }`}
                             >
                                 <span
-                                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black ${
+                                    className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${
                                         isCurrent
-                                            ? "bg-white text-teal-800"
+                                            ? "bg-white text-primary-700"
                                             : s.isDone
-                                            ? "bg-emerald-600 text-white"
-                                            : "bg-slate-200 text-slate-700"
+                                            ? "bg-primary-600 text-white"
+                                            : "bg-slate-100 text-slate-600 border border-slate-300"
                                     }`}
                                 >
                                     {s.isDone && !isCurrent ? (
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                                        <CheckCircle2 className="w-3 h-3 text-white" />
                                     ) : (
                                         s.num
                                     )}
                                 </span>
                                 <span>{s.title}</span>
                                 <span
-                                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
+                                    className={`text-[10px] px-1.5 py-0.5 rounded font-normal ${
                                         isCurrent
-                                            ? "bg-teal-700/60 text-teal-100"
+                                            ? "bg-primary-600 text-primary-50"
                                             : s.isDone
-                                            ? "bg-emerald-100 text-emerald-800"
-                                            : "bg-slate-200/70 text-slate-600"
+                                            ? "bg-primary-100 text-primary-800"
+                                            : "bg-slate-100 text-slate-500"
                                     }`}
                                 >
                                     {s.badge}
@@ -116,15 +117,15 @@ export const StudioStepper: React.FC<StudioStepperProps> = ({
                 <button
                     type="button"
                     onClick={() => setActiveStudioStep("copilot")}
-                    className={`px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shrink-0 self-start md:self-center ${
+                    className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border ${
                         activeStudioStep === "copilot"
-                            ? "bg-purple-600 text-white shadow-md shadow-purple-600/25 ring-2 ring-purple-400"
-                            : "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                            ? "bg-primary-500 text-white border-primary-500"
+                            : "bg-white text-primary-700 border-primary-300 hover:bg-primary-50"
                     }`}
                 >
-                    <Bot className="w-4 h-4 text-purple-600" />
+                    <Bot className="w-3.5 h-3.5 text-primary-600" />
                     <span>Trợ Lý Đạo Diễn AI</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-purple-200 text-purple-800 font-bold">
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-primary-100 text-primary-800 font-semibold">
                         Auto
                     </span>
                 </button>
