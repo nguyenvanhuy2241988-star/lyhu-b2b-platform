@@ -66,381 +66,28 @@ import {
     VideoProjectItem,
     DirectorGuide
 } from "@/lib/videoProjectStore";
-import { normalizeVietnamesePhonetics } from "@/lib/ttsHelper";
+import { normalizeVietnamesePhonetics, prepareTextForTTS } from "@/lib/ttsHelper";
 
-// ── COLOR LUT PRESETS FOR VIDEO GRADING ──
-const VIDEO_FILTERS = [
-    { id: "none", name: "Gốc", filter: "none" },
-    { id: "vibrant", name: "🔥 Rực Rỡ TikTok", filter: "saturate(1.3) contrast(1.08) brightness(1.03)" },
-    { id: "crispy", name: "✨ Bánh Giòn Rụm", filter: "sepia(0.18) saturate(1.25) contrast(1.12) brightness(1.04)" },
-    { id: "cinematic", name: "🎬 Điện Ảnh Sâu", filter: "contrast(1.18) brightness(0.96) saturate(1.08)" },
-    { id: "cool_storage", name: "❄️ Sáng Kho Hàng", filter: "brightness(1.06) contrast(1.1) saturate(0.95)" }
-];
-
-// ── 1-CLICK VIRAL HOOK PRESETS FOR SNACKS ──
-const VIRAL_HOOK_PRESETS = [
-    { label: "🔥 Bóc giá sỉ tận kho", text: "🔥 BÓC GIÁ SỈ TẬN KHO LYHU: LÃI GẤP ĐÔI CHO CHỦ QUÁN!" },
-    { label: "⚠️ Cảnh báo cháy hàng", text: "⚠️ CẢNH BÁO CHỦ QUÁN: MÓN ĂN VẶT NÀY VỪA VỀ ĐÃ CHÁY HÀNG!" },
-    { label: "💸 1 vốn 4 lời", text: "💸 1 VỐN 4 LỜI: TOP MÓN ĂN VẶT CỨU DOANH THU QUÁN MÙA NÀY!" },
-    { label: "📦 Đập hộp 100kg sỉ", text: "📦 ĐẬP HỘP KIỆN HÀNG 100KG ĂN VẶT GIÁ SỈ TẬN XƯỞNG!" },
-    { label: "🚀 Bí quyết đông khách", text: "🚀 BÍ QUYẾT QUÁN TRÀ SỮA ĐÔNG KHÁCH NHỜ MÓN ĂN VẶT NÀY!" },
-    { label: "✨ Xả kho giá gốc", text: "✨ XẢ KHO GIÁ GỐC: CHỈ DÀNH CHO 50 ĐỐI TÁC SỈ ĐẦU TIÊN!" }
-];
-
-interface VideoClip {
-    id: string;
-    file?: File;
-    url: string;
-    name: string;
-    duration: number; // in seconds
-    width: number;
-    height: number;
-    muted: boolean;
-}
-
-interface SubtitleCue {
-    start: number; // seconds
-    end: number;   // seconds
-    text: string;
-    words?: {
-        word: string;
-        start: number;
-        end: number;
-    }[];
-}
-
-interface TikTokTrendingSound {
-    id: string;
-    title: string;
-    author: string;
-    tag: string;
-    url: string;
-    duration: string;
-    useCase: string;
-    isHot?: boolean;
-}
-
-const TIKTOK_TRENDING_SOUNDS: TikTokTrendingSound[] = [
-    {
-        id: "tt_tramy_1",
-        title: "âm thanh gốc - Trà My 24Zone (Kể chuyện kho đêm)",
-        author: "Trà My 24Zone",
-        tag: "🔥 Đang Hot",
-        url: "/audio/bgm/warehouse_flow.mp3",
-        duration: "0:51",
-        useCase: "Video kể chuyện kho hàng đêm, đóng hàng sỉ, tự sự chân thật",
-        isHot: true
-    },
-    {
-        id: "tt_banhang_remix",
-        title: "Beat Chốt Đơn Sôi Động (Speed-up TikTok 2026)",
-        author: "TikTok Viral Sounds",
-        tag: "⚡ Bán Hàng Mạnh",
-        url: "/audio/bgm/trending.mp3",
-        duration: "0:45",
-        useCase: "Khuyến mãi, xả kho, thông báo hàng mới về cần đẩy số lượng lớn",
-        isHot: true
-    },
-    {
-        id: "tt_food_asmr",
-        title: "Vui Tươi Ăn Vặt & Review Ẩm Thực (Ngon miệng)",
-        author: "Foodie Daily Sound",
-        tag: "🍜 Review Đồ Ăn",
-        url: "/audio/bgm/food_review.mp3",
-        duration: "0:42",
-        useCase: "Review thanh khoai môn trứng cua, da cá hoàng kim, bánh tráng bơ",
-        isHot: true
-    },
-    {
-        id: "tt_lofi_pack",
-        title: "Lofi Nhẹ Nhàng Thư Giãn (Đóng Gói Đơn Hàng)",
-        author: "Chill Packing BGM",
-        tag: "📦 Đóng Hàng / Logistics",
-        url: "/audio/bgm/warehouse_flow.mp3",
-        duration: "0:48",
-        useCase: "Quay công nhân đóng thùng hàng, kiểm tem nhãn, in hóa đơn giao khách"
-    },
-    {
-        id: "tt_vinahouse_drop",
-        title: "Vinahouse Bass Căng (Nhạc Nền TikTok Hot)",
-        author: "Hot TikTok Vietnam",
-        tag: "🎧 Năng Lượng / Chốt Đơn",
-        url: "/audio/bgm/trending.mp3",
-        duration: "0:38",
-        useCase: "Video ngắn dưới 20 giây giật tít giảm giá sâu hoặc khai trương chi nhánh"
-    }
-];
-
-// Preset local royalty-free BGM tracks
-const BGM_PRESETS = [
-    {
-        id: "trending_upbeat",
-        name: "🔥 TikTok Trend Bán Hàng (Sôi động, kích thích chốt đơn)",
-        url: "/audio/bgm/trending.mp3"
-    },
-    {
-        id: "food_review",
-        name: "🍜 Review Đồ Ăn & Ẩm Thực (Vui tươi, nhẹ nhàng, ngon miệng)",
-        url: "/audio/bgm/food_review.mp3"
-    },
-    {
-        id: "warehouse_flow",
-        name: "📦 Kho Hàng & Đóng Gói Sỉ B2B (Hiện đại, uy tín doanh nghiệp)",
-        url: "/audio/bgm/warehouse_flow.mp3"
-    },
-    {
-        id: "tt_tramy_1",
-        name: "🎧 Âm thanh gốc - Trà My 24Zone (Kể chuyện kho đêm)",
-        url: "/audio/bgm/warehouse_flow.mp3"
-    },
-    {
-        id: "tt_banhang_remix",
-        name: "⚡ Beat Chốt Đơn Sôi Động (Speed-up TikTok 2026)",
-        url: "/audio/bgm/trending.mp3"
-    },
-    {
-        id: "tt_food_asmr",
-        name: "🥢 Beat Review Ẩm Thực Vui Tươi (Ngon miệng)",
-        url: "/audio/bgm/food_review.mp3"
-    },
-    {
-        id: "custom",
-        name: "📁 Tự tải file nhạc nền MP3 riêng từ máy tính...",
-        url: ""
-    },
-    {
-        id: "none",
-        name: "🔇 Không dùng nhạc nền (Chỉ giữ giọng đọc - Chuẩn đăng TikTok)",
-        url: ""
-    }
-];
-
-interface LyhuTemplate {
-    id: string;
-    badge: string;
-    title: string;
-    hookTitle: string;
-    script: string;
-    pacing: number;
-    transition: "auto" | "crossfade" | "slide_left" | "white_flash" | "hard_cut";
-    bgm: string;
-    textColor: string;
-    subtitleStyle: "tiktok_stroke" | "neon_glow" | "pill_dark" | "clean_shadow";
-}
-
-const LYHU_TEMPLATES: LyhuTemplate[] = [
-    {
-        id: "kho_dem",
-        badge: "🌙 Chuyện Kho Đêm",
-        title: "Kể chuyện đóng hàng sỉ xuyên đêm (Chuẩn phong cách 24Zone)",
-        hookTitle: "🌙 11H ĐÊM KHO SỈ LYHU VẪN ĐÓNG HÀNG!",
-        script: "Nhiều người bảo giờ này chỉ có đi ngủ, nhưng ở tổng kho sỉ LYHU thì bọn mình vẫn đang kiểm từng kiện hàng để sáng mai kịp giao cho các chủ quán. Nào là thanh khoai môn sấy trứng cua, da cá hoàng kim, bánh tráng Abi với bột phô mai Boyo. Khách đặt cả trăm thùng thì dù khuya mấy bọn mình cũng đóng gói cẩn thận. Cần mẫu thử hay bảng giá sỉ cứ nhắn bọn mình nha!",
-        pacing: 2.5,
-        transition: "auto",
-        bgm: "trending_upbeat",
-        textColor: "#FACC15",
-        subtitleStyle: "tiktok_stroke"
-    },
-    {
-        id: "khoai_mon_trung_cua",
-        badge: "🦀 Review Món Hot",
-        title: "Thanh khoai môn sấy trứng cua & Truffle (Kén khách nhưng siêu ngon)",
-        hookTitle: "🦀 THANH KHOAI MÔN TRỨNG CUA CÓ GÌ MÀ HOT?",
-        script: "Nhiều người bảo snack khoai môn sấy trên thị trường thiếu gì, sao LYHU lại mang dòng trứng cua với nấm truffle này về bán sỉ? Nói thật là vì vị nó quá cuốn! Sấy thăng hoa giòn rụm, phủ lớp trứng cua béo ngậy mằn mặn, ăn là dính. Quán cafe hay quán trà sữa để món này lên quầy là khách gọi lai rai suốt buổi. Ai muốn lấy thử thùng sỉ trải nghiệm nhắn LYHU gửi liền nha!",
-        pacing: 2.5,
-        transition: "crossfade",
-        bgm: "food_review",
-        textColor: "#22D3EE",
-        subtitleStyle: "neon_glow"
-    },
-    {
-        id: "bot_pho_mai_boyo",
-        badge: "🧀 Bột Phô Mai BOYO",
-        title: "Bột phô mai BOYO tận xưởng cho quán F&B (Mở bán rộn ràng)",
-        hookTitle: "🧀 BỘT PHÔ MAI BOYO GIÁ SỈ TẬN XƯỞNG!",
-        script: "500 anh em chủ quán ăn vặt và F&B ơi! Lô bột phô mai Boyo chính hãng mới về ngập kho LYHU rồi nè! Hạt mịn màng, thơm nức mũi, vị mặn ngọt béo ngậy chuẩn công thức cho quán gà rán, khoai tây lắc. Lấy bao 1kg tiết kiệm chi phí tối đa, bao đổi trả nếu không chuẩn vị. Cần bảng giá sỉ sập sàn để lại bình luận cho bọn mình nhé!",
-        pacing: 2.5,
-        transition: "slide_left",
-        bgm: "trending_upbeat",
-        textColor: "#FACC15",
-        subtitleStyle: "tiktok_stroke"
-    },
-    {
-        id: "abi_snack_uhi",
-        badge: "🍘 Abi Snack & UHi",
-        title: "Bánh tráng Abi Snack & Kẹo UHi Hàn Quốc độc quyền cho đại lý & mini mart",
-        hookTitle: "🍘 TỔNG KHO BÁNH TRÁNG ABI & KẸO UHi GIÁ SỈ!",
-        script: "Chủ quán ăn vặt, tiệm tạp hóa và mini mart đang tìm nguồn bánh tráng chuẩn vị cùng kẹo nhập khẩu Hàn Quốc thì xem hết video này nha! LYHU phân phối độc quyền dòng bánh tráng Abi Snack đậm vị giòn rụm và các dòng kẹo dẻo UHi thơm ngon chính ngạch. Date mới tinh vừa về kho, chính sách chiết khấu đại lý tốt nhất thị trường. Nhắn liền cho LYHU để nhận mẫu thử và bảng giá sỉ sập sàn nhé!",
-        pacing: 2.5,
-        transition: "auto",
-        bgm: "trending_upbeat",
-        textColor: "#F43F5E",
-        subtitleStyle: "tiktok_stroke"
-    }
-];
-
-// ── AI B-ROLL CINEMATIC FOOTAGE LIBRARY ──
-const AI_BROLL_LIBRARY = [
-    {
-        id: "broll_warehouse",
-        name: "📦 Kho hàng LYHU & Đóng gói kiện sỉ",
-        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-        tag: "Kho Hàng B2B",
-        duration: 15,
-        width: 1280,
-        height: 720
-    },
-    {
-        id: "broll_snack",
-        name: "🍟 Cận cảnh thanh khoai môn sấy giòn rụm",
-        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-        tag: "Sản Phẩm Hot",
-        duration: 15,
-        width: 1280,
-        height: 720
-    },
-    {
-        id: "broll_delivery",
-        name: "🚚 Xe container xuất hàng & Giao sỉ tận quán",
-        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-        tag: "Logistics",
-        duration: 12,
-        width: 1280,
-        height: 720
-    },
-    {
-        id: "broll_joy",
-        name: "😋 Khách hàng thưởng thức & Đánh giá 5 sao",
-        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4",
-        tag: "Review Ẩm Thực",
-        duration: 15,
-        width: 1280,
-        height: 720
-    },
-    {
-        id: "broll_meltdown",
-        name: "🧀 Bột phô mai Boyo rắc phủ vàng ươm",
-        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-        tag: "Nguyên Liệu Sỉ",
-        duration: 15,
-        width: 1280,
-        height: 720
-    },
-    {
-        id: "broll_container",
-        name: "🌙 Đêm container bốc hàng tại tổng kho",
-        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
-        tag: "Chuyện Kho Đêm",
-        duration: 15,
-        width: 1280,
-        height: 720
-    }
-];
-
-const DEMO_CLIPS = AI_BROLL_LIBRARY.slice(0, 3);
-
-// ── HIGH-FIDELITY WEB AUDIO SOUND DESIGN ENGINE (0ms Latency Synthesis) ──
-function playWebAudioSfx(
-    type: "whoosh" | "ding" | "kaching" | "boom" | "pop",
-    audioCtx: AudioContext,
-    destNode?: AudioNode,
-    volume = 0.35
-) {
-    try {
-        if (!audioCtx) return;
-        const now = audioCtx.currentTime;
-        const gain = audioCtx.createGain();
-        gain.gain.value = volume;
-        gain.connect(destNode || audioCtx.destination);
-
-        if (type === "whoosh") {
-            const bufferSize = Math.floor(audioCtx.sampleRate * 0.32);
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                data[i] = Math.random() * 2 - 1;
-            }
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = buffer;
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = "bandpass";
-            filter.frequency.setValueAtTime(320, now);
-            filter.frequency.exponentialRampToValueAtTime(3400, now + 0.16);
-            filter.frequency.exponentialRampToValueAtTime(450, now + 0.32);
-            filter.Q.value = 3.2;
-
-            gain.gain.setValueAtTime(0.01, now);
-            gain.gain.linearRampToValueAtTime(volume * 0.9, now + 0.14);
-            gain.gain.linearRampToValueAtTime(0.001, now + 0.32);
-
-            noise.connect(filter);
-            filter.connect(gain);
-            noise.start(now);
-            noise.stop(now + 0.32);
-
-        } else if (type === "ding") {
-            const osc = audioCtx.createOscillator();
-            const osc2 = audioCtx.createOscillator();
-            osc.type = "sine";
-            osc2.type = "sine";
-            osc.frequency.setValueAtTime(1480, now);
-            osc2.frequency.setValueAtTime(2960, now);
-
-            gain.gain.setValueAtTime(volume * 0.85, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
-
-            osc.connect(gain);
-            osc2.connect(gain);
-            osc.start(now);
-            osc2.start(now);
-            osc.stop(now + 0.65);
-            osc2.stop(now + 0.65);
-
-        } else if (type === "kaching") {
-            [1760, 2340, 3120].forEach((freq, idx) => {
-                const osc = audioCtx.createOscillator();
-                osc.type = "sine";
-                osc.frequency.setValueAtTime(freq, now + idx * 0.07);
-                const coinGain = audioCtx.createGain();
-                coinGain.gain.setValueAtTime(0, now + idx * 0.07);
-                coinGain.gain.linearRampToValueAtTime(volume * 0.75, now + idx * 0.07 + 0.01);
-                coinGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.38);
-                osc.connect(coinGain);
-                coinGain.connect(destNode || audioCtx.destination);
-                osc.start(now + idx * 0.07);
-                osc.stop(now + idx * 0.07 + 0.38);
-            });
-
-        } else if (type === "boom") {
-            const osc = audioCtx.createOscillator();
-            osc.type = "sine";
-            osc.frequency.setValueAtTime(130, now);
-            osc.frequency.exponentialRampToValueAtTime(32, now + 0.55);
-
-            gain.gain.setValueAtTime(volume * 1.1, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
-
-            osc.connect(gain);
-            osc.start(now);
-            osc.stop(now + 0.7);
-
-        } else if (type === "pop") {
-            const osc = audioCtx.createOscillator();
-            osc.type = "sine";
-            osc.frequency.setValueAtTime(450, now);
-            osc.frequency.exponentialRampToValueAtTime(950, now + 0.05);
-
-            gain.gain.setValueAtTime(volume * 0.7, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-
-            osc.connect(gain);
-            osc.start(now);
-            osc.stop(now + 0.08);
-        }
-    } catch (e) {
-        console.warn("SFX error:", e);
-    }
-}
+import {
+    VideoClip,
+    SubtitleCue,
+    LyhuTemplate,
+    TikTokTrendingSound
+} from "./types";
+import {
+    VIDEO_FILTERS,
+    VIRAL_HOOK_PRESETS,
+    TIKTOK_TRENDING_SOUNDS,
+    BGM_PRESETS,
+    LYHU_TEMPLATES,
+    AI_BROLL_LIBRARY,
+    DEMO_CLIPS
+} from "./lib/constants";
+import { playWebAudioSfx } from "./lib/sfx";
+import { drawFullStudioCanvas } from "./components/canvas/renderers";
+import { ClipPreviewModal } from "./components/modals/ClipPreviewModal";
+import { ProjectHistoryModal } from "./components/modals/ProjectHistoryModal";
+import { DirectorHubModal } from "./components/modals/DirectorHubModal";
 
 export default function AutoVideoStudioPage() {
     // ── STEP 1: Video Clips State ──
@@ -460,7 +107,7 @@ export default function AutoVideoStudioPage() {
     const [voiceDuration, setVoiceDuration] = useState<number>(30);
     const [isEditingText, setIsEditingText] = useState(true);
     const [selectedVoiceStyleId, setSelectedVoiceStyleId] = useState<string>("female-genz");
-    const [selectedVoiceEngine, setSelectedVoiceEngine] = useState<"gemini" | "edge" | "elevenlabs">("gemini");
+    const [selectedVoiceEngine, setSelectedVoiceEngine] = useState<"gemini" | "edge" | "elevenlabs">("edge");
     const [isRecordingMic, setIsRecordingMic] = useState(false);
     const [recordingSeconds, setRecordingSeconds] = useState(0);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -721,7 +368,8 @@ export default function AutoVideoStudioPage() {
                     text: textToSpeak.trim(),
                     voice: styleId,
                     style: styleId,
-                    rate: "+8%"
+                    engine: engineChoice,
+                    rateMultiplier: voiceSpeedMultiplier || 1.0
                 }),
                 signal: AbortSignal.timeout(45000)
             });
@@ -834,7 +482,7 @@ export default function AutoVideoStudioPage() {
 
         window.speechSynthesis.cancel();
 
-        const cleanText = normalizeVietnamesePhonetics(textToSpeak.trim());
+        const cleanText = prepareTextForTTS(textToSpeak.trim());
         if (!cleanText) return;
 
         const utterance = new SpeechSynthesisUtterance(cleanText);
@@ -1220,7 +868,7 @@ export default function AutoVideoStudioPage() {
                 setAnalyzingStepText("2/2 AI đang thu âm giọng đọc tiếng Việt khớp 100% kịch bản...");
                 let voiceGenerated = false;
                 try {
-                    const audioUrl = await generateSpeechForText(newScript, selectedVoiceStyleId);
+                    const audioUrl = await generateSpeechForText(newScript, selectedVoiceStyleId, selectedVoiceEngine);
                     if (audioUrl) voiceGenerated = true;
                 } catch (voiceErr: any) {
                     console.warn("Lỗi thu giọng đọc tự động:", voiceErr);
@@ -1446,7 +1094,7 @@ export default function AutoVideoStudioPage() {
                         setActiveTemplateId(null); // Reset badge template cũ
                         appliedLabels.push("Cập nhật kịch bản");
                         if (act.payload.triggerTTS !== false) {
-                            generateSpeechForText(act.payload.script, selectedVoiceStyleId);
+                            generateSpeechForText(act.payload.script, selectedVoiceStyleId, selectedVoiceEngine);
                             appliedLabels.push("Thu âm giọng đọc mới");
                         }
                     }
@@ -1457,7 +1105,7 @@ export default function AutoVideoStudioPage() {
                     if (act.type === "update_voice" && act.payload?.voiceStyle) {
                         setSelectedVoiceStyleId(act.payload.voiceStyle);
                         appliedLabels.push(`Đổi giọng (${act.payload.voiceStyle})`);
-                        generateSpeechForText(selectedVoiceText, act.payload.voiceStyle);
+                        generateSpeechForText(selectedVoiceText, act.payload.voiceStyle, selectedVoiceEngine);
                     }
                     if (act.type === "update_bgm" && act.payload?.bgmChoice) {
                         setBgmChoice(act.payload.bgmChoice);
@@ -1654,725 +1302,49 @@ export default function AutoVideoStudioPage() {
     };
 
     // ── DRAW FRAME ON CANVAS (Hardware-accelerated) ──
+    // ── DRAW FRAME ON CANVAS (Hardware-accelerated & Modularized) ──
     const drawCanvasFrame = useCallback((time: number) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        const cw = canvas.width;
-        const ch = canvas.height;
-
-        // Clear canvas
-        ctx.fillStyle = "#090d16";
-        ctx.fillRect(0, 0, cw, ch);
-
-        if (clips.length === 0) {
-            ctx.fillStyle = "#1e293b";
-            ctx.fillRect(0, 0, cw, ch);
-            ctx.fillStyle = "#64748b";
-            ctx.font = "bold 20px 'Be Vietnam Pro', sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText("Chưa có video quay thô", cw / 2, ch / 2 - 12);
-            ctx.font = "14px sans-serif";
-            ctx.fillStyle = "#94a3b8";
-            ctx.fillText("Nhấp '+ Tải video từ máy' hoặc '+ Dùng 2 clip mẫu'", cw / 2, ch / 2 + 16);
-            return;
-        }
-
-        const switchSec = Math.max(2, clipSwitchInterval || 2.5);
-        const validTime = (typeof time === "number" && isFinite(time) && time >= 0) ? time : 0;
-        const rawIdx = Math.floor(validTime / switchSec);
-        const clipIdx = (isFinite(rawIdx) && clips.length > 0) ? (Math.abs(rawIdx) % clips.length) : 0;
-        const currentClip = clips[clipIdx] || clips[0];
-        if (!currentClip) return;
-        const nextClipIdx = clips.length > 0 ? (clipIdx + 1) % clips.length : 0;
-        const nextClip = clips[nextClipIdx] || currentClip;
-
-        const timeInInterval = validTime % switchSec;
-        const transitionWindow = 0.45;
-        const isNearTransition = switchSec - timeInInterval <= transitionWindow && clips.length > 1;
-        const transitionFactor = isNearTransition ? (switchSec - timeInInterval) / transitionWindow : 1.0;
-
-        const currentVid = currentClip?.id ? videoElementsRef.current[currentClip.id] : null;
-        const nextVid = nextClip?.id ? videoElementsRef.current[nextClip.id] : null;
-
-        // Active transition effect
-        let activeTrans = transitionEffect;
-        if (activeTrans === "auto") {
-            const transPool: ("crossfade" | "zoom_in" | "slide_left" | "white_flash")[] = [
-                "crossfade",
-                "zoom_in",
-                "slide_left",
-                "crossfade"
-            ];
-            activeTrans = transPool[clipIdx % transPool.length];
-        }
-
-        // Draw cover video helper
-        const drawVideoCover = (
-            videoEl: HTMLVideoElement,
-            offsetX = 0,
-            alpha = 1.0,
-            scaleMultiplier = 1.0
-        ) => {
-            if (!videoEl || videoEl.readyState < 2) return;
-            const vw = videoEl.videoWidth || cw;
-            const vh = videoEl.videoHeight || ch;
-            const baseScale = Math.max(cw / vw, ch / vh) * scaleMultiplier;
-            const dw = vw * baseScale;
-            const dh = vh * baseScale;
-            const dx = (cw - dw) / 2 + offsetX;
-            const dy = (ch - dh) / 2;
-
-            ctx.save();
-            ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
-            if (videoFilterPreset !== "none") {
-                const foundFilter = VIDEO_FILTERS.find(f => f.id === videoFilterPreset);
-                if (foundFilter && foundFilter.filter !== "none") {
-                    ctx.filter = foundFilter.filter;
-                }
+        drawFullStudioCanvas({
+            canvas,
+            ctx,
+            time,
+            videoOptions: {
+                clips,
+                videoElements: videoElementsRef.current,
+                clipSwitchInterval,
+                transitionEffect,
+                videoFilterPreset,
+                videoFilters: VIDEO_FILTERS
+            },
+            hookOptions: {
+                showHookTitle,
+                hookDuration,
+                customHookTitle,
+                hookBannerTheme,
+                fontFamily
+            },
+            showWatermark,
+            stickerOptions: {
+                activeSalesSticker,
+                stickerPosition
+            },
+            subtitleOptions: {
+                enableSubtitles,
+                subtitleCues,
+                textPosition,
+                keyPowerWords,
+                textAnimationEffect,
+                subtitleStyle,
+                fontSize,
+                fontFamily,
+                textColor
             }
-            ctx.drawImage(videoEl, dx, dy, dw, dh);
-            ctx.restore();
-        };
-
-        const zoomProgress = (validTime % switchSec) / switchSec;
-        const dynamicScale = 1.0 + zoomProgress * 0.04;
-
-        const isNextVidReady = nextVid && nextVid.readyState >= 2;
-        // Smooth S-curve easing factor from 0.0 to 1.0
-        const progress = Math.max(0, Math.min(1, 1.0 - transitionFactor));
-        const ease = 0.5 - 0.5 * Math.cos(progress * Math.PI);
-
-        // Render with Transition (ZERO-JERK & ZERO BLACK-FRAME)
-        if (isNearTransition && clips.length > 1) {
-            if (activeTrans === "crossfade") {
-                if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
-                if (isNextVidReady) {
-                    drawVideoCover(nextVid, 0, ease, 1.0);
-                }
-
-            } else if (activeTrans === "zoom_in") {
-                const curScale = dynamicScale * (1.0 + ease * 0.08);
-                if (currentVid) drawVideoCover(currentVid, 0, 1.0, curScale);
-                if (isNextVidReady) {
-                    const nxtScale = 0.94 + ease * 0.06;
-                    drawVideoCover(nextVid, 0, ease, nxtScale);
-                }
-
-            } else if (activeTrans === "slide_left") {
-                if (isNextVidReady) {
-                    const slideOffset = ease * cw;
-                    if (currentVid) drawVideoCover(currentVid, -slideOffset, 1.0, dynamicScale);
-                    drawVideoCover(nextVid, cw - slideOffset, 1.0, 1.0);
-                } else {
-                    if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
-                }
-
-            } else if (activeTrans === "white_flash") {
-                if (progress < 0.5) {
-                    if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
-                } else {
-                    if (isNextVidReady) {
-                        drawVideoCover(nextVid, 0, 1.0, 1.0);
-                    } else if (currentVid) {
-                        drawVideoCover(currentVid, 0, 1.0, dynamicScale);
-                    }
-                }
-                const flashAlpha = Math.sin(progress * Math.PI) * 0.65;
-                ctx.save();
-                ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
-                ctx.fillRect(0, 0, cw, ch);
-                ctx.restore();
-
-            } else {
-                if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
-            }
-        } else {
-            if (currentVid) {
-                drawVideoCover(currentVid, 0, 1.0, dynamicScale);
-            }
-        }
-
-        // 2. Draw Hook Title (First 3.5s with High-Impact TikTok / CapCut Viral Aesthetic)
-        if (showHookTitle && time <= hookDuration && customHookTitle.trim()) {
-            ctx.save();
-
-            // Elastic pop-in bounce animation in first 0.28s
-            let hookScale = 1.0;
-            if (time < 0.28) {
-                const t = time / 0.28;
-                hookScale = 0.82 + 0.18 * Math.sin(t * Math.PI * 0.5);
-            }
-
-            const hookCenterY = ch * 0.17;
-            const maxBadgeW = Math.min(cw * 0.94, cw - 24);
-            const maxContentW = maxBadgeW - 32;
-
-            const textRaw = customHookTitle.trim();
-            let baseFontSize = 24;
-            if (textRaw.length > 55) baseFontSize = 18;
-            else if (textRaw.length > 36) baseFontSize = 21;
-
-            ctx.font = `900 ${baseFontSize}px ${fontFamily}`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-
-            const words = textRaw.split(/\s+/);
-            const lines: string[] = [];
-            let currentLine = "";
-
-            for (let i = 0; i < words.length; i++) {
-                const testLine = currentLine ? `${currentLine} ${words[i]}` : words[i];
-                const testW = ctx.measureText(testLine).width;
-                if (testW > maxContentW && currentLine) {
-                    lines.push(currentLine);
-                    currentLine = words[i];
-                } else {
-                    currentLine = testLine;
-                }
-            }
-            if (currentLine) lines.push(currentLine);
-
-            let maxLineW = 0;
-            lines.forEach((l) => {
-                const lw = ctx.measureText(l).width;
-                if (lw > maxLineW) maxLineW = lw;
-            });
-
-            const lineHeight = baseFontSize * 1.36;
-            const topTagH = 20;
-            const badgeW = Math.min(maxBadgeW, Math.max(220, maxLineW + 48));
-            const badgeH = Math.max(56, lines.length * lineHeight + topTagH + 18);
-            const badgeX = (cw - badgeW) / 2;
-            const badgeY = hookCenterY - badgeH / 2;
-
-            // Apply scale from center
-            ctx.translate(cw / 2, hookCenterY);
-            ctx.scale(hookScale, hookScale);
-            if (hookBannerTheme === "tiktok_sticker") {
-                ctx.rotate(-0.02); // 1.2 degree dynamic tilt
-            }
-            ctx.translate(-cw / 2, -hookCenterY);
-
-            // 3D Drop Shadow
-            ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
-            ctx.shadowBlur = 24;
-            ctx.shadowOffsetY = 6;
-
-            // Background Gradient by Theme
-            const grad = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeW, badgeY + badgeH);
-            if (hookBannerTheme === "tiktok_sticker") {
-                grad.addColorStop(0, "#FFE600");
-                grad.addColorStop(0.35, "#FF9900");
-                grad.addColorStop(1, "#DC2626");
-            } else if (hookBannerTheme === "black_gold") {
-                grad.addColorStop(0, "#09090B");
-                grad.addColorStop(0.5, "#18181B");
-                grad.addColorStop(1, "#27272A");
-            } else if (hookBannerTheme === "teal_lyhu") {
-                grad.addColorStop(0, "#0F766E");
-                grad.addColorStop(1, "#00AFA9");
-            } else {
-                // red_orange
-                grad.addColorStop(0, "#DC2626");
-                grad.addColorStop(0.5, "#E11D48");
-                grad.addColorStop(1, "#EA580C");
-            }
-
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 16);
-            ctx.fill();
-
-            // Inner glowing border / 3D rim
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetY = 0;
-            ctx.strokeStyle = hookBannerTheme === "tiktok_sticker"
-                ? "#000000"
-                : (hookBannerTheme === "black_gold" ? "#FACC15" : "rgba(255, 255, 255, 0.65)");
-            ctx.lineWidth = hookBannerTheme === "tiktok_sticker" ? 3.5 : 2;
-            ctx.stroke();
-
-            // Top Mini-Badge Tag (e.g. 🔥 HOT TREND KHO SỈ)
-            const tagText = hookBannerTheme === "black_gold"
-                ? "✦ BÍ QUYẾT BÁN BUÔN"
-                : (hookBannerTheme === "teal_lyhu" ? "📦 LYHU WHOLESALE" : "🔥 XU HƯỚNG KHO SỈ");
-            ctx.font = `900 11px ${fontFamily}`;
-            const tagW = ctx.measureText(tagText).width + 18;
-            const tagX = cw / 2 - tagW / 2;
-            const tagY = badgeY + 8;
-            ctx.fillStyle = hookBannerTheme === "tiktok_sticker" ? "#000000" : "rgba(0, 0, 0, 0.45)";
-            ctx.beginPath();
-            ctx.roundRect(tagX, tagY, tagW, 18, 9);
-            ctx.fill();
-            ctx.fillStyle = hookBannerTheme === "tiktok_sticker" ? "#FFE600" : "#FFFFFF";
-            ctx.fillText(tagText, cw / 2, tagY + 9);
-
-            // Draw each line of text
-            const startTextY = badgeY + topTagH + 8 + ((badgeH - topTagH - 18) - (lines.length - 1) * lineHeight) / 2;
-            lines.forEach((lineText, idx) => {
-                const lineY = startTextY + idx * lineHeight;
-                ctx.font = `900 ${baseFontSize}px ${fontFamily}`;
-
-                // Heavy 8.5px solid black stroke
-                ctx.strokeStyle = "#000000";
-                ctx.lineWidth = 8.5;
-                ctx.lineJoin = "round";
-                ctx.strokeText(lineText, cw / 2, lineY);
-
-                // High contrast vibrant fill
-                if (hookBannerTheme === "tiktok_sticker") {
-                    ctx.fillStyle = idx === 0 ? "#FFFFFF" : "#FFE600";
-                } else if (hookBannerTheme === "black_gold") {
-                    ctx.fillStyle = idx === 0 ? "#FFFFFF" : "#FEF08A";
-                } else {
-                    ctx.fillStyle = idx === 0 ? "#FFE600" : "#FFFFFF";
-                }
-                ctx.fillText(lineText, cw / 2, lineY);
-            });
-
-            ctx.restore();
-        }
-
-        // 3. Draw Brand Watermark
-        if (showWatermark) {
-            ctx.save();
-            ctx.fillStyle = "rgba(15, 23, 42, 0.75)";
-            const badgeW = 176;
-            const badgeH = 34;
-            const badgeX = 18;
-            const badgeY = 22;
-            ctx.beginPath();
-            ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 17);
-            ctx.fill();
-
-            ctx.fillStyle = "#00AFA9";
-            ctx.font = "900 13px 'Be Vietnam Pro', sans-serif";
-            ctx.textAlign = "left";
-            ctx.fillText("LYHU!", badgeX + 16, badgeY + 22);
-
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "600 11.5px 'Be Vietnam Pro', sans-serif";
-            ctx.fillText("• Tổng Kho Sỉ B2B", badgeX + 54, badgeY + 22);
-            ctx.restore();
-        }
-
-        // 3.5. Draw Active Animated Sales Callout Sticker / Live Badge
-        if (activeSalesSticker && activeSalesSticker !== "none") {
-            ctx.save();
-            const pulse = 1.0 + Math.sin(validTime * 4.5) * 0.04;
-
-            const STICKER_CONFIGS: Record<string, { title: string; subtitle: string; icon: string; bgGrad: [string, string]; border: string; subCol: string }> = {
-                freeship: {
-                    title: "FREESHIP TẬN QUÁN",
-                    subtitle: "GIAO NHANH NỘI THÀNH & TỈNH",
-                    icon: "🚚",
-                    bgGrad: ["#D97706", "#B45309"],
-                    border: "#FDE68A",
-                    subCol: "#FEF08A"
-                },
-                si_1_thung: {
-                    title: "SỈ TỪ 1 THÙNG",
-                    subtitle: "GIÁ TẬN XƯỞNG BAO LỜI X2",
-                    icon: "🏷️",
-                    bgGrad: ["#E11D48", "#BE123C"],
-                    border: "#FECDD3",
-                    subCol: "#FFE4E6"
-                },
-                san_kho: {
-                    title: "SẴN KHO 1.000 THÙNG",
-                    subtitle: "DATE MỚI TINH XUẤT NGAY",
-                    icon: "📦",
-                    bgGrad: ["#2563EB", "#1D4ED8"],
-                    border: "#BFDBFE",
-                    subCol: "#DBEAFE"
-                },
-                lai_x2: {
-                    title: "LÃI GẤP ĐÔI TẬN GỐC",
-                    subtitle: "CHIẾT KHẤU TỐI ĐA CHO ĐẠI LÝ",
-                    icon: "💰",
-                    bgGrad: ["#059669", "#047857"],
-                    border: "#A7F3D0",
-                    subCol: "#D1FAE5"
-                },
-                inbox_cta: {
-                    title: "INBOX NHẬN MẪU THỬ",
-                    subtitle: "GỬI MẪU ĂN THỬ MIỄN PHÍ",
-                    icon: "📲",
-                    bgGrad: ["#7C3AED", "#6D28D9"],
-                    border: "#DDD6FE",
-                    subCol: "#EDE9FE"
-                }
-            };
-
-            const cfg = STICKER_CONFIGS[activeSalesSticker] || STICKER_CONFIGS["freeship"];
-            const badgeW = Math.min(cw * 0.54, 255);
-            const badgeH = 54;
-            let stickerX = cw - badgeW / 2 - 16;
-            let stickerY = 64;
-            if (stickerPosition === "top_left") {
-                stickerX = badgeW / 2 + 16;
-                stickerY = 64;
-            } else if (stickerPosition === "bottom_right") {
-                stickerX = cw - badgeW / 2 - 16;
-                stickerY = ch - 190;
-            }
-
-            ctx.translate(stickerX, stickerY);
-            ctx.scale(pulse, pulse);
-
-            // 3D Shadow
-            ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
-            ctx.shadowBlur = 18;
-            ctx.shadowOffsetY = 4;
-
-            // Gradient Badge
-            const sGrad = ctx.createLinearGradient(-badgeW / 2, -badgeH / 2, badgeW / 2, badgeH / 2);
-            sGrad.addColorStop(0, cfg.bgGrad[0]);
-            sGrad.addColorStop(1, cfg.bgGrad[1]);
-            ctx.fillStyle = sGrad;
-            ctx.beginPath();
-            ctx.roundRect(-badgeW / 2, -badgeH / 2, badgeW, badgeH, 14);
-            ctx.fill();
-
-            // Rim border
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetY = 0;
-            ctx.strokeStyle = cfg.border;
-            ctx.lineWidth = 2.5;
-            ctx.stroke();
-
-            // Top Corner "● LIVE DEAL" Tag
-            const liveTagW = 76;
-            const liveTagH = 15;
-            ctx.fillStyle = "#DC2626";
-            ctx.beginPath();
-            ctx.roundRect(badgeW / 2 - liveTagW - 8, -badgeH / 2 - 7, liveTagW, liveTagH, 7);
-            ctx.fill();
-            ctx.strokeStyle = "#FFFFFF";
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            // Live dot
-            const liveDotAlpha = 0.5 + Math.sin(validTime * 8) * 0.5;
-            ctx.fillStyle = `rgba(255, 255, 255, ${liveDotAlpha})`;
-            ctx.beginPath();
-            ctx.arc(badgeW / 2 - liveTagW + 8, -badgeH / 2 + 0.5, 3.5, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.font = "900 8.5px 'Be Vietnam Pro', sans-serif";
-            ctx.fillStyle = "#FFFFFF";
-            ctx.textAlign = "center";
-            ctx.fillText("LIVE DEAL", badgeW / 2 - liveTagW / 2 + 6, -badgeH / 2 + 0.5);
-
-            // Icon circle
-            const iconR = 17;
-            const iconCx = -badgeW / 2 + 26;
-            ctx.beginPath();
-            ctx.arc(iconCx, 0, iconR, 0, Math.PI * 2);
-            ctx.fillStyle = "#FFFFFF";
-            ctx.fill();
-            ctx.strokeStyle = cfg.border;
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            ctx.font = "20px sans-serif";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(cfg.icon, iconCx, 1);
-
-            // Text
-            const textStartX = -badgeW / 2 + 50;
-            ctx.textAlign = "left";
-
-            // Title with dark outline stroke
-            ctx.font = "900 13px 'Be Vietnam Pro', sans-serif";
-            ctx.strokeStyle = "rgba(0, 0, 0, 0.9)";
-            ctx.lineWidth = 4;
-            ctx.strokeText(cfg.title, textStartX, -5);
-            ctx.fillStyle = "#FFFFFF";
-            ctx.fillText(cfg.title, textStartX, -5);
-
-            // Subtitle
-            ctx.font = "800 9px 'Be Vietnam Pro', sans-serif";
-            ctx.strokeStyle = "rgba(0, 0, 0, 0.85)";
-            ctx.lineWidth = 3;
-            ctx.strokeText(cfg.subtitle, textStartX, 13);
-            ctx.fillStyle = cfg.subCol;
-            ctx.fillText(cfg.subtitle, textStartX, 13);
-
-            ctx.restore();
-        }
-
-        // 4. Draw Animated Subtitle with Kinetic Typography & Creative Effects
-        if (enableSubtitles) {
-            const activeSub = subtitleCues.find(cue => time >= cue.start && time <= cue.end);
-            if (activeSub) {
-                ctx.save();
-                const text = activeSub.text;
-                const cueDur = Math.max(0.1, activeSub.end - activeSub.start);
-                const cueElapsed = time - activeSub.start;
-
-                let subY = ch * 0.82;
-                if (textPosition === "center") subY = ch * 0.52;
-                if (textPosition === "top") subY = ch * 0.28;
-
-                // Check for Power Words in current phrase
-                const uppercaseText = text.toUpperCase();
-                const matchedPowerWord = keyPowerWords.find(pw => pw && uppercaseText.includes(pw.toUpperCase()));
-
-                // Overall phrase transforms
-                let phraseScale = 1.0;
-                let shakeX = 0;
-                let shakeY = 0;
-
-                if (textAnimationEffect === "tiktok_pop") {
-                    // Elastic pop-in bounce on phrase entry (first 0.18s)
-                    if (cueElapsed < 0.18) {
-                        const t = cueElapsed / 0.18;
-                        phraseScale = 1.0 + Math.sin(t * Math.PI) * 0.22;
-                    }
-                } else if (textAnimationEffect === "fire_shake") {
-                    // Slam-down impact on entrance (first 0.12s) + dynamic shake for power words
-                    if (cueElapsed < 0.12) {
-                        const t = cueElapsed / 0.12;
-                        phraseScale = 1.35 - 0.35 * Math.sin(t * Math.PI * 0.5);
-                    }
-                    if (matchedPowerWord) {
-                        shakeX = Math.sin(time * 36) * 3;
-                        shakeY = Math.cos(time * 28) * 2.5;
-                    }
-                }
-
-                ctx.translate(cw / 2 + shakeX, subY + shakeY);
-                ctx.scale(phraseScale, phraseScale);
-
-                const maxAllowedSubW = cw - 56;
-                let activeFontSize = fontSize;
-                ctx.font = `900 ${fontSize}px ${fontFamily}`;
-                const rawMeasure = ctx.measureText(text).width;
-                if (rawMeasure > maxAllowedSubW) {
-                    activeFontSize = Math.max(16, Math.floor(fontSize * (maxAllowedSubW / rawMeasure)));
-                    ctx.font = `900 ${activeFontSize}px ${fontFamily}`;
-                }
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-
-                // Words array with timestamps
-                const wordsList = activeSub.words || text.split(" ").map((w, idx, arr) => ({
-                    word: w,
-                    start: activeSub.start + (idx / arr.length) * cueDur,
-                    end: activeSub.start + ((idx + 1) / arr.length) * cueDur
-                }));
-
-                // Calculate horizontal word layout
-                const spaceW = ctx.measureText(" ").width;
-                const wordWidths = wordsList.map(w => ctx.measureText(w.word).width);
-                const totalLineW = wordWidths.reduce((a, b) => a + b, 0) + (wordsList.length - 1) * spaceW;
-
-                // ── STYLE 1: TIKTOK_POP (CapCut Viral Word-by-Word Bounce & Highlight) ──
-                if (textAnimationEffect === "tiktok_pop") {
-                    let curX = -totalLineW / 2;
-                    wordsList.forEach((wObj, idx) => {
-                        const isSpeaking = time >= wObj.start && time <= wObj.end;
-                        const hasSpoken = time > wObj.end;
-                        const wWidth = wordWidths[idx];
-                        const wordCenter = curX + wWidth / 2;
-
-                        ctx.save();
-                        ctx.translate(wordCenter, 0);
-
-                        let wScale = 1.0;
-                        let wColor = textColor || "#FFFFFF";
-                        if (isSpeaking) {
-                            // Active word jumps 1.25x and turns radiant yellow/gold
-                            const wProgress = (time - wObj.start) / Math.max(0.05, wObj.end - wObj.start);
-                            wScale = 1.0 + Math.sin(Math.min(1, wProgress) * Math.PI) * 0.28;
-                            wColor = "#FFE600";
-                            ctx.shadowColor = "rgba(255, 230, 0, 0.9)";
-                            ctx.shadowBlur = 18;
-                        } else if (hasSpoken) {
-                            wColor = "#FFFFFF";
-                            ctx.shadowColor = "rgba(0,0,0,0.95)";
-                            ctx.shadowBlur = 10;
-                        } else {
-                            wColor = "rgba(255, 255, 255, 0.85)";
-                            ctx.shadowColor = "rgba(0,0,0,0.8)";
-                            ctx.shadowBlur = 8;
-                        }
-
-                        ctx.scale(wScale, wScale);
-                        ctx.lineWidth = Math.max(6, Math.round(activeFontSize * 0.24));
-                        ctx.strokeStyle = "#000000";
-                        ctx.lineJoin = "round";
-                        ctx.strokeText(wObj.word, 0, 0);
-
-                        ctx.fillStyle = wColor;
-                        ctx.fillText(wObj.word, 0, 0);
-                        ctx.restore();
-
-                        curX += wWidth + spaceW;
-                    });
-
-                // ── STYLE 2: KARAOKE_GLOW (Vệt sáng Neon lướt theo từng âm tiết) ──
-                } else if (textAnimationEffect === "karaoke_glow") {
-                    let curX = -totalLineW / 2;
-                    wordsList.forEach((wObj, idx) => {
-                        const isSpeaking = time >= wObj.start && time <= wObj.end;
-                        const hasSpoken = time > wObj.end;
-                        const wWidth = wordWidths[idx];
-                        const wordCenter = curX + wWidth / 2;
-
-                        ctx.save();
-                        ctx.translate(wordCenter, 0);
-
-                        ctx.lineWidth = Math.max(6, Math.round(activeFontSize * 0.22));
-                        ctx.strokeStyle = "#000000";
-                        ctx.lineJoin = "round";
-
-                        if (isSpeaking) {
-                            ctx.shadowColor = "#00F2FE";
-                            ctx.shadowBlur = 24;
-                            ctx.strokeText(wObj.word, 0, 0);
-                            ctx.fillStyle = "#00F2FE";
-                            ctx.fillText(wObj.word, 0, 0);
-
-                            // Glowing dot beneath active word
-                            ctx.beginPath();
-                            ctx.arc(0, activeFontSize * 0.65, 4, 0, Math.PI * 2);
-                            ctx.fillStyle = "#00F2FE";
-                            ctx.fill();
-                        } else if (hasSpoken) {
-                            ctx.shadowColor = "rgba(0,0,0,0.85)";
-                            ctx.shadowBlur = 8;
-                            ctx.strokeText(wObj.word, 0, 0);
-                            ctx.fillStyle = "#FFFFFF";
-                            ctx.fillText(wObj.word, 0, 0);
-                        } else {
-                            ctx.shadowColor = "rgba(0,0,0,0.6)";
-                            ctx.shadowBlur = 6;
-                            ctx.strokeText(wObj.word, 0, 0);
-                            ctx.fillStyle = "rgba(255, 255, 255, 0.65)";
-                            ctx.fillText(wObj.word, 0, 0);
-                        }
-                        ctx.restore();
-
-                        curX += wWidth + spaceW;
-                    });
-
-                // ── STYLE 3: BICOLOR_PUNCH (CapCut 2 Màu Tương Phản Thời Thượng) ──
-                } else if (textAnimationEffect === "bicolor_punch") {
-                    let curX = -totalLineW / 2;
-                    wordsList.forEach((wObj, idx) => {
-                        const wWidth = wordWidths[idx];
-                        const wordCenter = curX + wWidth / 2;
-                        const isPower = matchedPowerWord && wObj.word.toUpperCase().includes(matchedPowerWord.toUpperCase());
-                        const isSpeaking = time >= wObj.start && time <= wObj.end;
-
-                        ctx.save();
-                        ctx.translate(wordCenter, 0);
-                        if (isSpeaking) {
-                            ctx.scale(1.15, 1.15);
-                        }
-
-                        // Thick 3D drop shadow
-                        ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
-                        ctx.shadowBlur = 12;
-                        ctx.shadowOffsetX = 3;
-                        ctx.shadowOffsetY = 4;
-
-                        ctx.lineWidth = Math.max(6, Math.round(activeFontSize * 0.22));
-                        ctx.strokeStyle = "#000000";
-                        ctx.lineJoin = "round";
-                        ctx.strokeText(wObj.word, 0, 0);
-
-                        // Dual tone: odd words or power words get vibrant yellow/orange, even words white
-                        ctx.fillStyle = isPower ? "#FF4500" : (idx % 2 === 0 ? "#FFE600" : "#FFFFFF");
-                        ctx.fillText(wObj.word, 0, 0);
-                        ctx.restore();
-
-                        curX += wWidth + spaceW;
-                    });
-
-                // ── STYLE 4: BOX_PILL (Hộp bo góc CapCut Pro Gen Z) ──
-                } else if (subtitleStyle === "pill_dark" || textAnimationEffect === "box_pill") {
-                    const pillW = totalLineW + 44;
-                    const pillH = activeFontSize + 26;
-
-                    // Frosted dark pill background
-                    ctx.save();
-                    ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
-                    ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
-                    ctx.shadowBlur = 14;
-                    ctx.beginPath();
-                    ctx.roundRect(-pillW / 2, -pillH / 2, pillW, pillH, 14);
-                    ctx.fill();
-
-                    // Golden/Cyan accent rim
-                    ctx.strokeStyle = matchedPowerWord ? "#FACC15" : "rgba(255, 255, 255, 0.35)";
-                    ctx.lineWidth = 2.5;
-                    ctx.stroke();
-                    ctx.restore();
-
-                    let curX = -totalLineW / 2;
-                    wordsList.forEach((wObj, idx) => {
-                        const isSpeaking = time >= wObj.start && time <= wObj.end;
-                        const wWidth = wordWidths[idx];
-                        const wordCenter = curX + wWidth / 2;
-
-                        ctx.save();
-                        ctx.translate(wordCenter, 0);
-                        if (isSpeaking) {
-                            ctx.scale(1.12, 1.12);
-                            ctx.fillStyle = "#FFE600";
-                            ctx.shadowColor = "#FFE600";
-                            ctx.shadowBlur = 12;
-                        } else {
-                            ctx.fillStyle = "#FFFFFF";
-                        }
-                        ctx.fillText(wObj.word, 0, 0);
-                        ctx.restore();
-
-                        curX += wWidth + spaceW;
-                    });
-
-                // ── STYLE 5: FIRE_SHAKE / CLEAN_FADE (Viền đen nét căng dứt khoát) ──
-                } else {
-                    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
-                    ctx.shadowBlur = 12;
-                    ctx.lineWidth = Math.max(6, Math.round(activeFontSize * 0.24));
-                    ctx.strokeStyle = "#000000";
-                    ctx.lineJoin = "round";
-                    ctx.strokeText(text, 0, 0);
-
-                    ctx.fillStyle = matchedPowerWord ? "#FFE600" : (textColor || "#FFFFFF");
-                    ctx.fillText(text, 0, 0);
-                }
-
-                // If Power Word matched in this phrase, render top mini badge
-                if (matchedPowerWord && textAnimationEffect !== "box_pill") {
-                    ctx.save();
-                    ctx.font = `900 ${Math.max(10, Math.round(activeFontSize * 0.38))}px ${fontFamily}`;
-                    ctx.fillStyle = "#DC2626";
-                    ctx.shadowColor = "rgba(220, 38, 38, 0.8)";
-                    ctx.shadowBlur = 10;
-                    const tagText = `🔥 ${matchedPowerWord}`;
-                    const tagW = ctx.measureText(tagText).width + 16;
-                    const tagH = Math.max(18, Math.round(activeFontSize * 0.6));
-                    ctx.beginPath();
-                    ctx.roundRect(-tagW / 2, -activeFontSize - tagH + 2, tagW, tagH, 6);
-                    ctx.fill();
-
-                    ctx.fillStyle = "#FFFFFF";
-                    ctx.fillText(tagText, 0, -activeFontSize - tagH / 2 + 2);
-                    ctx.restore();
-                }
-
-                ctx.restore();
-            }
-        }
+        });
     }, [
         clips,
         clipSwitchInterval,
@@ -2391,7 +1363,9 @@ export default function AutoVideoStudioPage() {
         showWatermark,
         enableSubtitles,
         subtitleCues,
-        videoFilterPreset
+        videoFilterPreset,
+        activeSalesSticker,
+        stickerPosition
     ]);
 
     // ── HIGH-PERFORMANCE PREVIEW PLAYBACK LOOP (0 STUTTER) ──
@@ -3708,7 +2682,8 @@ export default function AutoVideoStudioPage() {
                                             onChange={(e) => setSelectedVoiceEngine(e.target.value as any)}
                                             className="w-full px-2.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
                                         >
-                                            <option value="gemini">✨ Gemini 3.8 Flash (Omni & Flow Speech AI)</option>
+                                            <option value="edge">🎙️ Studio Neural Voice (Hoài My & Nam Minh - Chuẩn 100%)</option>
+                                            <option value="gemini">✨ Google Gemini TTS (Nếu có API Key)</option>
                                             <option value="elevenlabs">🧬 ElevenLabs (Giọng nhân bản AI)</option>
                                         </select>
                                     </div>
@@ -3734,11 +2709,11 @@ export default function AutoVideoStudioPage() {
                                             }}
                                             className="w-full px-2.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-teal-500"
                                         >
-                                            <option value="female-genz">🌸 Nữ Gen Z (Kore - Vui tươi, chuẩn TikTok)</option>
-                                            <option value="female-sweet">🎀 Nữ Dịu Dàng (Aoede - Ấm áp, tâm sự)</option>
-                                            <option value="female-pro">💎 Nữ Chuyên Nghiệp (Leda - Tự tin, quảng cáo)</option>
-                                            <option value="male-genz">⚡ Nam Gen Z (Puck - Năng động, trẻ trung)</option>
-                                            <option value="male-pro">👔 Nam Chuyên Nghiệp (Fenrir - Trầm ấm, uy tín)</option>
+                                            <option value="female-genz">🌸 Nữ Gen Z (Hoài My - Vui tươi, chuẩn TikTok)</option>
+                                            <option value="female-sweet">🎀 Nữ Dịu Dàng (Hoài My - Ấm áp, tâm sự)</option>
+                                            <option value="female-pro">💎 Nữ Chuyên Nghiệp (Hoài My - Rõ ràng, tin cậy)</option>
+                                            <option value="male-genz">⚡ Nam Gen Z (Nam Minh - Năng động, dứt khoát)</option>
+                                            <option value="male-pro">👔 Nam Chuyên Nghiệp (Nam Minh - Trầm ấm, uy tín)</option>
                                         </select>
                                     </div>
 
@@ -5615,497 +4590,34 @@ export default function AutoVideoStudioPage() {
             </div>
 
             {/* MODAL 0: TRÌNH PHÁT XEM TRỰC TIẾP TỪNG VIDEO THÔ & SẮP XẾP */}
-            {previewingClip && (
-                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
-                    <div className="max-w-3xl w-full bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
-                        {/* Header */}
-                        <div className="p-3.5 sm:p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950 text-white">
-                            <div className="flex items-center gap-2.5 truncate">
-                                <span className="p-2 rounded-xl bg-purple-600 text-white shadow-sm">
-                                    <Film className="w-4 h-4" />
-                                </span>
-                                <div className="truncate">
-                                    <h3 className="font-bold text-white text-xs sm:text-sm truncate">
-                                        {previewingClip.name}
-                                    </h3>
-                                    <p className="text-[10px] text-slate-400 font-mono">
-                                        Thời lượng: {previewingClip.duration.toFixed(1)}s • Độ phân giải: {previewingClip.width || 1080}x{previewingClip.height || 1920}
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setPreviewingClip(null)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
+            <ClipPreviewModal
+                previewingClip={previewingClip}
+                clips={clips}
+                onClose={() => setPreviewingClip(null)}
+                onSetOpeningClip={handleSetOpeningClip}
+                onMoveClip={moveClip}
+            />
 
-                        {/* Video Player */}
-                        <div className="flex-1 bg-black flex items-center justify-center p-2 min-h-[300px]">
-                            <video
-                                src={previewingClip.url}
-                                controls
-                                autoPlay
-                                playsInline
-                                className="max-h-[62vh] max-w-full rounded-lg shadow-inner bg-black object-contain"
-                            />
-                        </div>
+            {/* MODAL 1: SỔ TAY KỊCH BẢN & LỊCH SỬ DỰ ÁN VIDEO */}
+            <ProjectHistoryModal
+                isOpen={isProjectHistoryOpen}
+                onClose={() => setIsProjectHistoryOpen(false)}
+                videoProjects={videoProjects}
+                onLoadProject={handleLoadProject}
+                onDeleteProject={handleDeleteProject}
+                onManualSaveProject={handleManualSaveProject}
+                isSavingProject={isSavingProject}
+            />
 
-                        {/* Quick Actions Footer */}
-                        <div className="p-3 sm:p-4 border-t border-slate-800 bg-slate-950 flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        handleSetOpeningClip(previewingClip);
-                                        setPreviewingClip(null);
-                                    }}
-                                    className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                                >
-                                    <span>⭐ Đặt Làm Mở Đầu (#1)</span>
-                                </button>
-                                {(() => {
-                                    const idx = clips.findIndex(c => c.url === previewingClip.url || c.id === previewingClip.id);
-                                    if (idx < 0) return null;
-                                    return (
-                                        <div className="flex items-center gap-1.5">
-                                            <button
-                                                type="button"
-                                                onClick={() => moveClip(idx, "up")}
-                                                disabled={idx === 0}
-                                                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
-                                            >
-                                                <MoveUp className="w-3.5 h-3.5" />
-                                                <span>Lên Trước</span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => moveClip(idx, "down")}
-                                                disabled={idx === clips.length - 1}
-                                                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
-                                            >
-                                                <MoveDown className="w-3.5 h-3.5" />
-                                                <span>Xuống Sau</span>
-                                            </button>
-                                        </div>
-                                    );
-                                })()}
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => setPreviewingClip(null)}
-                                className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors cursor-pointer"
-                            >
-                                Đóng Xem Thử
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* MODAL 1: SỔ TAY KỊCH BẢN & LỊCH SỬ DỰ ÁN VIDEO (PERSISTENT STORE) */}
-            {isProjectHistoryOpen && (
-                <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-                    <div className="max-w-3xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
-                        {/* Header */}
-                        <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-purple-50 via-indigo-50 to-white">
-                            <div className="flex items-center gap-2.5">
-                                <span className="p-2 rounded-xl bg-purple-600 text-white shadow-sm">
-                                    <FolderOpen className="w-5 h-5" />
-                                </span>
-                                <div>
-                                    <h3 className="font-bold text-gray-900 text-base">
-                                        Sổ Tay Kịch Bản & Lịch Sử Dự Án Video
-                                    </h3>
-                                    <p className="text-xs text-gray-500">
-                                        Lưu trữ an toàn trên máy ({videoProjects.length} dự án) • Không bao giờ mất kịch bản khi F5!
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setIsProjectHistoryOpen(false)}
-                                className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        {/* Project List */}
-                        <div className="overflow-y-auto p-4 sm:p-5 space-y-3 flex-1">
-                            {videoProjects.length === 0 ? (
-                                <div className="text-center py-12 space-y-3">
-                                    <div className="w-14 h-14 mx-auto rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                                        <FolderOpen className="w-7 h-7" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p className="font-bold text-sm text-gray-800">Chưa có dự án nào được lưu</p>
-                                        <p className="text-xs text-gray-500 max-w-md mx-auto">
-                                            Khi bạn bấm "✨ AI Học Phong Cách & Cấu Hình Studio", "Lưu Dự Án" hoặc xuất video, kịch bản và bảng phân cảnh sẽ tự động lưu vào đây.
-                                        </p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={handleManualSaveProject}
-                                        className="px-4 py-2 bg-purple-600 text-white font-bold text-xs rounded-xl hover:bg-purple-700 transition-colors shadow-sm"
-                                    >
-                                        Lưu Kịch Bản Hiện Tại
-                                    </button>
-                                </div>
-                            ) : (
-                                videoProjects.map((proj) => (
-                                    <div
-                                        key={proj.id}
-                                        onClick={() => handleLoadProject(proj)}
-                                        className="p-4 rounded-xl border border-gray-200 hover:border-purple-400 hover:shadow-md transition-all cursor-pointer bg-white group space-y-2.5"
-                                    >
-                                        <div className="flex flex-wrap items-center justify-between gap-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold text-sm text-gray-900 group-hover:text-purple-700 transition-colors">
-                                                    {proj.title}
-                                                </span>
-                                                <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
-                                                    {proj.aspectRatio}
-                                                </span>
-                                                {proj.directorGuide?.shots?.length ? (
-                                                    <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                                                        <Clapperboard className="w-2.5 h-2.5" /> 5 Shot Đạo Diễn
-                                                    </span>
-                                                ) : null}
-                                                {proj.renderedVideoUrl && (
-                                                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                                                        <CheckCircle2 className="w-2.5 h-2.5" /> Có file video
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[11px] text-gray-400">
-                                                    {new Date(proj.createdAt).toLocaleDateString("vi-VN", {
-                                                        day: "2-digit",
-                                                        month: "2-digit",
-                                                        year: "numeric",
-                                                        hour: "2-digit",
-                                                        minute: "2-digit"
-                                                    })}
-                                                </span>
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => handleDeleteProject(proj.id, e)}
-                                                    className="p-1 text-gray-300 hover:text-red-600 transition-colors rounded-lg"
-                                                    title="Xóa dự án"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <p className="text-xs text-gray-600 line-clamp-2 italic bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                                            "{proj.script}"
-                                        </p>
-
-                                        <div className="flex flex-wrap items-center justify-between text-[11px] text-gray-500 pt-1">
-                                            <div className="flex items-center gap-2">
-                                                <span>Nhịp cắt: <strong>{proj.clipSwitchInterval}s</strong></span>
-                                                <span>•</span>
-                                                <span>Chữ: <strong className="capitalize">{proj.textAnimationEffect || "Pop"}</strong></span>
-                                                <span>•</span>
-                                                <span>Màu: <span className="inline-block w-3 h-3 rounded-full align-middle border border-gray-300" style={{ backgroundColor: proj.textColor }} /></span>
-                                            </div>
-                                            <span className="text-purple-600 font-bold group-hover:underline flex items-center gap-1">
-                                                Nhấn để dựng lại dự án này →
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-
-                        {/* Footer */}
-                        <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                            <button
-                                type="button"
-                                onClick={handleManualSaveProject}
-                                disabled={isSavingProject}
-                                className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors flex items-center gap-1.5 shadow-sm"
-                            >
-                                <Save className="w-3.5 h-3.5 text-amber-400" />
-                                <span>Lưu kịch bản đang mở</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setIsProjectHistoryOpen(false)}
-                                className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-100 transition-colors"
-                            >
-                                Đóng
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* MODAL 2: BẢNG PHÂN CẢNH & CHỈ ĐẠO QUAY CỦA ĐẠO DIỄN AI (DIRECTOR'S SCRIPTBOOK) */}
-            {isDirectorHubOpen && (
-                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-                    <div className="max-w-4xl w-full bg-slate-900 text-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-amber-500/40 animate-in fade-in zoom-in-95 duration-200">
-                        {/* Header */}
-                        <div className="p-4 sm:p-5 border-b border-amber-500/30 flex items-center justify-between bg-gradient-to-r from-amber-950/60 via-slate-900 to-purple-950/60">
-                            <div className="flex items-center gap-3">
-                                <span className="p-2.5 rounded-xl bg-amber-400 text-slate-950 shadow-md">
-                                    <Clapperboard className="w-6 h-6" />
-                                </span>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="font-bold text-white text-base sm:text-lg">
-                                            Bảng Phân Cảnh & Chỉ Đạo Quay Của Đạo Diễn AI
-                                        </h3>
-                                        <span className="text-[10px] bg-amber-400 text-black px-2 py-0.5 rounded font-black tracking-wide">
-                                            24ZONE STYLE
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-amber-200/80">
-                                        Chỉ đạo đội quay Smartphone tại kho LYHU • 5 góc quay nhịp 2.5s Jump-cut • Giữ chân người xem 100%
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={handleCopyDirectorShotlist}
-                                    className="px-3.5 py-1.5 bg-gradient-to-r from-amber-400 to-orange-400 text-black font-bold text-xs rounded-xl hover:opacity-95 transition-all flex items-center gap-1.5 shadow-sm"
-                                >
-                                    <Copy className="w-3.5 h-3.5" />
-                                    <span>Copy Gửi Zalo</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsDirectorHubOpen(false)}
-                                    className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Content */}
-                        <div className="overflow-y-auto p-5 sm:p-6 space-y-6 flex-1 text-xs">
-                            {/* Hook Section (3s đầu quyết định ăn đề xuất) */}
-                            <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-transparent border border-amber-500/40 space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <div className="text-amber-400 font-bold flex items-center gap-1.5 text-xs sm:text-sm">
-                                        <Zap className="w-4 h-4 text-amber-400" />
-                                        <span>QUY TẮC 3 GIÂY ĐẦU (VISUAL & SPOKEN HOOK ĐẬP MẮT):</span>
-                                    </div>
-                                    <span className="text-[10px] text-amber-300 font-mono">Giữ chân 70%+ người xem</span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                                    <div className="p-3 rounded-lg bg-black/40 border border-white/10 space-y-1">
-                                        <div className="text-[11px] font-bold text-amber-300">🎯 Hình ảnh đập mắt (Visual Hook):</div>
-                                        <div className="text-gray-200 leading-relaxed">
-                                            {directorGuide?.hookVisual || "Cận cảnh mở bao/thùng hàng, hoặc hành động xé bọc, đổ sản phẩm giòn rụm ngay 1 giây đầu."}
-                                        </div>
-                                    </div>
-                                    <div className="p-3 rounded-lg bg-black/40 border border-white/10 space-y-1">
-                                        <div className="text-[11px] font-bold text-amber-300">🎙️ Câu thoại mở màn (Spoken Hook):</div>
-                                        <div className="text-gray-200 italic leading-relaxed">
-                                            "{directorGuide?.spokenHook || customHookTitle || "Hàng mới về đêm qua date mới tinh, đừng vội mua chỗ khác!"}"
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* 5-Shot Storyboard Grid */}
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <h4 className="font-bold text-sm text-white flex items-center gap-2">
-                                        <Camera className="w-4 h-4 text-amber-400" />
-                                        <span>BẢNG 5 GÓC MÁY QUAY BẰNG ĐIỆN THOẠI (Quay mỗi đoạn 2.5 - 3s):</span>
-                                    </h4>
-                                    <span className="text-[11px] text-gray-400 font-mono">Nhịp cắt: {directorGuide?.pacingSpeed || `${clipSwitchInterval}s`}</span>
-                                </div>
-
-                                <div className="space-y-3">
-                                    {directorGuide && directorGuide.shots && directorGuide.shots.length > 0 ? (
-                                        directorGuide.shots.map((shot) => (
-                                            <div
-                                                key={shot.shotNumber}
-                                                className="p-3.5 rounded-xl bg-white/5 border border-white/10 hover:border-amber-400/50 transition-colors space-y-2"
-                                            >
-                                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="px-2 py-0.5 rounded bg-amber-400 text-black font-black text-xs">
-                                                            CẢNH {shot.shotNumber}
-                                                        </span>
-                                                        <span className="font-bold text-white">
-                                                            [{shot.shotType}]
-                                                        </span>
-                                                        <span className="text-gray-400 text-[11px]">
-                                                            • Chuyển động: <strong className="text-amber-300">{shot.cameraMovement}</strong>
-                                                        </span>
-                                                    </div>
-                                                    <span className="text-[10px] text-purple-300 font-mono bg-purple-950/80 px-2 py-0.5 rounded border border-purple-500/30">
-                                                        Âm thanh: {shot.sfx}
-                                                    </span>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                                                    <div className="p-2 rounded bg-black/30 border border-white/5">
-                                                        <span className="text-gray-400 font-semibold">🎬 Thao tác nhân sự kho: </span>
-                                                        <span className="text-gray-200">{shot.action}</span>
-                                                    </div>
-                                                    <div className="p-2 rounded bg-black/30 border border-white/5">
-                                                        <span className="text-gray-400 font-semibold">🎙️ Lời thoại khớp hình: </span>
-                                                        <span className="text-amber-200 italic">"{shot.dialogueSnippet}"</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        /* Default 5 shots for LYHU warehouse operations */
-                                        [
-                                            {
-                                                shotNumber: 1,
-                                                shotType: "Cận Cảnh (Close-up)",
-                                                cameraMovement: "Zoom in từ từ",
-                                                action: "Tay xé seal thùng hàng hoặc bẻ đôi củ khoai môn / xé gói snack giòn rụm trước ống kính.",
-                                                dialogueSnippet: customHookTitle || "Hàng mới về đêm qua date mới tinh...",
-                                                sfx: "Tiếng xé bọc / giòn rụm 'Rắc'"
-                                            },
-                                            {
-                                                shotNumber: 2,
-                                                shotType: "Toàn Cảnh (Wide)",
-                                                cameraMovement: "Lia máy ngang (Pan)",
-                                                action: "Quay container hoặc các kệ pallet hàng chất cao ngập lối tại tổng kho LYHU.",
-                                                dialogueSnippet: "Container vừa đáp kho lúc nửa đêm, nguyên đai nguyên kiện...",
-                                                sfx: "Tiếng còi xe nâng / tiếng kho rộn ràng"
-                                            },
-                                            {
-                                                shotNumber: 3,
-                                                shotType: "Cực Cận (Macro)",
-                                                cameraMovement: "Cố định (Static)",
-                                                action: "Soi rõ nhãn mác NSX, HSD mới tinh năm 2026, màu sắc tươi ngon không vụn vỡ.",
-                                                dialogueSnippet: "Hàng date mới toanh, chất lượng bao test từng kiện...",
-                                                sfx: "Tiếng sột soạt kiểm hàng"
-                                            },
-                                            {
-                                                shotNumber: 4,
-                                                shotType: "Trung Cảnh (Medium)",
-                                                cameraMovement: "Góc thấp hất lên (Low Angle)",
-                                                action: "Nhân sự dán băng keo niêm phong thùng LYHU, xếp lên xe chuyển phát nhanh giao sỉ.",
-                                                dialogueSnippet: "Anh em NPP lấy bao nhiêu kiện cứ chốt số lượng là đi ngay trong ngày...",
-                                                sfx: "Tiếng kéo băng dính 'Rẹt rẹt'"
-                                            },
-                                            {
-                                                shotNumber: 5,
-                                                shotType: "Cận Cảnh (Call to action)",
-                                                cameraMovement: "Chĩa thẳng sản phẩm",
-                                                action: "Giơ sản phẩm về phía người xem, vẫy tay hoặc chỉ vào phần nhắn tin nhận bảng giá sỉ.",
-                                                dialogueSnippet: "Nhắn liền LYHU để nhận mẫu thử & giá sỉ tận gốc nha cả nhà!",
-                                                sfx: "Tiếng ting ting chốt đơn"
-                                            }
-                                        ].map((shot) => (
-                                            <div
-                                                key={shot.shotNumber}
-                                                className="p-3.5 rounded-xl bg-white/5 border border-white/10 hover:border-amber-400/50 transition-colors space-y-2"
-                                            >
-                                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="px-2 py-0.5 rounded bg-amber-400 text-black font-black text-xs">
-                                                            CẢNH {shot.shotNumber}
-                                                        </span>
-                                                        <span className="font-bold text-white">
-                                                            [{shot.shotType}]
-                                                        </span>
-                                                        <span className="text-gray-400 text-[11px]">
-                                                            • Chuyển động: <strong className="text-amber-300">{shot.cameraMovement}</strong>
-                                                        </span>
-                                                    </div>
-                                                    <span className="text-[10px] text-purple-300 font-mono bg-purple-950/80 px-2 py-0.5 rounded border border-purple-500/30">
-                                                        Âm thanh: {shot.sfx}
-                                                    </span>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                                                    <div className="p-2 rounded bg-black/30 border border-white/5">
-                                                        <span className="text-gray-400 font-semibold">🎬 Thao tác nhân sự kho: </span>
-                                                        <span className="text-gray-200">{shot.action}</span>
-                                                    </div>
-                                                    <div className="p-2 rounded bg-black/30 border border-white/5">
-                                                        <span className="text-gray-400 font-semibold">🎙️ Lời thoại khớp hình: </span>
-                                                        <span className="text-amber-200 italic">"{shot.dialogueSnippet}"</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Practical Shooting Tips for LYHU Staff */}
-                            <div className="p-4 rounded-xl bg-purple-950/50 border border-purple-500/30 space-y-2">
-                                <div className="text-xs font-bold text-purple-300 flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-purple-400" />
-                                    <span>3 MẸO QUAY THỰC CHIẾN BẰNG SMARTPHONE TẠI TỔNG KHO LYHU:</span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-                                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 space-y-1">
-                                        <div className="font-bold text-white text-[11px]">1. Lau sạch camera & Quay dọc 9:16</div>
-                                        <p className="text-gray-300 text-[10px] leading-relaxed">
-                                            Dùng camera sau, lau sạch mồ hôi/bụi trên kính máy. Luôn quay dọc khung hình 9:16 để video TikTok nét nhất.
-                                        </p>
-                                    </div>
-                                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 space-y-1">
-                                        <div className="font-bold text-white text-[11px]">2. Quay cận cảnh 30-50cm & Chạm lấy nét</div>
-                                        <p className="text-gray-300 text-[10px] leading-relaxed">
-                                            Đưa camera gần sản phẩm để thấy rõ thớ khoai môn hoặc date in trên thùng. Giữ tay chắc không run.
-                                        </p>
-                                    </div>
-                                    <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 space-y-1">
-                                        <div className="font-bold text-white text-[11px]">3. Bấm quay 3 giây rồi đổi góc</div>
-                                        <p className="text-gray-300 text-[10px] leading-relaxed">
-                                            Không cần lia máy dài dòng! Cứ quay mỗi góc 3s, nạp vào Studio này AI sẽ tự động Jump-cut cắt nhịp 2.5s chuẩn TikTok.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* CTA Section */}
-                            <div className="p-3.5 rounded-xl bg-slate-800 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                <div>
-                                    <span className="text-[11px] text-gray-400 font-semibold block">LỜI KÊU GỌI HÀNH ĐỘNG (CTA KẾT VIDEO):</span>
-                                    <span className="text-xs font-bold text-amber-300">
-                                        {directorGuide?.callToAction || "Nhắn liền LYHU để nhận mẫu thử & bảng giá sỉ!"}
-                                    </span>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handleCopyDirectorShotlist}
-                                    className="px-4 py-2 rounded-xl bg-amber-400 text-black font-bold text-xs hover:bg-amber-300 transition-colors flex items-center justify-center gap-1.5 shrink-0"
-                                >
-                                    <Copy className="w-4 h-4" />
-                                    <span>Copy Gửi Zalo Cho Đội Quay</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="p-4 bg-slate-950 border-t border-white/10 flex items-center justify-between">
-                            <span className="text-xs text-gray-400">
-                                💡 Sau khi quay xong các clip, nạp vào <strong>Bước 1</strong> để Studio tự động cắt ghép!
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => setIsDirectorHubOpen(false)}
-                                className="px-5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors"
-                            >
-                                Đã Hiểu & Đóng
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* MODAL 2: BẢNG PHÂN CẢNH & CHỈ ĐẠO QUAY CỦA ĐẠO DIỄN AI */}
+            <DirectorHubModal
+                isOpen={isDirectorHubOpen}
+                onClose={() => setIsDirectorHubOpen(false)}
+                directorGuide={directorGuide}
+                customHookTitle={customHookTitle}
+                clipSwitchInterval={clipSwitchInterval}
+                onCopyShotlist={handleCopyDirectorShotlist}
+            />
 
             {/* Hidden media elements for canvas sync */}
             <div className="hidden">

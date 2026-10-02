@@ -55,9 +55,11 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { referenceUrl, referenceDesc, userTopic } = body;
 
-        if (!userTopic) {
+        if (!userTopic || typeof userTopic !== "string" || !userTopic.trim()) {
             return NextResponse.json({ error: "Vui lòng nhập chủ đề video của bạn" }, { status: 400 });
         }
+
+        const topic = userTopic.trim();
 
         let refInfo = "";
         if (referenceUrl) {
@@ -72,21 +74,25 @@ export async function POST(req: NextRequest) {
             refInfo += `\nGhi chú thêm về phong cách mẫu: "${referenceDesc}"`;
         }
 
-        // Check if Gemini API Key is available
+        // 1. Call Gemini API if Key is available
         if (GEMINI_API_KEY) {
-            const prompt = `Bạn là Đạo diễn nội dung xuất sắc kiêm chuyên gia sản xuất Video ngắn triệu view trên TikTok & Reels (phong cách mộc mạc, gần gũi, đời thường, cuốn hút như kênh Trà My 24Zone).
-Nhiệm vụ: Phân tích phong cách của video mẫu và áp dụng 100% phong cách đó để viết kịch bản, bảng phân cảnh đạo diễn (Shooting Shotlist) và hiệu ứng chữ động cho thương hiệu LYHU! (Tổng kho sỉ đồ ăn vặt & gia vị F&B).
+            const prompt = `Bạn là Đạo diễn nội dung xuất sắc kiêm chuyên gia sản xuất Video ngắn triệu view trên TikTok & Reels cho công ty LYHU (sản xuất, nhập khẩu và phân phối bánh kẹo, đồ ăn vặt & gia vị các loại).
+CÁC THƯƠNG HIỆU ĐỘC QUYỀN CỦA LYHU:
+- BOYO: Bột phô mai dành cho nhà hàng, gia đình, quán gà rán, khoai tây lắc.
+- CVT: Khoai môn sấy tẩm vị (trứng cua, nấm truffle...) nhập khẩu độc quyền từ Trung Quốc.
+- UHi: Kẹo các loại nhập khẩu độc quyền từ Hàn Quốc.
+- Abi Snack: Bánh tráng và đồ ăn vặt độc quyền miền Bắc.
 
 THÔNG TIN VIDEO MẪU THAM CHIẾU:
-${refInfo || "Phong cách Trà My 24Zone: Mộc mạc, xưng 'bọn mình', mở đầu bằng câu chuyện đời thường/nỗi niềm địa phương, nhịp cắt 2.5s dồn dập, tự hào về chất lượng phục vụ, không quảng cáo sáo rỗng."}
+${refInfo || "Phong cách mộc mạc, gần gũi, xưng 'bọn mình', mở đầu bằng câu chuyện đời thường, nhịp cắt 2.5s dồn dập, tự hào về chất lượng phục vụ, không quảng cáo sáo rỗng."}
 
-CHỦ ĐỀ SẢN PHẨM LYHU CẦN DỰNG:
-"${userTopic}"
+CHỦ ĐỀ SẢN PHẨM CẦN VIẾT KỊCH BẢN:
+"${topic}"
 
-YÊU CẦU ĐẦU RA BẮT BUỘC (JSON chuẩn, không kèm markdown):
+YÊU CẦU ĐẦU RA BẮT BUỘC (JSON chuẩn, không markdown):
 {
-  "hookTitle": "Tiêu đề giật tít 3.5s đầu in hoa có icon (VD: 🚛 12H ĐÊM CONTAINER KHOAI MÔN CVT CẬP KHO!)",
-  "script": "Nội dung lời thoại hoàn chỉnh (tầm 110 - 130 từ, đọc khoảng 35 - 45 giây). Văn phong mộc mạc, xưng bọn mình/LYHU, nói chuyện chân thành như người nhà, cuốn hút.",
+  "hookTitle": "Tiêu đề giật tít 3.5s đầu in hoa có icon (phù hợp với chủ đề ${topic})",
+  "script": "Nội dung lời thoại hoàn chỉnh (tầm 110 - 130 từ, đọc khoảng 35 - 45 giây). Văn phong mộc mạc, xưng bọn mình/LYHU, nói chuyện chân thành như người nhà, cuốn hút, đúng sản phẩm được yêu cầu.",
   "pacing": 2.5,
   "transition": "auto",
   "textColor": "#FACC15",
@@ -94,132 +100,161 @@ YÊU CẦU ĐẦU RA BẮT BUỘC (JSON chuẩn, không kèm markdown):
   "textAnimationEffect": "tiktok_pop",
   "keyPowerWords": ["TỪ KHÓA 1", "TỪ KHÓA 2", "TỪ KHÓA 3", "TỪ KHÓA 4"],
   "directorGuide": {
-    "hookVisual": "Hành động thị giác 3s đầu bẻ khóa sự chú ý (VD: Cận cảnh soi đèn flash vào nhãn Date mới tinh vừa bốc khói)",
+    "hookVisual": "Hành động thị giác 3s đầu bẻ khóa sự chú ý",
     "spokenHook": "Câu nói mở đầu giật tít",
     "pacingSpeed": "2.5s / cảnh - Jump cut dồn dập",
     "keyPowerWords": ["DATE MỚI TINH", "GIÁ SỈ TẬN XƯỞNG", "GIÒN RỤM"],
     "callToAction": "Câu chốt kêu gọi hành động cuối clip",
     "shootingTips": [
       "Quay dọc 9:16 bằng điện thoại, cầm chắc tay hoặc lia nhẹ theo chiều ngang.",
-      "Ưu tiên góc quay cận cảnh chi tiết hạt gia vị hoặc bao bì sản phẩm.",
-      "Tận dụng ánh sáng tự nhiên hoặc đèn pin điện thoại để tạo độ chân thật."
+      "Ưu tiên góc quay cận cảnh chi tiết bao bì hoặc cận cảnh thưởng thức.",
+      "Tận dụng ánh sáng tự nhiên để tạo độ chân thật."
     ],
     "shots": [
       {
         "shotNumber": 1,
-        "shotType": "Cận cảnh Macro / Hook",
+        "shotType": "Cận cảnh Hook",
         "cameraMovement": "Zoom in dứt khoát",
         "action": "Mở đầu giật mắt với hành động thực tế",
         "duration": 2.5,
         "dialogueSnippet": "Câu thoại đoạn 1",
-        "sfx": "Tiếng động giòn rụm hoặc tiếng còi xe"
+        "sfx": "Tiếng động giòn rụm hoặc chuông ting"
       },
       {
         "shotNumber": 2,
         "shotType": "Trung cảnh",
         "cameraMovement": "Pan ngang mượt",
-        "action": "Khui thùng hoặc thao tác thực tế",
+        "action": "Thao tác trên sản phẩm",
         "duration": 2.5,
         "dialogueSnippet": "Câu thoại đoạn 2",
-        "sfx": "Tiếng xé bao bì"
+        "sfx": "Tiếng mở gói hoặc tiếng kho"
       },
       {
         "shotNumber": 3,
-        "shotType": "Góc nhìn thứ nhất (POV)",
-        "cameraMovement": "Lia máy theo tay",
-        "action": "Trực quan sản phẩm trên tay hoặc trên kệ",
+        "shotType": "Cực cận Macro",
+        "cameraMovement": "Cố định",
+        "action": "Soi rõ chi tiết chất lượng hoặc date",
         "duration": 2.5,
         "dialogueSnippet": "Câu thoại đoạn 3",
-        "sfx": "Tiếng rộp rộp"
+        "sfx": "Tiếng lạo xạo"
       },
       {
         "shotNumber": 4,
-        "shotType": "Toàn cảnh kho / quầy",
-        "cameraMovement": "Lùi dần tạo chiều sâu",
-        "action": "Hàng hóa đầy ắp thể hiện độ uy tín",
+        "shotType": "Toàn cảnh",
+        "cameraMovement": "Góc thấp",
+        "action": "Đóng gói hoặc giao hàng",
         "duration": 2.5,
         "dialogueSnippet": "Câu thoại đoạn 4",
-        "sfx": "Tiếng xe nâng hoặc đóng băng keo"
+        "sfx": "Tiếng dán băng dính"
       },
       {
         "shotNumber": 5,
-        "shotType": "Cận cảnh thân thiện / CTA",
-        "cameraMovement": "Tĩnh cố định",
-        "action": "Cười tươi vẫy tay hoặc giơ sản phẩm mời khách",
+        "shotType": "Cận cảnh CTA",
+        "cameraMovement": "Chĩa thẳng sản phẩm",
+        "action": "Giơ sản phẩm mời chào thân thiện",
         "duration": 2.5,
-        "dialogueSnippet": "Câu thoại chốt đơn",
-        "sfx": "Tiếng chuông ting ting"
+        "dialogueSnippet": "Câu thoại kết",
+        "sfx": "Tiếng ting ting chốt đơn"
       }
     ]
-  },
-  "storyboard": [
-    "Góc 1 (0s-3s - Hook): ...",
-    "Góc 2 (3s-10s): ...",
-    "Góc 3 (10s-20s): ...",
-    "Góc 4 (20s-35s): ...",
-    "Góc 5 (35s-45s - CTA): ..."
-  ],
-  "styleSummary": "Đã học phong cách kể chuyện đời thường 24Zone và áp dụng chuẩn xác cho sản phẩm LYHU!"
+  }
 }`;
 
-            const aiRes = await fetch(GEMINI_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        temperature: 0.75,
-                        maxOutputTokens: 2500,
-                        responseMimeType: "application/json"
-                    }
-                })
-            });
+            try {
+                const aiRes = await fetch(GEMINI_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ role: "user", parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            temperature: 0.75,
+                            maxOutputTokens: 2500,
+                            responseMimeType: "application/json"
+                        }
+                    }),
+                    signal: AbortSignal.timeout(30000)
+                });
 
-            if (aiRes.ok) {
-                const aiData = await aiRes.json();
-                const rawText = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (rawText) {
-                    try {
+                if (aiRes.ok) {
+                    const aiData = await aiRes.json();
+                    const rawText = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (rawText) {
                         const parsed = JSON.parse(rawText);
+                        const storyboard = parsed.directorGuide?.shots?.map(
+                            (s: any) => `Góc ${s.shotNumber} (${s.shotType}): ${s.action} - [${s.cameraMovement}]`
+                        ) || [];
                         return NextResponse.json({
                             success: true,
-                            ...parsed
+                            ...parsed,
+                            storyboard,
+                            styleSummary: `Đạo diễn AI đã thiết kế kịch bản & 5 góc quay thực chiến cho chủ đề "${topic}"!`
                         });
-                    } catch (pe) {
-                        console.warn("JSON parse error from Gemini:", pe);
                     }
                 }
+            } catch (geminiErr) {
+                console.warn("[Clone Style] Gemini call failed, using intelligent product template:", geminiErr);
             }
         }
 
-        // Smart Director Fallback Generator
-        const isNightWarehouse = /đêm|khuya|kho|container|xe|cập bến|hàng về|bốc dỡ/i.test(userTopic);
+        // 2. Intelligent Product-Specific Template Generator (LYHU Portfolio)
+        const isBoyo = /boyo|phô mai|pho mai|bột phô mai|bắp lắc|khoai tây lắc/i.test(topic);
+        const isCVT = /cvt|khoai môn|khoai mon|trứng cua|trung cua|tẩm vị|tam vi/i.test(topic);
+        const isUHi = /uhi|kẹo|keo|kẹo dẻo|keo deo|hàn quốc|han quoc/i.test(topic);
+        const isAbi = /abi|bánh tráng|banh trang|ăn vặt|an vat|da cá/i.test(topic);
+        const isNightWarehouse = /đêm|khuya|kho đêm|kho dem|container|bốc dỡ/i.test(topic);
 
-        let hookTitle = `🔥 ${userTopic.toUpperCase()} CẬP BẾN TỔNG KHO LYHU!`;
+        let hookTitle = `🔥 ${topic.toUpperCase()} GIÁ SỈ TẬN XƯỞNG LYHU!`;
         let script = "";
         let hookVisual = "";
         let keyPowerWords: string[] = [];
+        let textColor = "#FACC15";
 
-        if (isNightWarehouse) {
-            hookTitle = `🚛 12H ĐÊM CONTAINER ${userTopic.toUpperCase().replace(/CONTAINER|XE|HÀNG/g, '').trim()} CẬP KHO!`;
-            hookVisual = "Bác tài lùi xe container vào cổng kho trong bóng đêm, công nhân bật đèn pha soi rọi từng kiện hàng";
-            keyPowerWords = ["DATE MỚI TINH", "12H ĐÊM", "GIÁ SỈ TẬN KHO", "VỪA CẬP BẾN", "ĐỦ VỊ"];
-            script = `Tầm này cả thành phố ngủ hết rồi, nhưng cổng kho LYHU thì đèn vẫn sáng trưng đón xe container vừa kịp cập bến nè cả nhà ơi! Bác tài chạy ròng rã suốt ngày đêm để hàng về kịp, anh em trong kho lại hào hứng xắn tay áo bốc dỡ từng kiện hàng. Khách sỉ hối dữ lắm vì cháy hàng suốt tuần nay. Mở thùng kiểm tra là ưng cái bụng liền: Date mới tinh vừa mới xuất xưởng, gói nào gói nấy căng phồng! Toàn bộ đã được xếp ngay ngắn vào kho, sáng mai các chủ quán ăn vặt và đối tác sỉ tha hồ lên đơn nha. Cần bảng giá sỉ date mới tinh cứ nhắn liền cho LYHU nha!`;
+        if (isBoyo) {
+            hookTitle = `🧀 BỘT PHÔ MAI BOYO: GIÁ SỈ TẬN XƯỞNG CHO QUÁN ĂN & GIA ĐÌNH!`;
+            hookVisual = "Rắc bột phô mai BOYO vàng cam óng ả phủ đều lên khay khoai tây lắc nóng hổi khói nghi ngút";
+            keyPowerWords = ["BOYO CHÍNH HÃNG", "THƠM BÉO ĐẬM ĐÀ", "SỈ TỪ 1KG", "TIẾT KIỆM CHI PHÍ"];
+            script = `500 anh em chủ quán gà rán, khoai tây lắc và các quán F&B ơi! Lô bột phô mai BOYO chính hãng vừa cập bến tổng kho LYHU với giá sỉ tận xưởng cực kỳ hấp dẫn. Hạt bột mịn màng, thơm nức mũi, vị mặn ngọt béo ngậy chuẩn công thức độc quyền cho quán ăn và gia đình. Lấy bao 1kg tiết kiệm chi phí tối đa, bao đổi trả nếu không chuẩn vị. Cần bảng giá sỉ và mẫu thử miễn phí cứ để lại bình luận cho LYHU nha!`;
+            textColor = "#FACC15";
+        } else if (isCVT) {
+            hookTitle = `🥔 KHOAI MÔN SẤY TẨM VỊ CVT: ĐỘC QUYỀN TRUNG QUỐC SIÊU CUỐN!`;
+            hookVisual = "Bẻ đôi thanh khoai môn sấy giòn rụm trước ống kính, lộ rõ lớp trứng cua và gia vị phủ kín";
+            keyPowerWords = ["CVT ĐỘC QUYỀN", "SẤY THĂNG HOA", "GIÒN RỤM", "LÃI GẤP ĐÔI"];
+            script = `Nhiều người bảo snack khoai môn trên thị trường thiếu gì, sao LYHU lại nhập khẩu độc quyền thanh khoai môn tẩm vị CVT này từ Trung Quốc? Nói thật là vì vị nó quá cuốn! Công nghệ sấy thăng hoa giòn rụm, tẩm vị trứng cua béo ngậy mằn mặn, ăn là dính. Kênh quán ăn, trà sữa hay phòng hát karaoke đưa món này lên menu là khách gọi lai rai suốt buổi. Chủ quán muốn lấy thử thùng sỉ trải nghiệm nhắn liền cho LYHU nha!`;
+            textColor = "#22D3EE";
+        } else if (isUHi) {
+            hookTitle = `🍬 KẸO DẺO UHi HÀN QUỐC: PHÂN PHỐI ĐỘC QUYỀN DATE MỚI TINH!`;
+            hookVisual = "Bóc túi kẹo dẻo UHi đầy màu sắc thơm lừng, kéo dẻo mềm mọng nước trước camera";
+            keyPowerWords = ["UHi HÀN QUỐC", "ĐỘC QUYỀN CHÍNH NGẠCH", "DATE MỚI TINH", "CHIẾT KHẤU CAO"];
+            script = `Các nhà phân phối tỉnh, chuỗi siêu thị và mini mart đang tìm dòng bánh kẹo nhập khẩu cao cấp thì xem ngay lô kẹo UHi Hàn Quốc này nha! LYHU nhập khẩu độc quyền chính ngạch, đầy đủ giấy tờ công bố và hóa đơn đỏ. Viên kẹo dẻo mềm, thơm ngát vị trái cây tự nhiên, bao bì bắt mắt các bạn trẻ và phụ huynh cực kỳ thích. Date mới tinh vừa về kho, chính sách chiết khấu đại lý tốt nhất. Nhắn LYHU để nhận ngay bảng giá sỉ sập sàn nhé!`;
+            textColor = "#FB7185";
+        } else if (isAbi) {
+            hookTitle = `🍘 BÁNH TRÁNG ABI SNACK ĐỘC QUYỀN MIỀN BẮC: LÃI CỰC ĐỈNH!`;
+            hookVisual = "Cận cảnh xé bao bánh tráng Abi Snack bơ tỏi sa tế thơm lừng, sốt óng ánh sánh mịn";
+            keyPowerWords = ["ABI SNACK", "ĐỘC QUYỀN MIỀN BẮC", "SỈ TỪ 1 THÙNG", "BAO ĐỔI TRẢ"];
+            script = `Các tiệm tạp hóa, căng tin trường học và quán ăn vặt miền Bắc ơi! LYHU hiện là nhà phân phối độc quyền thương hiệu Abi Snack tại miền Bắc. Nào là bánh tráng bơ sa tế, khô gà cay, rong biển cháy tỏi... gia vị đậm đà độc quyền ăn là ghiền. Hàng về liên tục date mới tinh xuất xưởng trong tuần, hỗ trợ sỉ từ 1 thùng giao tận quán. Cần mẫu ăn thử và bảng giá đại lý cứ nhắn liền cho LYHU nha!`;
+            textColor = "#F43F5E";
+        } else if (isNightWarehouse) {
+            hookTitle = `🌙 11H ĐÊM KHO SỈ LYHU VẪN ĐÓNG HÀNG CHO KHÁCH SỈ!`;
+            hookVisual = "Xe container lùi vào cổng kho trong đêm, công nhân bật đèn pha soi rọi kiểm đếm từng kiện hàng";
+            keyPowerWords = ["DATE MỚI TINH", "11H ĐÊM", "GIÁ SỈ TẬN KHO", "VỪA CẬP BẾN"];
+            script = `Nhiều người bảo giờ này chỉ có đi ngủ, nhưng ở tổng kho sỉ LYHU thì bọn mình vẫn đang kiểm từng kiện hàng để sáng mai kịp giao cho các nhà phân phối tỉnh và chuỗi siêu thị. Nào là thanh khoai môn sấy CVT, kẹo UHi Hàn Quốc, bánh tráng Abi với bột phô mai Boyo. Khách đặt cả trăm thùng thì dù khuya mấy bọn mình cũng đóng gói cẩn thận. Cần mẫu thử hay bảng giá sỉ cứ nhắn bọn mình nha!`;
+            textColor = "#FACC15";
         } else {
-            hookTitle = `🔥 SIÊU PHẨM ${userTopic.toUpperCase()} GIÁ SỈ TẬN XƯỞNG!`;
-            hookVisual = "Cận cảnh xé gói bao bì giòn rụm, màu sắc óng ánh bắt mắt và rải đều trên đĩa";
-            keyPowerWords = ["GIÒN RỤM", "GIÁ SỈ TẬN XƯỞNG", "DATE MỚI TOANH", "MẪU THỬ MIỄN PHÍ"];
-            script = `500 anh em chủ quán ăn vặt và F&B ơi! Siêu phẩm mà mọi người hỏi thăm suốt thời gian qua chính thức cập bến tổng kho LYHU rồi nè. Nhiều người bảo món này kén khách, nhưng vì chất lượng đỉnh quá nên bọn mình bắt buộc phải mang về. Hàng date mới toanh, hương vị đậm đà thơm nức, khách ăn một lần là quay lại gọi thêm đĩa thứ hai liền. Các chủ quán cần mẫu thử tận nơi hoặc bảng giá sỉ không qua trung gian cứ để lại bình luận cho LYHU nha!`;
+            hookTitle = `🔥 TỔNG KHO LYHU: ${topic.toUpperCase()} GIÁ SỈ TẬN GỐC!`;
+            hookVisual = `Cận cảnh mở thùng hàng ${topic}, soi rõ tem mác và nhãn date mới tinh vừa xuất xưởng`;
+            keyPowerWords = ["DATE MỚI TOANH", "GIÁ SỈ TẬN XƯỞNG", "GIAO NHANH", "MẪU THỬ MIỄN PHÍ"];
+            script = `500 anh em đối tác và các chủ quán ơi! Lô hàng ${topic} chất lượng cao chính thức có mặt tại tổng kho LYHU rồi nè. Hàng nhập khẩu chính ngạch, date mới tinh, bao đổi trả nếu không chuẩn chất lượng. Với chính sách chiết khấu tận xưởng không qua trung gian, các nhà phân phối và đại lý tha hồ yên tâm lên đơn. Nhắn liền cho LYHU để nhận bảng giá sỉ và gửi mẫu trải nghiệm tận nơi nhé!`;
+            textColor = "#FACC15";
         }
 
         const directorGuide = {
             hookVisual,
-            spokenHook: script.slice(0, 70) + "...",
+            spokenHook: script.slice(0, 65) + "...",
             pacingSpeed: "2.5s / cảnh - Chuẩn Jump Cut TikTok",
             keyPowerWords,
             callToAction: "Các chủ quán cần bảng giá sỉ hoặc mẫu thử cứ nhắn liền cho LYHU nha!",
             shootingTips: [
-                "Quay dọc chuẩn 9:16 bằng điện thoại thông thường, không cần mua máy ảnh chuyên nghiệp.",
+                "Quay dọc chuẩn 9:16 bằng điện thoại thông thường, lau sạch mắt kính camera.",
                 "Mỗi góc quay chỉ giữ từ 2 đến 3 giây, đổi góc liên tục để giữ chân người xem.",
                 "Tập trung quay thật gần các chi tiết xé gói, bốc hàng, soi nhãn date để tạo niềm tin 100%."
             ],
@@ -228,42 +263,42 @@ YÊU CẦU ĐẦU RA BẮT BUỘC (JSON chuẩn, không kèm markdown):
                     shotNumber: 1,
                     shotType: "Cận cảnh Macro (Hook 3s)",
                     cameraMovement: "Zoom in nhanh dứt khoát",
-                    action: isNightWarehouse ? "Soi đèn flash vào biển số xe container hoặc cổng kho rực sáng" : "Xé nhanh miệng túi giòn rụm hoặc đổ sản phẩm vàng óng",
+                    action: hookVisual,
                     duration: 2.5,
-                    dialogueSnippet: "Tầm này cả thành phố ngủ hết rồi...",
-                    sfx: "Tiếng rộp rộp hoặc tiếng còi xe"
+                    dialogueSnippet: script.slice(0, 45) + "...",
+                    sfx: "Tiếng xé bọc / giòn rụm hoặc tiếng chuông ting"
                 },
                 {
                     shotNumber: 2,
                     shotType: "Trung cảnh hành động",
                     cameraMovement: "Pan ngang theo chiều tay",
-                    action: isNightWarehouse ? "Mở thùng xe tải lộ các kiện hàng xếp cao" : "Cận cảnh gắp hoặc nếm thử với biểu cảm ưng ý",
+                    action: "Mở thùng hàng lộ các kiện sản phẩm xếp cao ngay ngắn",
                     duration: 2.5,
-                    dialogueSnippet: "Bác tài chạy ròng rã suốt ngày đêm...",
-                    sfx: "Tiếng xé thùng hàng"
+                    dialogueSnippet: script.slice(45, 100) + "...",
+                    sfx: "Tiếng mở thùng hàng"
                 },
                 {
                     shotNumber: 3,
                     shotType: "Góc nhìn người xem (POV)",
                     cameraMovement: "Lia máy theo nhịp bước chân",
-                    action: "Ngón tay chỉ vào nhãn Date in mới toanh trên bao bì",
+                    action: "Ngón tay chỉ vào nhãn Date in mới toanh trên bao bì sản phẩm",
                     duration: 2.5,
-                    dialogueSnippet: "Mở thùng kiểm tra là ưng cái bụng liền: Date mới tinh!",
-                    sfx: "Tiếng cười nói rôm rả"
+                    dialogueSnippet: "Hàng date mới toanh, chất lượng chuẩn chỉnh...",
+                    sfx: "Tiếng sột soạt kiểm hàng"
                 },
                 {
                     shotNumber: 4,
                     shotType: "Toàn cảnh uy tín kho",
-                    cameraMovement: "Lùi dần tạo chiều sâu",
-                    action: "Quay các dãy kệ hàng và thùng sỉ xếp ngay ngắn",
+                    cameraMovement: "Góc thấp hất lên",
+                    action: "Quay các dãy kệ hàng và thùng sỉ xếp ngay ngắn tại kho LYHU",
                     duration: 2.5,
-                    dialogueSnippet: "Sáng mai các chủ quán tha hồ lên đơn nha...",
+                    dialogueSnippet: "Sẵn kho số lượng lớn, giao ngay trong ngày...",
                     sfx: "Tiếng dán băng keo đóng hàng"
                 },
                 {
                     shotNumber: 5,
                     shotType: "Cận cảnh kêu gọi (CTA)",
-                    cameraMovement: "Cố định, ánh sáng rõ ràng",
+                    cameraMovement: "Chĩa thẳng sản phẩm",
                     action: "Cầm sản phẩm giơ lên màn hình mời chào thân thiện",
                     duration: 2.5,
                     dialogueSnippet: "Cần bảng giá sỉ cứ nhắn liền cho LYHU nha!",
@@ -280,13 +315,13 @@ YÊU CẦU ĐẦU RA BẮT BUỘC (JSON chuẩn, không kèm markdown):
             script,
             pacing: 2.5,
             transition: "auto",
-            textColor: "#FACC15",
+            textColor,
             subtitleStyle: "tiktok_stroke",
             textAnimationEffect: "tiktok_pop",
             keyPowerWords,
             directorGuide,
             storyboard,
-            styleSummary: "Đạo diễn AI đã thiết kế kịch bản & 5 góc quay thực chiến chuẩn Trà My 24Zone cho LYHU!"
+            styleSummary: `Đạo diễn AI đã thiết kế kịch bản & 5 góc quay thực chiến chuẩn cho chủ đề "${topic}"!`
         });
 
     } catch (e: any) {
