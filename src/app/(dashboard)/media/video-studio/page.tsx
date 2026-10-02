@@ -380,7 +380,7 @@ export default function AutoVideoStudioPage() {
                     geminiApiKey: typeof window !== "undefined" ? localStorage.getItem("GEMINI_API_KEY") || undefined : undefined,
                     elevenApiKey: typeof window !== "undefined" ? localStorage.getItem("ELEVENLABS_API_KEY") || undefined : undefined
                 }),
-                signal: AbortSignal.timeout(60000)
+                signal: AbortSignal.timeout(90000)
             });
 
             if (!res.ok) {
@@ -2709,7 +2709,9 @@ export default function AutoVideoStudioPage() {
                 directorGuide={directorGuide}
                 customHookTitle={customHookTitle}
                 clipSwitchInterval={clipSwitchInterval}
+                currentScript={selectedVoiceText}
                 onCopyShotlist={handleCopyDirectorShotlist}
+                onApplyGuide={(guide) => setDirectorGuide(guide)}
             />
 
             {/* Hidden media elements for canvas sync */}
