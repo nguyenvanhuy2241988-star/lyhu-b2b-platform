@@ -83,13 +83,13 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                     </div>
                     <div>
                         <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                            <span>Bước 2: Chọn Cảnh Quay & Kho B-Roll LYHU</span>
+                            <span>Bước 2: Chọn Video Quay Thô & Ảnh Minh Họa</span>
                             <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary-50 text-primary-700 border border-primary-200">
-                                {clips.length} cảnh trong timeline
+                                {clips.length} cảnh / ảnh trong timeline
                             </span>
                         </h2>
                         <p className="text-xs text-slate-500">
-                            Quản lý các đoạn video, sắp xếp thứ tự và nạp các thước phim quay kho thực tế.
+                            Quản lý các đoạn video, ảnh chụp sản phẩm/siêu thị, đổi thứ tự và nạp kho B-Roll thực tế.
                         </p>
                     </div>
                 </div>
@@ -178,10 +178,10 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                 <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                         <Upload className="w-4 h-4 text-primary-600" />
-                        <span>Tải Lên Video Quay Thô (Footage):</span>
+                        <span>Tải Lên Video & Ảnh Minh Họa (Footage & Photos):</span>
                     </label>
                     <span className="text-[11px] text-slate-500 font-mono">
-                        {clips.length} clip • {(clips.length * clipSwitchInterval).toFixed(1)}s video
+                        {clips.length} cảnh • {(clips.length * clipSwitchInterval).toFixed(1)}s thời lượng
                     </span>
                 </div>
 
@@ -200,7 +200,7 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                         {isUploadingVideo ? (
                             <div className="flex items-center gap-2">
                                 <Loader2 className="w-4 h-4 text-primary-600 animate-spin" />
-                                <p className="text-xs font-semibold text-primary-800">Đang nạp video vào bộ nhớ...</p>
+                                <p className="text-xs font-semibold text-primary-800">Đang nạp video / ảnh vào bộ nhớ...</p>
                             </div>
                         ) : (
                             <>
@@ -209,10 +209,10 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                 </span>
                                 <div className="text-left sm:flex-1">
                                     <p className="text-xs font-bold text-slate-800">
-                                        Kéo thả hoặc nhấp để tải thêm clip quay thô từ máy
+                                        Kéo thả hoặc nhấp để tải thêm Video clip hoặc Ảnh chụp sản phẩm từ máy
                                     </p>
                                     <p className="text-[11px] text-slate-500">
-                                        Hỗ trợ MP4, MOV, WebM • Chọn nhiều video cùng lúc • Tự động khớp tỉ lệ {aspectRatio}
+                                        Hỗ trợ Video (MP4, MOV, WebM) & Ảnh (PNG, JPG, WEBP) • Tự động chuyển cảnh nhịp {clipSwitchInterval}s
                                     </p>
                                 </div>
                                 <button
@@ -223,7 +223,7 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                     }}
                                     className="px-3.5 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shrink-0"
                                 >
-                                    + Chọn Tệp Video
+                                    + Chọn Video / Ảnh
                                 </button>
                             </>
                         )}
@@ -235,7 +235,7 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
             <input
                 ref={fileInputRef}
                 type="file"
-                accept="video/*,.mp4,.mov,.webm,.m4v,.mkv"
+                accept="video/*,image/*,.mp4,.mov,.webm,.m4v,.mkv,.png,.jpg,.jpeg,.webp"
                 multiple
                 onChange={handleVideoUpload}
                 className="hidden"
@@ -279,14 +279,22 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                         <div
                                             onClick={() => setPreviewingClip(c)}
                                             className="relative group/thumb cursor-pointer shrink-0 rounded-lg overflow-hidden border border-slate-200 bg-slate-900 w-20 h-14 flex items-center justify-center"
-                                            title="Xem trước clip thô này"
+                                            title="Xem trước cảnh này"
                                         >
-                                            <video
-                                                src={c.url}
-                                                preload="metadata"
-                                                muted
-                                                className="w-full h-full object-cover"
-                                            />
+                                            {c.mediaType === "image" ? (
+                                                <img
+                                                    src={c.url}
+                                                    alt={c.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <video
+                                                    src={c.url}
+                                                    preload="metadata"
+                                                    muted
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            )}
                                             <div className="absolute inset-0 bg-black/30 group-hover/thumb:bg-black/10 flex items-center justify-center transition-colors">
                                                 <span className="p-1 rounded-full bg-white/90 text-primary-600">
                                                     <Play className="w-3 h-3 fill-primary-600" />
@@ -298,13 +306,20 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                         </div>
 
                                         <div className="min-w-0 flex-1 space-y-0.5">
-                                            <div className="flex items-center gap-1.5">
+                                            <div className="flex items-center gap-1.5 flex-wrap">
                                                 <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
                                                     idx === 0
                                                         ? "bg-primary-500 text-white"
                                                         : "bg-slate-100 text-slate-700 border border-slate-200"
                                                 }`}>
                                                     {idx === 0 ? "CẢNH #1 (MỞ ĐẦU)" : `CẢNH #${idx + 1}`}
+                                                </span>
+                                                <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                                                    c.mediaType === "image"
+                                                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                                        : "bg-blue-50 text-blue-700 border border-blue-200"
+                                                }`}>
+                                                    {c.mediaType === "image" ? "📸 ẢNH" : "🎬 VIDEO"}
                                                 </span>
                                                 {isCurrentlyPlayingThis && (
                                                     <span className="text-[10px] font-bold text-primary-700 bg-primary-100 px-1.5 rounded">

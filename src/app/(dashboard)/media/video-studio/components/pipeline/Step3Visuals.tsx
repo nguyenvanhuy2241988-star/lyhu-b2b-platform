@@ -159,22 +159,23 @@ export const Step3Visuals: React.FC<Step3VisualsProps> = ({
                                 <label className="font-semibold text-slate-700">Phong cách Hook:</label>
                                 <div className="grid grid-cols-2 gap-1.5">
                                     {[
-                                        { id: "teal_lyhu", label: "Xanh LYHU (Chuẩn Brand)" },
-                                        { id: "tiktok_sticker", label: "Nhãn Vàng TikTok" },
-                                        { id: "red_orange", label: "Đỏ Cam Bán Hàng" },
-                                        { id: "black_gold", label: "Đen Vàng B2B" }
+                                        { id: "teal_lyhu", label: "Xanh LYHU (Brand)", desc: "Pill phẳng màu thương hiệu" },
+                                        { id: "tiktok_sticker", label: "Đen TikTok (Creator)", desc: "Nền tối giản kính mờ viral" },
+                                        { id: "red_orange", label: "Đỏ Bán Hàng (Deal)", desc: "Nổi bật, kích thích chốt đơn" },
+                                        { id: "black_gold", label: "Trắng Tối Giản (Clean)", desc: "Phong cách tạp chí cao cấp" }
                                     ].map((thm) => (
                                         <button
                                             key={thm.id}
                                             type="button"
                                             onClick={() => setHookBannerTheme(thm.id as any)}
-                                            className={`p-1.5 rounded-md border text-center text-[11px] font-semibold transition-colors cursor-pointer ${
+                                            className={`p-2 rounded-lg border text-left transition-colors cursor-pointer ${
                                                 hookBannerTheme === thm.id
-                                                    ? "bg-primary-500 text-white border-primary-500 font-bold"
-                                                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                                                    ? "bg-[#00afa9] text-white border-[#00afa9] font-bold shadow-xs"
+                                                    : "bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                                             }`}
                                         >
-                                            {thm.label}
+                                            <div className="text-[11px] font-bold line-clamp-1">{thm.label}</div>
+                                            <div className={`text-[10px] mt-0.5 ${hookBannerTheme === thm.id ? "text-white/80" : "text-slate-400"}`}>{thm.desc}</div>
                                         </button>
                                     ))}
                                 </div>
@@ -248,12 +249,12 @@ export const Step3Visuals: React.FC<Step3VisualsProps> = ({
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                     {[
-                        { id: "freeship", label: "FREESHIP TẬN QUÁN", sub: "Miễn phí ship" },
-                        { id: "si_1_thung", label: "SỈ TỪ 1 THÙNG", sub: "Giá gốc xưởng" },
-                        { id: "san_kho", label: "SẴN KHO 1000 THÙNG", sub: "Giao ngay 2h" },
-                        { id: "lai_x2", label: "LÃI GẤP ĐÔI", sub: "Bán chạy nhất" },
-                        { id: "inbox_cta", label: "NHẬN MẪU THỬ", sub: "Thử miễn phí" },
-                        { id: "none", label: "TẮT HUY HIỆU", sub: "Không gắn" }
+                        { id: "freeship", label: "FREESHIP TẬN QUÁN", sub: "Giao nhanh nội & ngoại thành", icon: "🚚" },
+                        { id: "si_1_thung", label: "SỈ TỪ 1 THÙNG", sub: "Giá gốc xưởng lời x2", icon: "🏷️" },
+                        { id: "san_kho", label: "SẴN KHO SỐ LƯỢNG", sub: "Date mới tinh 2026", icon: "📦" },
+                        { id: "lai_x2", label: "LÃI GẤP ĐÔI", sub: "Chiết khấu cao đại lý", icon: "💰" },
+                        { id: "inbox_cta", label: "MẪU THỬ MIỄN PHÍ", sub: "Gửi mẫu ăn thử tận quán", icon: "🎁" },
+                        { id: "none", label: "TẮT HUY HIỆU", sub: "Không gắn lên video", icon: "✕" }
                     ].map((stk) => {
                         const isSelected = activeSalesSticker === stk.id;
                         return (
@@ -261,14 +262,17 @@ export const Step3Visuals: React.FC<Step3VisualsProps> = ({
                                 key={stk.id}
                                 type="button"
                                 onClick={() => setActiveSalesSticker(stk.id)}
-                                className={`p-2.5 rounded-lg border text-left transition-colors cursor-pointer ${
+                                className={`p-2.5 rounded-lg border text-left transition-colors cursor-pointer flex flex-col justify-between ${
                                     isSelected
-                                        ? "bg-primary-50 border-primary-500 text-primary-900 font-bold"
+                                        ? "bg-[#00afa9]/10 border-[#00afa9] text-slate-900 font-bold"
                                         : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
                                 }`}
                             >
-                                <div className="text-[11px] font-bold line-clamp-1">{stk.label}</div>
-                                <div className="text-[10px] text-slate-500 mt-0.5">{stk.sub}</div>
+                                <div className="flex items-center gap-1.5 text-sm mb-1">
+                                    <span>{stk.icon}</span>
+                                    <span className="text-[11px] font-bold line-clamp-1">{stk.label}</span>
+                                </div>
+                                <div className="text-[10px] text-slate-500 line-clamp-1">{stk.sub}</div>
                             </button>
                         );
                     })}

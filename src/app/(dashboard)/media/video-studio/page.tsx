@@ -274,7 +274,7 @@ export default function AutoVideoStudioPage() {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const hiddenAudioRef = useRef<HTMLAudioElement | null>(null);
     const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
-    const videoElementsRef = useRef<{ [key: string]: HTMLVideoElement | null }>({});
+    const videoElementsRef = useRef<{ [key: string]: any }>({});
     const animationFrameRef = useRef<number | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const audioInputRef = useRef<HTMLInputElement | null>(null);
@@ -704,11 +704,35 @@ export default function AutoVideoStudioPage() {
 
         for (let i = 0; i < fileList.length; i++) {
             const file = fileList[i];
-            if (!file || (!file.type.startsWith("video/") && !file.name.match(/\.(mp4|mov|webm|avi|mkv|m4v)$/i))) {
-                continue;
-            }
+            if (!file) continue;
+
+            const isImage = file.type.startsWith("image/") || !!file.name.match(/\.(png|jpe?g|webp|gif|bmp)$/i);
+            const isVideo = file.type.startsWith("video/") || !!file.name.match(/\.(mp4|mov|webm|avi|mkv|m4v)$/i);
+            if (!isImage && !isVideo) continue;
 
             const url = URL.createObjectURL(file);
+
+            if (isImage) {
+                const imgMeta = await new Promise<{ width: number; height: number }>((resolve) => {
+                    const img = new Image();
+                    img.onload = () => resolve({ width: img.naturalWidth || 1080, height: img.naturalHeight || 1920 });
+                    img.onerror = () => resolve({ width: 1080, height: 1920 });
+                    img.src = url;
+                });
+
+                newClips.push({
+                    id: `clip-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`,
+                    file,
+                    url,
+                    name: file.name,
+                    duration: clipSwitchInterval || 2.5,
+                    width: imgMeta.width,
+                    height: imgMeta.height,
+                    muted: true,
+                    mediaType: "image"
+                });
+                continue;
+            }
 
             // Extract metadata with strict timeout to prevent hangs
             const meta = await new Promise<{ duration: number; width: number; height: number }>((resolve) => {
@@ -755,7 +779,8 @@ export default function AutoVideoStudioPage() {
                 duration: meta.duration,
                 width: meta.width,
                 height: meta.height,
-                muted: true
+                muted: true,
+                mediaType: "video"
             });
         }
 
@@ -1442,7 +1467,7 @@ export default function AutoVideoStudioPage() {
             const activeClip = clips[clipIdx] || clips[0];
             if (activeClip?.id) {
                 const activeVid = videoElementsRef.current[activeClip.id];
-                if (activeVid) {
+                if (activeVid && typeof activeVid.play === "function") {
                     const localT = (validT % switchSec) % Math.max(1, activeClip.duration || 15);
                     activeVid.currentTime = isFinite(localT) ? localT : 0;
                     activeVid.play().catch(() => {});
@@ -1463,7 +1488,7 @@ export default function AutoVideoStudioPage() {
         clips.forEach(c => {
             if (c?.id) {
                 const vid = videoElementsRef.current[c.id];
-                if (vid && !vid.paused) vid.pause();
+                if (vid && typeof vid.pause === "function" && !vid.paused) vid.pause();
             }
         });
     };
@@ -1498,10 +1523,10 @@ export default function AutoVideoStudioPage() {
                 clips.forEach(c => {
                     if (!c?.id) return;
                     const v = videoElementsRef.current[c.id];
-                    if (v && c.id !== activeClip.id && !v.paused) v.pause();
+                    if (v && typeof v.pause === "function" && c.id !== activeClip.id && !v.paused) v.pause();
                 });
 
-                if (activeVid) {
+                if (activeVid && typeof activeVid.play === "function") {
                     const localT = (validTime % switchSec) % Math.max(1, activeClip.duration || 15);
                     activeVid.currentTime = isFinite(localT) ? localT : 0;
                     if (isPlaying && activeVid.paused) activeVid.play().catch(() => {});
@@ -1613,7 +1638,7 @@ export default function AutoVideoStudioPage() {
         if (targetClip?.id) {
             const vid = videoElementsRef.current[targetClip.id];
             if (vid) {
-                vid.currentTime = 0.5;
+                if ("currentTime" in vid) vid.currentTime = 0.5;
                 setTimeout(() => drawCanvasFrame(targetTime), 50);
             }
         }
@@ -1636,7 +1661,7 @@ export default function AutoVideoStudioPage() {
         setDisplayTime(0);
         setTimeout(() => {
             const vid = videoElementsRef.current[openingClip.id];
-            if (vid) vid.currentTime = 0.5;
+            if (vid && "currentTime" in vid) vid.currentTime = 0.5;
             drawCanvasFrame(0);
         }, 100);
     };
@@ -1752,7 +1777,7 @@ export default function AutoVideoStudioPage() {
                 // Pre-roll next clip 0.45s before switch
                 if (switchSec - timeInInterval <= 0.45 && nextClip?.id) {
                     const nextVid = videoElementsRef.current[nextClip.id];
-                    if (nextVid && nextVid.paused) {
+                    if (nextVid && typeof nextVid.play === "function" && nextVid.paused) {
                         nextVid.currentTime = 0;
                         nextVid.play().catch(() => {});
                     }
@@ -1762,10 +1787,10 @@ export default function AutoVideoStudioPage() {
                 if (currentClip?.id && currentClip.id !== lastActiveClipIdRef.current) {
                     if (lastActiveClipIdRef.current) {
                         const prevVid = videoElementsRef.current[lastActiveClipIdRef.current];
-                        if (prevVid && !prevVid.paused) prevVid.pause();
+                        if (prevVid && typeof prevVid.pause === "function" && !prevVid.paused) prevVid.pause();
                     }
                     const activeVid = videoElementsRef.current[currentClip.id];
-                    if (activeVid && activeVid.paused) {
+                    if (activeVid && typeof activeVid.play === "function" && activeVid.paused) {
                         activeVid.play().catch(() => {});
                     }
                     lastActiveClipIdRef.current = currentClip.id;
@@ -1921,7 +1946,7 @@ export default function AutoVideoStudioPage() {
                 clips.forEach(c => {
                     if (c?.id) {
                         const v = videoElementsRef.current[c.id];
-                        if (v && !v.paused) v.pause();
+                        if (v && typeof v.pause === "function" && !v.paused) v.pause();
                     }
                 });
                 audioCtx.close().catch(() => {});
@@ -1974,14 +1999,14 @@ export default function AutoVideoStudioPage() {
             clips.forEach((c) => {
                 if (c?.id) {
                     const v = videoElementsRef.current[c.id];
-                    if (v && !v.paused) v.pause();
+                    if (v && typeof v.pause === "function" && !v.paused) v.pause();
                 }
             });
 
             // Start First Video Clip
             const firstClip = clips[0];
             const firstVid = firstClip?.id ? videoElementsRef.current[firstClip.id] : null;
-            if (firstVid) {
+            if (firstVid && typeof firstVid.play === "function") {
                 firstVid.currentTime = 0;
                 firstVid.play().catch(() => {});
             }
@@ -2032,7 +2057,7 @@ export default function AutoVideoStudioPage() {
                     // Pre-roll next clip 0.35s before switch
                     if (switchSec - timeInInt <= 0.35 && nxtClip?.id && nxtClip.id !== curClip.id) {
                         const nxtVid = videoElementsRef.current[nxtClip.id];
-                        if (nxtVid && nxtVid.paused) {
+                        if (nxtVid && typeof nxtVid.play === "function" && nxtVid.paused) {
                             nxtVid.currentTime = 0;
                             nxtVid.play().catch(() => {});
                         }
@@ -2042,10 +2067,10 @@ export default function AutoVideoStudioPage() {
                     if (curClip?.id && curClip.id !== exportActiveClipId.current) {
                         if (exportActiveClipId.current) {
                             const prevVid = videoElementsRef.current[exportActiveClipId.current];
-                            if (prevVid && !prevVid.paused) prevVid.pause();
+                            if (prevVid && typeof prevVid.pause === "function" && !prevVid.paused) prevVid.pause();
                         }
                         const curVid = videoElementsRef.current[curClip.id];
-                        if (curVid) {
+                        if (curVid && typeof curVid.play === "function") {
                             curVid.currentTime = 0;
                             curVid.play().catch(() => {});
                         }
@@ -2718,6 +2743,21 @@ export default function AutoVideoStudioPage() {
             <div className="hidden">
                 {clips.map((clip) => {
                     if (!clip?.id || !clip?.url) return null;
+                    if (clip.mediaType === "image") {
+                        return (
+                            <img
+                                key={clip.id}
+                                ref={(el) => {
+                                    if (clip?.id) {
+                                        videoElementsRef.current[clip.id] = el;
+                                    }
+                                }}
+                                src={clip.url}
+                                crossOrigin="anonymous"
+                                alt={clip.name}
+                            />
+                        );
+                    }
                     return (
                         <video
                             key={clip.id}

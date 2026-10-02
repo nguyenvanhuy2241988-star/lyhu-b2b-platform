@@ -4,7 +4,7 @@ export interface VideoRendererOptions {
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
     clips: VideoClip[];
-    videoElements: { [key: string]: HTMLVideoElement | null };
+    videoElements: { [key: string]: HTMLVideoElement | HTMLImageElement | null };
     validTime: number;
     clipSwitchInterval: number;
     transitionEffect: "auto" | "crossfade" | "zoom_in" | "slide_left" | "white_flash" | "hard_cut";
@@ -36,10 +36,10 @@ export function renderVideoFrame({
         ctx.fillStyle = "#64748b";
         ctx.font = "bold 20px 'Be Vietnam Pro', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("Chưa có video quay thô", cw / 2, ch / 2 - 12);
+        ctx.fillText("Chưa có video hoặc ảnh minh họa", cw / 2, ch / 2 - 12);
         ctx.font = "14px sans-serif";
         ctx.fillStyle = "#94a3b8";
-        ctx.fillText("Nhấp '+ Tải video từ máy' hoặc '+ Dùng 3 clip mẫu'", cw / 2, ch / 2 + 16);
+        ctx.fillText("Nhấp '+ Tải video / ảnh từ máy' hoặc '+ Dùng 3 clip mẫu'", cw / 2, ch / 2 + 16);
         return;
     }
 
@@ -70,16 +70,33 @@ export function renderVideoFrame({
         activeTrans = transPool[clipIdx % transPool.length];
     }
 
+    const zoomProgress = (validTime % switchSec) / switchSec;
+
+    const isElementReady = (el: HTMLVideoElement | HTMLImageElement | null): boolean => {
+        if (!el) return false;
+        if ((el instanceof HTMLImageElement) || (el as any).tagName === "IMG") {
+            return (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0;
+        }
+        return (el as HTMLVideoElement).readyState >= 2;
+    };
+
     const drawVideoCover = (
-        videoEl: HTMLVideoElement,
+        mediaEl: HTMLVideoElement | HTMLImageElement,
         offsetX = 0,
         alpha = 1.0,
         scaleMultiplier = 1.0
     ) => {
-        if (!videoEl || videoEl.readyState < 2) return;
-        const vw = videoEl.videoWidth || cw;
-        const vh = videoEl.videoHeight || ch;
-        const baseScale = Math.max(cw / vw, ch / vh) * scaleMultiplier;
+        if (!mediaEl || !isElementReady(mediaEl)) return;
+
+        const isImg = (mediaEl instanceof HTMLImageElement) || (mediaEl as any).tagName === "IMG";
+        const vw = isImg ? (mediaEl as HTMLImageElement).naturalWidth : ((mediaEl as HTMLVideoElement).videoWidth || cw);
+        const vh = isImg ? (mediaEl as HTMLImageElement).naturalHeight : ((mediaEl as HTMLVideoElement).videoHeight || ch);
+        
+        // Ken Burns effect for static photos: slow cinematic push (1.0 -> 1.05)
+        const photoKenBurns = isImg ? (1.0 + zoomProgress * 0.05) : 1.0;
+        const finalScale = scaleMultiplier * photoKenBurns;
+
+        const baseScale = Math.max(cw / vw, ch / vh) * finalScale;
         const dw = vw * baseScale;
         const dh = vh * baseScale;
         const dx = (cw - dw) / 2 + offsetX;
@@ -94,57 +111,50 @@ export function renderVideoFrame({
             }
         }
         try {
-            ctx.drawImage(videoEl, dx, dy, dw, dh);
+            ctx.drawImage(mediaEl, dx, dy, dw, dh);
         } catch {
             // Safe fallback if crossOrigin or tainted frame occurs
         }
         ctx.restore();
     };
 
-    const zoomProgress = (validTime % switchSec) / switchSec;
     const dynamicScale = 1.0 + zoomProgress * 0.04;
-
-    const isNextVidReady = nextVid && nextVid.readyState >= 2;
+    const isNextReady = isElementReady(nextVid);
     const progress = Math.max(0, Math.min(1, 1.0 - transitionFactor));
     const ease = 0.5 - 0.5 * Math.cos(progress * Math.PI);
 
     if (isNearTransition && clips.length > 1) {
         if (activeTrans === "crossfade") {
             if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
-            if (isNextVidReady) {
+            if (isNextReady && nextVid) {
                 drawVideoCover(nextVid, 0, ease, 1.0);
             }
         } else if (activeTrans === "zoom_in") {
             const curScale = dynamicScale * (1.0 + ease * 0.08);
             if (currentVid) drawVideoCover(currentVid, 0, 1.0, curScale);
-            if (isNextVidReady) {
+            if (isNextReady && nextVid) {
                 const nxtScale = 0.94 + ease * 0.06;
                 drawVideoCover(nextVid, 0, ease, nxtScale);
             }
         } else if (activeTrans === "slide_left") {
-            if (isNextVidReady) {
-                const slideOffset = ease * cw;
-                if (currentVid) drawVideoCover(currentVid, -slideOffset, 1.0, dynamicScale);
-                drawVideoCover(nextVid, cw - slideOffset, 1.0, 1.0);
+            if (isNextReady && nextVid) {
+                const offsetNext = cw * (1.0 - ease);
+                const offsetCur = -cw * ease;
+                if (currentVid) drawVideoCover(currentVid, offsetCur, 1.0, dynamicScale);
+                drawVideoCover(nextVid, offsetNext, 1.0, 1.0);
             } else {
                 if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
             }
         } else if (activeTrans === "white_flash") {
-            if (progress < 0.5) {
-                if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
-            } else {
-                if (isNextVidReady) {
-                    drawVideoCover(nextVid, 0, 1.0, 1.0);
-                } else if (currentVid) {
-                    drawVideoCover(currentVid, 0, 1.0, dynamicScale);
-                }
+            if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
+            if (progress > 0.5 && isNextReady && nextVid) {
+                drawVideoCover(nextVid, 0, 1.0, 1.0);
             }
-            const flashAlpha = Math.sin(progress * Math.PI) * 0.65;
-            ctx.save();
+            const flashAlpha = Math.sin(progress * Math.PI) * 0.85;
             ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
             ctx.fillRect(0, 0, cw, ch);
-            ctx.restore();
         } else {
+            // hard_cut
             if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
         }
     } else {

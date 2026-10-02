@@ -7,6 +7,7 @@ export interface VideoClip {
     width: number;
     height: number;
     muted: boolean;
+    mediaType?: "video" | "image";
 }
 
 export interface SubtitleCue {

@@ -48,15 +48,23 @@ export const ClipPreviewModal: React.FC<ClipPreviewModalProps> = ({
                     </button>
                 </div>
 
-                {/* Video Player */}
+                {/* Video / Image Player */}
                 <div className="flex-1 bg-black flex items-center justify-center p-2 min-h-[300px]">
-                    <video
-                        src={previewingClip.url}
-                        controls
-                        autoPlay
-                        playsInline
-                        className="max-h-[62vh] max-w-full rounded-lg shadow-inner bg-black object-contain"
-                    />
+                    {previewingClip.mediaType === "image" ? (
+                        <img
+                            src={previewingClip.url}
+                            alt={previewingClip.name}
+                            className="max-h-[62vh] max-w-full rounded-lg shadow-inner object-contain"
+                        />
+                    ) : (
+                        <video
+                            src={previewingClip.url}
+                            controls
+                            autoPlay
+                            playsInline
+                            className="max-h-[62vh] max-w-full rounded-lg shadow-inner bg-black object-contain"
+                        />
+                    )}
                 </div>
 
                 {/* Quick Actions Footer */}

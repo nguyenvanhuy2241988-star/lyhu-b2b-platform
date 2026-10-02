@@ -26,20 +26,22 @@ export function renderHookBanner({
 
     ctx.save();
 
+    // Smooth subtle pop-in animation (0 - 0.25s)
     let hookScale = 1.0;
-    if (time < 0.28) {
-        const t = time / 0.28;
-        hookScale = 0.82 + 0.18 * Math.sin(t * Math.PI * 0.5);
+    if (time < 0.25) {
+        const t = time / 0.25;
+        hookScale = 0.88 + 0.12 * Math.sin(t * Math.PI * 0.5);
     }
 
-    const hookCenterY = ch * 0.17;
-    const maxBadgeW = Math.min(cw * 0.94, cw - 24);
+    // Position: upper safe area, safely above the speaker's eyes & forehead
+    const hookCenterY = ch * 0.115;
+    const maxBadgeW = Math.min(cw * 0.92, cw - 28);
     const maxContentW = maxBadgeW - 32;
 
     const textRaw = customHookTitle.trim();
-    let baseFontSize = 24;
-    if (textRaw.length > 55) baseFontSize = 18;
-    else if (textRaw.length > 36) baseFontSize = 21;
+    let baseFontSize = 21;
+    if (textRaw.length > 55) baseFontSize = 16;
+    else if (textRaw.length > 36) baseFontSize = 18.5;
 
     ctx.font = `900 ${baseFontSize}px ${fontFamily}`;
     ctx.textAlign = "center";
@@ -67,86 +69,100 @@ export function renderHookBanner({
         if (lw > maxLineW) maxLineW = lw;
     });
 
-    const lineHeight = baseFontSize * 1.36;
-    const topTagH = 20;
-    const badgeW = Math.min(maxBadgeW, Math.max(220, maxLineW + 48));
-    const badgeH = Math.max(56, lines.length * lineHeight + topTagH + 18);
+    const lineHeight = baseFontSize * 1.34;
+    const topTagH = 18;
+    const badgeW = Math.min(maxBadgeW, Math.max(220, maxLineW + 40));
+    const badgeH = Math.max(50, lines.length * lineHeight + topTagH + 16);
     const badgeX = (cw - badgeW) / 2;
     const badgeY = hookCenterY - badgeH / 2;
 
     ctx.translate(cw / 2, hookCenterY);
     ctx.scale(hookScale, hookScale);
-    if (hookBannerTheme === "tiktok_sticker") {
-        ctx.rotate(-0.02);
-    }
     ctx.translate(-cw / 2, -hookCenterY);
 
-    ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
-    ctx.shadowBlur = 24;
-    ctx.shadowOffsetY = 6;
+    // Subtle elegant shadow
+    ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetY = 4;
 
-    const grad = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeW, badgeY + badgeH);
+    // Theme backgrounds & borders
+    let bgFill = "#00AFA9";
+    let strokeCol = "rgba(255, 255, 255, 0.35)";
+    let tagText = "📦 TỔNG KHO LYHU";
+    let tagBg = "rgba(0, 0, 0, 0.25)";
+    let tagTextCol = "#FFFFFF";
+    let line1Col = "#FFFFFF";
+    let line2Col = "#FEF08A";
+
     if (hookBannerTheme === "tiktok_sticker") {
-        grad.addColorStop(0, "#FFE600");
-        grad.addColorStop(0.35, "#FF9900");
-        grad.addColorStop(1, "#DC2626");
+        // Modern TikTok Creator Dark Slate Glass
+        bgFill = "rgba(15, 23, 42, 0.92)";
+        strokeCol = "rgba(255, 255, 255, 0.2)";
+        tagText = "🔥 VIRAL TREND";
+        tagBg = "rgba(250, 204, 21, 0.2)";
+        tagTextCol = "#FACC15";
+        line1Col = "#FFFFFF";
+        line2Col = "#FACC15";
+    } else if (hookBannerTheme === "red_orange") {
+        // Vibrant Deal Red
+        bgFill = "#DC2626";
+        strokeCol = "rgba(255, 255, 255, 0.4)";
+        tagText = "⚡ GIÁ SỈ TẬN KHO";
+        tagBg = "rgba(0, 0, 0, 0.25)";
+        tagTextCol = "#FFFFFF";
+        line1Col = "#FFFFFF";
+        line2Col = "#FEF08A";
     } else if (hookBannerTheme === "black_gold") {
-        grad.addColorStop(0, "#09090B");
-        grad.addColorStop(0.5, "#18181B");
-        grad.addColorStop(1, "#27272A");
-    } else if (hookBannerTheme === "teal_lyhu") {
-        grad.addColorStop(0, "#0F766E");
-        grad.addColorStop(1, "#00AFA9");
-    } else {
-        grad.addColorStop(0, "#DC2626");
-        grad.addColorStop(0.5, "#E11D48");
-        grad.addColorStop(1, "#EA580C");
+        // Clean Minimalist Editorial White
+        bgFill = "#FFFFFF";
+        strokeCol = "rgba(15, 23, 42, 0.15)";
+        tagText = "✦ BÍ QUYẾT BÁN BUÔN";
+        tagBg = "rgba(0, 175, 169, 0.12)";
+        tagTextCol = "#008F8A";
+        line1Col = "#0F172A";
+        line2Col = "#008F8A";
     }
 
-    ctx.fillStyle = grad;
+    // Draw main capsule background
+    ctx.fillStyle = bgFill;
     ctx.beginPath();
-    ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 16);
+    ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 14);
     ctx.fill();
 
+    // Border
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
-    ctx.strokeStyle = hookBannerTheme === "tiktok_sticker"
-        ? "#000000"
-        : (hookBannerTheme === "black_gold" ? "#FACC15" : "rgba(255, 255, 255, 0.65)");
-    ctx.lineWidth = hookBannerTheme === "tiktok_sticker" ? 3.5 : 2;
+    ctx.strokeStyle = strokeCol;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    const tagText = hookBannerTheme === "black_gold"
-        ? "✦ BÍ QUYẾT BÁN BUÔN"
-        : (hookBannerTheme === "teal_lyhu" ? "📦 LYHU WHOLESALE" : "🔥 XU HƯỚNG KHO SỈ");
-    ctx.font = `900 11px ${fontFamily}`;
-    const tagW = ctx.measureText(tagText).width + 18;
+    // Micro-badge tag pill
+    ctx.font = `800 10px ${fontFamily}`;
+    const tagW = ctx.measureText(tagText).width + 16;
     const tagX = cw / 2 - tagW / 2;
-    const tagY = badgeY + 8;
-    ctx.fillStyle = hookBannerTheme === "tiktok_sticker" ? "#000000" : "rgba(0, 0, 0, 0.45)";
+    const tagY = badgeY + 7;
+    ctx.fillStyle = tagBg;
     ctx.beginPath();
-    ctx.roundRect(tagX, tagY, tagW, 18, 9);
+    ctx.roundRect(tagX, tagY, tagW, 16, 8);
     ctx.fill();
-    ctx.fillStyle = hookBannerTheme === "tiktok_sticker" ? "#FFE600" : "#FFFFFF";
-    ctx.fillText(tagText, cw / 2, tagY + 9);
+    ctx.fillStyle = tagTextCol;
+    ctx.fillText(tagText, cw / 2, tagY + 8);
 
-    const startTextY = badgeY + topTagH + 8 + ((badgeH - topTagH - 18) - (lines.length - 1) * lineHeight) / 2;
+    // Headline Lines
+    const startTextY = badgeY + topTagH + 8 + ((badgeH - topTagH - 16) - (lines.length - 1) * lineHeight) / 2;
     lines.forEach((lineText, idx) => {
         const lineY = startTextY + idx * lineHeight;
         ctx.font = `900 ${baseFontSize}px ${fontFamily}`;
 
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 8.5;
-        ctx.lineJoin = "round";
-        ctx.strokeText(lineText, cw / 2, lineY);
-
-        if (hookBannerTheme === "tiktok_sticker") {
-            ctx.fillStyle = idx === 0 ? "#FFFFFF" : "#FFE600";
-        } else if (hookBannerTheme === "black_gold") {
-            ctx.fillStyle = idx === 0 ? "#FFFFFF" : "#FEF08A";
-        } else {
-            ctx.fillStyle = idx === 0 ? "#FFE600" : "#FFFFFF";
+        // Subtle dark outline for razor-sharp readability on all video backgrounds
+        if (hookBannerTheme !== "black_gold") {
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.55)";
+            ctx.lineWidth = 3.0;
+            ctx.lineJoin = "round";
+            ctx.strokeText(lineText, cw / 2, lineY);
         }
+
+        ctx.fillStyle = idx === 0 ? line1Col : line2Col;
         ctx.fillText(lineText, cw / 2, lineY);
     });
 

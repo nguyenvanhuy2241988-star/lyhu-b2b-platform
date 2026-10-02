@@ -231,42 +231,42 @@ export const DEMO_CLIPS = AI_BROLL_LIBRARY.slice(0, 3);
 export const STICKER_CONFIGS: Record<string, { title: string; subtitle: string; icon: string; bgGrad: [string, string]; border: string; subCol: string }> = {
     freeship: {
         title: "FREESHIP TẬN QUÁN",
-        subtitle: "GIAO NHANH NỘI THÀNH & TỈNH",
+        subtitle: "Giao nhanh nội thành & tỉnh",
         icon: "🚚",
-        bgGrad: ["#D97706", "#B45309"],
-        border: "#FDE68A",
-        subCol: "#FEF08A"
+        bgGrad: ["#059669", "#047857"],
+        border: "rgba(255, 255, 255, 0.4)",
+        subCol: "#A7F3D0"
     },
     si_1_thung: {
         title: "SỈ TỪ 1 THÙNG",
-        subtitle: "GIÁ TẬN XƯỞNG BAO LỜI X2",
+        subtitle: "Giá tận xưởng bao lời x2",
         icon: "🏷️",
-        bgGrad: ["#E11D48", "#BE123C"],
-        border: "#FECDD3",
-        subCol: "#FFE4E6"
+        bgGrad: ["#00AFA9", "#008F8A"],
+        border: "rgba(255, 255, 255, 0.4)",
+        subCol: "#CCFBF1"
     },
     san_kho: {
-        title: "SẴN KHO 1.000 THÙNG",
-        subtitle: "DATE MỚI TINH XUẤT NGAY",
+        title: "SẴN KHO SỐ LƯỢNG LỚN",
+        subtitle: "Date mới tinh xuất ngay",
         icon: "📦",
-        bgGrad: ["#2563EB", "#1D4ED8"],
-        border: "#BFDBFE",
-        subCol: "#DBEAFE"
+        bgGrad: ["#D97706", "#B45309"],
+        border: "rgba(255, 255, 255, 0.4)",
+        subCol: "#FEF3C7"
     },
     lai_x2: {
         title: "LÃI GẤP ĐÔI TẬN GỐC",
-        subtitle: "CHIẾT KHẤU TỐI ĐA CHO ĐẠI LÝ",
+        subtitle: "Chiết khấu cao cho đại lý",
         icon: "💰",
-        bgGrad: ["#059669", "#047857"],
-        border: "#A7F3D0",
-        subCol: "#D1FAE5"
+        bgGrad: ["#E11D48", "#BE123C"],
+        border: "rgba(255, 255, 255, 0.4)",
+        subCol: "#FFE4E6"
     },
     inbox_cta: {
-        title: "INBOX NHẬN MẪU THỬ",
-        subtitle: "GỬI MẪU ĂN THỬ MIỄN PHÍ",
-        icon: "📲",
-        bgGrad: ["#7C3AED", "#6D28D9"],
-        border: "#DDD6FE",
-        subCol: "#EDE9FE"
+        title: "NHẬN MẪU THỬ MIỄN PHÍ",
+        subtitle: "Gửi mẫu ăn thử tận quán",
+        icon: "🎁",
+        bgGrad: ["#4F46E5", "#4338CA"],
+        border: "rgba(255, 255, 255, 0.4)",
+        subCol: "#E0E7FF"
     }
 };
