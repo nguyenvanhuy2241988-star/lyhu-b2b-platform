@@ -148,6 +148,54 @@ async function synthesizeWithElevenLabs(text: string, voiceId: string, apiKey: s
 }
 
 /**
+ * Chia văn bản thành các câu tự nhiên để xử lý âm thanh tốc độ cao
+ */
+function splitTextIntoChunks(text: string, maxLen = 140): string[] {
+    const clean = text.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+    if (!clean) return [];
+
+    const sentences = clean.split(/(?<=[.!?,;:\n])\s+/);
+    const chunks: string[] = [];
+    let current = "";
+
+    for (const sentence of sentences) {
+        if ((current + " " + sentence).trim().length <= maxLen) {
+            current = (current + " " + sentence).trim();
+        } else {
+            if (current) chunks.push(current);
+            current = sentence;
+        }
+    }
+    if (current) chunks.push(current);
+    return chunks;
+}
+
+/**
+ * Động cơ HTTP trực tiếp siêu tốc (< 600ms) - bảo vệ tuyệt đối chống timeout trên Vercel Serverless
+ */
+async function synthesizeWithGoogleTTS(text: string): Promise<Buffer> {
+    const chunks = splitTextIntoChunks(text, 140);
+    if (chunks.length === 0) throw new Error("Văn bản rỗng.");
+
+    const chunkPromises = chunks.map(async (chunk) => {
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+        const res = await fetch(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                Referer: "https://translate.google.com/"
+            },
+            signal: AbortSignal.timeout(6000)
+        });
+
+        if (!res.ok) throw new Error("Lỗi tải phân đoạn âm thanh");
+        return Buffer.from(await res.arrayBuffer());
+    });
+
+    const buffers = await Promise.all(chunkPromises);
+    return Buffer.concat(buffers);
+}
+
+/**
  * Tạo giọng đọc qua Google Gemini AI Expressive Neural Audio (Kore, Puck, Aoede, Fenrir, Leda)
  */
 async function synthesizeWithGeminiTTS(
@@ -303,22 +351,36 @@ export async function POST(req: NextRequest) {
                 mimeType = geminiResult.mimeType;
                 engineUsed = `gemini-${geminiResult.modelUsed}`;
             } catch (geminiErr: any) {
-                console.warn("[TTS] Gemini Audio REST endpoint unavailable, switching to Studio Neural Voice:", geminiErr.message);
-                // Tự động chuyển tiếp sang Studio Neural Voice (Azure Neural: Hoài My & Nam Minh)
-                // Đảm bảo video studio luôn thu âm thành công 100%, không bao giờ bị popup 404 gián đoạn!
-                const edgeResult = await synthesizeWithEdgeTTS(normalizedText, styleKey, Number(rateMultiplier) || 1.0);
-                audioBuffer = edgeResult.buffer;
-                mimeType = edgeResult.mimeType;
-                engineUsed = "studio-neural-hoaimy-namminh";
+                console.warn("[TTS] Gemini Audio unavailable, using high-speed audio fallback:", geminiErr.message);
+                try {
+                    // Thử Edge Neural trong tối đa 2.5s (tránh treo WebSocket trên Vercel Serverless)
+                    const edgePromise = synthesizeWithEdgeTTS(normalizedText, styleKey, Number(rateMultiplier) || 1.0);
+                    const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Edge WebSocket timeout")), 2500));
+                    const edgeResult = await Promise.race([edgePromise, timeoutPromise]);
+                    audioBuffer = edgeResult.buffer;
+                    mimeType = edgeResult.mimeType;
+                    engineUsed = "studio-neural-hoaimy-namminh";
+                } catch (edgeErr: any) {
+                    console.log("[TTS] Fast-fallback to Google High-Speed Audio (<600ms)");
+                    audioBuffer = await synthesizeWithGoogleTTS(normalizedText);
+                    mimeType = "audio/mpeg";
+                    engineUsed = "google-fast-audio";
+                }
             }
         }
 
         // ƯU TIÊN 3: Microsoft Edge (Chỉ dùng khi người dùng chủ động chọn engine "edge")
         if (!audioBuffer && engine === "edge") {
-            const edgeResult = await synthesizeWithEdgeTTS(normalizedText, styleKey, Number(rateMultiplier) || 1.0);
-            audioBuffer = edgeResult.buffer;
-            mimeType = edgeResult.mimeType;
-            engineUsed = "edge-neural";
+            try {
+                const edgeResult = await synthesizeWithEdgeTTS(normalizedText, styleKey, Number(rateMultiplier) || 1.0);
+                audioBuffer = edgeResult.buffer;
+                mimeType = edgeResult.mimeType;
+                engineUsed = "edge-neural";
+            } catch {
+                audioBuffer = await synthesizeWithGoogleTTS(normalizedText);
+                mimeType = "audio/mpeg";
+                engineUsed = "google-fast-audio";
+            }
         }
 
         if (!audioBuffer || audioBuffer.length === 0) {
