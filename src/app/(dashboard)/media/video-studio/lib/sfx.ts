@@ -14,29 +14,39 @@ export function playWebAudioSfx(
         gain.connect(destNode || audioCtx.destination);
 
         if (type === "whoosh") {
-            const bufferSize = Math.floor(audioCtx.sampleRate * 0.32);
+            const duration = 0.22;
+            const bufferSize = Math.floor(audioCtx.sampleRate * duration);
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
+
+            // Generate gentle warm noise (Brown/Pink noise curve to eliminate harsh mic hiss/wind)
+            let b0 = 0, b1 = 0;
             for (let i = 0; i < bufferSize; i++) {
-                data[i] = Math.random() * 2 - 1;
+                const white = Math.random() * 2 - 1;
+                b0 = 0.95 * b0 + white * 0.05;
+                b1 = 0.90 * b1 + white * 0.10;
+                data[i] = (b0 + b1) * 2.2;
             }
+
             const noise = audioCtx.createBufferSource();
             noise.buffer = buffer;
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = "bandpass";
-            filter.frequency.setValueAtTime(320, now);
-            filter.frequency.exponentialRampToValueAtTime(3400, now + 0.16);
-            filter.frequency.exponentialRampToValueAtTime(450, now + 0.32);
-            filter.Q.value = 3.2;
 
-            gain.gain.setValueAtTime(0.01, now);
-            gain.gain.linearRampToValueAtTime(volume * 0.9, now + 0.14);
-            gain.gain.linearRampToValueAtTime(0.001, now + 0.32);
+            // Low-pass filter for smooth cinematic deep swoosh, NO harsh microphone hiss/wind
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(350, now);
+            filter.frequency.exponentialRampToValueAtTime(750, now + duration * 0.45);
+            filter.frequency.exponentialRampToValueAtTime(220, now + duration);
+            filter.Q.value = 0.8;
+
+            gain.gain.setValueAtTime(0.001, now);
+            gain.gain.linearRampToValueAtTime(volume * 0.45, now + duration * 0.4);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
             noise.connect(filter);
             filter.connect(gain);
             noise.start(now);
-            noise.stop(now + 0.32);
+            noise.stop(now + duration);
 
         } else if (type === "ding") {
             const osc = audioCtx.createOscillator();

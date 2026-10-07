@@ -360,7 +360,7 @@ export const Step4AudioExport: React.FC<Step4AudioExportProps> = ({
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {[
-                        { id: "whoosh", label: "Whoosh Chuyển Cảnh", checked: enableSfxWhoosh, setChecked: setEnableSfxWhoosh, desc: "Âm lướt gió khi đổi clip" },
+                        { id: "whoosh", label: "Swoosh Trầm (Tùy chọn)", checked: enableSfxWhoosh, setChecked: setEnableSfxWhoosh, desc: "Âm vuốt trầm nhẹ khi đổi cảnh (mặc định tắt)" },
                         { id: "ding", label: "Ding Thu Hút 0.3s", checked: enableSfxDing, setChecked: setEnableSfxDing, desc: "Keng nhẹ giữ chân người xem" },
                         { id: "kaching", label: "Kaching Tiền Sỉ", checked: enableSfxKaching, setChecked: setEnableSfxKaching, desc: "Keng máy đếm tiền khi có từ sỉ" },
                         { id: "boom", label: "Boom Bass Drop", checked: enableSfxBoom, setChecked: setEnableSfxBoom, desc: "Trầm uy lực khi hé lộ giá" }

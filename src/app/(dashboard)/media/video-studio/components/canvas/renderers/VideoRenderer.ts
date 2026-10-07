@@ -118,7 +118,7 @@ export function renderVideoFrame({
     const nextClip = clips[nextClipIdx] || currentClip;
 
     const remainingInClip = clipDuration * (1 - progressInClip);
-    const transitionWindow = 0.45;
+    const transitionWindow = 0.20; // 200ms snappy cinematic transition window
     const isNearTransition = remainingInClip <= transitionWindow && clips.length > 1;
     const transitionFactor = isNearTransition ? remainingInClip / transitionWindow : 1.0;
 
@@ -127,11 +127,12 @@ export function renderVideoFrame({
 
     let activeTrans = transitionEffect;
     if (activeTrans === "auto") {
-        const transPool: ("crossfade" | "zoom_in" | "slide_left" | "white_flash")[] = [
+        // Modern short-form pacing: crisp hard cuts interspersed with silky crossfades & zoom punches
+        const transPool: ("hard_cut" | "crossfade" | "hard_cut" | "zoom_in")[] = [
+            "hard_cut",
             "crossfade",
-            "zoom_in",
-            "slide_left",
-            "crossfade"
+            "hard_cut",
+            "zoom_in"
         ];
         activeTrans = transPool[clipIdx % transPool.length];
     }
@@ -192,15 +193,17 @@ export function renderVideoFrame({
 
     if (isNearTransition && clips.length > 1) {
         if (activeTrans === "crossfade") {
-            if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
+            // Silky smooth cross-dissolve: fade out current slightly while fading in next
+            if (currentVid) drawVideoCover(currentVid, 0, Math.max(0.05, 1.0 - ease * 0.95), dynamicScale);
             if (isNextReady && nextVid) {
                 drawVideoCover(nextVid, 0, ease, 1.0);
             }
         } else if (activeTrans === "zoom_in") {
-            const curScale = dynamicScale * (1.0 + ease * 0.08);
-            if (currentVid) drawVideoCover(currentVid, 0, 1.0, curScale);
+            // Dynamic punch-in cut
+            const curScale = dynamicScale * (1.0 + ease * 0.05);
+            if (currentVid) drawVideoCover(currentVid, 0, Math.max(0.1, 1.0 - ease * 0.9), curScale);
             if (isNextReady && nextVid) {
-                const nxtScale = 0.94 + ease * 0.06;
+                const nxtScale = 0.96 + ease * 0.04;
                 drawVideoCover(nextVid, 0, ease, nxtScale);
             }
         } else if (activeTrans === "slide_left") {
@@ -217,11 +220,11 @@ export function renderVideoFrame({
             if (progress > 0.5 && isNextReady && nextVid) {
                 drawVideoCover(nextVid, 0, 1.0, 1.0);
             }
-            const flashAlpha = Math.sin(progress * Math.PI) * 0.85;
+            const flashAlpha = Math.sin(progress * Math.PI) * 0.75;
             ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
             ctx.fillRect(0, 0, cw, ch);
         } else {
-            // hard_cut
+            // hard_cut (instant, crisp TikTok cut with zero ghosting)
             if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
         }
     } else {

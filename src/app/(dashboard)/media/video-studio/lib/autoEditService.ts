@@ -97,10 +97,11 @@ async function captureVideoFrameAtTime(
  */
 export async function captureMultiKeyframesForClip(
     clip: VideoClip,
-    existingMediaEl?: HTMLVideoElement | HTMLImageElement | null
+    existingMediaEl?: HTMLVideoElement | HTMLImageElement | null,
+    isLargeBatch = false
 ): Promise<InputKeyframe[]> {
     const frames: InputKeyframe[] = [];
-    const maxDim = 400;
+    const maxDim = isLargeBatch ? 320 : 400;
 
     // CASE 1: Image clip -> 1 frame
     if (clip.mediaType === "image") {
@@ -118,7 +119,7 @@ export async function captureMultiKeyframesForClip(
                 const ctx = canvas.getContext("2d");
                 if (ctx) {
                     ctx.drawImage(existingMediaEl, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL("image/jpeg", 0.75));
+                    resolve(canvas.toDataURL("image/jpeg", 0.7));
                     return;
                 }
             }
@@ -132,7 +133,7 @@ export async function captureMultiKeyframesForClip(
                 const ctx = canvas.getContext("2d");
                 if (ctx) {
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL("image/jpeg", 0.75));
+                    resolve(canvas.toDataURL("image/jpeg", 0.7));
                 } else {
                     resolve(null);
                 }
@@ -152,13 +153,15 @@ export async function captureMultiKeyframesForClip(
         return frames;
     }
 
-    // CASE 2: Video clip -> Extract 3 keyframes across duration (Beginning, Middle, End)
+    // CASE 2: Video clip -> Adaptive sampling (1 frame for large batch >8 clips, 3 frames for small projects)
     const dur = Math.max(2, clip.duration || 8);
-    const samplePoints = [
-        { label: "Đầu clip", time: Math.min(1.2, dur * 0.15) },
-        { label: "Giữa clip (Hành động)", time: dur * 0.5 },
-        { label: "Cuối clip", time: Math.max(1.5, dur * 0.85) }
-    ];
+    const samplePoints = isLargeBatch
+        ? [{ label: "Hành động chính", time: dur * 0.45 }]
+        : [
+            { label: "Đầu clip", time: Math.min(1.2, dur * 0.15) },
+            { label: "Giữa clip (Hành động)", time: dur * 0.5 },
+            { label: "Cuối clip", time: Math.max(1.5, dur * 0.85) }
+        ];
 
     for (const pt of samplePoints) {
         try {
@@ -253,7 +256,7 @@ export async function runSmartAutoEdit({
 
     const sentenceBeats = buildSentenceBeats(script, totalDuration, subtitleCues);
 
-    // Extract multi-keyframes for each clip
+    // Extract keyframes with adaptive batch concurrency
     const itemsWithFrames: {
         id: string;
         name: string;
@@ -263,20 +266,29 @@ export async function runSmartAutoEdit({
     }[] = [];
 
     const total = clips.length;
-    for (let i = 0; i < total; i++) {
-        const c = clips[i];
-        const existingEl = existingMediaElements ? existingMediaElements[c.id] : null;
-        const frames = await captureMultiKeyframesForClip(c, existingEl);
-        itemsWithFrames.push({
-            id: c.id,
-            name: c.name,
-            mediaType: c.mediaType || "video",
-            duration: c.duration || 10,
-            frames
-        });
+    const isLargeBatch = total > 8;
+    const batchSize = isLargeBatch ? 3 : 2;
 
-        const progressPercent = Math.round(10 + ((i + 1) / total) * 50);
-        onProgress?.(`Đã quét thị giác (${i + 1}/${total}): ${c.name.slice(0, 22)}...`, progressPercent);
+    for (let i = 0; i < total; i += batchSize) {
+        const batch = clips.slice(i, i + batchSize);
+        const batchResults = await Promise.all(
+            batch.map(async (c) => {
+                const existingEl = existingMediaElements ? existingMediaElements[c.id] : null;
+                const frames = await captureMultiKeyframesForClip(c, existingEl, isLargeBatch);
+                return {
+                    id: c.id,
+                    name: c.name,
+                    mediaType: (c.mediaType || "video") as "video" | "image",
+                    duration: c.duration || 10,
+                    frames
+                };
+            })
+        );
+        itemsWithFrames.push(...batchResults);
+
+        const processed = Math.min(total, i + batch.length);
+        const progressPercent = Math.round(10 + (processed / total) * 50);
+        onProgress?.(`Đã quét thị giác (${processed}/${total}): ${batch[0].name.slice(0, 22)}...`, progressPercent);
     }
 
     onProgress?.("Đạo diễn AI đang đối chiếu kịch bản, tìm khoảnh khắc vàng (Trim) & lọc cảnh tinh hoa...", 65);

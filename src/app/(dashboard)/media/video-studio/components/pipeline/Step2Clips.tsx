@@ -46,6 +46,8 @@ interface Step2ClipsProps {
     handleAddBRoll: (item: any) => void;
     videoFilterPreset: string;
     setVideoFilterPreset: (f: string) => void;
+    transitionEffect?: "auto" | "crossfade" | "zoom_in" | "slide_left" | "white_flash" | "hard_cut";
+    setTransitionEffect?: (effect: "auto" | "crossfade" | "zoom_in" | "slide_left" | "white_flash" | "hard_cut") => void;
     onTriggerAutoEdit?: () => void;
     isAutoEditing?: boolean;
     onPrev: () => void;
@@ -75,6 +77,8 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
     handleAddBRoll,
     videoFilterPreset,
     setVideoFilterPreset,
+    transitionEffect = "auto",
+    setTransitionEffect,
     onTriggerAutoEdit,
     isAutoEditing = false,
     onPrev,
@@ -543,6 +547,43 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                     ))}
                 </div>
             </div>
+
+            {/* Transition Effect Selector */}
+            {setTransitionEffect && (
+                <div className="space-y-1.5 p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <label className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                            <Sparkles className="w-4 h-4 text-teal-600" />
+                            <span>Hiệu Ứng Chuyển Cảnh (Transitions):</span>
+                        </span>
+                        <span className="text-[11px] text-teal-700 font-medium">
+                            {transitionEffect === "hard_cut" ? "Dứt khoát 0ms bóng mờ (Chuẩn TikTok)" : transitionEffect === "crossfade" ? "Hòa tan êm dịu 200ms" : transitionEffect === "zoom_in" ? "Zoom cận cảnh" : "⚡ Tự động thông minh"}
+                        </span>
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {[
+                            { id: "auto", name: "⚡ Tự động (Auto)", desc: "Hard cut & hòa tan đan xen" },
+                            { id: "hard_cut", name: "✂️ Cắt dứt khoát", desc: "Chuẩn TikTok / Reels viral" },
+                            { id: "crossfade", name: "🌊 Hòa tan mượt", desc: "Mềm mại, không giật hình" },
+                            { id: "zoom_in", name: "🔍 Zoom cận cảnh", desc: "Đẩy khung hình tạo điểm nhấn" },
+                        ].map((item) => (
+                            <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => setTransitionEffect(item.id as any)}
+                                className={`p-2 rounded-lg border text-left transition-all cursor-pointer text-xs flex flex-col justify-between ${
+                                    (transitionEffect || "auto") === item.id
+                                        ? "bg-white border-teal-500 text-teal-900 font-semibold shadow-xs ring-1 ring-teal-500"
+                                        : "bg-white/80 text-slate-700 border-slate-200 hover:bg-white"
+                                }`}
+                            >
+                                <span className="font-bold text-[11px]">{item.name}</span>
+                                <span className="text-[10px] text-slate-700 mt-0.5 line-clamp-1">{item.desc}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Video Filters LUT */}
             <div className="space-y-1.5">
