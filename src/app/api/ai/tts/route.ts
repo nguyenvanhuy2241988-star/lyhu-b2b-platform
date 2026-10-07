@@ -221,7 +221,10 @@ async function synthesizeWithGeminiTTS(
     const cleanScript = text.trim();
 
     const endpoints = [
-        { name: "gemini-2.0-flash", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, timeoutMs: 6000 }
+        { name: "gemini-3.8-flash-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=${apiKey}`, timeoutMs: 15000 },
+        { name: "gemini-2.5-flash-preview-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, timeoutMs: 15000 },
+        { name: "gemini-3.8-flash-lite-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-lite-tts:generateContent?key=${apiKey}`, timeoutMs: 12000 },
+        { name: "gemini-2.0-flash", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, timeoutMs: 10000 }
     ];
 
     let lastError = "";
