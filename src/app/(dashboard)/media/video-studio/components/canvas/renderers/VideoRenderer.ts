@@ -11,6 +11,7 @@ export interface VideoRendererOptions {
     transitionEffect: "auto" | "crossfade" | "zoom_in" | "slide_left" | "white_flash" | "hard_cut";
     videoFilterPreset: string;
     videoFilters: { id: string; filter: string }[];
+    isExport?: boolean;
 }
 
 export function renderVideoFrame({
@@ -22,7 +23,8 @@ export function renderVideoFrame({
     clipSwitchInterval,
     transitionEffect,
     videoFilterPreset,
-    videoFilters
+    videoFilters,
+    isExport = false
 }: VideoRendererOptions) {
     const cw = canvas.width;
     const ch = canvas.height;
@@ -172,7 +174,8 @@ export function renderVideoFrame({
 
         ctx.save();
         ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
-        if (videoFilterPreset !== "none") {
+        // Only apply heavy 2D context filter during export recording; preview uses 60FPS GPU CSS filter
+        if (isExport && videoFilterPreset !== "none") {
             const foundFilter = videoFilters.find(f => f.id === videoFilterPreset);
             if (foundFilter && foundFilter.filter !== "none") {
                 ctx.filter = foundFilter.filter;
@@ -186,37 +189,40 @@ export function renderVideoFrame({
         ctx.restore();
     };
 
-    const dynamicScale = 1.0 + zoomProgress * 0.04;
     const isNextReady = isElementReady(nextVid);
     const progress = Math.max(0, Math.min(1, 1.0 - transitionFactor));
     const ease = 0.5 - 0.5 * Math.cos(progress * Math.PI);
 
     if (isNearTransition && clips.length > 1) {
         if (activeTrans === "crossfade") {
-            // Silky smooth cross-dissolve: fade out current slightly while fading in next
-            if (currentVid) drawVideoCover(currentVid, 0, Math.max(0.05, 1.0 - ease * 0.95), dynamicScale);
+            // Silky smooth cross-dissolve: fade out current ONLY when next video is ready
             if (isNextReady && nextVid) {
+                if (currentVid) drawVideoCover(currentVid, 0, Math.max(0.01, 1.0 - ease), 1.0);
                 drawVideoCover(nextVid, 0, ease, 1.0);
+            } else {
+                if (currentVid) drawVideoCover(currentVid, 0, 1.0, 1.0);
             }
         } else if (activeTrans === "zoom_in") {
             // Dynamic punch-in cut
-            const curScale = dynamicScale * (1.0 + ease * 0.05);
-            if (currentVid) drawVideoCover(currentVid, 0, Math.max(0.1, 1.0 - ease * 0.9), curScale);
             if (isNextReady && nextVid) {
+                const curScale = 1.0 + ease * 0.05;
+                if (currentVid) drawVideoCover(currentVid, 0, Math.max(0.01, 1.0 - ease * 0.9), curScale);
                 const nxtScale = 0.96 + ease * 0.04;
                 drawVideoCover(nextVid, 0, ease, nxtScale);
+            } else {
+                if (currentVid) drawVideoCover(currentVid, 0, 1.0, 1.0);
             }
         } else if (activeTrans === "slide_left") {
             if (isNextReady && nextVid) {
                 const offsetNext = cw * (1.0 - ease);
                 const offsetCur = -cw * ease;
-                if (currentVid) drawVideoCover(currentVid, offsetCur, 1.0, dynamicScale);
+                if (currentVid) drawVideoCover(currentVid, offsetCur, 1.0, 1.0);
                 drawVideoCover(nextVid, offsetNext, 1.0, 1.0);
             } else {
-                if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
+                if (currentVid) drawVideoCover(currentVid, 0, 1.0, 1.0);
             }
         } else if (activeTrans === "white_flash") {
-            if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
+            if (currentVid) drawVideoCover(currentVid, 0, 1.0, 1.0);
             if (progress > 0.5 && isNextReady && nextVid) {
                 drawVideoCover(nextVid, 0, 1.0, 1.0);
             }
@@ -225,11 +231,11 @@ export function renderVideoFrame({
             ctx.fillRect(0, 0, cw, ch);
         } else {
             // hard_cut (instant, crisp TikTok cut with zero ghosting)
-            if (currentVid) drawVideoCover(currentVid, 0, 1.0, dynamicScale);
+            if (currentVid) drawVideoCover(currentVid, 0, 1.0, 1.0);
         }
     } else {
         if (currentVid) {
-            drawVideoCover(currentVid, 0, 1.0, dynamicScale);
+            drawVideoCover(currentVid, 0, 1.0, 1.0);
         }
     }
 }

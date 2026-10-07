@@ -1665,7 +1665,8 @@ export default function AutoVideoStudioPage() {
                 clipSwitchInterval,
                 transitionEffect,
                 videoFilterPreset,
-                videoFilters: VIDEO_FILTERS
+                videoFilters: VIDEO_FILTERS,
+                isExport: isExportingRef.current
             },
             hookOptions: {
                 showHookTitle,
@@ -2077,17 +2078,24 @@ export default function AutoVideoStudioPage() {
         const loop = (now: number) => {
             if (!isPlaying || isExportingRef.current) return;
 
-            const delta = (now - lastTime) / 1000;
+            const delta = Math.min(0.066, (now - lastTime) / 1000);
             lastTime = now;
 
+            // High-precision continuous 60/120 FPS time progression
             let nextTime = currentTimeRef.current + delta;
 
-            // ── HARDWARE AUDIO CLOCK MASTER SYNC ──
-            // Whenever voice audio is actively playing, synchronize directly to audio.currentTime!
-            // This guarantees 0ms drift between what is spoken and what text/subtitles are displayed!
+            // ── HARDWARE AUDIO CLOCK PHASE-LOCKED LOOP (PLL) ──
+            // In web browsers, audio.currentTime only updates every ~60-100ms.
+            // A Phase-Locked Loop gently steers time without freezing animation frames in place!
             const voiceAudio = hiddenAudioRef.current;
-            if (voiceAudio && !voiceAudio.paused && !voiceAudio.ended && isFinite(voiceAudio.currentTime) && voiceAudio.currentTime > 0) {
-                nextTime = voiceAudio.currentTime / (voiceSpeedMultiplier || 1.0);
+            if (voiceAudio && !voiceAudio.paused && !voiceAudio.ended && isFinite(voiceAudio.currentTime)) {
+                const targetAudioTime = voiceAudio.currentTime / (voiceSpeedMultiplier || 1.0);
+                const drift = targetAudioTime - nextTime;
+                if (Math.abs(drift) > 0.35) {
+                    nextTime = targetAudioTime;
+                } else {
+                    nextTime += drift * 0.1;
+                }
             }
 
             currentTimeRef.current = nextTime;
@@ -3093,6 +3101,11 @@ export default function AutoVideoStudioPage() {
                                     ref={canvasRef}
                                     width={aspectRatio === "9:16" ? 540 : aspectRatio === "16:9" ? 960 : 720}
                                     height={aspectRatio === "9:16" ? 960 : aspectRatio === "16:9" ? 540 : 720}
+                                    style={{
+                                        filter: videoFilterPreset !== "none"
+                                            ? (VIDEO_FILTERS.find(f => f.id === videoFilterPreset)?.filter || "none")
+                                            : "none"
+                                    }}
                                     className="w-full h-full object-cover"
                                 />
 
@@ -3272,8 +3285,21 @@ export default function AutoVideoStudioPage() {
                 timelineLength={totalDuration}
             />
 
-            {/* Hidden media elements for canvas sync */}
-            <div className="hidden">
+            {/* Off-screen media elements for canvas sync (Must NOT use display:none to preserve 60FPS hardware video decoding) */}
+            <div
+                aria-hidden="true"
+                style={{
+                    position: "fixed",
+                    top: -9999,
+                    left: -9999,
+                    width: 1,
+                    height: 1,
+                    opacity: 0.001,
+                    pointerEvents: "none",
+                    overflow: "hidden",
+                    zIndex: -999
+                }}
+            >
                 {clips.map((clip) => {
                     if (!clip?.id || !clip?.url) return null;
                     if (clip.mediaType === "image") {
