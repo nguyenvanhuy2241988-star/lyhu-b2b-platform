@@ -32,15 +32,82 @@ export function renderVideoFrame({
     ctx.fillRect(0, 0, cw, ch);
 
     if (clips.length === 0) {
-        ctx.fillStyle = "#1e293b";
+        // LYHU Sleek Studio Empty State
+        const grad = ctx.createLinearGradient(0, 0, 0, ch);
+        grad.addColorStop(0, "#090d16");
+        grad.addColorStop(1, "#0f172a");
+        ctx.fillStyle = grad;
         ctx.fillRect(0, 0, cw, ch);
-        ctx.fillStyle = "#64748b";
-        ctx.font = "bold 20px 'Be Vietnam Pro', sans-serif";
+
+        // Center card box
+        const cardW = Math.min(cw * 0.82, 380);
+        const cardH = 220;
+        const cardX = (cw - cardW) / 2;
+        const cardY = (ch - cardH) / 2;
+
+        ctx.save();
+        ctx.fillStyle = "rgba(15, 23, 42, 0.75)";
+        ctx.strokeStyle = "rgba(0, 175, 169, 0.35)";
+        ctx.lineWidth = 1.5;
+        if (typeof (ctx as any).roundRect === "function") {
+            (ctx as any).beginPath();
+            (ctx as any).roundRect(cardX, cardY, cardW, cardH, 20);
+            ctx.fill();
+            ctx.stroke();
+        } else {
+            ctx.fillRect(cardX, cardY, cardW, cardH);
+            ctx.strokeRect(cardX, cardY, cardW, cardH);
+        }
+
+        // Camera Icon Circle
+        const iconY = cardY + 54;
+        ctx.beginPath();
+        ctx.arc(cw / 2, iconY, 26, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0, 175, 169, 0.15)";
+        ctx.fill();
+        ctx.strokeStyle = "#00afa9";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Play / Clapper triangle
+        ctx.beginPath();
+        ctx.moveTo(cw / 2 - 6, iconY - 9);
+        ctx.lineTo(cw / 2 + 10, iconY);
+        ctx.lineTo(cw / 2 - 6, iconY + 9);
+        ctx.closePath();
+        ctx.fillStyle = "#00afa9";
+        ctx.fill();
+
+        // Branded pill tag
+        ctx.fillStyle = "rgba(0, 175, 169, 0.2)";
+        const pillW = 120;
+        const pillH = 20;
+        const pillX = (cw - pillW) / 2;
+        const pillY = cardY + 95;
+        if (typeof (ctx as any).roundRect === "function") {
+            (ctx as any).beginPath();
+            (ctx as any).roundRect(pillX, pillY, pillW, pillH, 10);
+            ctx.fill();
+        } else {
+            ctx.fillRect(pillX, pillY, pillW, pillH);
+        }
+        ctx.fillStyle = "#2dd4bf";
+        ctx.font = "bold 10px 'Be Vietnam Pro', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("Chưa có video hoặc ảnh minh họa", cw / 2, ch / 2 - 12);
-        ctx.font = "14px sans-serif";
+        ctx.fillText("LYHU VIDEO STUDIO", cw / 2, pillY + 14);
+
+        // Heading
+        ctx.fillStyle = "#f8fafc";
+        ctx.font = "bold 18px 'Be Vietnam Pro', sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("Chưa có video hoặc ảnh minh họa", cw / 2, cardY + 145);
+
+        // Subtext
         ctx.fillStyle = "#94a3b8";
-        ctx.fillText("Nhấp '+ Tải video / ảnh từ máy' hoặc '+ Dùng 3 clip mẫu'", cw / 2, ch / 2 + 16);
+        ctx.font = "13px 'Be Vietnam Pro', sans-serif";
+        ctx.fillText("Tải video/ảnh từ máy hoặc bấm '+ Dùng 3 clip mẫu'", cw / 2, cardY + 172);
+
+        ctx.restore();
         return;
     }
 

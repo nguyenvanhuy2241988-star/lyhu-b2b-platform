@@ -64,8 +64,17 @@ import {
     getVideoProjects,
     deleteVideoProject,
     VideoProjectItem,
-    DirectorGuide
+    DirectorGuide,
+    saveActiveStudioDraft,
+    getActiveStudioDraft,
+    clearActiveStudioDraft
 } from "@/lib/videoProjectStore";
+import {
+    serializeClipsForStorage,
+    restoreClipsFromStorage,
+    serializeAudioUrlToBlob,
+    restoreAudioUrlFromBlob
+} from "./lib/mediaStorage";
 import { normalizeVietnamesePhonetics, prepareTextForTTS } from "@/lib/ttsHelper";
 
 import {
@@ -89,6 +98,7 @@ import { ClipPreviewModal } from "./components/modals/ClipPreviewModal";
 import { ProjectHistoryModal } from "./components/modals/ProjectHistoryModal";
 import { DirectorHubModal } from "./components/modals/DirectorHubModal";
 import { AutoEditModal } from "./components/modals/AutoEditModal";
+import { ExportPreflightModal } from "./components/modals/ExportPreflightModal";
 import { runSmartAutoEdit, AutoEditResult } from "./lib/autoEditService";
 import { getActiveClipAtTime, getTimelineLength } from "./lib/clipTimingHelper";
 import {
@@ -278,6 +288,7 @@ export default function AutoVideoStudioPage() {
     const [renderProgress, setRenderProgress] = useState(0);
     const [renderedVideoUrl, setRenderedVideoUrl] = useState<string | null>(null);
     const [renderedFormat, setRenderedFormat] = useState<string>("mp4");
+    const [isPreflightOpen, setIsPreflightOpen] = useState(false);
 
     // ── REFS (Avoid React Re-renders on high-speed loops) ──
     const currentTimeRef = useRef<number>(0);
@@ -292,6 +303,7 @@ export default function AutoVideoStudioPage() {
     const bgmInputRef = useRef<HTMLInputElement | null>(null);
     const isExportingRef = useRef(false);
     const lastUiUpdateRef = useRef<number>(0);
+    const draftSaveTimerRef = useRef<any>(null);
 
     // Inject Google Brand Fonts
     useEffect(() => {
@@ -305,12 +317,91 @@ export default function AutoVideoStudioPage() {
         }
     }, []);
 
-    // Load History & Financials & Saved Projects on mount
+    // Load History & Financials & Saved Projects & Draft on mount
     useEffect(() => {
         loadHistory();
         loadFinancialTracker();
         loadSavedProjects();
+
+        // Restore active draft from IndexedDB (survives page refresh)
+        getActiveStudioDraft().then((draft) => {
+            if (draft) {
+                if (draft.clips && draft.clips.length > 0) {
+                    const restored = restoreClipsFromStorage(draft.clips);
+                    setClips(restored);
+                }
+                if (draft.script) {
+                    setSelectedVoiceText(draft.script);
+                }
+                if (draft.voiceBlob) {
+                    const audioUrl = restoreAudioUrlFromBlob(draft.voiceBlob);
+                    if (audioUrl) {
+                        setSelectedVoiceAudioUrl(audioUrl);
+                        setSelectedVoiceId("ai-generated");
+                    }
+                }
+                if (draft.topic) setCloneTopic(draft.topic);
+                if (draft.hookTitle) setCustomHookTitle(draft.hookTitle);
+                if (draft.aspectRatio) setAspectRatio(draft.aspectRatio);
+                if (draft.clipSwitchInterval) setClipSwitchInterval(draft.clipSwitchInterval);
+                if (draft.bgmChoice) setBgmChoice(draft.bgmChoice);
+            }
+        }).catch((err) => {
+            console.warn("[Draft] Khong the tai ban nhap:", err);
+        });
     }, []);
+
+    // Auto-save draft to IndexedDB (debounced 2.5s)
+    useEffect(() => {
+        if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+        draftSaveTimerRef.current = setTimeout(async () => {
+            if (clips.length > 0 || (selectedVoiceText && selectedVoiceText.trim().length > 5)) {
+                try {
+                    const serializedClips = await serializeClipsForStorage(clips);
+                    const voiceBlob = await serializeAudioUrlToBlob(selectedVoiceAudioUrl);
+                    await saveActiveStudioDraft({
+                        id: "current_draft",
+                        topic: cloneTopic || customHookTitle,
+                        hookTitle: customHookTitle,
+                        script: selectedVoiceText,
+                        clips: serializedClips,
+                        voiceBlob: voiceBlob || undefined,
+                        voiceStyleId: selectedVoiceStyleId,
+                        aspectRatio,
+                        fontFamily,
+                        fontSize,
+                        textColor,
+                        subtitleStyle,
+                        textAnimationEffect,
+                        clipSwitchInterval,
+                        transitionEffect,
+                        bgmChoice,
+                        updatedAt: Date.now()
+                    });
+                } catch (_) {}
+            }
+        }, 2500);
+
+        return () => {
+            if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+        };
+    }, [
+        clips,
+        selectedVoiceText,
+        selectedVoiceAudioUrl,
+        cloneTopic,
+        customHookTitle,
+        aspectRatio,
+        fontFamily,
+        fontSize,
+        textColor,
+        subtitleStyle,
+        textAnimationEffect,
+        clipSwitchInterval,
+        transitionEffect,
+        bgmChoice,
+        selectedVoiceStyleId
+    ]);
 
     const loadSavedProjects = async () => {
         try {
@@ -1023,6 +1114,9 @@ export default function AutoVideoStudioPage() {
     const handleManualSaveProject = async () => {
         setIsSavingProject(true);
         try {
+            const serializedClips = await serializeClipsForStorage(clips);
+            const voiceBlob = await serializeAudioUrlToBlob(selectedVoiceAudioUrl);
+
             const item: VideoProjectItem = {
                 id: `proj-${Date.now()}`,
                 title: cloneTopic || customHookTitle.slice(0, 45) || "Dự án video LYHU",
@@ -1052,11 +1146,14 @@ export default function AutoVideoStudioPage() {
                 bgmChoice,
                 createdAt: Date.now(),
                 renderedVideoUrl: renderedVideoUrl || undefined,
-                renderedFormat
+                renderedFormat,
+                clips: serializedClips,
+                voiceBlob: voiceBlob || undefined,
+                voiceStyleId: selectedVoiceStyleId
             };
             await saveVideoProject(item);
             await loadSavedProjects();
-            alert("💾 Đã lưu dự án video và kịch bản vào Sổ Tay Đạo Diễn thành công!");
+            alert("💾 Đã lưu dự án video (kèm toàn bộ clip & giọng đọc) vào Sổ Tay Đạo Diễn thành công!");
         } catch (e: any) {
             alert("Lỗi khi lưu dự án: " + e.message);
         } finally {
@@ -1085,8 +1182,26 @@ export default function AutoVideoStudioPage() {
         if (proj.renderedVideoUrl) {
             setRenderedVideoUrl(proj.renderedVideoUrl);
         }
+
+        // Restore clips from persistent storage
+        if (proj.clips && proj.clips.length > 0) {
+            const restoredClips = restoreClipsFromStorage(proj.clips);
+            setClips(restoredClips);
+        }
+
+        // Restore voice audio from blob
+        if (proj.voiceBlob) {
+            const restoredVoiceUrl = restoreAudioUrlFromBlob(proj.voiceBlob);
+            if (restoredVoiceUrl) {
+                setSelectedVoiceAudioUrl(restoredVoiceUrl);
+                setSelectedVoiceId("ai-generated");
+            }
+        } else if (proj.voiceId) {
+            setSelectedVoiceId(proj.voiceId);
+        }
+
         setIsProjectHistoryOpen(false);
-        alert(`📂 Đã nạp lại dự án "${proj.title}" vào Studio!`);
+        alert(`📂 Đã nạp lại dự án "${proj.title}" (kèm media) vào Studio!`);
     };
 
     const handleDeleteProject = async (id: string, e: React.MouseEvent) => {
@@ -1953,12 +2068,21 @@ export default function AutoVideoStudioPage() {
     }, [drawCanvasFrame, aspectRatio]);
 
     // ── HIGH-FIDELITY MP4 / WEBM VIDEO EXPORT (Real-time Recording) ──
-    const handleExportVideo = async () => {
+    const handleExportVideo = () => {
+        if (clips.length === 0) {
+            alert("Vui lòng tải lên ít nhất 1 video quay thô hoặc bấm '+ Dùng 3 clip mẫu' để dựng video!");
+            return;
+        }
+        setIsPreflightOpen(true);
+    };
+
+    const executeExportVideo = async () => {
+        setIsPreflightOpen(false);
         const canvas = canvasRef.current;
         if (!canvas) return;
 
         if (clips.length === 0) {
-            alert("Vui lòng tải lên ít nhất 1 video quay thô hoặc bấm '+ Dùng 2 clip mẫu' để dựng video!");
+            alert("Vui lòng tải lên ít nhất 1 video quay thô hoặc bấm '+ Dùng 3 clip mẫu' để dựng video!");
             return;
         }
 
@@ -1973,7 +2097,39 @@ export default function AutoVideoStudioPage() {
         setRenderProgress(0);
         isExportingRef.current = true;
 
+        let timerFallbackId: any = null;
+        let animExportId: number;
+        let exportStep: () => void = () => {};
+        let exportLoop: () => void = () => {};
+
+        const cleanupExportListeners = () => {
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+            if (timerFallbackId) {
+                clearInterval(timerFallbackId);
+                timerFallbackId = null;
+            }
+        };
+
+        const onVisibilityChange = () => {
+            if (document.hidden) {
+                if (!timerFallbackId && isExportingRef.current) {
+                    timerFallbackId = setInterval(() => {
+                        exportStep();
+                    }, 16);
+                }
+            } else {
+                if (timerFallbackId) {
+                    clearInterval(timerFallbackId);
+                    timerFallbackId = null;
+                }
+                if (isExportingRef.current) {
+                    animExportId = requestAnimationFrame(exportLoop);
+                }
+            }
+        };
+
         try {
+            document.addEventListener("visibilitychange", onVisibilityChange);
             // Setup Web Audio Context for audio mixing
             const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
             if (audioCtx.state === "suspended") {
@@ -2091,6 +2247,7 @@ export default function AutoVideoStudioPage() {
             };
 
             recorder.onstop = () => {
+                cleanupExportListeners();
                 const finalBlob = new Blob(chunks, { type: chosenMime });
                 const finalUrl = URL.createObjectURL(finalBlob);
                 setRenderedVideoUrl(finalUrl);
@@ -2110,36 +2267,43 @@ export default function AutoVideoStudioPage() {
 
                 updateFinancialTracker();
 
-                // Auto-save rendered video project into history
-                const savedProj: VideoProjectItem = {
-                    id: `proj-${Date.now()}`,
-                    title: cloneTopic || customHookTitle.slice(0, 45) || "Dự án video LYHU",
-                    topic: cloneTopic || customHookTitle,
-                    hookTitle: customHookTitle,
-                    script: selectedVoiceText,
-                    directorGuide: directorGuide || {
-                        hookVisual: "",
-                        spokenHook: "",
-                        pacingSpeed: `${clipSwitchInterval}s`,
-                        keyPowerWords,
-                        callToAction: "Nhắn liền LYHU để nhận mẫu thử & bảng giá sỉ!",
-                        shootingTips: [],
-                        shots: []
-                    },
-                    aspectRatio,
-                    fontFamily,
-                    fontSize,
-                    textColor,
-                    subtitleStyle,
-                    textAnimationEffect,
-                    clipSwitchInterval,
-                    transitionEffect,
-                    bgmChoice,
-                    createdAt: Date.now(),
-                    renderedVideoUrl: finalUrl,
-                    renderedFormat: finalExt
-                };
-                saveVideoProject(savedProj).then(() => loadSavedProjects()).catch(() => {});
+                // Auto-save rendered video project into history with persistent media blobs
+                serializeClipsForStorage(clips).then((serializedClips) => {
+                    serializeAudioUrlToBlob(activeVoiceUrl).then((vBlob) => {
+                        const savedProj: VideoProjectItem = {
+                            id: `proj-${Date.now()}`,
+                            title: cloneTopic || customHookTitle.slice(0, 45) || "Dự án video LYHU",
+                            topic: cloneTopic || customHookTitle,
+                            hookTitle: customHookTitle,
+                            script: selectedVoiceText,
+                            directorGuide: directorGuide || {
+                                hookVisual: "",
+                                spokenHook: "",
+                                pacingSpeed: `${clipSwitchInterval}s`,
+                                keyPowerWords,
+                                callToAction: "Nhắn liền LYHU để nhận mẫu thử & bảng giá sỉ!",
+                                shootingTips: [],
+                                shots: []
+                            },
+                            aspectRatio,
+                            fontFamily,
+                            fontSize,
+                            textColor,
+                            subtitleStyle,
+                            textAnimationEffect,
+                            clipSwitchInterval,
+                            transitionEffect,
+                            bgmChoice,
+                            createdAt: Date.now(),
+                            renderedVideoUrl: finalUrl,
+                            renderedFormat: finalExt,
+                            clips: serializedClips,
+                            voiceBlob: vBlob || undefined,
+                            voiceStyleId: selectedVoiceStyleId
+                        };
+                        saveVideoProject(savedProj).then(() => loadSavedProjects()).catch(() => {});
+                    });
+                });
 
                 // Instant safe download trigger
                 const a = document.createElement("a");
@@ -2183,9 +2347,8 @@ export default function AutoVideoStudioPage() {
             };
             let lastRecordedT = 0;
             const exportStartTime = performance.now();
-            let animExportId: number;
 
-            const exportLoop = () => {
+            exportStep = () => {
                 if (!isExportingRef.current) return;
 
                 const elapsed = (performance.now() - exportStartTime) / 1000;
@@ -2280,19 +2443,27 @@ export default function AutoVideoStudioPage() {
                 setRenderProgress(progress);
 
                 if (validExportT >= exportTotalDuration) {
+                    cleanupExportListeners();
                     cancelAnimationFrame(animExportId);
                     if (recorder.state === "recording") {
                         recorder.stop();
                     }
                     return;
                 }
+            };
 
-                animExportId = requestAnimationFrame(exportLoop);
+            exportLoop = () => {
+                if (!isExportingRef.current) return;
+                exportStep();
+                if (isExportingRef.current && currentTimeRef.current < exportTotalDuration) {
+                    animExportId = requestAnimationFrame(exportLoop);
+                }
             };
 
             animExportId = requestAnimationFrame(exportLoop);
 
         } catch (err: any) {
+            cleanupExportListeners();
             console.error("Render error:", err);
             alert("Có lỗi khi render video: " + err.message);
             setIsRendering(false);
@@ -2912,6 +3083,20 @@ export default function AutoVideoStudioPage() {
                 onApplyAll={handleApplyAllAutoEdit}
                 onRevert={handleRevertAutoEdit}
                 canRevert={!!previousClipsBeforeAutoEdit}
+            />
+
+            {/* MODAL 4: KIỂM TRA TRƯỚC KHI XUẤT VIDEO (PREFLIGHT CHECK) */}
+            <ExportPreflightModal
+                isOpen={isPreflightOpen}
+                onClose={() => setIsPreflightOpen(false)}
+                onConfirmExport={executeExportVideo}
+                clips={clips}
+                hasVoice={Boolean(selectedVoiceAudioUrl)}
+                voiceDuration={voiceDuration}
+                hasScript={selectedVoiceText.trim().length >= 10}
+                aspectRatio={aspectRatio}
+                bgmChoice={bgmChoice}
+                timelineLength={totalDuration}
             />
 
             {/* Hidden media elements for canvas sync */}

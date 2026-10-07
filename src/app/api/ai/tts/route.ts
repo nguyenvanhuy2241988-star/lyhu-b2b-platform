@@ -221,10 +221,7 @@ async function synthesizeWithGeminiTTS(
     const cleanScript = text.trim();
 
     const endpoints = [
-        { name: "gemini-3.8-flash-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=${apiKey}`, timeoutMs: 24000 },
-        { name: "gemini-2.5-flash-preview-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, timeoutMs: 24000 },
-        { name: "gemini-3.8-flash-lite-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-lite-tts:generateContent?key=${apiKey}`, timeoutMs: 16000 },
-        { name: "gemini-2.0-flash", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, timeoutMs: 16000 }
+        { name: "gemini-2.0-flash", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, timeoutMs: 6000 }
     ];
 
     let lastError = "";
@@ -347,9 +344,9 @@ export async function POST(req: NextRequest) {
             } catch (geminiErr: any) {
                 console.warn("[TTS] Gemini Audio unavailable, synthesizing with Studio Neural Voice:", geminiErr.message);
                 try {
-                    // Cố gắng lấy giọng Edge Neural trong tối đa 4.5s (bảo vệ chống treo WebSocket trên Vercel Serverless)
+                    // Cố gắng lấy giọng Edge Neural trong tối đa 9.0s (bảo vệ chống treo WebSocket)
                     const edgePromise = synthesizeWithEdgeTTS(normalizedText, styleKey, Number(rateMultiplier) || 1.0);
-                    const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Edge WebSocket timeout")), 4500));
+                    const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Edge WebSocket timeout")), 9000));
                     const edgeResult = await Promise.race([edgePromise, timeoutPromise]);
                     audioBuffer = edgeResult.buffer;
                     mimeType = edgeResult.mimeType;
@@ -367,7 +364,7 @@ export async function POST(req: NextRequest) {
         if (!audioBuffer && engine === "edge") {
             try {
                 const edgePromise = synthesizeWithEdgeTTS(normalizedText, styleKey, Number(rateMultiplier) || 1.0);
-                const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Edge WebSocket timeout")), 4500));
+                const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Edge WebSocket timeout")), 9000));
                 const edgeResult = await Promise.race([edgePromise, timeoutPromise]);
                 audioBuffer = edgeResult.buffer;
                 mimeType = edgeResult.mimeType;

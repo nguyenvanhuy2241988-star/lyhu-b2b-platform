@@ -27,6 +27,11 @@ export function drawFullStudioCanvas(options: FullCanvasRenderOptions) {
         ...options.videoOptions
     });
 
+    // If there are no clips, do not overlay subtitles, hooks, watermark or stickers
+    if (!options.videoOptions.clips || options.videoOptions.clips.length === 0) {
+        return;
+    }
+
     // 2. Draw viral Hook banner (first 3.5s)
     renderHookBanner({
         canvas,
