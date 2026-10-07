@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
     Tag,
     Sparkles,
@@ -6,9 +6,11 @@ import {
     Sliders,
     Play,
     ArrowLeft,
-    ArrowRight
+    ArrowRight,
+    Wand2
 } from "lucide-react";
 import { VIRAL_HOOK_PRESETS } from "../../lib/constants";
+import { SubtitleCue } from "../../types";
 
 interface Step3VisualsProps {
     handlePreviewHookOnly: () => void;
@@ -40,6 +42,10 @@ interface Step3VisualsProps {
     setFontSize: (sz: number) => void;
     textPosition: "bottom" | "center" | "top";
     setTextPosition: (pos: "bottom" | "center" | "top") => void;
+    subtitleCues?: SubtitleCue[];
+    onAutoAlignSubtitles?: () => void;
+    isAligningSubtitles?: boolean;
+    onSeekCue?: (time: number) => void;
     onPrev: () => void;
     onNext: () => void;
 }
@@ -74,9 +80,14 @@ export const Step3Visuals: React.FC<Step3VisualsProps> = ({
     setFontSize,
     textPosition,
     setTextPosition,
+    subtitleCues = [],
+    onAutoAlignSubtitles,
+    isAligningSubtitles = false,
+    onSeekCue,
     onPrev,
     onNext
 }) => {
+    const [showCuesList, setShowCuesList] = useState(false);
     return (
         <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 space-y-4">
             {/* Header */}
@@ -356,6 +367,83 @@ export const Step3Visuals: React.FC<Step3VisualsProps> = ({
                                     <option value="box_pill">Hộp bo góc chữ tối giản</option>
                                     <option value="clean_fade">Chữ viền đen dày (Classic Bold)</option>
                                 </select>
+                            </div>
+
+                            {/* AI Voice Silence & Waveform Alignment */}
+                            <div className="sm:col-span-2 p-3.5 rounded-xl bg-gradient-to-r from-teal-50 via-emerald-50 to-white border border-teal-200 space-y-2.5">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                    <div className="space-y-0.5">
+                                        <div className="flex items-center gap-1.5 font-bold text-xs text-teal-900">
+                                            <Sparkles className="w-4 h-4 text-teal-600" />
+                                            <span>AI Đồng Bộ Phụ Đề Theo Giọng (Waveform Silence Sync)</span>
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 font-semibold">Khớp 100%</span>
+                                        </div>
+                                        <p className="text-[11px] text-teal-700">
+                                            Tự động quét khoảng lặng thực tế trong audio để khớp từng câu chữ, triệt tiêu hoàn toàn hiện tượng chữ chạy lệch tiếng.
+                                        </p>
+                                    </div>
+
+                                    {onAutoAlignSubtitles && (
+                                        <button
+                                            type="button"
+                                            onClick={onAutoAlignSubtitles}
+                                            disabled={isAligningSubtitles}
+                                            className="px-3.5 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                                        >
+                                            {isAligningSubtitles ? (
+                                                <>
+                                                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    <span>Đang phân tích audio...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Wand2 className="w-3.5 h-3.5" />
+                                                    <span>Khớp Giọng Ngay</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Collapsible Cues List */}
+                                {subtitleCues && subtitleCues.length > 0 && (
+                                    <div className="pt-2 border-t border-teal-200/60 space-y-2">
+                                        <div className="flex items-center justify-between text-xs text-teal-800 font-semibold">
+                                            <span>Danh sách các cụm phụ đề ({subtitleCues.length} cụm):</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowCuesList(!showCuesList)}
+                                                className="text-[11px] text-teal-700 hover:underline cursor-pointer"
+                                            >
+                                                {showCuesList ? "Thu gọn ▲" : "Xem chi tiết ▼"}
+                                            </button>
+                                        </div>
+
+                                        {showCuesList && (
+                                            <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                                                {subtitleCues.map((cue, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        onClick={() => onSeekCue?.(cue.start)}
+                                                        className="p-2 rounded-lg bg-white/90 border border-teal-100 hover:border-teal-400 hover:bg-teal-50/50 transition-all cursor-pointer flex items-center justify-between text-xs group"
+                                                    >
+                                                        <div className="flex items-center gap-2 truncate">
+                                                            <span className="font-mono text-[10px] text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200 shrink-0 font-bold">
+                                                                {cue.start.toFixed(1)}s - {cue.end.toFixed(1)}s
+                                                            </span>
+                                                            <span className="text-slate-800 font-medium truncate">
+                                                                "{cue.text}"
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-[10px] text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                                            Nhấn để xem ▶
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Subtitle Sync Offset Slider */}

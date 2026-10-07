@@ -101,6 +101,8 @@ import { AutoEditModal } from "./components/modals/AutoEditModal";
 import { ExportPreflightModal } from "./components/modals/ExportPreflightModal";
 import { runSmartAutoEdit, AutoEditResult } from "./lib/autoEditService";
 import { getActiveClipAtTime, getTimelineLength } from "./lib/clipTimingHelper";
+import { alignSubtitlesWithVoiceWaveform } from "./lib/voiceAlignmentHelper";
+import { StudioMiniTimeline } from "./components/timeline/StudioMiniTimeline";
 import {
     StudioStepper,
     Step1Script,
@@ -770,8 +772,68 @@ export default function AutoVideoStudioPage() {
         return null;
     }, [bgmChoice, bgmCustomUrl]);
 
-    // Subtitle cues generation (Punctuation-weighted & Offset-synchronized)
+    // AI Waveform-aligned subtitle state
+    const [alignedSubtitleCues, setAlignedSubtitleCues] = useState<SubtitleCue[] | null>(null);
+    const [isAligningSubtitles, setIsAligningSubtitles] = useState(false);
+
+    const handleAutoAlignSubtitles = async () => {
+        if (!selectedVoiceAudioUrl || !selectedVoiceText.trim()) {
+            alert("Vui lòng tạo hoặc tải giọng đọc trước khi đồng bộ phụ đề!");
+            return;
+        }
+        setIsAligningSubtitles(true);
+        try {
+            const cues = await alignSubtitlesWithVoiceWaveform(
+                selectedVoiceAudioUrl,
+                selectedVoiceText,
+                voiceSpeedMultiplier || 1.0,
+                subtitleOffset || 0
+            );
+            if (cues && cues.length > 0) {
+                setAlignedSubtitleCues(cues);
+                alert(`🎯 Đã đồng bộ chuẩn xác ${cues.length} cụm phụ đề khớp với từng khoảng lặng giọng đọc!`);
+            }
+        } catch (e: any) {
+            console.warn("Lỗi đồng bộ phụ đề:", e);
+        } finally {
+            setIsAligningSubtitles(false);
+        }
+    };
+
+    // Auto-align when voice audio is ready
+    useEffect(() => {
+        if (selectedVoiceAudioUrl && selectedVoiceText.trim()) {
+            alignSubtitlesWithVoiceWaveform(
+                selectedVoiceAudioUrl,
+                selectedVoiceText,
+                voiceSpeedMultiplier || 1.0,
+                subtitleOffset || 0
+            ).then((cues) => {
+                if (cues && cues.length > 0) {
+                    setAlignedSubtitleCues(cues);
+                }
+            }).catch(() => {});
+        } else {
+            setAlignedSubtitleCues(null);
+        }
+    }, [selectedVoiceAudioUrl, selectedVoiceText, voiceSpeedMultiplier]);
+
+    // Subtitle cues generation (Waveform AI Silence Alignment with Punctuation Fallback)
     const subtitleCues = useMemo<SubtitleCue[]>(() => {
+        if (alignedSubtitleCues && alignedSubtitleCues.length > 0) {
+            if (subtitleOffset === 0) return alignedSubtitleCues;
+            return alignedSubtitleCues.map((c) => ({
+                ...c,
+                start: Math.max(0, c.start + subtitleOffset),
+                end: Math.max(0.1, c.end + subtitleOffset),
+                words: c.words?.map((w) => ({
+                    ...w,
+                    start: Math.max(0, w.start + subtitleOffset),
+                    end: Math.max(0.1, w.end + subtitleOffset)
+                }))
+            }));
+        }
+
         if (!selectedVoiceText.trim() || voiceDuration <= 0) return [];
 
         const sentences = selectedVoiceText.split(/(?<=[.!?,;:\n])\s+/).filter(s => s.trim().length > 0);
@@ -834,7 +896,7 @@ export default function AutoVideoStudioPage() {
                 words
             };
         });
-    }, [selectedVoiceText, voiceDuration, subtitleOffset, voiceSpeedMultiplier]);
+    }, [selectedVoiceText, voiceDuration, subtitleOffset, voiceSpeedMultiplier, alignedSubtitleCues]);
 
     // Project Total Duration (Guaranteed Finite Number)
     const totalDuration = voiceDuration > 0
@@ -2825,6 +2887,10 @@ export default function AutoVideoStudioPage() {
                             setFontSize={setFontSize}
                             textPosition={textPosition}
                             setTextPosition={setTextPosition}
+                            subtitleCues={subtitleCues}
+                            onAutoAlignSubtitles={handleAutoAlignSubtitles}
+                            isAligningSubtitles={isAligningSubtitles}
+                            onSeekCue={handleSeek}
                             onPrev={() => setActiveStudioStep("step_clips")}
                             onNext={() => setActiveStudioStep("step_audio_export")}
                         />
@@ -2930,37 +2996,17 @@ export default function AutoVideoStudioPage() {
                             </div>
                         </div>
 
-                        {/* Playback Scrubbing & Controls */}
-                        <div className="space-y-2 pt-2">
-                            <input
-                                type="range"
-                                min={0}
-                                max={Math.max(1, totalDuration)}
-                                step={0.1}
-                                value={displayTime}
-                                onChange={(e) => handleSeek(parseFloat(e.target.value))}
-                                className="w-full accent-primary-600 h-1.5 bg-slate-200 rounded cursor-pointer"
-                            />
-
-                            <div className="flex items-center justify-center gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => handleSeek(0)}
-                                    className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md cursor-pointer"
-                                    title="Phát lại từ đầu"
-                                >
-                                    <RotateCcw className="w-4 h-4" />
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={togglePlay}
-                                    className="w-10 h-10 bg-primary-500 hover:bg-primary-600 text-white rounded-full flex items-center justify-center transition-colors cursor-pointer"
-                                >
-                                    {isPlaying ? <Pause className="w-5 h-5 fill-white" /> : <Play className="w-5 h-5 fill-white ml-0.5" />}
-                                </button>
-                            </div>
-                        </div>
+                        {/* Interactive Studio Mini Timeline */}
+                        <StudioMiniTimeline
+                            clips={clips}
+                            subtitleCues={subtitleCues}
+                            currentTime={displayTime}
+                            totalDuration={totalDuration}
+                            clipSwitchInterval={clipSwitchInterval}
+                            isPlaying={isPlaying}
+                            onTogglePlay={togglePlay}
+                            onSeek={handleSeek}
+                        />
 
                         {/* Export Format Selection */}
                         <div className="pt-2 border-t border-slate-100 space-y-2">
