@@ -157,6 +157,7 @@ export function renderVideoFrame({
         const isImg = (mediaEl instanceof HTMLImageElement) || (mediaEl as any).tagName === "IMG";
         const vw = isImg ? (mediaEl as HTMLImageElement).naturalWidth : ((mediaEl as HTMLVideoElement).videoWidth || cw);
         const vh = isImg ? (mediaEl as HTMLImageElement).naturalHeight : ((mediaEl as HTMLVideoElement).videoHeight || ch);
+        if (!vw || !vh || vw <= 0 || vh <= 0 || !isFinite(vw) || !isFinite(vh)) return;
         
         // Ken Burns effect for static photos: slow cinematic push (1.0 -> 1.05)
         const photoKenBurns = isImg ? (1.0 + zoomProgress * 0.05) : 1.0;

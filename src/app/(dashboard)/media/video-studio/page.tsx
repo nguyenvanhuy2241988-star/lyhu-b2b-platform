@@ -3031,6 +3031,9 @@ export default function AutoVideoStudioPage() {
                             isRendering={isRendering}
                             renderProgress={renderProgress}
                             handleExportVideo={handleExportVideo}
+                            renderedVideoUrl={renderedVideoUrl}
+                            renderedFormat={renderedFormat}
+                            aspectRatio={aspectRatio}
                             onPrev={() => setActiveStudioStep("step_visuals")}
                         />
                     )}

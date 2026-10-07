@@ -57,6 +57,9 @@ interface Step4AudioExportProps {
     isRendering: boolean;
     renderProgress: number;
     handleExportVideo: () => void;
+    renderedVideoUrl?: string | null;
+    renderedFormat?: string;
+    aspectRatio?: string;
     onPrev: () => void;
 }
 
@@ -98,6 +101,9 @@ export const Step4AudioExport: React.FC<Step4AudioExportProps> = ({
     isRendering,
     renderProgress,
     handleExportVideo,
+    renderedVideoUrl,
+    renderedFormat = "mp4",
+    aspectRatio = "9:16",
     onPrev
 }) => {
     return (
@@ -421,6 +427,54 @@ export const Step4AudioExport: React.FC<Step4AudioExportProps> = ({
                     </div>
                 </div>
             </div>
+
+            {/* RENDERED VIDEO SUCCESS SHOWCASE CARD */}
+            {renderedVideoUrl && !isRendering && (
+                <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-2 border-emerald-300 space-y-3 animate-in fade-in zoom-in-95 duration-200 shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-emerald-200/70">
+                        <div className="flex items-center gap-2">
+                            <span className="p-1.5 rounded-lg bg-emerald-600 text-white shadow-xs">
+                                <Check className="w-4 h-4" />
+                            </span>
+                            <div>
+                                <h3 className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                                    <span>🎉 Video Thành Phẩm Đã Render Hoàn Tất!</span>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900 uppercase">
+                                        {(renderedFormat || "mp4").toUpperCase()} • 60 FPS
+                                    </span>
+                                </h3>
+                                <p className="text-[11px] text-emerald-800">
+                                    Video chuẩn tỷ lệ {aspectRatio}, âm thanh và hình ảnh đã khớp 100%, sẵn sàng để đăng tải ngay.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Video Player Preview */}
+                    <div className="rounded-lg overflow-hidden border border-emerald-200 bg-black flex justify-center max-h-72">
+                        <video
+                            src={renderedVideoUrl}
+                            controls
+                            playsInline
+                            className="max-h-72 w-auto object-contain mx-auto"
+                        />
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1">
+                        <span className="text-[11px] text-emerald-700 font-medium">
+                            ✓ Không dính watermark lạ • Tương thích mọi mạng xã hội
+                        </span>
+                        <a
+                            href={renderedVideoUrl}
+                            download={`LYHU_Studio_${(aspectRatio || "9-16").replace(":", "-")}_${Date.now()}.${renderedFormat || "mp4"}`}
+                            className="w-full sm:w-auto px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer"
+                        >
+                            <Download className="w-4 h-4" />
+                            <span>Tải Video {(renderedFormat || "mp4").toUpperCase()} Về Máy Ngay</span>
+                        </a>
+                    </div>
+                </div>
+            )}
 
             {/* NAVIGATION & EXPORT BUTTON */}
             <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
