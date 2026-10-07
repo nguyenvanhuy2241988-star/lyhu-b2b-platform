@@ -17,7 +17,8 @@ import {
     ArrowLeft,
     ArrowRight,
     Sparkles,
-    Wand2
+    Wand2,
+    Scissors
 } from "lucide-react";
 import { VideoClip, BRollItem } from "../../types";
 import { AI_BROLL_LIBRARY, VIDEO_FILTERS } from "../../lib/constants";
@@ -411,6 +412,16 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                         >
                                             <Eye className="w-3 h-3" />
                                             <span>Xem Thử</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreviewingClip(c)}
+                                            className="px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
+                                            title="Cắt điểm vào In-point và thời lượng"
+                                        >
+                                            <Scissors className="w-3 h-3 text-primary-600" />
+                                            <span>Cắt</span>
                                         </button>
 
                                         {/* Dropdown Đổi Thứ Tự Cảnh */}

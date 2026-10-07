@@ -1061,6 +1061,74 @@ export default function AutoVideoStudioPage() {
         }, 50);
     };
 
+    const [isOneClickBuilding, setIsOneClickBuilding] = useState<boolean>(false);
+
+    const handleOneClickProduction = async (templateId: string) => {
+        const tpl = LYHU_TEMPLATES.find(t => t.id === templateId) || LYHU_TEMPLATES[0];
+        if (!tpl) return;
+
+        setIsOneClickBuilding(true);
+        try {
+            // 1. Load template settings
+            handleApplyTemplate(tpl);
+
+            // 2. Ensure demo footage is loaded
+            const baseDemoClips: VideoClip[] = DEMO_CLIPS.map((demo, idx) => ({
+                id: `demo-${idx}-${Date.now()}`,
+                url: demo.url,
+                name: demo.name,
+                duration: demo.duration,
+                width: demo.width,
+                height: demo.height,
+                muted: true
+            }));
+            const activeClips = clips.length > 0 ? clips : baseDemoClips;
+            if (clips.length === 0) {
+                setClips(baseDemoClips);
+            }
+
+            // 3. Synthesize Voice with flagship model (Gemini 3.8 Flash TTS)
+            const voiceUrl = await generateSpeechForText(tpl.script, selectedVoiceStyleId, "gemini");
+
+            // 4. Align subtitles via Audio waveform silence detection
+            if (voiceUrl) {
+                try {
+                    const aligned = await alignSubtitlesWithVoiceWaveform(voiceUrl, tpl.script);
+                    if (aligned && aligned.length > 0) {
+                        setAlignedSubtitleCues(aligned);
+                    }
+                } catch (_) {}
+            }
+
+            // 5. Run Smart Auto-Edit on footage to align with script beats
+            try {
+                const autoResult = await runSmartAutoEdit({
+                    clips: activeClips,
+                    script: tpl.script,
+                    hookTitle: tpl.hookTitle,
+                    clipSwitchInterval: tpl.pacing || 2.5,
+                    totalDuration: voiceDuration || 25,
+                    existingMediaElements: videoElementsRef.current
+                });
+                if (autoResult && autoResult.curatedClips.length > 0) {
+                    setClips(autoResult.curatedClips);
+                }
+            } catch (_) {}
+
+            // Switch to step 3 Visuals so the user can immediately review & preview!
+            setActiveStudioStep("step_visuals");
+            pausePlayback();
+            currentTimeRef.current = 0;
+            setDisplayTime(0);
+            setTimeout(() => drawCanvasFrame(0), 100);
+        } catch (err: any) {
+            console.error("1-Click production error:", err);
+            alert("Có lỗi khi tạo video 1-chạm: " + (err?.message || "Vui lòng thử lại"));
+        } finally {
+            setIsOneClickBuilding(false);
+        }
+    };
+
     const handleCloneStyle = async (forcedTopic?: string, forcedUrl?: string) => {
         const topicToUse = (typeof forcedTopic === "string" ? forcedTopic : cloneTopic).trim();
         if (!topicToUse) {
@@ -1456,6 +1524,13 @@ export default function AutoVideoStudioPage() {
         setEnableAudioDucking(true);
         setBgmVolume(0.18);
         alert(`🤖 AI Đã Tự Động Phối Nhạc Phù Hợp:\n\n🎵 Bản nhạc: ${title}\n💡 Phân tích: ${reason}\n✓ Đã tự động kích hoạt Audio Ducking (nhạc tự nhỏ khi có tiếng nói)!`);
+    };
+
+    const updateClip = (id: string, updates: Partial<VideoClip>) => {
+        setClips(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+        if (previewingClip && previewingClip.id === id) {
+            setPreviewingClip(prev => prev ? { ...prev, ...updates } : null);
+        }
     };
 
     const removeClip = (id: string) => {
@@ -2078,8 +2153,8 @@ export default function AutoVideoStudioPage() {
                 }
             } catch (_) {}
 
-            // Seamless clip switching factoring in custom duration & trimStart
-            if (clips.length > 1) {
+            // Seamless clip switching & single/multi clip sync factoring in custom duration & trimStart
+            if (clips.length > 0) {
                 const validT = (typeof nextTime === "number" && isFinite(nextTime) && nextTime >= 0) ? nextTime : 0;
                 const activeInfo = getActiveClipAtTime(clips, validT, clipSwitchInterval);
                 if (activeInfo) {
@@ -2088,8 +2163,8 @@ export default function AutoVideoStudioPage() {
                     const nextClip = clips[nextClipIdx] || currentClip;
                     const remainingInClip = activeInfo.clipDuration * (1 - activeInfo.progressInClip);
 
-                    // Pre-roll next clip 0.45s before switch
-                    if (remainingInClip <= 0.45 && nextClip?.id && nextClip.id !== currentClip.id) {
+                    // Pre-roll next clip 0.45s before switch if multiple clips
+                    if (clips.length > 1 && remainingInClip <= 0.45 && nextClip?.id && nextClip.id !== currentClip.id) {
                         const nextVid = videoElementsRef.current[nextClip.id];
                         if (nextVid && typeof nextVid.play === "function" && nextVid.paused) {
                             nextVid.currentTime = nextClip.trimStart || 0;
@@ -2109,6 +2184,15 @@ export default function AutoVideoStudioPage() {
                             if (activeVid.paused) activeVid.play().catch(() => {});
                         }
                         lastActiveClipIdRef.current = currentClip.id;
+                    } else if (currentClip?.id) {
+                        // Guard against video freezing if source ends or drifts
+                        const activeVid = videoElementsRef.current[currentClip.id];
+                        if (activeVid && typeof activeVid.currentTime === "number" && isFinite(activeInfo.localT)) {
+                            if (activeVid.ended || Math.abs(activeVid.currentTime - activeInfo.localT) > 0.5) {
+                                activeVid.currentTime = activeInfo.localT;
+                                if (activeVid.paused) activeVid.play().catch(() => {});
+                            }
+                        }
                     }
                 }
             }
@@ -2428,16 +2512,16 @@ export default function AutoVideoStudioPage() {
                 const validExportT = Math.min(exportTotalDuration, lastRecordedT);
                 currentTimeRef.current = validExportT;
 
-                // Seamless clip switching during export (0 decode contention)
-                if (clips.length > 1) {
+                // Seamless clip switching & sync during export (0 decode contention)
+                if (clips.length > 0) {
                     const activeInfo = getActiveClipAtTime(clips, validExportT, clipSwitchInterval);
                     if (activeInfo) {
                         const curClip = activeInfo.activeClip;
                         const nxtClip = clips[(activeInfo.clipIdx + 1) % clips.length] || curClip;
                         const remainingInClip = activeInfo.clipDuration * (1 - activeInfo.progressInClip);
 
-                        // Pre-roll next clip 0.35s before switch
-                        if (remainingInClip <= 0.35 && nxtClip?.id && nxtClip.id !== curClip.id) {
+                        // Pre-roll next clip 0.35s before switch if multiple clips
+                        if (clips.length > 1 && remainingInClip <= 0.35 && nxtClip?.id && nxtClip.id !== curClip.id) {
                             const nxtVid = videoElementsRef.current[nxtClip.id];
                             if (nxtVid && typeof nxtVid.play === "function" && nxtVid.paused) {
                                 nxtVid.currentTime = nxtClip.trimStart || 0;
@@ -2457,6 +2541,15 @@ export default function AutoVideoStudioPage() {
                                 curVid.play().catch(() => {});
                             }
                             exportActiveClipId.current = curClip.id;
+                        } else if (curClip?.id) {
+                            // Keep current video in sync if looped or drifted
+                            const curVid = videoElementsRef.current[curClip.id];
+                            if (curVid && typeof curVid.currentTime === "number" && isFinite(activeInfo.localT)) {
+                                if (curVid.ended || Math.abs(curVid.currentTime - activeInfo.localT) > 0.5) {
+                                    curVid.currentTime = activeInfo.localT;
+                                    if (curVid.paused) curVid.play().catch(() => {});
+                                }
+                            }
                         }
                     }
                 }
@@ -2800,6 +2893,8 @@ export default function AutoVideoStudioPage() {
                             activeTemplateId={activeTemplateId}
                             setActiveTemplateId={setActiveTemplateId}
                             handleApplyTemplate={handleApplyTemplate}
+                            onOneClickProduction={handleOneClickProduction}
+                            isOneClickBuilding={isOneClickBuilding}
                             selectedVoiceText={selectedVoiceText}
                             setSelectedVoiceText={setSelectedVoiceText}
                             selectedVoiceEngine={selectedVoiceEngine}
@@ -3091,6 +3186,7 @@ export default function AutoVideoStudioPage() {
                 onClose={() => setPreviewingClip(null)}
                 onSetOpeningClip={handleSetOpeningClip}
                 onMoveClip={moveClip}
+                onUpdateClip={updateClip}
             />
 
             {/* MODAL 1: SỔ TAY KỊCH BẢN & LỊCH SỬ DỰ ÁN VIDEO */}

@@ -303,31 +303,39 @@ export async function runSmartAutoEdit({
     onProgress?.("Hoàn tất cắt gọt In-point và đồng bộ timeline!", 100);
 
     const curatedTimeline: CuratedClipItem[] = data.curatedTimeline || [];
-    const clipMap = new Map<string, VideoClip>(clips.map(c => [c.id, { ...c }]));
+    const originalClipMap = new Map<string, VideoClip>(clips.map(c => [c.id, { ...c }]));
 
     const curatedClips: VideoClip[] = [];
-    curatedTimeline.forEach(item => {
-        const base = clipMap.get(item.clipId);
+    const usedOriginalIds = new Set<string>();
+
+    curatedTimeline.forEach((item, idx) => {
+        const base = originalClipMap.get(item.clipId);
         if (base) {
+            const isDuplicate = usedOriginalIds.has(item.clipId);
+            // Give duplicate cuts a distinct ID so each has its own independent timeline node
+            const uniqueId = isDuplicate ? `${base.id}_cut${idx + 1}` : base.id;
             curatedClips.push({
                 ...base,
+                id: uniqueId,
                 trimStart: item.trimStart || 0,
                 displayDuration: item.duration || clipSwitchInterval,
                 role: item.role,
                 matchedSentence: item.matchedSentence,
                 isAiSelected: true
             });
-            clipMap.delete(item.clipId);
+            usedOriginalIds.add(item.clipId);
         }
     });
 
-    // Backup clips (surplus clips not used in main timeline)
+    // Backup clips (surplus raw clips not used in curated timeline)
     const backupClips: VideoClip[] = [];
-    clipMap.forEach(c => {
-        backupClips.push({
-            ...c,
-            isAiSelected: false
-        });
+    clips.forEach(c => {
+        if (!usedOriginalIds.has(c.id)) {
+            backupClips.push({
+                ...c,
+                isAiSelected: false
+            });
+        }
     });
 
     const orderedClips = [...curatedClips, ...backupClips];

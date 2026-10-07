@@ -12,7 +12,8 @@ import {
     Volume2,
     Pause,
     ArrowRight,
-    Camera
+    Camera,
+    Zap
 } from "lucide-react";
 import { LYHU_TEMPLATES } from "../../lib/constants";
 
@@ -35,6 +36,8 @@ interface Step1ScriptProps {
     activeTemplateId?: string | null;
     setActiveTemplateId?: (id: string | null) => void;
     handleApplyTemplate?: (template: any) => void;
+    onOneClickProduction?: (templateId: string) => void;
+    isOneClickBuilding?: boolean;
     isSynthesizingVoice: boolean;
     selectedVoiceEngine: "gemini" | "edge" | "elevenlabs";
     setSelectedVoiceEngine: (val: "gemini" | "edge" | "elevenlabs") => void;
@@ -75,6 +78,8 @@ export const Step1Script: React.FC<Step1ScriptProps> = ({
     activeTemplateId,
     setActiveTemplateId,
     handleApplyTemplate,
+    onOneClickProduction,
+    isOneClickBuilding = false,
     isSynthesizingVoice,
     selectedVoiceEngine,
     setSelectedVoiceEngine,
@@ -136,6 +141,57 @@ export const Step1Script: React.FC<Step1ScriptProps> = ({
                             <span>Chưa thu âm giọng đọc</span>
                         </span>
                     )}
+                </div>
+            </div>
+
+            {/* ⚡ 1-CLICK PRODUCTION QUICK LAUNCH BAR */}
+            <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-teal-500/10 via-primary-500/10 to-emerald-500/10 border border-primary-200 space-y-2.5 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <span className="p-1.5 rounded-lg bg-primary-600 text-white shadow-xs">
+                            <Zap className="w-4 h-4" />
+                        </span>
+                        <div>
+                            <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                <span>⚡ Tạo Nhanh Video 1-Chạm (LYHU Quick Production)</span>
+                                <span className="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-primary-100 text-primary-800">
+                                    Siêu Tốc 15s
+                                </span>
+                            </h3>
+                            <p className="text-[11px] text-slate-600">
+                                Tự động nạp kịch bản sỉ + clip B-roll + lồng tiếng Gemini 3.8 Flash TTS + cắt gọt khớp 100%!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {LYHU_TEMPLATES.map((tpl) => (
+                        <button
+                            key={tpl.id}
+                            type="button"
+                            onClick={() => onOneClickProduction ? onOneClickProduction(tpl.id) : handleApplyTemplate?.(tpl)}
+                            disabled={isOneClickBuilding || isSynthesizingVoice}
+                            className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 bg-white hover:border-primary-400 hover:shadow-xs ${
+                                activeTemplateId === tpl.id ? "border-primary-500 ring-2 ring-primary-100" : "border-slate-200"
+                            } disabled:opacity-60`}
+                        >
+                            <span className="text-[11px] font-bold text-slate-800 line-clamp-1">{tpl.badge}</span>
+                            <span className="text-[10px] text-primary-700 font-semibold flex items-center gap-1">
+                                {isOneClickBuilding ? (
+                                    <>
+                                        <Loader2 className="w-3 h-3 animate-spin text-primary-600" />
+                                        <span>Đang tạo...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Zap className="w-3 h-3 text-primary-600" />
+                                        <span>Tạo 1-chạm</span>
+                                    </>
+                                )}
+                            </span>
+                        </button>
+                    ))}
                 </div>
             </div>
 
