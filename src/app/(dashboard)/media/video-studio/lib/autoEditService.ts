@@ -312,7 +312,7 @@ export async function runSmartAutoEdit({
             curatedClips.push({
                 ...base,
                 trimStart: item.trimStart || 0,
-                duration: item.duration || clipSwitchInterval,
+                displayDuration: item.duration || clipSwitchInterval,
                 role: item.role,
                 matchedSentence: item.matchedSentence,
                 isAiSelected: true

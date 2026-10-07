@@ -9,9 +9,40 @@ export interface ActiveClipInfo {
     progressInClip: number; // 0.0 to 1.0
 }
 
+/** Seconds a clip stays on the timeline. `duration` is the SOURCE length and must never drive pacing. */
+export function getClipDisplayDuration(clip: VideoClip, defaultInterval: number = 2.5): number {
+    const d = clip.displayDuration;
+    if (typeof d === "number" && isFinite(d) && d > 0) return Math.max(0.5, d);
+    return Math.max(1.5, defaultInterval || 2.5);
+}
+
+/** Total timeline length contributed by all clips (one pass, no looping). */
+export function getTimelineLength(clips: VideoClip[], defaultInterval: number = 2.5): number {
+    return clips.reduce((sum, c) => sum + getClipDisplayDuration(c, defaultInterval), 0);
+}
+
+function buildInfo(clips: VideoClip[], idx: number, start: number, dur: number, timeInClip: number): ActiveClipInfo {
+    const clip = clips[idx];
+    const trimStart = clip.trimStart || 0;
+    let localT = trimStart + timeInClip;
+    // Keep the playhead inside the source video: loop the usable part instead of freezing on the last frame
+    if (clip.mediaType !== "image" && clip.duration > 0) {
+        const usable = Math.max(0.5, clip.duration - trimStart);
+        localT = trimStart + (timeInClip % usable);
+    }
+    return {
+        activeClip: clip,
+        clipIdx: idx,
+        localT,
+        clipStartTime: start,
+        clipDuration: dur,
+        progressInClip: Math.min(1, Math.max(0, timeInClip / dur))
+    };
+}
+
 /**
- * Calculates which clip is active at time `t`, factoring in custom clip durations,
- * in-point (`trimStart`), and transitions.
+ * Which clip is active at time `t`. Clips occupy their DISPLAY duration (pacing), the timeline
+ * cycles when voice is longer than the sum of clips.
  */
 export function getActiveClipAtTime(
     clips: VideoClip[],
@@ -20,57 +51,16 @@ export function getActiveClipAtTime(
 ): ActiveClipInfo | null {
     if (!clips || clips.length === 0) return null;
     const validT = Math.max(0, isFinite(t) ? t : 0);
+    const total = getTimelineLength(clips, defaultInterval);
+    const loopedT = total > 0 ? validT % total : 0;
 
-    // Calculate cumulative timeline durations
-    let accumulated = 0;
+    let acc = 0;
     for (let i = 0; i < clips.length; i++) {
-        const clip = clips[i];
-        const dur = Math.max(0.5, clip.duration || defaultInterval);
-        if (validT >= accumulated && validT < accumulated + dur) {
-            const timeInClip = validT - accumulated;
-            const trimStart = clip.trimStart || 0;
-            return {
-                activeClip: clip,
-                clipIdx: i,
-                localT: trimStart + timeInClip,
-                clipStartTime: accumulated,
-                clipDuration: dur,
-                progressInClip: Math.min(1, Math.max(0, timeInClip / dur))
-            };
+        const dur = getClipDisplayDuration(clips[i], defaultInterval);
+        if (loopedT >= acc && loopedT < acc + dur) {
+            return buildInfo(clips, i, acc, dur, loopedT - acc);
         }
-        accumulated += dur;
+        acc += dur;
     }
-
-    // If beyond accumulated duration, cycle or return the last clip
-    if (accumulated > 0) {
-        const loopedT = validT % accumulated;
-        let loopAcc = 0;
-        for (let i = 0; i < clips.length; i++) {
-            const clip = clips[i];
-            const dur = Math.max(0.5, clip.duration || defaultInterval);
-            if (loopedT >= loopAcc && loopedT < loopAcc + dur) {
-                const timeInClip = loopedT - loopAcc;
-                const trimStart = clip.trimStart || 0;
-                return {
-                    activeClip: clip,
-                    clipIdx: i,
-                    localT: trimStart + timeInClip,
-                    clipStartTime: loopAcc,
-                    clipDuration: dur,
-                    progressInClip: Math.min(1, Math.max(0, timeInClip / dur))
-                };
-            }
-            loopAcc += dur;
-        }
-    }
-
-    const first = clips[0];
-    return {
-        activeClip: first,
-        clipIdx: 0,
-        localT: first.trimStart || 0,
-        clipStartTime: 0,
-        clipDuration: defaultInterval,
-        progressInClip: 0
-    };
+    return buildInfo(clips, 0, 0, getClipDisplayDuration(clips[0], defaultInterval), 0);
 }

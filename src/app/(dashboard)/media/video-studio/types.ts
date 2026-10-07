@@ -10,6 +10,7 @@ export interface VideoClip {
     mediaType?: "video" | "image";
     trimStart?: number; // in-point in seconds for raw video
     trimEnd?: number;   // out-point in seconds
+    displayDuration?: number; // seconds this clip stays on the timeline (falls back to pacing interval). `duration` is always the SOURCE length.
     role?: string;      // e.g. "Hook 3s đầu", "Chứng minh chất lượng", "CTA"
     matchedSentence?: string; // Dialogue sentence this clip illustrates
     isAiSelected?: boolean;   // Whether AI curated this scene for timeline

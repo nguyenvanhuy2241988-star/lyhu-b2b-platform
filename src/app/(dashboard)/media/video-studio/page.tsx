@@ -90,7 +90,7 @@ import { ProjectHistoryModal } from "./components/modals/ProjectHistoryModal";
 import { DirectorHubModal } from "./components/modals/DirectorHubModal";
 import { AutoEditModal } from "./components/modals/AutoEditModal";
 import { runSmartAutoEdit, AutoEditResult } from "./lib/autoEditService";
-import { getActiveClipAtTime } from "./lib/clipTimingHelper";
+import { getActiveClipAtTime, getTimelineLength } from "./lib/clipTimingHelper";
 import {
     StudioStepper,
     Step1Script,
@@ -748,7 +748,7 @@ export default function AutoVideoStudioPage() {
     // Project Total Duration (Guaranteed Finite Number)
     const totalDuration = voiceDuration > 0
         ? (voiceDuration / (voiceSpeedMultiplier || 1.0))
-        : (clips.length > 0 ? Math.max(1, clips.reduce((acc, c) => acc + ((c && isFinite(c.duration) && c.duration > 0) ? c.duration : 15), 0)) : 30);
+        : (clips.length > 0 ? Math.max(1, getTimelineLength(clips, clipSwitchInterval)) : 30);
 
     // ── ROBUST VIDEO UPLOAD PROCESSOR (With timeout & drag-drop) ──
     const processVideoFiles = async (fileList: FileList | File[]) => {
@@ -1875,10 +1875,10 @@ export default function AutoVideoStudioPage() {
 
                     // Transition whoosh sound
                     if (clips.length > 1 && enableSfxWhoosh) {
-                        const switchSec = Math.max(2, clipSwitchInterval || 2.5);
-                        const currentClipIdx = Math.floor(nextTime / switchSec);
-                        if (currentClipIdx > 0 && currentClipIdx !== lastSfxTriggerRef.current.lastTransitionIdx) {
-                            const timeInInterval = nextTime % switchSec;
+                        const wInfo = getActiveClipAtTime(clips, nextTime, clipSwitchInterval);
+                        const currentClipIdx = wInfo ? wInfo.clipIdx : 0;
+                        if (wInfo && currentClipIdx > 0 && currentClipIdx !== lastSfxTriggerRef.current.lastTransitionIdx) {
+                            const timeInInterval = nextTime - wInfo.clipStartTime;
                             if (timeInInterval <= 0.35) {
                                 lastSfxTriggerRef.current.lastTransitionIdx = currentClipIdx;
                                 playWebAudioSfx("whoosh", actx, undefined, sfxVolume);
@@ -1993,6 +1993,24 @@ export default function AutoVideoStudioPage() {
                 voiceSrc.connect(destNode);
                 voiceAudioEl.currentTime = 0;
             }
+
+            // The React state (voiceDuration/totalDuration) is stale if the voice was JUST generated above,
+            // so read the real length from the audio file itself.
+            let exportVoiceDur = voiceDuration;
+            if (voiceAudioEl) {
+                await new Promise<void>((resolve) => {
+                    const done = () => resolve();
+                    if (voiceAudioEl!.readyState >= 1 && isFinite(voiceAudioEl!.duration)) return done();
+                    voiceAudioEl!.addEventListener("loadedmetadata", done, { once: true });
+                    setTimeout(done, 4000);
+                });
+                if (isFinite(voiceAudioEl.duration) && voiceAudioEl.duration > 0) {
+                    exportVoiceDur = voiceAudioEl.duration;
+                }
+            }
+            const exportTotalDuration = exportVoiceDur > 0
+                ? exportVoiceDur / (voiceSpeedMultiplier || 1.0)
+                : Math.max(1, getTimelineLength(clips, clipSwitchInterval));
 
             // 2. BGM Source with Ducking Gain
             let bgmAudioEl: HTMLAudioElement | null = null;
@@ -2177,12 +2195,12 @@ export default function AutoVideoStudioPage() {
                 if (voiceAudioEl && !voiceAudioEl.paused && voiceAudioEl.currentTime > 0) {
                     exportTime = voiceAudioEl.currentTime;
                 } else if (voiceAudioEl && voiceAudioEl.ended) {
-                    exportTime = Math.max(elapsed, voiceDuration);
+                    exportTime = Math.max(elapsed, exportVoiceDur);
                 }
 
                 // Monotonic non-decreasing time
                 lastRecordedT = Math.max(lastRecordedT, exportTime);
-                const validExportT = Math.min(totalDuration, lastRecordedT);
+                const validExportT = Math.min(exportTotalDuration, lastRecordedT);
                 currentTimeRef.current = validExportT;
 
                 // Seamless clip switching during export (0 decode contention)
@@ -2220,7 +2238,7 @@ export default function AutoVideoStudioPage() {
 
                 // Dynamic Audio Ducking in export
                 if (bgmGainNode) {
-                    const isSpeaking = voiceDuration > 0 && validExportT < voiceDuration;
+                    const isSpeaking = exportVoiceDur > 0 && validExportT < exportVoiceDur;
                     bgmGainNode.gain.value = enableAudioDucking && isSpeaking
                         ? bgmVolume * 0.22
                         : bgmVolume;
@@ -2233,10 +2251,10 @@ export default function AutoVideoStudioPage() {
                         playWebAudioSfx("ding", audioCtx, destNode, sfxVolume);
                     }
                     if (clips.length > 1 && enableSfxWhoosh) {
-                        const switchSec = Math.max(2, clipSwitchInterval || 2.5);
-                        const clipIdx = Math.floor(validExportT / switchSec);
-                        if (clipIdx > 0 && clipIdx !== exportSfxTrigger.lastTransitionIdx) {
-                            const timeInInt = validExportT % switchSec;
+                        const wInfo = getActiveClipAtTime(clips, validExportT, clipSwitchInterval);
+                        const clipIdx = wInfo ? wInfo.clipIdx : 0;
+                        if (wInfo && clipIdx > 0 && clipIdx !== exportSfxTrigger.lastTransitionIdx) {
+                            const timeInInt = validExportT - wInfo.clipStartTime;
                             if (timeInInt <= 0.35) {
                                 exportSfxTrigger.lastTransitionIdx = clipIdx;
                                 playWebAudioSfx("whoosh", audioCtx, destNode, sfxVolume);
@@ -2258,10 +2276,10 @@ export default function AutoVideoStudioPage() {
 
                 drawCanvasFrame(validExportT);
 
-                const progress = Math.min(99, Math.round((validExportT / totalDuration) * 100));
+                const progress = Math.min(99, Math.round((validExportT / exportTotalDuration) * 100));
                 setRenderProgress(progress);
 
-                if (validExportT >= totalDuration) {
+                if (validExportT >= exportTotalDuration) {
                     cancelAnimationFrame(animExportId);
                     if (recorder.state === "recording") {
                         recorder.stop();

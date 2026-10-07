@@ -235,7 +235,7 @@ export const AutoEditModal: React.FC<AutoEditModalProps> = ({
 
                                                             <span className="text-primary-700 bg-primary-50 px-1.5 py-0.5 rounded border border-primary-200 font-semibold flex items-center gap-1">
                                                                 <Clock className="w-3 h-3 text-primary-600" />
-                                                                <span>Chiếu: {(c.duration || 2.5).toFixed(1)}s</span>
+                                                                <span>Chiếu: {(c.displayDuration || 2.5).toFixed(1)}s</span>
                                                             </span>
                                                         </div>
                                                     </div>
