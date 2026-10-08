@@ -199,6 +199,7 @@ export default function AutoVideoStudioPage() {
     const [previewingSoundUrl, setPreviewingSoundUrl] = useState<string | null>(null);
     const [copiedSoundTitle, setCopiedSoundTitle] = useState<string | null>(null);
     const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+    const clientTtsCacheRef = useRef<Map<string, { url: string; duration: number }>>(new Map());
 
     // ── AI SCRIPT & STYLE CLONE STATE ──
     const [scriptInputMode, setScriptInputMode] = useState<"ai_chat" | "ai_prompt" | "clone_link" | "templates">("ai_chat");
@@ -470,6 +471,26 @@ export default function AutoVideoStudioPage() {
             alert("Vui lòng nhập kịch bản hoặc lời thoại cần thu âm!");
             return null;
         }
+
+        // 1. Check Client-side Audio Cache (Instant 0ms, 0đ cost, 100% stable)
+        const speedVal = (voiceSpeedMultiplier || 1.0).toFixed(2);
+        const cacheKey = `${engineChoice}_${styleId}_${speedVal}_${textToSpeak.trim()}`;
+
+        if (clientTtsCacheRef.current.has(cacheKey)) {
+            const cached = clientTtsCacheRef.current.get(cacheKey)!;
+            setSelectedVoiceAudioUrl(cached.url);
+            setSelectedVoiceId("ai-generated");
+            setVoiceDuration(cached.duration);
+            if (hiddenAudioRef.current) {
+                hiddenAudioRef.current.src = cached.url;
+                hiddenAudioRef.current.load();
+            }
+            if (auditionAudioRef.current) {
+                auditionAudioRef.current.src = cached.url;
+            }
+            return cached.url;
+        }
+
         setIsSynthesizingVoice(true);
         try {
             const res = await fetch("/api/ai/tts", {
@@ -501,6 +522,8 @@ export default function AutoVideoStudioPage() {
             setSelectedVoiceAudioUrl(url);
             setSelectedVoiceId("ai-generated");
 
+            let exactDuration = Math.round(textToSpeak.trim().split(/\s+/).length / 3.2);
+
             // Measure exact audio duration with Web Audio API for 100% precision
             try {
                 const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -509,6 +532,7 @@ export default function AutoVideoStudioPage() {
                     const arrayBuf = await blob.arrayBuffer();
                     const audioBuf = await ctx.decodeAudioData(arrayBuf);
                     if (audioBuf.duration && isFinite(audioBuf.duration) && audioBuf.duration > 0) {
+                        exactDuration = audioBuf.duration;
                         setVoiceDuration(audioBuf.duration);
                     }
                     ctx.close().catch(() => {});
@@ -517,10 +541,14 @@ export default function AutoVideoStudioPage() {
                 const tempAudio = new Audio(url);
                 tempAudio.onloadedmetadata = () => {
                     if (tempAudio.duration && isFinite(tempAudio.duration) && tempAudio.duration > 0) {
+                        exactDuration = tempAudio.duration;
                         setVoiceDuration(tempAudio.duration);
                     }
                 };
             }
+
+            // Save into Client-side Cache for instant reuse
+            clientTtsCacheRef.current.set(cacheKey, { url, duration: exactDuration });
 
             // Update hidden audio element for video playback
             if (hiddenAudioRef.current) {

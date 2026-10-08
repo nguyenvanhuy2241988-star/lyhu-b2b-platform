@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prepareTextForTTS } from "@/lib/ttsHelper";
 import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+// ── IN-MEMORY PERSISTENT TTS CACHE (0đ Vercel, 0ms latency for repeated requests) ──
+const globalTtsCache = new Map<string, { buffer: Buffer; mimeType: string; engineUsed: string; timestamp: number }>();
 
 // ── EDGE NEURAL TTS CONFIGURATIONS (Hoài My & Nam Minh - Chuẩn Studio 100%) ──
 interface VoicePreset {
@@ -221,10 +225,9 @@ async function synthesizeWithGeminiTTS(
     const cleanScript = text.trim();
 
     const endpoints = [
-        { name: "gemini-3.8-flash-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=${apiKey}`, timeoutMs: 15000 },
+        { name: "gemini-2.0-flash", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, timeoutMs: 15000 },
         { name: "gemini-2.5-flash-preview-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, timeoutMs: 15000 },
-        { name: "gemini-3.8-flash-lite-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-lite-tts:generateContent?key=${apiKey}`, timeoutMs: 12000 },
-        { name: "gemini-2.0-flash", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, timeoutMs: 10000 }
+        { name: "gemini-3.8-flash-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=${apiKey}`, timeoutMs: 12000 }
     ];
 
     let lastError = "";
@@ -241,6 +244,8 @@ async function synthesizeWithGeminiTTS(
                     }
                 ],
                 generationConfig: {
+                    temperature: 0.0, // Fixed 0.0 temperature locks voice timbre & removes randomness
+                    seed: 4242,       // Deterministic seed ensures identical voice across text edits
                     responseModalities: ["AUDIO"],
                     speechConfig: {
                         voiceConfig: {
@@ -317,6 +322,30 @@ export async function POST(req: NextRequest) {
 
         console.log(`[TTS API] Request: engine=${engine}, styleKey=${styleKey}, textLength=${normalizedText.length}`);
 
+        // ── STEP 1: CHECK GLOBAL IN-MEMORY PERSISTENT AUDIO CACHE (0ms, 0đ) ──
+        const speedVal = (Number(rateMultiplier) || 1.0).toFixed(2);
+        const cacheKey = crypto
+            .createHash("md5")
+            .update(`${engine || "gemini"}_${styleKey}_${speedVal}_${normalizedText}`)
+            .digest("hex");
+
+        if (globalTtsCache.has(cacheKey)) {
+            const cached = globalTtsCache.get(cacheKey)!;
+            console.log(`[TTS API] Cache HIT (0ms latency, 0đ cost): ${cacheKey} (${cached.engineUsed})`);
+            return new NextResponse(new Uint8Array(cached.buffer), {
+                status: 200,
+                headers: {
+                    "Content-Type": cached.mimeType,
+                    "Content-Length": cached.buffer.length.toString(),
+                    "Content-Disposition": `inline; filename="voiceover_${styleKey}.${cached.mimeType.includes("wav") ? "wav" : "mp3"}"`,
+                    "Cache-Control": "public, max-age=86400",
+                    "X-TTS-Engine": cached.engineUsed,
+                    "X-TTS-Voice": styleKey,
+                    "X-TTS-Cache": "HIT"
+                }
+            });
+        }
+
         let audioBuffer: Buffer | null = null;
         let mimeType = "audio/wav";
         let engineUsed = "gemini-flash-audio";
@@ -345,12 +374,10 @@ export async function POST(req: NextRequest) {
                 mimeType = geminiResult.mimeType;
                 engineUsed = `gemini-${geminiResult.modelUsed}`;
             } catch (geminiErr: any) {
-                console.warn("[TTS] Gemini Audio unavailable, synthesizing with Studio Neural Voice:", geminiErr.message);
+                console.warn("[TTS] Gemini Audio unavailable, synthesizing with Studio Neural Voice (Hoài My & Nam Minh):", geminiErr.message);
                 try {
-                    // Cố gắng lấy giọng Edge Neural trong tối đa 9.0s (bảo vệ chống treo WebSocket)
-                    const edgePromise = synthesizeWithEdgeTTS(normalizedText, styleKey, Number(rateMultiplier) || 1.0);
-                    const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Edge WebSocket timeout")), 9000));
-                    const edgeResult = await Promise.race([edgePromise, timeoutPromise]);
+                    // Cố định giọng Edge Neural (Hoài My & Nam Minh) để bảo đảm 100% nhất quán âm sắc, không dùng timeout quá ngắn
+                    const edgeResult = await synthesizeWithEdgeTTS(normalizedText, styleKey, Number(rateMultiplier) || 1.0);
                     audioBuffer = edgeResult.buffer;
                     mimeType = edgeResult.mimeType;
                     engineUsed = "studio-neural-hoaimy-namminh";
@@ -366,9 +393,7 @@ export async function POST(req: NextRequest) {
         // ƯU TIÊN 3: Microsoft Edge (Chỉ dùng khi người dùng chủ động chọn engine "edge")
         if (!audioBuffer && engine === "edge") {
             try {
-                const edgePromise = synthesizeWithEdgeTTS(normalizedText, styleKey, Number(rateMultiplier) || 1.0);
-                const timeoutPromise = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Edge WebSocket timeout")), 9000));
-                const edgeResult = await Promise.race([edgePromise, timeoutPromise]);
+                const edgeResult = await synthesizeWithEdgeTTS(normalizedText, styleKey, Number(rateMultiplier) || 1.0);
                 audioBuffer = edgeResult.buffer;
                 mimeType = edgeResult.mimeType;
                 engineUsed = "edge-neural";
@@ -383,15 +408,28 @@ export async function POST(req: NextRequest) {
             throw new Error("Không thể tạo dữ liệu âm thanh.");
         }
 
+        // ── SAVE TO SERVER IN-MEMORY CACHE ──
+        globalTtsCache.set(cacheKey, {
+            buffer: audioBuffer,
+            mimeType,
+            engineUsed,
+            timestamp: Date.now()
+        });
+        if (globalTtsCache.size > 200) {
+            const oldestKey = globalTtsCache.keys().next().value;
+            if (oldestKey) globalTtsCache.delete(oldestKey);
+        }
+
         return new NextResponse(new Uint8Array(audioBuffer), {
             status: 200,
             headers: {
                 "Content-Type": mimeType,
                 "Content-Length": audioBuffer.length.toString(),
-                "Content-Disposition": `inline; filename="voiceover_gemini_${styleKey}.${mimeType.includes("wav") ? "wav" : "mp3"}"`,
-                "Cache-Control": "public, max-age=3600",
+                "Content-Disposition": `inline; filename="voiceover_${styleKey}.${mimeType.includes("wav") ? "wav" : "mp3"}"`,
+                "Cache-Control": "public, max-age=86400",
                 "X-TTS-Engine": engineUsed,
-                "X-TTS-Voice": styleKey
+                "X-TTS-Voice": styleKey,
+                "X-TTS-Cache": "MISS"
             }
         });
     } catch (err: any) {
