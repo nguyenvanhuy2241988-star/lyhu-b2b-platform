@@ -49,6 +49,7 @@ export interface TikTokTrendingSound {
     duration: string;
     useCase: string;
     isHot?: boolean;
+    category?: "trending" | "food" | "warehouse" | "lofi" | "hype";
 }
 
 export interface BgmPreset {

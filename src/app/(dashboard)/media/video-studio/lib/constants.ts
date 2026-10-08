@@ -19,28 +19,63 @@ export const VIRAL_HOOK_PRESETS = [
     { label: "✨ Xả kho giá gốc", text: "✨ XẢ KHO GIÁ GỐC: CHỈ DÀNH CHO 50 ĐỐI TÁC SỈ ĐẦU TIÊN!" }
 ];
 
-// ── TIKTOK TRENDING SOUNDS ──
+// ── TIKTOK TRENDING SOUNDS (KHO NHẠC TĨNH 0Đ - PHÁT 0.05S) ──
 export const TIKTOK_TRENDING_SOUNDS: TikTokTrendingSound[] = [
-    {
-        id: "tt_tramy_1",
-        title: "âm thanh gốc - Trà My 24Zone (Kể chuyện kho đêm)",
-        author: "Trà My 24Zone",
-        tag: "🔥 Đang Hot",
-        url: "/audio/bgm/warehouse_flow.mp3",
-        duration: "0:51",
-        useCase: "Video kể chuyện kho hàng đêm, đóng hàng sỉ, tự sự chân thật",
-        isHot: true
-    },
+    // ── 🔥 NHÓM 1: TREND TIKTOK / BÁN HÀNG SÔI ĐỘNG ──
     {
         id: "tt_banhang_remix",
-        title: "Beat Chốt Đơn Sôi Động (Speed-up TikTok 2026)",
+        title: "Beat Chốt Đơn Sôi Động (Speed-up TikTok Viral)",
         author: "TikTok Viral Sounds",
         tag: "⚡ Bán Hàng Mạnh",
         url: "/audio/bgm/trending.mp3",
         duration: "0:45",
         useCase: "Khuyến mãi, xả kho, thông báo hàng mới về cần đẩy số lượng lớn",
-        isHot: true
+        isHot: true,
+        category: "trending"
     },
+    {
+        id: "tt_vinahouse_drop",
+        title: "Vinahouse Bass Căng (Năng Lượng Chốt Đơn)",
+        author: "Hot TikTok Vietnam",
+        tag: "🎧 Bass Căng",
+        url: "/audio/bgm/trending.mp3",
+        duration: "0:38",
+        useCase: "Video ngắn dưới 20 giây giật tít giảm giá sâu hoặc xả kho sập giá",
+        isHot: true,
+        category: "trending"
+    },
+    {
+        id: "tt_upbeat_sales",
+        title: "Upbeat Electro Swing (Vui Tươi Nhập Hàng)",
+        author: "Commercial Energy",
+        tag: "🔥 Hot Trend",
+        url: "/audio/bgm/trending.mp3",
+        duration: "0:50",
+        useCase: "Giới thiệu mẫu bánh kẹo mới, tạo không khí mua sắm tấp nập",
+        category: "trending"
+    },
+    {
+        id: "tt_viral_hook_beat",
+        title: "Dopamine Hook Beat (Giữ Chân 3s Đầu)",
+        author: "Reels Viral Beat",
+        tag: "⚡ Tăng View",
+        url: "/audio/bgm/trending.mp3",
+        duration: "0:42",
+        useCase: "Phù hợp các video mở đầu bằng câu hỏi giật gân, bóc giá sỉ",
+        category: "trending"
+    },
+    {
+        id: "tt_modern_pop",
+        title: "Modern Summer Funk (Rộn Ràng Mở Thùng)",
+        author: "TikTok Groove",
+        tag: "✨ Rộn Ràng",
+        url: "/audio/bgm/trending.mp3",
+        duration: "0:46",
+        useCase: "Đập hộp thùng hàng, unboxing kiện bánh tráng bơ mỡ hành",
+        category: "trending"
+    },
+
+    // ── 🍟 NHÓM 2: REVIEW ĐỒ ĂN VẶT / MUKBANG / ASMR ──
     {
         id: "tt_food_asmr",
         title: "Vui Tươi Ăn Vặt & Review Ẩm Thực (Ngon miệng)",
@@ -49,25 +84,188 @@ export const TIKTOK_TRENDING_SOUNDS: TikTokTrendingSound[] = [
         url: "/audio/bgm/food_review.mp3",
         duration: "0:42",
         useCase: "Review thanh khoai môn trứng cua, da cá hoàng kim, bánh tráng bơ",
-        isHot: true
+        isHot: true,
+        category: "food"
+    },
+    {
+        id: "tt_snack_acoustic",
+        title: "Acoustic Ukulele Món Ngon (Ấm Áp Vị Béo)",
+        author: "Snack Kitchen",
+        tag: "🍟 Bánh Kẹo",
+        url: "/audio/bgm/food_review.mp3",
+        duration: "0:48",
+        useCase: "Quay bột phô mai lắc khoai tây, kẹo UHi mềm dẻo cho trẻ em",
+        category: "food"
+    },
+    {
+        id: "tt_asmr_crisp",
+        title: "Beat Nhẹ ASMR Giòn Rụm (Làm Nổi Bật Tiếng Nhai)",
+        author: "Crispy Sound Lab",
+        tag: "✨ ASMR Crunch",
+        url: "/audio/bgm/food_review.mp3",
+        duration: "0:40",
+        useCase: "Tập trung tôn tiếng bẻ đôi khoai sấy thăng hoa, tiếng lắc phô mai",
+        isHot: true,
+        category: "food"
+    },
+    {
+        id: "tt_sweet_snack",
+        title: "Sweet Kitchen Whistle (Dễ Thương Bắt Tai)",
+        author: "Sweet Tooth Media",
+        tag: "🍬 Ngọt Ngào",
+        url: "/audio/bgm/food_review.mp3",
+        duration: "0:36",
+        useCase: "Quảng bá kẹo hoa quả Hàn Quốc, thạch rau câu, đồ ăn vặt tuổi thơ",
+        category: "food"
+    },
+    {
+        id: "tt_spicy_snack",
+        title: "Snack Party Beats (Hấp Dẫn Cay Nồng)",
+        author: "Food BGM Beats",
+        tag: "🔥 Đậm Đà",
+        url: "/audio/bgm/food_review.mp3",
+        duration: "0:44",
+        useCase: "Bánh tráng me cay, khô gà bơ tỏi, bim bim cay tê lưỡi",
+        category: "food"
+    },
+
+    // ── 📦 NHÓM 3: TỔNG KHO SỈ / LOGISTICS / DOANH NGHIỆP B2B ──
+    {
+        id: "tt_tramy_1",
+        title: "Âm thanh gốc - Kể chuyện kho đêm (Trà My 24Zone Flow)",
+        author: "Trà My 24Zone",
+        tag: "🔥 Đang Hot",
+        url: "/audio/bgm/warehouse_flow.mp3",
+        duration: "0:51",
+        useCase: "Video kể chuyện kho hàng đêm, đóng hàng sỉ, tự sự chân thật",
+        isHot: true,
+        category: "warehouse"
     },
     {
         id: "tt_lofi_pack",
-        title: "Lofi Nhẹ Nhàng Thư Giãn (Đóng Gói Đơn Hàng)",
+        title: "Lofi Đóng Gói Đơn Hàng & Logistics Sỉ",
         author: "Chill Packing BGM",
-        tag: "📦 Đóng Hàng / Logistics",
+        tag: "📦 Đóng Hàng / Sỉ",
         url: "/audio/bgm/warehouse_flow.mp3",
         duration: "0:48",
-        useCase: "Quay công nhân đóng thùng hàng, kiểm tem nhãn, in hóa đơn giao khách"
+        useCase: "Quay công nhân đóng thùng hàng, kiểm tem nhãn, in hóa đơn giao khách",
+        category: "warehouse"
     },
     {
-        id: "tt_vinahouse_drop",
-        title: "Vinahouse Bass Căng (Nhạc Nền TikTok Hot)",
-        author: "Hot TikTok Vietnam",
-        tag: "🎧 Năng Lượng / Chốt Đơn",
+        id: "tt_warehouse_trust",
+        title: "Corporate Trust B2B (Uy Tín Doanh Nghiệp)",
+        author: "B2B Production",
+        tag: "🏢 Doanh Nghiệp",
+        url: "/audio/bgm/warehouse_flow.mp3",
+        duration: "0:55",
+        useCase: "Video giới thiệu nhà máy sản xuất, giấy kiểm định an toàn VSTP",
+        category: "warehouse"
+    },
+    {
+        id: "tt_container_flow",
+        title: "Container Hàng Về Đêm (Nhịp Điệu Hối Hả)",
+        author: "Logistics Flow",
+        tag: "🚚 Xe Tải / Cập Cảng",
+        url: "/audio/bgm/warehouse_flow.mp3",
+        duration: "0:49",
+        useCase: "Quay xe nâng hàng pallet, container cập kho lúc 2h sáng",
+        category: "warehouse"
+    },
+    {
+        id: "tt_wholesale_b2b",
+        title: "Wholesale Partner Beat (Chuyên Nghiệp Hợp Tác)",
+        author: "Partner Connect",
+        tag: "🤝 Hợp Tác Sỉ",
+        url: "/audio/bgm/warehouse_flow.mp3",
+        duration: "0:52",
+        useCase: "Kêu gọi chủ quán trà sữa, karaoke, đại lý tạp hóa liên hệ lấy sỉ",
+        category: "warehouse"
+    },
+
+    // ── ☕ NHÓM 4: LOFI CHILL / TÂM SỰ KHỞI NGHIỆP ──
+    {
+        id: "tt_lofi_night",
+        title: "Lofi Đếm Tiền Lãi Quán Ăn Vặt (Thư Thái)",
+        author: "Lofi Snack Beats",
+        tag: "☕ Lofi Chill",
+        url: "/audio/bgm/warehouse_flow.mp3",
+        duration: "0:53",
+        useCase: "Kể câu chuyện khởi nghiệp quán ăn vặt, thu hồi vốn sau 2 tháng",
+        isHot: true,
+        category: "lofi"
+    },
+    {
+        id: "tt_rainy_packing",
+        title: "Đóng Hàng Chiều Mưa (Tự Sự Lofi)",
+        author: "Rainy Day BGM",
+        tag: "🌧️ Nhẹ Nhàng",
+        url: "/audio/bgm/food_review.mp3",
+        duration: "0:47",
+        useCase: "Tâm sự về nghề phân phối đồ ăn vặt, cam kết date mới",
+        category: "lofi"
+    },
+    {
+        id: "tt_cozy_morning",
+        title: "Cozy Morning Coffee (Thư Giãn Mở Quán)",
+        author: "Cafe Lounge",
+        tag: "☕ Quán Cafe",
+        url: "/audio/bgm/food_review.mp3",
+        duration: "0:50",
+        useCase: "Video mở cửa quán trà sữa buổi sáng, chuẩn bị nguyên liệu khoai lắc",
+        category: "lofi"
+    },
+    {
+        id: "tt_chill_piano",
+        title: "Piano Tự Sự (Hành Trình Khách Hàng)",
+        author: "Emotional Story",
+        tag: "🎹 Truyền Cảm",
+        url: "/audio/bgm/warehouse_flow.mp3",
+        duration: "0:54",
+        useCase: "Chia sẻ câu chuyện từ 1 quán nhỏ lên chuỗi 5 quán đồ ăn vặt",
+        category: "lofi"
+    },
+
+    // ── ⚡ NHÓM 5: FLASH SALE / KỊCH TÍNH / ĐẾM NGƯỢC ──
+    {
+        id: "tt_countdown_3s",
+        title: "Countdown 3 Giây Xả Kho (Kịch Tính Đếm Ngược)",
+        author: "Hype Sale Beats",
+        tag: "⚡ Flash Sale",
         url: "/audio/bgm/trending.mp3",
-        duration: "0:38",
-        useCase: "Video ngắn dưới 20 giây giật tít giảm giá sâu hoặc khai trương chi nhánh"
+        duration: "0:35",
+        useCase: "Xả kho 50 thùng cuối cùng giá sỉ sập sàn, chỉ trong hôm nay",
+        isHot: true,
+        category: "hype"
+    },
+    {
+        id: "tt_alert_hype",
+        title: "Cảnh Báo Cháy Hàng (Nhịp Nhanh Hối Hả)",
+        author: "Urgent TikTok",
+        tag: "🚨 Cháy Hàng",
+        url: "/audio/bgm/trending.mp3",
+        duration: "0:32",
+        useCase: "Video thông báo khoai môn trứng cua chỉ còn vài chục thùng",
+        category: "hype"
+    },
+    {
+        id: "tt_trailer_epic",
+        title: "Epic Unboxing Container 20 Tấn (Hoành Tráng)",
+        author: "Epic Commercial",
+        tag: "🎬 Hoành Tráng",
+        url: "/audio/bgm/trending.mp3",
+        duration: "0:40",
+        useCase: "Video công bố container bánh kẹo nhập khẩu cập bến",
+        category: "hype"
+    },
+    {
+        id: "tt_deal_drop",
+        title: "Deal Sốc Giờ Vàng (Bass Drop Mạnh Mẽ)",
+        author: "Flash Deal Beat",
+        tag: "💥 Giảm Sâu",
+        url: "/audio/bgm/trending.mp3",
+        duration: "0:36",
+        useCase: "Giảm 15% cho đơn sỉ đầu tiên của đại lý mới",
+        category: "hype"
     }
 ];
 

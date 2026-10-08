@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import {
     Music,
     Sparkles,
@@ -14,7 +14,11 @@ import {
     Volume2,
     Gauge,
     ArrowLeft,
-    Download
+    Download,
+    Search,
+    Upload,
+    SlidersHorizontal,
+    Plus
 } from "lucide-react";
 import { ViralityScore, TikTokTrendingSound } from "../../types";
 import { BGM_PRESETS, TIKTOK_TRENDING_SOUNDS } from "../../lib/constants";
@@ -106,6 +110,34 @@ export const Step4AudioExport: React.FC<Step4AudioExportProps> = ({
     aspectRatio = "9:16",
     onPrev
 }) => {
+    const [bgmCategoryFilter, setBgmCategoryFilter] = useState<"all" | "trending" | "food" | "warehouse" | "lofi" | "hype">("all");
+    const [bgmSearchQuery, setBgmSearchQuery] = useState("");
+    const customMusicInputRef = useRef<HTMLInputElement>(null);
+
+    const filteredTrendingSounds = TIKTOK_TRENDING_SOUNDS.filter((s) => {
+        const matchCategory = bgmCategoryFilter === "all" || s.category === bgmCategoryFilter;
+        const matchSearch = !bgmSearchQuery.trim() ||
+            s.title.toLowerCase().includes(bgmSearchQuery.toLowerCase()) ||
+            s.useCase.toLowerCase().includes(bgmSearchQuery.toLowerCase()) ||
+            s.tag.toLowerCase().includes(bgmSearchQuery.toLowerCase());
+        return matchCategory && matchSearch;
+    });
+
+    const handleCustomMp3Upload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const objectUrl = URL.createObjectURL(file);
+        handleApplyTikTokSound({
+            id: `custom_${Date.now()}`,
+            title: `🎵 ${file.name.replace(/\.[^/.]+$/, "")} (File từ máy tính)`,
+            author: "Tải từ máy tính",
+            tag: "📁 Nhạc Riêng",
+            url: objectUrl,
+            duration: "Gốc",
+            useCase: "Nhạc nền MP3 do người dùng tự tải lên từ thiết bị cá nhân"
+        });
+    };
+
     return (
         <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 space-y-4">
             {/* Header */}
@@ -205,101 +237,134 @@ export const Step4AudioExport: React.FC<Step4AudioExportProps> = ({
                     </div>
                 )}
 
-                {/* MANUAL TIKTOK TREND */}
+                {/* MANUAL TIKTOK TREND & STATIC BGM CATALOG (0Đ MÁY CHỦ, 0.05S TỨC THÌ) */}
                 {bgmMode === "manual_trend" && (
-                    <div className="space-y-2.5">
-                        {/* URL EXTRACT */}
-                        <div className="p-3 rounded-lg bg-white border border-slate-200 space-y-2">
-                            <label className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                                <Zap className="w-3.5 h-3.5 text-primary-600" />
-                                <span>Trích xuất âm thanh từ link TikTok:</span>
-                            </label>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="text"
-                                    value={tiktokExtractUrl}
-                                    onChange={(e) => setTiktokExtractUrl(e.target.value)}
-                                    placeholder="Dán link video TikTok cần bóc tách nhạc..."
-                                    className="flex-1 px-3 py-1.5 rounded-md border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-primary-500"
-                                />
+                    <div className="space-y-3">
+                        {/* CATEGORY FILTER PILLS */}
+                        <div className="flex flex-wrap items-center gap-1.5 pb-1">
+                            {[
+                                { id: "all", label: "Tất cả (23)" },
+                                { id: "trending", label: "🔥 Hot Trend & Bán Hàng" },
+                                { id: "food", label: "🍟 Review Đồ Ăn & ASMR" },
+                                { id: "warehouse", label: "📦 Tổng Kho Sỉ B2B" },
+                                { id: "lofi", label: "☕ Lofi Chill" },
+                                { id: "hype", label: "⚡ Flash Sale & Hype" }
+                            ].map((cat) => (
                                 <button
+                                    key={cat.id}
                                     type="button"
-                                    onClick={() => handleExtractTikTokSound()}
-                                    disabled={isExtractingTikTokSound}
-                                    className="px-3 py-1.5 rounded-md bg-primary-500 hover:bg-primary-600 text-white font-bold text-xs flex items-center gap-1.5 disabled:opacity-50 transition-colors cursor-pointer"
+                                    onClick={() => setBgmCategoryFilter(cat.id as any)}
+                                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                                        bgmCategoryFilter === cat.id
+                                            ? "bg-primary-500 text-white shadow-xs"
+                                            : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                                    }`}
                                 >
-                                    {isExtractingTikTokSound ? (
-                                        <>
-                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                            <span>Đang tách...</span>
-                                        </>
-                                    ) : (
-                                        <span>Tách Nhạc</span>
-                                    )}
+                                    {cat.label}
                                 </button>
-                            </div>
+                            ))}
                         </div>
 
-                        {/* LIST */}
-                        <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
-                            {TIKTOK_TRENDING_SOUNDS.map((sound) => {
-                                const isPlayingThis = previewingSoundUrl === sound.url;
-                                const isSelected = bgmChoice === sound.id;
-                                return (
-                                    <div
-                                        key={sound.id}
-                                        className={`p-2 rounded-lg border transition-colors flex items-center justify-between gap-2 text-xs ${
-                                            isSelected
-                                                ? "bg-primary-50 border-primary-500"
-                                                : "bg-white border-slate-200 hover:border-slate-300"
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleTogglePreviewSound(sound.url)}
-                                                className={`p-1.5 rounded-md shrink-0 transition-colors cursor-pointer border ${
-                                                    isPlayingThis
-                                                        ? "bg-primary-500 text-white border-primary-500"
-                                                        : "bg-white text-slate-700 hover:bg-slate-50 border-slate-200"
-                                                }`}
-                                            >
-                                                {isPlayingThis ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                                            </button>
-                                            <div className="min-w-0">
-                                                <div className="font-semibold truncate text-slate-800">
-                                                    {sound.title}
-                                                </div>
-                                                <div className="text-[10px] text-slate-500">
-                                                    {sound.tag} • {sound.duration}
+                        {/* SEARCH & CUSTOM UPLOAD BAR */}
+                        <div className="flex flex-col sm:flex-row items-center gap-2">
+                            <div className="relative flex-1 w-full">
+                                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="text"
+                                    value={bgmSearchQuery}
+                                    onChange={(e) => setBgmSearchQuery(e.target.value)}
+                                    placeholder="Tìm nhạc theo tên, phong cách (khoai môn, bán hàng, kho đêm, vui nhộn...)"
+                                    className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-primary-500 bg-white"
+                                />
+                            </div>
+
+                            {/* UPLOAD CUSTOM MP3 BUTTON */}
+                            <input
+                                ref={customMusicInputRef}
+                                type="file"
+                                accept="audio/*"
+                                className="hidden"
+                                onChange={handleCustomMp3Upload}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => customMusicInputRef.current?.click()}
+                                className="w-full sm:w-auto px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                            >
+                                <Upload className="w-3.5 h-3.5 text-primary-600" />
+                                <span>Tải Nhạc Riêng (0đ)</span>
+                            </button>
+                        </div>
+
+                        {/* TRACK LIST */}
+                        <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                            {filteredTrendingSounds.length === 0 ? (
+                                <div className="p-4 text-center text-xs text-slate-400 bg-white rounded-lg border border-slate-200">
+                                    Không tìm thấy bài hát nào phù hợp với từ khóa & bộ lọc.
+                                </div>
+                            ) : (
+                                filteredTrendingSounds.map((sound) => {
+                                    const isPlayingThis = previewingSoundUrl === sound.url;
+                                    const isSelected = bgmChoice === sound.id;
+                                    return (
+                                        <div
+                                            key={sound.id}
+                                            className={`p-2.5 rounded-lg border transition-all flex items-center justify-between gap-2 text-xs ${
+                                                isSelected
+                                                    ? "bg-primary-50/70 border-primary-500 ring-1 ring-primary-400 shadow-xs"
+                                                    : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs"
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleTogglePreviewSound(sound.url)}
+                                                    className={`p-2 rounded-lg shrink-0 transition-colors cursor-pointer border ${
+                                                        isPlayingThis
+                                                            ? "bg-primary-500 text-white border-primary-500 animate-pulse"
+                                                            : "bg-slate-50 text-slate-700 hover:bg-primary-50 hover:text-primary-600 border-slate-200"
+                                                    }`}
+                                                    title={isPlayingThis ? "Tạm dừng nghe thử" : "Nghe thử bản nhạc"}
+                                                >
+                                                    {isPlayingThis ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                                                </button>
+                                                <div className="min-w-0">
+                                                    <div className="font-bold truncate text-slate-900 text-xs">
+                                                        {sound.title}
+                                                    </div>
+                                                    <div className="text-[11px] text-slate-500 truncate mt-0.5">
+                                                        <span className="font-medium text-primary-700">{sound.tag}</span> • {sound.duration} • {sound.useCase}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className="flex items-center gap-1 shrink-0">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleCopySoundTitle(sound.title)}
-                                                className="px-2 py-0.5 rounded border border-slate-200 bg-white text-[10px] text-slate-600 hover:bg-slate-50 cursor-pointer"
-                                            >
-                                                {copiedSoundTitle === sound.title ? <Check className="w-3 h-3 text-emerald-600 inline" /> : <Copy className="w-3 h-3 inline" />}
-                                                <span className="ml-1">Copy</span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleApplyTikTokSound(sound)}
-                                                className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${
-                                                    isSelected
-                                                        ? "bg-primary-500 text-white"
-                                                        : "bg-slate-100 hover:bg-primary-500 hover:text-white text-slate-700"
-                                                }`}
-                                            >
-                                                {isSelected ? "Đang chọn" : "+ Gắn"}
-                                            </button>
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleApplyTikTokSound(sound)}
+                                                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                                        isSelected
+                                                            ? "bg-emerald-600 text-white shadow-xs"
+                                                            : "bg-primary-500 hover:bg-primary-600 text-white shadow-xs"
+                                                    }`}
+                                                >
+                                                    {isSelected ? (
+                                                        <>
+                                                            <Check className="w-3.5 h-3.5" />
+                                                            <span>Đang Dùng</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Plus className="w-3.5 h-3.5" />
+                                                            <span>Áp Dụng</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })
+                            )}
                         </div>
                     </div>
                 )}
