@@ -201,7 +201,7 @@ export default function AutoVideoStudioPage() {
     const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
     // ── AI SCRIPT & STYLE CLONE STATE ──
-    const [scriptInputMode, setScriptInputMode] = useState<"ai_prompt" | "clone_link" | "templates">("ai_prompt");
+    const [scriptInputMode, setScriptInputMode] = useState<"ai_chat" | "ai_prompt" | "clone_link" | "templates">("ai_chat");
     const [isCloneModalOpen, setIsCloneModalOpen] = useState(true);
     const [cloneRefUrl, setCloneRefUrl] = useState("");
     const [cloneTopic, setCloneTopic] = useState("Hàng khoai môn CVT container về buổi đêm date mới tinh");
@@ -2920,6 +2920,8 @@ export default function AutoVideoStudioPage() {
                             voiceDuration={voiceDuration}
                             scriptInputMode={scriptInputMode}
                             setScriptInputMode={setScriptInputMode}
+                            customHookTitle={customHookTitle}
+                            setCustomHookTitle={setCustomHookTitle}
                             cloneTopic={cloneTopic}
                             setCloneTopic={setCloneTopic}
                             handleCloneStyle={handleCloneStyle}

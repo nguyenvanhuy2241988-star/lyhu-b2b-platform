@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
     FileText,
     Sparkles,
@@ -13,17 +13,25 @@ import {
     Pause,
     ArrowRight,
     Camera,
-    Zap
+    Zap,
+    MessageSquare,
+    Send,
+    Bot,
+    User,
+    Check,
+    RotateCcw
 } from "lucide-react";
 import { LYHU_TEMPLATES } from "../../lib/constants";
 
 interface Step1ScriptProps {
     selectedVoiceText: string;
     setSelectedVoiceText: (text: string) => void;
+    customHookTitle?: string;
+    setCustomHookTitle?: (val: string) => void;
     voiceDuration: number;
     selectedVoiceAudioUrl: string | null;
-    scriptInputMode: "ai_prompt" | "clone_link" | "templates";
-    setScriptInputMode: (mode: "ai_prompt" | "clone_link" | "templates") => void;
+    scriptInputMode: "ai_chat" | "ai_prompt" | "clone_link" | "templates";
+    setScriptInputMode: (mode: "ai_chat" | "ai_prompt" | "clone_link" | "templates") => void;
     cloneTopic: string;
     setCloneTopic: (topic: string) => void;
     handleCloneStyle: (topic: string, link: string) => void;
@@ -62,6 +70,8 @@ interface Step1ScriptProps {
 export const Step1Script: React.FC<Step1ScriptProps> = ({
     selectedVoiceText,
     setSelectedVoiceText,
+    customHookTitle,
+    setCustomHookTitle,
     voiceDuration,
     selectedVoiceAudioUrl,
     scriptInputMode,
@@ -107,6 +117,110 @@ export const Step1Script: React.FC<Step1ScriptProps> = ({
     };
     const wordCount = selectedVoiceText.split(/\s+/).filter(Boolean).length;
     const estDuration = Math.round(wordCount / 3.2);
+
+    // ── AI CHAT CO-WRITER STATE ──
+    interface ChatMessage {
+        id: string;
+        role: "user" | "assistant";
+        content: string;
+        scriptDraft?: {
+            hookTitle: string;
+            script: string;
+            estimatedSeconds?: number;
+            pacing?: number;
+            scenes?: Array<{ visual: string; audio: string }>;
+        } | null;
+        timestamp: string;
+    }
+
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+        {
+            id: "msg_welcome",
+            role: "assistant",
+            content: "Xin chào! Tôi là AI Đạo Diễn & Biên Kịch kịch bản video ngắn triệu view của LYHU. Hãy trò chuyện với tôi về ý tưởng hoặc sản phẩm bạn muốn làm video (Khoai môn CVT, Bột phô mai BOYO, Kẹo UHi, Bánh tráng Abi...). Tôi sẽ cùng bạn trao đổi, điều chỉnh câu chữ và chốt kịch bản ưng ý nhất!",
+            scriptDraft: null,
+            timestamp: "Mới"
+        }
+    ]);
+    const [chatInput, setChatInput] = useState("");
+    const [isChatSending, setIsChatSending] = useState(false);
+    const [appliedChatId, setAppliedChatId] = useState<string | null>(null);
+    const chatEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (scriptInputMode === "ai_chat") {
+            chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [chatMessages, scriptInputMode]);
+
+    const handleSendChatMessage = async (userPromptText?: string) => {
+        const textToSend = (userPromptText || chatInput).trim();
+        if (!textToSend || isChatSending) return;
+
+        const userMsg: ChatMessage = {
+            id: `user_${Date.now()}`,
+            role: "user",
+            content: textToSend,
+            timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+        };
+
+        const newHistory = [...chatMessages, userMsg];
+        setChatMessages(newHistory);
+        setChatInput("");
+        setIsChatSending(true);
+
+        try {
+            const payloadMessages = newHistory.map(m => ({
+                role: m.role,
+                content: m.content
+            }));
+
+            const res = await fetch("/api/ai/script-chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    messages: payloadMessages,
+                    currentScript: selectedVoiceText,
+                    currentHookTitle: customHookTitle
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                const aiMsg: ChatMessage = {
+                    id: `ai_${Date.now()}`,
+                    role: "assistant",
+                    content: data.reply || "Dưới đây là phương án kịch bản tối ưu dành cho bạn:",
+                    scriptDraft: data.scriptDraft || null,
+                    timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+                };
+                setChatMessages(prev => [...prev, aiMsg]);
+            } else {
+                throw new Error(data.error || "Không thể nhận phản hồi từ AI");
+            }
+        } catch (err: any) {
+            setChatMessages(prev => [
+                ...prev,
+                {
+                    id: `err_${Date.now()}`,
+                    role: "assistant",
+                    content: `⚠️ Có lỗi xảy ra: ${err?.message || "Không thể kết nối đến AI Biên Kịch"}. Vui lòng thử lại!`,
+                    scriptDraft: null,
+                    timestamp: "Lỗi"
+                }
+            ]);
+        } finally {
+            setIsChatSending(false);
+        }
+    };
+
+    const handleApplyScriptDraft = (draft: { hookTitle: string; script: string }, msgId: string) => {
+        setSelectedVoiceText(draft.script);
+        if (setCustomHookTitle && draft.hookTitle) {
+            setCustomHookTitle(draft.hookTitle);
+        }
+        setAppliedChatId(msgId);
+    };
 
     return (
         <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 space-y-4">
@@ -207,6 +321,18 @@ export const Step1Script: React.FC<Step1ScriptProps> = ({
                     <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-slate-200">
                         <button
                             type="button"
+                            onClick={() => setScriptInputMode("ai_chat")}
+                            className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                                scriptInputMode === "ai_chat"
+                                    ? "bg-primary-500 text-white shadow-xs"
+                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                            }`}
+                        >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            <span>Chat AI Biên Kịch</span>
+                        </button>
+                        <button
+                            type="button"
                             onClick={() => setScriptInputMode("ai_prompt")}
                             className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer ${
                                 scriptInputMode === "ai_prompt"
@@ -240,6 +366,197 @@ export const Step1Script: React.FC<Step1ScriptProps> = ({
                         </button>
                     </div>
                 </div>
+
+                {/* TAB 0: CHAT 2 CHIỀU VỚI AI BIÊN KỊCH (CHATGPT / GEMINI) */}
+                {scriptInputMode === "ai_chat" && (
+                    <div className="space-y-3">
+                        {/* Quick Prompts Chips */}
+                        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                            <span className="text-slate-500 font-medium">Gợi ý nhanh:</span>
+                            {[
+                                {
+                                    label: "🔥 Khoai Môn CVT Trứng Cua",
+                                    prompt: "Viết kịch bản video TikTok 25s cho sản phẩm Khoai môn sấy CVT vị trứng cua & nấm truffle, nhắm đến quán karaoke, beer club nhập sỉ. Phong cách giòn rụm bắt mắt, chốt sỉ tận gốc."
+                                },
+                                {
+                                    label: "🧀 Bột Phô Mai BOYO 1kg",
+                                    prompt: "Viết kịch bản video TikTok 20s cho Bột phô mai BOYO 1kg, nhắm đến chủ quán khoai lắc và gà rán. Nhấn mạnh thơm nồng béo ngậy, 1 vốn 4 lời, giao nhanh."
+                                },
+                                {
+                                    label: "🍬 Kẹo UHi Hàn Quốc",
+                                    prompt: "Viết kịch bản video ngắn cho Kẹo hoa quả UHi nhập khẩu độc quyền Hàn Quốc, date mới toanh cho chuỗi siêu thị và mini mart."
+                                },
+                                {
+                                    label: "📦 Bánh Tráng Abi Snack Sỉ",
+                                    prompt: "Viết kịch bản xả kho sỉ 100 thùng bánh tráng Abi bơ mỡ hành và da cá hoàng kim, chiết khấu sâu cho đại lý sỉ đồ ăn vặt."
+                                }
+                            ].map((chip, idx) => (
+                                <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => handleSendChatMessage(chip.prompt)}
+                                    disabled={isChatSending}
+                                    className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-800 transition-colors cursor-pointer disabled:opacity-50"
+                                >
+                                    {chip.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Chat Messages Log */}
+                        <div className="bg-white rounded-xl border border-slate-200 p-3 max-h-[360px] min-h-[180px] overflow-y-auto space-y-3 shadow-inner">
+                            {chatMessages.map((msg) => (
+                                <div
+                                    key={msg.id}
+                                    className={`flex gap-2.5 ${
+                                        msg.role === "user" ? "justify-end" : "justify-start"
+                                    }`}
+                                >
+                                    {msg.role === "assistant" && (
+                                        <div className="w-7 h-7 rounded-lg bg-primary-100 text-primary-700 border border-primary-200 flex items-center justify-center shrink-0 mt-0.5">
+                                            <Bot className="w-4 h-4" />
+                                        </div>
+                                    )}
+
+                                    <div
+                                        className={`max-w-[85%] rounded-xl p-3 text-xs leading-relaxed space-y-2 ${
+                                            msg.role === "user"
+                                                ? "bg-primary-600 text-white rounded-tr-xs"
+                                                : "bg-slate-50 text-slate-800 border border-slate-200 rounded-tl-xs"
+                                        }`}
+                                    >
+                                        <p className="whitespace-pre-wrap">{msg.content}</p>
+
+                                        {/* If Assistant proposed a script draft */}
+                                        {msg.scriptDraft && (
+                                            <div className="mt-2.5 p-3 rounded-lg bg-white border border-primary-200 shadow-xs space-y-2 text-slate-900">
+                                                <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
+                                                    <span className="text-[10px] uppercase font-bold text-primary-700 bg-primary-50 px-2 py-0.5 rounded border border-primary-200">
+                                                        🎯 Kịch bản đề xuất
+                                                    </span>
+                                                    {msg.scriptDraft.estimatedSeconds && (
+                                                        <span className="text-[10px] text-slate-500 font-medium">
+                                                            ~{msg.scriptDraft.estimatedSeconds}s đọc
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {msg.scriptDraft.hookTitle && (
+                                                    <div className="bg-amber-50 border border-amber-200 px-2.5 py-1.5 rounded text-[11px] font-bold text-amber-900">
+                                                        {msg.scriptDraft.hookTitle}
+                                                    </div>
+                                                )}
+
+                                                <div className="bg-slate-50 p-2.5 rounded border border-slate-200 font-medium text-slate-800 text-[11px] leading-relaxed whitespace-pre-wrap">
+                                                    {msg.scriptDraft.script}
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleApplyScriptDraft(msg.scriptDraft!, msg.id)}
+                                                    className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs ${
+                                                        appliedChatId === msg.id
+                                                            ? "bg-emerald-600 text-white"
+                                                            : "bg-primary-500 hover:bg-primary-600 text-white"
+                                                    }`}
+                                                >
+                                                    {appliedChatId === msg.id ? (
+                                                        <>
+                                                            <Check className="w-4 h-4" />
+                                                            <span>✓ Đã Áp Dụng Vào Kịch Bản Video</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Zap className="w-4 h-4" />
+                                                            <span>⚡ Chốt & Áp Dụng Kịch Bản Này Vào Video</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        <div
+                                            className={`text-[9px] text-right ${
+                                                msg.role === "user" ? "text-primary-100" : "text-slate-400"
+                                            }`}
+                                        >
+                                            {msg.timestamp}
+                                        </div>
+                                    </div>
+
+                                    {msg.role === "user" && (
+                                        <div className="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0 mt-0.5">
+                                            <User className="w-4 h-4" />
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+
+                            {isChatSending && (
+                                <div className="flex gap-2.5 items-center text-xs text-primary-700 bg-primary-50 border border-primary-200 p-2.5 rounded-lg w-fit">
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-primary-600" />
+                                    <span>AI Đạo Diễn đang soạn kịch bản theo phản hồi của bạn...</span>
+                                </div>
+                            )}
+
+                            <div ref={chatEndRef} />
+                        </div>
+
+                        {/* Chat Input Bar */}
+                        <div className="space-y-1.5">
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    handleSendChatMessage();
+                                }}
+                                className="flex gap-2 items-center"
+                            >
+                                <input
+                                    type="text"
+                                    value={chatInput}
+                                    onChange={(e) => setChatInput(e.target.value)}
+                                    placeholder="Trao đổi với AI (VD: Sửa câu đầu giật gân hơn, rút ngắn còn 20s, thêm giá sỉ...)"
+                                    disabled={isChatSending}
+                                    className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-primary-500 text-slate-800 font-medium"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={!chatInput.trim() || isChatSending}
+                                    className="py-2 px-3.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shrink-0"
+                                >
+                                    {isChatSending ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                        <Send className="w-3.5 h-3.5" />
+                                    )}
+                                    <span>Gửi</span>
+                                </button>
+                            </form>
+
+                            {/* Quick refinement suggestions */}
+                            <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-[10px] text-slate-500">
+                                <span>Phản hồi nhanh:</span>
+                                {[
+                                    "✂️ Rút ngắn kịch bản còn 20 giây",
+                                    "🔥 Viết câu mở đầu giật gân hơn nữa",
+                                    "📦 Nhấn mạnh giá sỉ tận xưởng & miễn phí ship",
+                                    "😄 Đổi sang phong cách vui nhộn, hài hước",
+                                    "🎯 Thêm lời kêu gọi inbox nhận mẫu thử"
+                                ].map((prompt, idx) => (
+                                    <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={() => handleSendChatMessage(prompt)}
+                                        disabled={isChatSending}
+                                        className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer disabled:opacity-50"
+                                    >
+                                        {prompt}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* TAB 1: AI Viết Theo Sản Phẩm / Ý Tưởng */}
                 {scriptInputMode === "ai_prompt" && (
