@@ -2023,39 +2023,73 @@ export default function AutoVideoStudioPage() {
         });
     };
 
-    // ── AI SMART AUTO-EDIT HANDLERS ──
-    const handleTriggerAutoEdit = async () => {
-        if (clips.length < 2) {
-            alert("Cần ít nhất 2 video hoặc ảnh để AI có thể phân tích và sắp xếp thứ tự cắt dựng!");
+    // ── CLIENT-SIDE INSTANT SCRIPT-TO-CLIP AUTO ALIGN (0.001s, 0đ VERCEL) ──
+    const handleTriggerAutoEdit = () => {
+        if (clips.length === 0) {
+            alert("Vui lòng tải lên ít nhất 1 video hoặc ảnh để ghép theo kịch bản!");
             return;
         }
-        setIsAutoEditModalOpen(true);
-        setIsAutoEditing(true);
-        setAutoEditProgressStep("Đang quét đa khung hình thị giác (Multi-Keyframe Vision)...");
-        setAutoEditProgressPercent(10);
-        setAutoEditResult(null);
 
-        try {
-            const result = await runSmartAutoEdit({
-                clips,
-                script: selectedVoiceText,
-                hookTitle: customHookTitle,
-                clipSwitchInterval,
-                totalDuration,
-                subtitleCues,
-                existingMediaElements: videoElementsRef.current,
-                onProgress: (step, percent) => {
-                    setAutoEditProgressStep(step);
-                    setAutoEditProgressPercent(percent);
-                }
+        // Tách kịch bản thành các câu thoại rõ ràng
+        const rawSentences = selectedVoiceText
+            .split(/(?<=[.!?\n])\s+/)
+            .map(s => s.trim())
+            .filter(Boolean);
+
+        const targetSentences = rawSentences.length > 0
+            ? rawSentences
+            : ["Hook 3s đầu mở màn cuốn hút", "Giới thiệu sản phẩm & nguồn hàng độc quyền", "Date mới toanh & cam kết chất lượng", "Kêu gọi hành động chốt sỉ tận gốc"];
+
+        const targetCount = targetSentences.length;
+        const perSentenceDuration = totalDuration > 0
+            ? Math.max(1.5, totalDuration / targetCount)
+            : clipSwitchInterval;
+
+        const alignedClips: VideoClip[] = [];
+        const usedIds = new Set<string>();
+
+        for (let i = 0; i < targetCount; i++) {
+            // Lấy clip độc nhất trong kho clips
+            let baseClip = clips.find((c, idx) => !usedIds.has(c.id) && idx === i) ||
+                           clips.find(c => !usedIds.has(c.id)) ||
+                           clips[i % clips.length];
+
+            const isReused = usedIds.has(baseClip.id);
+            const clipId = isReused ? `${baseClip.id}_cut${i + 1}` : baseClip.id;
+
+            // Bỏ 1.0s rung lắc ở đầu đối với video dài > 3s
+            const trimStart = baseClip.mediaType === "video" && (baseClip.duration || 5) > 3.0 ? 1.0 : 0;
+
+            const role = i === 0
+                ? "🎯 Hook 3s đầu"
+                : i === targetCount - 1
+                ? "🚀 Kêu gọi chốt sỉ (CTA)"
+                : `Phân cảnh #${i + 1}`;
+
+            alignedClips.push({
+                ...baseClip,
+                id: clipId,
+                trimStart,
+                displayDuration: perSentenceDuration,
+                role,
+                matchedSentence: targetSentences[i],
+                isAiSelected: true
             });
 
-            setAutoEditResult(result);
-            setIsAutoEditing(false);
-        } catch (err: any) {
-            setIsAutoEditing(false);
-            setAutoEditProgressStep("Gặp lỗi: " + (err?.message || "Không thể cắt dựng tự động."));
+            usedIds.add(baseClip.id);
         }
+
+        // Các clip còn lại đưa vào làm kho dự phòng
+        const backupClips = clips
+            .filter(c => !usedIds.has(c.id))
+            .map(c => ({ ...c, isAiSelected: false }));
+
+        setPreviousClipsBeforeAutoEdit([...clips]);
+        setClips([...alignedClips, ...backupClips]);
+        pausePlayback();
+        currentTimeRef.current = 0;
+        setDisplayTime(0);
+        setTimeout(() => drawCanvasFrame(0), 100);
     };
 
     const handleApplyCuratedAutoEdit = () => {
