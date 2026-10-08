@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useMemo } from "react";
 import { Play, Pause, RotateCcw, Film, Image as ImageIcon, MessageSquare } from "lucide-react";
 import { VideoClip, SubtitleCue } from "../../types";
 
@@ -20,7 +20,7 @@ function formatTime(seconds: number): string {
     return `${mins.toString().padStart(2, "0")}:${parseFloat(secs) < 10 ? "0" : ""}${secs}`;
 }
 
-export const StudioMiniTimeline: React.FC<StudioMiniTimelineProps> = ({
+const StudioMiniTimelineComponent: React.FC<StudioMiniTimelineProps> = ({
     clips,
     subtitleCues,
     currentTime,
@@ -54,26 +54,28 @@ export const StudioMiniTimeline: React.FC<StudioMiniTimelineProps> = ({
         "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
     ];
 
-    // Compute clip widths
-    let accumulatedTime = 0;
-    const clipLayouts = clips.map((clip, idx) => {
-        const dur = clip.displayDuration || clipSwitchInterval || 2.5;
-        const start = accumulatedTime;
-        const end = start + dur;
-        accumulatedTime = end;
+    // Compute clip widths (Memoized to prevent recalculating on every millisecond)
+    const clipLayouts = useMemo(() => {
+        let accumulatedTime = 0;
+        return clips.map((clip, idx) => {
+            const dur = clip.displayDuration || clipSwitchInterval || 2.5;
+            const start = accumulatedTime;
+            const end = start + dur;
+            accumulatedTime = end;
 
-        const leftPercent = (start / safeTotal) * 100;
-        const widthPercent = (dur / safeTotal) * 100;
+            const leftPercent = (start / safeTotal) * 100;
+            const widthPercent = (dur / safeTotal) * 100;
 
-        return {
-            clip,
-            idx,
-            dur,
-            leftPercent,
-            widthPercent,
-            colorClass: clipColorClasses[idx % clipColorClasses.length]
-        };
-    });
+            return {
+                clip,
+                idx,
+                dur,
+                leftPercent,
+                widthPercent,
+                colorClass: clipColorClasses[idx % clipColorClasses.length]
+            };
+        });
+    }, [clips, clipSwitchInterval, safeTotal]);
 
     return (
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-2.5 select-none text-slate-100 shadow-sm">
@@ -185,3 +187,5 @@ export const StudioMiniTimeline: React.FC<StudioMiniTimelineProps> = ({
         </div>
     );
 };
+
+export const StudioMiniTimeline = React.memo(StudioMiniTimelineComponent);

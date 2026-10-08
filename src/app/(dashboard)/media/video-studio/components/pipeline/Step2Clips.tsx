@@ -36,7 +36,8 @@ interface Step2ClipsProps {
     fileInputRef: React.RefObject<any>;
     isUploadingVideo: boolean;
     handleVideoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    displayTime: number;
+    displayTime?: number;
+    activeClipIndex?: number;
     setPreviewingClip: (clip: VideoClip) => void;
     handlePreviewSpecificClip: (idx: number) => void;
     moveClipToIndex: (fromIdx: number, toIdx: number) => void;
@@ -54,7 +55,7 @@ interface Step2ClipsProps {
     onNext: () => void;
 }
 
-export const Step2Clips: React.FC<Step2ClipsProps> = ({
+const Step2ClipsComponent: React.FC<Step2ClipsProps> = ({
     clips,
     aspectRatio,
     setAspectRatio,
@@ -67,7 +68,8 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
     fileInputRef,
     isUploadingVideo,
     handleVideoUpload,
-    displayTime,
+    displayTime = 0,
+    activeClipIndex,
     setPreviewingClip,
     handlePreviewSpecificClip,
     moveClipToIndex,
@@ -318,8 +320,10 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                     <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                         {clips.map((c, idx) => {
                             if (!c?.id) return null;
-                            const activeClipIndex = clips.length > 0 ? Math.floor(displayTime / Math.max(1.5, clipSwitchInterval || 2.5)) % clips.length : 0;
-                            const isCurrentlyPlayingThis = activeClipIndex === idx;
+                            const activeIdx = typeof activeClipIndex === "number"
+                                ? activeClipIndex
+                                : (clips.length > 0 ? Math.floor((displayTime || 0) / Math.max(1.5, clipSwitchInterval || 2.5)) % clips.length : 0);
+                            const isCurrentlyPlayingThis = activeIdx === idx;
                             return (
                                 <div
                                     key={c.id}
@@ -345,7 +349,7 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
                                             ) : (
                                                 <video
                                                     src={c.url}
-                                                    preload="metadata"
+                                                    preload="none"
                                                     muted
                                                     className="w-full h-full object-cover"
                                                 />
@@ -631,3 +635,5 @@ export const Step2Clips: React.FC<Step2ClipsProps> = ({
         </div>
     );
 };
+
+export const Step2Clips = React.memo(Step2ClipsComponent);

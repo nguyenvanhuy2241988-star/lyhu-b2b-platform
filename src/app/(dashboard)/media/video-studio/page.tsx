@@ -2110,8 +2110,8 @@ export default function AutoVideoStudioPage() {
                 return;
             }
 
-            // Throttle UI React state update to ~5 times per second to prevent stutter
-            if (now - lastUiUpdateRef.current > 180) {
+            // Throttle UI React state update to ~4 times per second to prevent stutter
+            if (now - lastUiUpdateRef.current > 250) {
                 setDisplayTime(nextTime);
                 lastUiUpdateRef.current = now;
             }
@@ -2206,11 +2206,13 @@ export default function AutoVideoStudioPage() {
                             }
                         }
                     } else if (currentClip?.id) {
-                        // Guard against video freezing if source ends or drifts
+                        // Guard against video freezing if source ends or drifts (with seeking lock guard and duration modulo)
                         const activeVid = videoElementsRef.current[currentClip.id];
-                        if (activeVid && typeof activeVid.currentTime === "number" && isFinite(activeInfo.localT)) {
-                            if (activeVid.ended || Math.abs(activeVid.currentTime - activeInfo.localT) > 0.45) {
-                                activeVid.currentTime = activeInfo.localT;
+                        if (activeVid && typeof activeVid.currentTime === "number" && isFinite(activeInfo.localT) && !activeVid.seeking) {
+                            const vidDur = (activeVid.duration && isFinite(activeVid.duration) && activeVid.duration > 0) ? activeVid.duration : 999;
+                            const targetLocalT = activeInfo.localT % vidDur;
+                            if (activeVid.ended || Math.abs(activeVid.currentTime - targetLocalT) > 0.4) {
+                                activeVid.currentTime = targetLocalT;
                                 if (activeVid.paused) activeVid.play().catch(() => {});
                             }
                         }
@@ -2576,11 +2578,13 @@ export default function AutoVideoStudioPage() {
                                 }
                             }
                         } else if (curClip?.id) {
-                            // Keep current video in sync if looped or drifted
+                            // Keep current video in sync if looped or drifted (with seeking lock guard and duration modulo)
                             const curVid = videoElementsRef.current[curClip.id];
-                            if (curVid && typeof curVid.currentTime === "number" && isFinite(activeInfo.localT)) {
-                                if (curVid.ended || Math.abs(curVid.currentTime - activeInfo.localT) > 0.45) {
-                                    curVid.currentTime = activeInfo.localT;
+                            if (curVid && typeof curVid.currentTime === "number" && isFinite(activeInfo.localT) && !curVid.seeking) {
+                                const vidDur = (curVid.duration && isFinite(curVid.duration) && curVid.duration > 0) ? curVid.duration : 999;
+                                const targetLocalT = activeInfo.localT % vidDur;
+                                if (curVid.ended || Math.abs(curVid.currentTime - targetLocalT) > 0.4) {
+                                    curVid.currentTime = targetLocalT;
                                     if (curVid.paused) curVid.play().catch(() => {});
                                 }
                             }
@@ -2967,6 +2971,7 @@ export default function AutoVideoStudioPage() {
                             fileInputRef={fileInputRef}
                             isUploadingVideo={isUploadingVideo}
                             handleVideoUpload={handleVideoUpload}
+                            activeClipIndex={clips.length > 0 ? (getActiveClipAtTime(clips, displayTime, clipSwitchInterval)?.clipIdx ?? 0) : 0}
                             displayTime={displayTime}
                             setPreviewingClip={setPreviewingClip}
                             handlePreviewSpecificClip={handlePreviewSpecificClip}
@@ -3300,7 +3305,7 @@ export default function AutoVideoStudioPage() {
                     zIndex: -999
                 }}
             >
-                {clips.map((clip) => {
+                {clips.map((clip, idx) => {
                     if (!clip?.id || !clip?.url) return null;
                     if (clip.mediaType === "image") {
                         return (
@@ -3328,7 +3333,7 @@ export default function AutoVideoStudioPage() {
                             src={clip.url}
                             playsInline
                             muted
-                            preload="auto"
+                            preload={idx < 4 ? "auto" : "metadata"}
                             crossOrigin="anonymous"
                         />
                     );
