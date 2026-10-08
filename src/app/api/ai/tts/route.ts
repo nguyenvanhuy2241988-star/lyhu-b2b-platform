@@ -224,69 +224,51 @@ async function synthesizeWithGeminiTTS(
     // Clean script text to be spoken - NEVER add prompt instructions inside text, as Gemini TTS will speak them out loud!
     const cleanScript = text.trim();
 
-    const endpoints = [
-        { name: "gemini-2.0-flash", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, timeoutMs: 15000 },
-        { name: "gemini-2.5-flash-preview-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`, timeoutMs: 15000 },
-        { name: "gemini-3.8-flash-tts", url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=${apiKey}`, timeoutMs: 12000 }
-    ];
-
-    let lastError = "";
-
-    for (const ep of endpoints) {
-        try {
-            console.log(`[Gemini TTS] Requesting ${ep.name} with voice ${voiceName}...`);
-            const url = ep.url;
-            const body = {
-                contents: [
-                    {
-                        role: "user",
-                        parts: [{ text: cleanScript }]
-                    }
-                ],
-                generationConfig: {
-                    temperature: 0.0, // Fixed 0.0 temperature locks voice timbre & removes randomness
-                    seed: 4242,       // Deterministic seed ensures identical voice across text edits
-                    responseModalities: ["AUDIO"],
-                    speechConfig: {
-                        voiceConfig: {
-                            prebuiltVoiceConfig: {
-                                voiceName
-                            }
+    try {
+        console.log(`[Gemini TTS] Trying Gemini Audio (voice: ${voiceName}, 3.5s fast-check)...`);
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        const body = {
+            contents: [
+                {
+                    role: "user",
+                    parts: [{ text: cleanScript }]
+                }
+            ],
+            generationConfig: {
+                temperature: 0.0,
+                seed: 4242,
+                responseModalities: ["AUDIO"],
+                speechConfig: {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: {
+                            voiceName
                         }
                     }
                 }
-            };
-
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body),
-                signal: AbortSignal.timeout(ep.timeoutMs)
-            });
-
-            if (!res.ok) {
-                const errText = await res.text();
-                lastError = `${ep.name} (${res.status}): ${errText.slice(0, 150)}`;
-                console.warn(`[Gemini TTS] ${lastError}`);
-                continue;
             }
+        };
 
+        const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+            signal: AbortSignal.timeout(3500)
+        });
+
+        if (res.ok) {
             const json = await res.json();
             const part = json.candidates?.[0]?.content?.parts?.[0];
             if (part?.inlineData?.data) {
                 return {
                     buffer: Buffer.from(part.inlineData.data, "base64"),
                     mimeType: part.inlineData.mimeType || "audio/wav",
-                    modelUsed: ep.name
+                    modelUsed: "gemini-2.0-flash"
                 };
             }
-        } catch (e: any) {
-            lastError = `${ep.name}: ${e.message}`;
-            console.warn(`[Gemini TTS] ${lastError}`);
         }
-    }
+    } catch (_) {}
 
-    throw new Error(`Lỗi khởi tạo giọng Google Gemini AI: ${lastError || "Các mô hình Gemini Audio đang bận."}`);
+    throw new Error("Gemini Audio không khả dụng, chuyển sang Microsoft Studio Neural.");
 }
 
 // ── MAIN API HANDLER ──

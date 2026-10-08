@@ -554,12 +554,20 @@ export default function AutoVideoStudioPage() {
             setSelectedVoiceAudioUrl(cached.url);
             setSelectedVoiceId("ai-generated");
             setVoiceDuration(cached.duration);
+            currentTimeRef.current = 0;
+            setDisplayTime(0);
+            drawCanvasFrame(0);
             if (hiddenAudioRef.current) {
                 hiddenAudioRef.current.src = cached.url;
+                hiddenAudioRef.current.currentTime = 0;
+                hiddenAudioRef.current.volume = 1.0;
                 hiddenAudioRef.current.load();
             }
             if (auditionAudioRef.current) {
                 auditionAudioRef.current.src = cached.url;
+                auditionAudioRef.current.currentTime = 0;
+                auditionAudioRef.current.volume = 1.0;
+                auditionAudioRef.current.play().then(() => setIsAuditionPlaying(true)).catch(() => {});
             }
             return cached.url;
         }
@@ -623,14 +631,24 @@ export default function AutoVideoStudioPage() {
             // Save into Client-side Cache for instant reuse
             clientTtsCacheRef.current.set(cacheKey, { url, duration: exactDuration });
 
+            // Rewind preview timeline to 0s so video and voice start in perfect sync
+            currentTimeRef.current = 0;
+            setDisplayTime(0);
+            drawCanvasFrame(0);
+
             // Update hidden audio element for video playback
             if (hiddenAudioRef.current) {
                 hiddenAudioRef.current.src = url;
+                hiddenAudioRef.current.currentTime = 0;
+                hiddenAudioRef.current.volume = 1.0;
                 hiddenAudioRef.current.load();
             }
-            // Update audition audio element
+            // Update audition audio element & immediately play audition for instant feedback
             if (auditionAudioRef.current) {
                 auditionAudioRef.current.src = url;
+                auditionAudioRef.current.currentTime = 0;
+                auditionAudioRef.current.volume = 1.0;
+                auditionAudioRef.current.play().then(() => setIsAuditionPlaying(true)).catch(() => {});
             }
 
             return url;
@@ -695,13 +713,24 @@ export default function AutoVideoStudioPage() {
                     setVoiceDuration(exactSec);
                 }
 
+                currentTimeRef.current = 0;
+                setDisplayTime(0);
+                drawCanvasFrame(0);
+
                 if (hiddenAudioRef.current) {
                     hiddenAudioRef.current.src = url;
+                    hiddenAudioRef.current.currentTime = 0;
+                    hiddenAudioRef.current.volume = 1.0;
                     hiddenAudioRef.current.load();
+                }
+                if (auditionAudioRef.current) {
+                    auditionAudioRef.current.src = url;
+                    auditionAudioRef.current.currentTime = 0;
+                    auditionAudioRef.current.volume = 1.0;
+                    auditionAudioRef.current.play().then(() => setIsAuditionPlaying(true)).catch(() => {});
                 }
 
                 stream.getTracks().forEach((track) => track.stop());
-                alert("🎙️ Đã thu âm giọng nói của bạn thành công và đồng bộ vào video!");
             };
 
             mediaRecorder.start();
@@ -806,6 +835,7 @@ export default function AutoVideoStudioPage() {
         if (selectedVoiceAudioUrl && auditionAudioRef.current) {
             auditionAudioRef.current.src = selectedVoiceAudioUrl;
             auditionAudioRef.current.currentTime = 0;
+            auditionAudioRef.current.volume = 1.0;
             try {
                 await auditionAudioRef.current.play();
                 setIsAuditionPlaying(true);
@@ -1673,6 +1703,24 @@ export default function AutoVideoStudioPage() {
         tempAudio.onloadedmetadata = () => {
             setVoiceDuration(tempAudio.duration || 30);
         };
+
+        currentTimeRef.current = 0;
+        setDisplayTime(0);
+        drawCanvasFrame(0);
+
+        if (hiddenAudioRef.current) {
+            hiddenAudioRef.current.src = url;
+            hiddenAudioRef.current.currentTime = 0;
+            hiddenAudioRef.current.volume = 1.0;
+            hiddenAudioRef.current.load();
+        }
+        if (auditionAudioRef.current) {
+            auditionAudioRef.current.src = url;
+            auditionAudioRef.current.currentTime = 0;
+            auditionAudioRef.current.volume = 1.0;
+            auditionAudioRef.current.play().then(() => setIsAuditionPlaying(true)).catch(() => {});
+        }
+
         if (audioInputRef.current) audioInputRef.current.value = "";
     };
 
@@ -1872,15 +1920,16 @@ export default function AutoVideoStudioPage() {
                 hiddenAudioRef.current.src = selectedVoiceAudioUrl;
             }
             hiddenAudioRef.current.playbackRate = voiceSpeedMultiplier || 1.0;
-            hiddenAudioRef.current.currentTime = currentT * (voiceSpeedMultiplier || 1.0);
+            hiddenAudioRef.current.volume = 1.0;
+            const effectiveVoiceDur = voiceDuration || hiddenAudioRef.current.duration || 10;
+            if (currentT >= effectiveVoiceDur - 0.5) {
+                hiddenAudioRef.current.currentTime = 0;
+            } else {
+                hiddenAudioRef.current.currentTime = currentT * (voiceSpeedMultiplier || 1.0);
+            }
             hiddenAudioRef.current.play().catch(() => {});
         } else if (selectedVoiceText && selectedVoiceText.trim()) {
-            // Live browser voice fallback only if AI audio not yet rendered
-            if (typeof window !== "undefined" && "speechSynthesis" in window) {
-                if (currentT < 1.0) {
-                    speakWithBrowser(selectedVoiceText, selectedVoiceStyleId);
-                }
-            }
+            generateSpeechForText(selectedVoiceText, selectedVoiceStyleId, selectedVoiceEngine);
         }
 
         // 2. Play BGM Audio

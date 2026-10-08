@@ -220,6 +220,9 @@ export const Step1Script: React.FC<Step1ScriptProps> = ({
             setCustomHookTitle(draft.hookTitle);
         }
         setAppliedChatId(msgId);
+        if (typeof generateSpeechForText === "function") {
+            generateSpeechForText(draft.script, selectedVoiceStyleId, selectedVoiceEngine);
+        }
     };
 
     return (
