@@ -13,6 +13,9 @@ export interface ActiveClipInfo {
 export function getClipDisplayDuration(clip: VideoClip, defaultInterval: number = 2.5): number {
     const d = clip.displayDuration;
     if (typeof d === "number" && isFinite(d) && d > 0) return Math.max(0.5, d);
+    if (clip.trimEnd !== undefined && clip.trimStart !== undefined && clip.trimEnd > clip.trimStart) {
+        return Math.max(0.5, clip.trimEnd - clip.trimStart);
+    }
     return Math.max(1.5, defaultInterval || 2.5);
 }
 
@@ -24,12 +27,14 @@ export function getTimelineLength(clips: VideoClip[], defaultInterval: number = 
 function buildInfo(clips: VideoClip[], idx: number, start: number, dur: number, timeInClip: number): ActiveClipInfo {
     const clip = clips[idx];
     const trimStart = clip.trimStart || 0;
-    let localT = trimStart + timeInClip;
-    // Keep the playhead inside the source video: loop the usable part instead of freezing on the last frame
-    if (clip.mediaType !== "image" && clip.duration > 0) {
-        const usable = Math.max(0.5, clip.duration - trimStart);
-        localT = trimStart + (timeInClip % usable);
+    const trimEnd = clip.trimEnd !== undefined && clip.trimEnd > trimStart ? clip.trimEnd : (clip.duration || 10);
+    const usable = Math.max(0.5, trimEnd - trimStart);
+    
+    let localT = trimStart + (timeInClip % usable);
+    if (clip.mediaType === "image") {
+        localT = 0;
     }
+    
     return {
         activeClip: clip,
         clipIdx: idx,

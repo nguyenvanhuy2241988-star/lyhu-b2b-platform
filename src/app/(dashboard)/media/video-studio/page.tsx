@@ -152,8 +152,81 @@ export default function AutoVideoStudioPage() {
     const [subtitleOffset, setSubtitleOffset] = useState<number>(0);
     const [customHookTitle, setCustomHookTitle] = useState("🔥 TỔNG KHO ĂN VẶT & BỘT PHÔ MAI BOYO GIÁ SỈ!");
     const [showHookTitle, setShowHookTitle] = useState(true);
-    const [hookBannerTheme, setHookBannerTheme] = useState<"tiktok_sticker" | "red_orange" | "black_gold" | "teal_lyhu">("tiktok_sticker");
+    const [hookBannerTheme, setHookBannerTheme] = useState<"tiktok_sticker" | "red_orange" | "black_gold" | "teal_lyhu" | "cyber_yellow">("tiktok_sticker");
     const [hookDuration, setHookDuration] = useState<number>(3.5);
+    const [hookTagText, setHookTagText] = useState<string>("🔥 VIRAL TREND");
+    const [hookPositionOffsetY, setHookPositionOffsetY] = useState<number>(0.118);
+
+    // ── VIDEO PROJECT TITLE ──
+    const [videoProjectTitle, setVideoProjectTitle] = useState<string>("Video Kho Sỉ B2B - LYHU");
+
+    // ── BRAND BADGE & SALES STICKER DESIGN STUDIO ──
+    const [brandText, setBrandText] = useState<string>("LYHU!");
+    const [brandSubtitle, setBrandSubtitle] = useState<string>("• Tổng Kho Sỉ B2B");
+    const [brandStyle, setBrandStyle] = useState<"glass_dark" | "teal_brand" | "gold_luxury" | "white_clean">("glass_dark");
+    const [brandPosition, setBrandPosition] = useState<"top_left" | "top_right" | "bottom_left">("top_left");
+
+    const [customStickerTitle, setCustomStickerTitle] = useState<string>("FREESHIP TẬN QUÁN");
+    const [customStickerSubtitle, setCustomStickerSubtitle] = useState<string>("Giao nhanh nội thành & tỉnh");
+    const [customStickerIcon, setCustomStickerIcon] = useState<string>("🚚");
+    const [stickerStyle, setStickerStyle] = useState<"emerald_deal" | "teal_lyhu" | "fire_sale" | "amber_gold" | "cyber_purple">("emerald_deal");
+
+    // ── 1-CLICK PRO DESIGN PRESET HANDLER ──
+    const handleApplyProDesignPreset = (presetId: "tiktok_creator" | "lyhu_b2b" | "flash_sale" | "editorial_luxury") => {
+        if (presetId === "tiktok_creator") {
+            setHookBannerTheme("tiktok_sticker");
+            setHookTagText("🔥 VIRAL TREND");
+            setBrandStyle("glass_dark");
+            setBrandText("LYHU!");
+            setBrandSubtitle("• Tổng Kho Sỉ B2B");
+            setActiveSalesSticker("freeship");
+            setCustomStickerTitle("FREESHIP TẬN QUÁN");
+            setCustomStickerSubtitle("Giao nhanh nội thành & tỉnh");
+            setCustomStickerIcon("🚚");
+            setStickerStyle("emerald_deal");
+            setSubtitleStyle("tiktok_stroke");
+            setTextColor("#FACC15");
+        } else if (presetId === "lyhu_b2b") {
+            setHookBannerTheme("teal_lyhu");
+            setHookTagText("📦 TỔNG KHO LYHU");
+            setBrandStyle("teal_brand");
+            setBrandText("LYHU!");
+            setBrandSubtitle("• Kho Sỉ Toàn Quốc");
+            setActiveSalesSticker("si_1_thung");
+            setCustomStickerTitle("SỈ TỪ 1 THÙNG");
+            setCustomStickerSubtitle("Giá gốc xưởng lời x2");
+            setCustomStickerIcon("🏷️");
+            setStickerStyle("teal_lyhu");
+            setSubtitleStyle("pill_dark");
+            setTextColor("#FFFFFF");
+        } else if (presetId === "flash_sale") {
+            setHookBannerTheme("red_orange");
+            setHookTagText("⚡ GIÁ SỈ TẬN KHO");
+            setBrandStyle("gold_luxury");
+            setBrandText("LYHU SỈ");
+            setBrandSubtitle("• Xả Kho Cực Đại");
+            setActiveSalesSticker("lai_x2");
+            setCustomStickerTitle("CHIẾT KHẤU 40%");
+            setCustomStickerSubtitle("Số lượng có hạn tuần này");
+            setCustomStickerIcon("🔥");
+            setStickerStyle("fire_sale");
+            setSubtitleStyle("tiktok_stroke");
+            setTextColor("#FEF08A");
+        } else if (presetId === "editorial_luxury") {
+            setHookBannerTheme("black_gold");
+            setHookTagText("✦ BÍ QUYẾT BÁN BUÔN");
+            setBrandStyle("white_clean");
+            setBrandText("LYHU");
+            setBrandSubtitle("• Premium Quality");
+            setActiveSalesSticker("inbox_cta");
+            setCustomStickerTitle("MẪU THỬ MIỄN PHÍ");
+            setCustomStickerSubtitle("Gửi mẫu ăn thử tận quán");
+            setCustomStickerIcon("🎁");
+            setStickerStyle("amber_gold");
+            setSubtitleStyle("clean_shadow");
+            setTextColor("#FFFFFF");
+        }
+    };
 
     // ── DIRECTOR'S SCRIPTBOOK & PROJECT HISTORY ──
     const [directorGuide, setDirectorGuide] = useState<DirectorGuide | null>(null);
@@ -1277,7 +1350,7 @@ export default function AutoVideoStudioPage() {
 
             const item: VideoProjectItem = {
                 id: `proj-${Date.now()}`,
-                title: cloneTopic || customHookTitle.slice(0, 45) || "Dự án video LYHU",
+                title: videoProjectTitle || cloneTopic || customHookTitle.slice(0, 45) || "Dự án video LYHU",
                 topic: cloneTopic || customHookTitle,
                 hookTitle: customHookTitle,
                 script: selectedVoiceText,
@@ -1700,13 +1773,26 @@ export default function AutoVideoStudioPage() {
                 showHookTitle,
                 hookDuration,
                 customHookTitle,
-                hookBannerTheme,
-                fontFamily
+                hookBannerTheme: hookBannerTheme as any,
+                fontFamily,
+                hookTagText,
+                hookPositionOffsetY
             },
             showWatermark,
+            watermarkOptions: {
+                brandText,
+                brandSubtitle,
+                brandStyle,
+                position: brandPosition,
+                fontFamily
+            },
             stickerOptions: {
                 activeSalesSticker,
-                stickerPosition
+                stickerPosition,
+                customTitle: customStickerTitle,
+                customSubtitle: customStickerSubtitle,
+                customIcon: customStickerIcon,
+                stickerStyle
             },
             subtitleOptions: {
                 enableSubtitles,
@@ -1735,12 +1821,22 @@ export default function AutoVideoStudioPage() {
         showHookTitle,
         hookBannerTheme,
         hookDuration,
+        hookTagText,
+        hookPositionOffsetY,
         showWatermark,
+        brandText,
+        brandSubtitle,
+        brandStyle,
+        brandPosition,
         enableSubtitles,
         subtitleCues,
         videoFilterPreset,
         activeSalesSticker,
-        stickerPosition
+        stickerPosition,
+        customStickerTitle,
+        customStickerSubtitle,
+        customStickerIcon,
+        stickerStyle
     ]);
 
     // ── HIGH-PERFORMANCE PREVIEW PLAYBACK LOOP (0 STUTTER) ──
@@ -2537,9 +2633,12 @@ export default function AutoVideoStudioPage() {
                 });
 
                 // Instant safe download trigger
+                const sanitizedTitle = (videoProjectTitle || "LYHU_Video").trim()
+                    .replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9\- ]/g, "")
+                    .replace(/\s+/g, "_");
                 const a = document.createElement("a");
                 a.href = finalUrl;
-                a.download = `LYHU_${aspectRatio.replace(":", "-")}_${Date.now()}.${finalExt}`;
+                a.download = `${sanitizedTitle}_${aspectRatio.replace(":", "-")}.${finalExt}`;
                 document.body.appendChild(a);
                 a.click();
                 setTimeout(() => {
@@ -2745,6 +2844,18 @@ export default function AutoVideoStudioPage() {
                             <p className="text-xs text-slate-500">
                                 Cắt ghép góc quay tự động, khớp giọng đọc AI, chèn phụ đề động & xuất MP4 chuẩn TikTok/Reels.
                             </p>
+                            <div className="flex flex-wrap items-center gap-2 pt-1.5">
+                                <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                                    <span>🎬 Tên Video:</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={videoProjectTitle}
+                                    onChange={(e) => setVideoProjectTitle(e.target.value)}
+                                    placeholder="Đặt tên video (VD: Khoai Môn CVT - Bột Phô Mai BOYO)..."
+                                    className="px-2.5 py-1 text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded-lg focus:border-[#00afa9] focus:ring-1 focus:ring-[#00afa9] outline-none shadow-2xs w-64 sm:w-80"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3067,10 +3178,33 @@ export default function AutoVideoStudioPage() {
                             handleHookTitleChange={handleHookTitleChange}
                             hookBannerTheme={hookBannerTheme}
                             setHookBannerTheme={setHookBannerTheme}
+                            hookTagText={hookTagText}
+                            setHookTagText={setHookTagText}
+                            hookPositionOffsetY={hookPositionOffsetY}
+                            setHookPositionOffsetY={setHookPositionOffsetY}
+                            showWatermark={showWatermark}
+                            setShowWatermark={setShowWatermark}
+                            brandText={brandText}
+                            setBrandText={setBrandText}
+                            brandSubtitle={brandSubtitle}
+                            setBrandSubtitle={setBrandSubtitle}
+                            brandStyle={brandStyle}
+                            setBrandStyle={setBrandStyle}
+                            brandPosition={brandPosition}
+                            setBrandPosition={setBrandPosition}
                             stickerPosition={stickerPosition}
                             setStickerPosition={setStickerPosition}
                             activeSalesSticker={activeSalesSticker}
                             setActiveSalesSticker={setActiveSalesSticker}
+                            customStickerTitle={customStickerTitle}
+                            setCustomStickerTitle={setCustomStickerTitle}
+                            customStickerSubtitle={customStickerSubtitle}
+                            setCustomStickerSubtitle={setCustomStickerSubtitle}
+                            customStickerIcon={customStickerIcon}
+                            setCustomStickerIcon={setCustomStickerIcon}
+                            stickerStyle={stickerStyle}
+                            setStickerStyle={setStickerStyle}
+                            onApplyProPreset={handleApplyProDesignPreset}
                             enableSubtitles={enableSubtitles}
                             setEnableSubtitles={setEnableSubtitles}
                             fontFamily={fontFamily}
@@ -3275,7 +3409,7 @@ export default function AutoVideoStudioPage() {
                                     </div>
                                     <a
                                         href={renderedVideoUrl}
-                                        download={`LYHU_${aspectRatio.replace(":", "-")}_${Date.now()}.${renderedFormat}`}
+                                        download={`${(videoProjectTitle || "LYHU_Video").trim().replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9\- ]/g, "").replace(/\s+/g, "_")}_${aspectRatio.replace(":", "-")}.${renderedFormat}`}
                                         className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shrink-0 flex items-center gap-1 shadow-sm"
                                     >
                                         <Download className="w-3.5 h-3.5" />

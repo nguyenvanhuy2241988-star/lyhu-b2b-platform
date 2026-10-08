@@ -1,6 +1,6 @@
 import { renderVideoFrame, VideoRendererOptions } from "./VideoRenderer";
 import { renderHookBanner, HookBannerOptions } from "./HookBannerRenderer";
-import { renderWatermark } from "./WatermarkRenderer";
+import { renderWatermark, WatermarkRendererOptions } from "./WatermarkRenderer";
 import { renderSalesSticker, StickerRendererOptions } from "./StickerRenderer";
 import { renderSubtitles, SubtitleRendererOptions } from "./SubtitleRenderer";
 
@@ -11,6 +11,7 @@ export interface FullCanvasRenderOptions {
     videoOptions: Omit<VideoRendererOptions, "canvas" | "ctx" | "validTime">;
     hookOptions: Omit<HookBannerOptions, "canvas" | "ctx" | "time">;
     showWatermark: boolean;
+    watermarkOptions?: Omit<WatermarkRendererOptions, "ctx" | "showWatermark">;
     stickerOptions: Omit<StickerRendererOptions, "canvas" | "ctx" | "validTime">;
     subtitleOptions: Omit<SubtitleRendererOptions, "canvas" | "ctx" | "time">;
 }
@@ -41,7 +42,11 @@ export function drawFullStudioCanvas(options: FullCanvasRenderOptions) {
     });
 
     // 3. Draw Watermark badge
-    renderWatermark(ctx, options.showWatermark);
+    renderWatermark({
+        ctx,
+        showWatermark: options.showWatermark,
+        ...options.watermarkOptions
+    });
 
     // 4. Draw Sales Sticker
     renderSalesSticker({
