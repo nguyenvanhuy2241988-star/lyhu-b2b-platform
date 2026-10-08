@@ -72,49 +72,52 @@ export async function POST(req: NextRequest) {
         }
 
         // Prepare Advanced System Prompt for Gemini Film Director
-        const systemInstructionText = `Bạn là SIÊU ĐẠO DIỄN VÀ CHUYÊN GIA DỰNG PHIM ĐIỆN ẢNH TIKTOK/REELS (AI Master Film Editor) CỦA LYHU.
-LYHU là tổng kho chuyên sỉ đồ ăn vặt & nguyên liệu thực phẩm (Khoai môn sấy CVT, bột phô mai BOYO, bánh tráng Abi, kẹo UHi...).
+        const systemInstructionText = `Bạn là SIÊU ĐẠO DIỄN VÀ CHUYÊN GIA DỰNG PHIM ĐIỆN ẢNH TIKTOK/REELS (AI Master Film Editor) CỦA TỔNG KHO SỈ LYHU.
+LYHU chuyên sỉ các món ăn vặt & nguyên liệu thực phẩm (Khoai môn sấy CVT, bột phô mai BOYO, bánh tráng Abi, kẹo dẻo UHi...).
 
-QUY TẮC DỰNG PHIM ĐỈNH CAO (CINEMA AUTO-EDIT DIRECTIVES):
-1. QUAN SÁT THỊ GIÁC SÂU (MULTI-KEYFRAME VISION):
-   - Bạn được cung cấp nhiều khung hình trích xuất ở các mốc (Đầu clip, Giữa clip, Cuối clip) của từng video/ảnh thô.
-   - Hãy thẩm định kỹ: Đoạn nào camera rung lắc, mờ, chưa vào khung hình? Đoạn nào hành động đắt giá nhất xuất hiện (ví dụ: bẻ đôi miếng khoai giòn tan, rắc bột phô mai bồng bềnh, công nhân đóng thùng, pallet hàng ngập kho)?
+QUY TẮC DỰNG PHIM CHUYÊN NGHIỆP CỦA ĐẠO DIỄN THỰC THỤ (HUMAN FILM DIRECTOR RULES):
 
-2. TÍNH TOÁN ĐIỂM VÀO ĐẮT GIÁ NHẤT (TRIM IN-POINT / TRIMSTART):
-   - Hầu hết video quay bằng điện thoại bị rung 1-2 giây đầu. TUYỆT ĐỐI không để trimStart = 0 nếu đầu clip bị rung lắc hoặc chết góc!
-   - Hãy chỉ định chính xác \`trimStart\` (giây) để video nhảy ngay vào khoảnh khắc hành động đẹp nhất (thường từ 1.0s đến 3.0s). Với ảnh tĩnh thì trimStart = 0.
+1. NGUYÊN TẮC BẤT DI BẤT DỊCH #1: TUYỆT ĐỐI KHÔNG LẶP LẠI CLIP HOẶC ẢNH (ZERO REPETITION / 100% UNIQUE SHOTS):
+   - Người xem sẽ cảm thấy video rất chán, nghèo nàn và ngớ ngẩn nếu nhìn thấy một bức ảnh hay cùng một cảnh quay lặp đi lặp lại 2-3 lần trong một video ngắn 30 giây!
+   - MỖI CLIP HOẶC ẢNH CHỈ ĐƯỢC PHÉP XUẤT HIỆN TỐI ĐA 1 LẦN DUY NHẤT trong curatedTimeline.
+   - TUYỆT ĐỐI CẤM trùng lặp clipId! Tất cả các phần tử trong \`curatedTimeline\` phải có \`clipId\` hoàn toàn khác nhau.
+   - Mỗi câu thoại PHẢI là một hình ảnh / góc máy MỚI HOÀN TOÀN để giữ cho video luôn đa dạng, hấp dẫn và đẳng cấp.
+   - ĐẶC BIỆT VỚI ẢNH TĨNH: Nghiêm cấm 100% việc lặp lại ảnh tĩnh.
 
-3. ĐỒNG BỘ CHẶT CHẼ THEO TỪNG CÂU NÓI (STORY BEAT MATCHING):
-   - Đối chiếu danh sách từng câu kịch bản kèm thời lượng (targetDuration).
-   - Hãy ghép mỗi câu nói với MỘT cảnh quay có ý nghĩa tương ứng nhất:
-     * Câu Hook (3s đầu): BẮT BUỘC chọn cảnh CẬN CẢNH (Close-up/Macro) bắt mắt nhất, kích thích vị giác hoặc hành động bất ngờ làm Cảnh #1 để giữ chân người lướt.
-     * Câu Về Chất Lượng / Quy Trình: Chọn cảnh rắc gia vị, bao bì nguyên seal, dây chuyền sạch sẽ.
-     * Câu Về Sỉ / Kho Bãi / Vận Chuyển: Chọn cảnh toàn kho, xe tải, pallet hàng cao ngất ngưởng.
-     * Câu Kêu Gọi Hành Động (CTA): Chọn cảnh trưng bày tổng thể hoặc gói hàng chỉn chu.
-   - Gán \`duration\` của cảnh đó khớp chính xác với thời lượng câu thoại (hoặc từ 1.8s đến 3.5s).
-   - NẾU SỐ LƯỢNG CLIP ÍT HƠN SỐ CÂU THOẠI: Bạn hoàn toàn có thể tái sử dụng một video dài bằng cách chọn các \`trimStart\` khác nhau (ví dụ: đoạn đầu ở giây 1.0s, đoạn sau ở giây 5.5s) để đảm bảo TOÀN BỘ các câu thoại đều có hình minh họa sống động!
+2. "XEM" VÀ PHÂN LOẠI NỘI DUNG TỪNG CLIP NHƯ NGƯỜI THẬT (SEMANTIC VISUAL MATCHING):
+   - Bạn được cung cấp các khung hình trích xuất từ từng nguyên liệu thô. Hãy "nhìn" kỹ từng khung hình như mắt người thật và ghép đúng ngữ cảnh:
+     * CẬN CẢNH MÓN ĂN / FOOD PORN: Miếng khoai giòn, rắc bột phô mai bồng bềnh, bẻ đôi bánh, zoom cận cảnh hạt/bánh hấp dẫn -> Dùng cho Cảnh #1 (Hook 3s đầu) hoặc câu thoại khen giòn ngon, kích thích vị giác.
+     * BAO BÌ / DATE / QUY CÁCH: Gói zip bạc nguyên seal, thùng carton in logo, date dập nổi mới tinh -> Dùng cho câu thoại nói về Date mới toanh, hàng chính hãng, đóng gói kỹ.
+     * TOÀN CẢNH KHO / PALLET / CONTAINER: Kho bãi ngút ngàn, xe nâng bốc pallet hàng cao, xe container về đêm -> Dùng cho câu thoại nói về Giá sỉ tận kho, container cập bến, hàng sẵn số lượng lớn.
+     * ĐÓNG GÓI / ĐƠN ĐI / GIAO HÀNG (CTA): Công nhân dán băng keo, xếp thùng lên xe tải, kiểm kê đơn sỉ -> Dùng cho câu thoại Kêu gọi hành động (CTA), nhắn nhận bảng giá sỉ, giao hàng hỏa tốc.
+
+3. TÍNH TOÁN ĐIỂM CẮT VÀNG (TRIM IN-POINT / TRIMSTART):
+   - Video quay bằng điện thoại thường bị rung 1-2 giây đầu khi bấm máy hoặc đổi góc.
+   - Hãy quan sát các khung hình và chỉ định chính xác \`trimStart\` (giây) để video nhảy ngay vào khoảnh khắc hành động đắt giá nhất (thường từ 1.0s đến 3.0s), bỏ hẳn đoạn rung máy đầu.
+   - Nếu là Ảnh tĩnh: Bắt buộc trimStart = 0.
 
 4. LỌC BỎ CẢNH THỪA (SMART CURATION):
-   - Chọn lọc những cảnh tinh hoa nhất đưa vào \`curatedTimeline\`.
-   - Các cảnh rung lắc, mờ nhạt hoặc trùng lặp không dùng đến hãy đưa vào danh sách \`backupClipIds\`.
+   - Chỉ chọn những cảnh xuất sắc nhất, đúng ngữ nghĩa nhất cho \`curatedTimeline\`.
+   - Các cảnh còn lại đưa vào \`backupClipIds\`.
+   - Độ dài mỗi cảnh (\`duration\`) phải khớp chính xác với thời lượng câu thoại tương ứng (\`targetDuration\`).
 
-BẮT BUỘC TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON NHƯ SAU:
+BẮT BUỘC TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON:
 {
-  "summary": "Tóm tắt tư duy cắt dựng của đạo diễn: Đã chọn bao nhiêu cảnh đẹp nhất, đã cắt bỏ đoạn rung lắc của clip nào, bắt khoảnh khắc vàng ở giây thứ mấy, nhịp điệu tổng thể thế nào...",
+  "summary": "Tóm tắt tư duy cắt dựng: Phân tích lý do chọn từng cảnh khớp với câu thoại, đảm bảo 100% không lặp lại hình ảnh, nhịp cắt tổng thể...",
   "curatedTimeline": [
     {
-      "clipId": "id_cua_clip",
-      "trimStart": 2.0, // Giây bắt đầu đẹp nhất của video thô (nếu là ảnh thì để 0)
-      "duration": 3.0, // Thời lượng cảnh hiển thị khớp với câu thoại
+      "clipId": "id_cua_clip_doc_nhat", // MỖI clipId CHỈ XUẤT HIỆN TỐI ĐA 1 LẦN!
+      "trimStart": 1.5,
+      "duration": 3.0,
       "role": "Hook 3s đầu (Cận cảnh cực phẩm)",
-      "matchedSentence": "Nội dung câu thoại mà cảnh này minh họa...",
-      "reason": "Lý do chọn: Bắt đúng khoảnh khắc bẻ khoai giòn tan từ giây 2.0, loại bỏ 2s đầu bị rung máy..."
+      "matchedSentence": "Câu thoại...",
+      "reason": "Khung hình cận cảnh miếng khoai cực nét, cắt bỏ 1.5s đầu rung máy..."
     }
   ],
-  "backupClipIds": ["id_clip_thua_1", "id_clip_thua_2"],
+  "backupClipIds": ["id_clip_chua_dung_1", "id_clip_chua_dung_2"],
   "suggestedPacing": 2.5
 }
-LƯU Ý QUAN TRỌNG: Tất cả clipId trong \`curatedTimeline\` và \`backupClipIds\` phải khớp với ID các nguyên liệu đã gửi lên.`;
+LƯU Ý NGHIÊM NGẶT: Trong curatedTimeline, các clipId KHÔNG ĐƯỢC PHÉP TRÙNG NHAU. MỖI PHÂN CẢNH PHẢI LÀ MỘT CLIP ĐỘC NHẤT VÔ NHỊ!`;
 
         // Format Sentences
         const formattedSentences = sentences && sentences.length > 0
@@ -233,17 +236,47 @@ Tên: "${item.name}"
                                     });
 
                                 if (validCurated.length > 0) {
-                                    const usedIds = new Set(validCurated.map((c: any) => c.clipId));
+                                    // ── DEDUPLICATION SAFETY FILTER ──
+                                    // Ensure 100% unique shots: If AI accidentally duplicated a clip, replace with an unused asset
+                                    const usedIds = new Set<string>();
+                                    const uniqueCurated: any[] = [];
+                                    const unusedAssetsPool = [...items];
+
+                                    for (const cut of validCurated) {
+                                        if (!usedIds.has(cut.clipId)) {
+                                            uniqueCurated.push(cut);
+                                            usedIds.add(cut.clipId);
+                                        } else {
+                                            // Find an unused clip from user's assets
+                                            const alternative = unusedAssetsPool.find(it => !usedIds.has(it.id));
+                                            if (alternative) {
+                                                uniqueCurated.push({
+                                                    ...cut,
+                                                    clipId: alternative.id,
+                                                    trimStart: alternative.mediaType === "video" ? Math.min(1.5, (alternative.duration || 5) * 0.2) : 0,
+                                                    duration: cut.duration,
+                                                    role: cut.role,
+                                                    matchedSentence: cut.matchedSentence,
+                                                    reason: `Đạo diễn AI ghép cảnh độc nhất [${alternative.name}] để đảm bảo 100% không lặp lại hình ảnh`
+                                                });
+                                                usedIds.add(alternative.id);
+                                            } else if (cut.mediaType === "video") {
+                                                // Only allow if user provided fewer clips than sentences
+                                                uniqueCurated.push(cut);
+                                            }
+                                        }
+                                    }
+
                                     const backupIds = items.filter(it => !usedIds.has(it.id)).map(it => it.id);
-                                    const orderedClipIds = [...validCurated.map((c: any) => c.clipId), ...backupIds];
+                                    const orderedClipIds = [...uniqueCurated.map((c: any) => c.clipId), ...backupIds];
 
                                     return NextResponse.json({
                                         success: true,
-                                        summary: parsed.summary || "Đạo diễn AI đã chọn lọc và cắt gọt các cảnh quay chuẩn theo từng câu thoại.",
-                                        curatedTimeline: validCurated,
+                                        summary: parsed.summary || "Đạo diễn AI đã chọn lọc các cảnh quay độc nhất, không lặp lại hình ảnh và khớp chuẩn từng câu thoại.",
+                                        curatedTimeline: uniqueCurated,
                                         orderedClipIds,
                                         backupClipIds: backupIds,
-                                        directorNotes: validCurated.map((c: any) => ({
+                                        directorNotes: uniqueCurated.map((c: any) => ({
                                             clipId: c.clipId,
                                             role: c.role,
                                             reason: c.reason
@@ -260,7 +293,7 @@ Tên: "${item.name}"
             }
         }
 
-        // Smart Heuristic Fallback: Ensure 100% of sentences have a dedicated matching visual beat!
+        // Smart Heuristic Fallback: 100% UNIQUE VISUALS (NO DUPLICATES)
         const sentenceCount = sentences && sentences.length > 0 ? sentences.length : Math.max(2, Math.floor(totalDuration / clipSwitchInterval));
 
         const sortedItems = [...items].sort((a, b) => {
@@ -273,18 +306,24 @@ Tên: "${item.name}"
             return 0;
         });
 
-        // Map every sentence beat to a clip (cycling through sortedItems if items < sentences)
-        const curated = Array.from({ length: sentenceCount }).map((_, idx) => {
-            const it = sortedItems[idx % sortedItems.length];
+        const curated: any[] = [];
+        const usedFallbackIds = new Set<string>();
+
+        for (let idx = 0; idx < sentenceCount; idx++) {
             const sent = sentences[idx];
             const dur = sent ? sent.targetDuration : (totalDuration / sentenceCount);
-            
-            // Calculate intelligent in-point offset for repeated clips
-            const cycleCount = Math.floor(idx / sortedItems.length);
+
+            // Prioritize an unused clip so EVERY scene is 100% unique!
+            let it = sortedItems.find(item => !usedFallbackIds.has(item.id));
+            if (!it) {
+                // If total footage pool is smaller than sentences, cycle through long videos
+                it = sortedItems[idx % sortedItems.length];
+            }
+            usedFallbackIds.add(it.id);
+
             let trimStart = 0;
             if (it.mediaType === "video" && (it.duration || 5) > 4) {
-                // First pass starts at 1.5s to bypass shake; subsequent passes step forward 3s
-                trimStart = Math.min((it.duration || 5) - 2, 1.5 + cycleCount * 3.0);
+                trimStart = 1.5;
             }
 
             const role = idx === 0
@@ -295,7 +334,7 @@ Tên: "${item.name}"
                         ? "Chứng minh chất lượng / Quy trình"
                         : `Thân bài cảnh #${idx + 1}`;
 
-            return {
+            curated.push({
                 clipId: it.id,
                 trimStart,
                 duration: Math.max(1.5, Math.min(8, dur)),
@@ -303,9 +342,9 @@ Tên: "${item.name}"
                 matchedSentence: sent ? sent.text : "",
                 reason: idx === 0
                     ? "Hình ảnh đắt giá nhất mở đầu, tự động bỏ 1.5s rung máy lúc bấm quay"
-                    : `Khớp với nhịp câu thoại #${idx + 1}`
-            };
-        });
+                    : `Cảnh độc nhất minh họa câu thoại #${idx + 1}`
+            });
+        }
 
         const usedIds = new Set(curated.map(c => c.clipId));
         const backupIds = sortedItems.filter(it => !usedIds.has(it.id)).map(it => it.id);
@@ -313,7 +352,7 @@ Tên: "${item.name}"
 
         return NextResponse.json({
             success: true,
-            summary: `Đạo diễn AI đã chọn lọc và phân bổ ${curated.length} phân cảnh khớp trọn vẹn với từng câu thoại, tự động cắt bỏ đoạn rung máy ban đầu và tối ưu nhịp chuyển cảnh.`,
+            summary: `Đạo diễn AI đã chọn lọc và phân bổ ${curated.length} phân cảnh hoàn toàn độc nhất, không lặp lại hình ảnh, khớp trọn vẹn với từng câu thoại và tự động cắt bỏ đoạn rung máy ban đầu.`,
             curatedTimeline: curated,
             orderedClipIds,
             backupClipIds: backupIds,

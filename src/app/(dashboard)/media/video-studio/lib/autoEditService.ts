@@ -153,10 +153,13 @@ export async function captureMultiKeyframesForClip(
         return frames;
     }
 
-    // CASE 2: Video clip -> Adaptive sampling (1 frame for large batch >8 clips, 3 frames for small projects)
+    // CASE 2: Video clip -> Adaptive sampling (2 frames for large batch >8 clips, 3 frames for small projects)
     const dur = Math.max(2, clip.duration || 8);
     const samplePoints = isLargeBatch
-        ? [{ label: "Hành động chính", time: dur * 0.45 }]
+        ? [
+            { label: "Đầu clip (kiểm tra rung máy)", time: Math.min(1.0, dur * 0.15) },
+            { label: "Hành động chính (thẩm định nội dung)", time: dur * 0.5 }
+        ]
         : [
             { label: "Đầu clip", time: Math.min(1.2, dur * 0.15) },
             { label: "Giữa clip (Hành động)", time: dur * 0.5 },
@@ -319,12 +322,22 @@ export async function runSmartAutoEdit({
 
     const curatedClips: VideoClip[] = [];
     const usedOriginalIds = new Set<string>();
+    const unusedClipsPool = [...clips];
 
     curatedTimeline.forEach((item, idx) => {
-        const base = originalClipMap.get(item.clipId);
+        let base = originalClipMap.get(item.clipId);
+
+        // If this clip was already used, try to substitute with an unused clip from user's pool first!
+        if (base && usedOriginalIds.has(base.id)) {
+            const alternative = unusedClipsPool.find(c => !usedOriginalIds.has(c.id));
+            if (alternative) {
+                base = alternative;
+            }
+        }
+
         if (base) {
-            const isDuplicate = usedOriginalIds.has(item.clipId);
-            // Give duplicate cuts a distinct ID so each has its own independent timeline node
+            const isDuplicate = usedOriginalIds.has(base.id);
+            // Give duplicate cuts a distinct ID only if pool was completely exhausted
             const uniqueId = isDuplicate ? `${base.id}_cut${idx + 1}` : base.id;
             curatedClips.push({
                 ...base,
@@ -335,7 +348,7 @@ export async function runSmartAutoEdit({
                 matchedSentence: item.matchedSentence,
                 isAiSelected: true
             });
-            usedOriginalIds.add(item.clipId);
+            usedOriginalIds.add(base.id);
         }
     });
 
