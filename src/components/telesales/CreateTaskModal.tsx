@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { X, Calendar, User, Phone, UserPlus, CheckCircle, AlertTriangle, Trash2, Eye, Download, CheckSquare, Plus } from "lucide-react";
 import {
     TaskStatus,
@@ -23,7 +23,7 @@ interface CreateTaskModalProps {
     onDelete?: (taskId: string) => void; // New: Delete handler
     initialStatus?: TaskStatus;
     initialData?: Partial<TelesalesTask>; // New: Pre-fill data
-    columns?: TelesalesColumn[]; // Support dynamic columns
+    columns?: (TelesalesColumn & { column_type?: string })[]; // Support dynamic columns
 }
 
 interface TaskFormData {
@@ -56,17 +56,44 @@ export const CreateTaskModal = ({
 }: CreateTaskModalProps) => {
     const isEditMode = !!initialData?.id;
 
-    const [formData, setFormData] = useState<TaskFormData>({
-        title: "",
-        customerName: "",
-        phone: "",
-        priority: "normal",
-        dueDate: new Date().toISOString().split('T')[0],
-        status: initialStatus,
-        stage: "in_progress",
-        description: "",
-        assigneeIds: initialData?.assignee_ids || [],
-        leaderId: initialData?.leader_id || ""
+    // Helper: compute default column and due date
+    const computeInitialDateAndStatus = useCallback(() => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        let defStatus = initialStatus;
+        let defDueDate = todayStr;
+
+        // If initialStatus corresponds to today
+        const matchedCol = columns.find(c => c.id === initialStatus || c.column_type === initialStatus);
+        const colType = matchedCol?.column_type || initialStatus;
+
+        if (colType === 'date_today' || initialStatus === 'today' || matchedCol?.label?.toLowerCase().includes('hôm nay')) {
+            defDueDate = todayStr;
+        } else if (colType === 'date_tomorrow' || initialStatus === 'tomorrow' || matchedCol?.label?.toLowerCase().includes('ngày mai')) {
+            const tmr = new Date();
+            tmr.setDate(tmr.getDate() + 1);
+            defDueDate = tmr.toISOString().split('T')[0];
+        } else if (colType === 'system_inbox' || initialStatus === 'inbox' || matchedCol?.label?.toLowerCase().includes('hộp thư')) {
+            defDueDate = "";
+        }
+        return { defStatus, defDueDate };
+    }, [initialStatus, columns]);
+
+    const [hasDraftRestored, setHasDraftRestored] = useState(false);
+
+    const [formData, setFormData] = useState<TaskFormData>(() => {
+        const { defStatus, defDueDate } = computeInitialDateAndStatus();
+        return {
+            title: "",
+            customerName: "",
+            phone: "",
+            priority: "normal",
+            dueDate: defDueDate,
+            status: defStatus,
+            stage: "in_progress",
+            description: "",
+            assigneeIds: initialData?.assignee_ids || [],
+            leaderId: initialData?.leader_id || ""
+        };
     });
 
     const [subtasks, setSubtasks] = useState<SubtaskItem[]>([]);
@@ -82,8 +109,6 @@ export const CreateTaskModal = ({
     const [isUploading, setIsUploading] = useState(false);
 
     // Track if user has made local edits (dirty state)
-    // When dirty, we DON'T overwrite with Realtime updates to protect user's input
-    // When clean, we sync from server (e.g., when admin updates)
     const [hasUserEdited, setHasUserEdited] = useState(false);
     const [lastSyncedTaskId, setLastSyncedTaskId] = useState<string | null>(null);
 
@@ -96,9 +121,42 @@ export const CreateTaskModal = ({
         loadProfiles();
     }, []);
 
+    // Draft Auto-Save: save whenever user inputs in Create mode
+    useEffect(() => {
+        if (!isEditMode && isOpen) {
+            if (formData.title || formData.customerName || formData.phone || formData.description || subtasks.length > 0) {
+                try {
+                    localStorage.setItem('lyhu_task_create_draft', JSON.stringify({ formData, subtasks }));
+                } catch (e) { }
+            }
+        }
+    }, [formData, subtasks, isEditMode, isOpen]);
+
+    const handleClearDraft = () => {
+        try {
+            localStorage.removeItem('lyhu_task_create_draft');
+        } catch (e) { }
+        const { defStatus, defDueDate } = computeInitialDateAndStatus();
+        setFormData({
+            title: "",
+            customerName: "",
+            phone: "",
+            priority: "normal",
+            dueDate: defDueDate,
+            status: defStatus,
+            stage: "in_progress",
+            description: "",
+            assigneeIds: [],
+            leaderId: ""
+        });
+        setSubtasks([]);
+        setHasDraftRestored(false);
+        setHasUserEdited(false);
+    };
+
     // Smart sync logic:
-    // 1. ALWAYS sync when modal opens (isOpen changes to true) or task ID changes
-    // 2. ALSO sync if Realtime update arrives AND user hasn't made local edits yet
+    // 1. ALWAYS sync when modal opens or task ID changes
+    // 2. In create mode: restore local draft if available so user doesn't lose progress!
     useEffect(() => {
         if (isOpen && initialData) {
             const taskIdChanged = initialData.id !== lastSyncedTaskId;
@@ -106,13 +164,31 @@ export const CreateTaskModal = ({
 
             if (shouldSync) {
                 const meta = extractTaskMetadata(initialData as any);
+                const initialDueDate = initialData.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : "";
+                
+                // Find matching column ID for the task
+                let targetColId = initialStatus;
+                if (initialData.due_date) {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const tmr = new Date();
+                    tmr.setDate(tmr.getDate() + 1);
+                    const tmrStr = tmr.toISOString().split('T')[0];
+                    if (initialDueDate === todayStr) {
+                        const col = columns.find(c => c.column_type === 'date_today' || c.id === 'today');
+                        if (col) targetColId = col.id as TaskStatus;
+                    } else if (initialDueDate === tmrStr) {
+                        const col = columns.find(c => c.column_type === 'date_tomorrow' || c.id === 'tomorrow');
+                        if (col) targetColId = col.id as TaskStatus;
+                    }
+                }
+
                 setFormData({
                     title: initialData.title || "",
                     customerName: initialData.customer_name || "",
                     phone: initialData.phone || "",
                     priority: initialData.priority || "normal",
-                    dueDate: initialData.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : "",
-                    status: initialStatus,
+                    dueDate: initialDueDate,
+                    status: targetColId,
                     stage: meta.stage || "in_progress",
                     description: meta.cleanNote || "",
                     assigneeIds: initialData.assignee_ids || [],
@@ -122,21 +198,34 @@ export const CreateTaskModal = ({
                 setAttachments(initialData.attachments || []);
                 setLastSyncedTaskId(initialData.id || null);
 
-                // Reset dirty state when syncing due to task change
                 if (taskIdChanged) {
                     setHasUserEdited(false);
                 }
             }
         } else if (isOpen && !initialData) {
-            // Fresh create mode
+            // Fresh create mode - check for saved draft first
             if (!hasUserEdited) {
+                const draftStr = typeof window !== 'undefined' ? localStorage.getItem('lyhu_task_create_draft') : null;
+                if (draftStr) {
+                    try {
+                        const draft = JSON.parse(draftStr);
+                        if (draft.formData?.title || draft.formData?.description || (draft.subtasks && draft.subtasks.length > 0)) {
+                            setFormData(draft.formData);
+                            setSubtasks(draft.subtasks || []);
+                            setHasDraftRestored(true);
+                            return;
+                        }
+                    } catch (e) { }
+                }
+
+                const { defStatus, defDueDate } = computeInitialDateAndStatus();
                 setFormData({
                     title: "",
                     customerName: "",
                     phone: "",
                     priority: "normal",
-                    dueDate: new Date().toISOString().split('T')[0],
-                    status: initialStatus,
+                    dueDate: defDueDate,
+                    status: defStatus,
                     stage: "in_progress",
                     description: "",
                     assigneeIds: [],
@@ -146,12 +235,85 @@ export const CreateTaskModal = ({
                 setAttachments([]);
             }
         } else if (!isOpen) {
-            // Modal closed - reset dirty state for next open
             setHasUserEdited(false);
-            setLastSyncedTaskId(null); // Reset so next open triggers fresh sync
+            setLastSyncedTaskId(null);
             setNewSubtaskTitle("");
         }
-    }, [isOpen, initialStatus, initialData, hasUserEdited, lastSyncedTaskId]);
+    }, [isOpen, initialStatus, initialData, hasUserEdited, lastSyncedTaskId, columns, computeInitialDateAndStatus]);
+
+    // Handle column selection with automatic due date synchronization
+    const handleColumnChange = (selectedColId: string) => {
+        setHasUserEdited(true);
+        const matchedCol = columns.find(c => c.id === selectedColId || c.column_type === selectedColId);
+        const colType = matchedCol?.column_type || selectedColId;
+
+        let newDueDate = formData.dueDate;
+        let newStage = formData.stage;
+
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+
+        if (colType === 'date_today' || selectedColId === 'today' || matchedCol?.label?.toLowerCase().includes('hôm nay')) {
+            newDueDate = todayStr;
+        } else if (colType === 'date_tomorrow' || selectedColId === 'tomorrow' || matchedCol?.label?.toLowerCase().includes('ngày mai')) {
+            const tmr = new Date(today);
+            tmr.setDate(tmr.getDate() + 1);
+            newDueDate = tmr.toISOString().split('T')[0];
+        } else if (colType === 'date_this_week' || selectedColId === 'this_week' || matchedCol?.label?.toLowerCase().includes('tuần này')) {
+            const thisWeek = new Date(today);
+            thisWeek.setDate(today.getDate() + 4);
+            newDueDate = thisWeek.toISOString().split('T')[0];
+        } else if (colType === 'system_inbox' || selectedColId === 'inbox' || matchedCol?.label?.toLowerCase().includes('hộp thư')) {
+            newDueDate = "";
+        } else if (colType === 'system_done' || selectedColId === 'done' || matchedCol?.label?.toLowerCase().includes('đã xong')) {
+            newStage = 'completed';
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            status: selectedColId as TaskStatus,
+            dueDate: newDueDate,
+            stage: newStage
+        }));
+    };
+
+    // Handle due date selection with automatic column synchronization
+    const handleDueDateChange = (newDateStr: string) => {
+        setHasUserEdited(true);
+        let newStatus = formData.status;
+
+        if (newDateStr) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const targetDate = new Date(newDateStr);
+            targetDate.setHours(0, 0, 0, 0);
+
+            const diffDays = Math.round((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) {
+                const todayCol = columns.find(c => c.column_type === 'date_today' || c.id === 'today');
+                if (todayCol) newStatus = todayCol.id as TaskStatus;
+            } else if (diffDays === 1) {
+                const tomorrowCol = columns.find(c => c.column_type === 'date_tomorrow' || c.id === 'tomorrow');
+                if (tomorrowCol) newStatus = tomorrowCol.id as TaskStatus;
+            } else if (diffDays > 1 && diffDays <= 7) {
+                const thisWeekCol = columns.find(c => c.column_type === 'date_this_week' || c.id === 'this_week');
+                if (thisWeekCol) newStatus = thisWeekCol.id as TaskStatus;
+            } else if (diffDays < 0) {
+                const overdueCol = columns.find(c => c.column_type === 'date_overdue' || c.id === 'overdue');
+                if (overdueCol) newStatus = overdueCol.id as TaskStatus;
+            }
+        } else {
+            const inboxCol = columns.find(c => c.column_type === 'system_inbox' || c.id === 'inbox');
+            if (inboxCol) newStatus = inboxCol.id as TaskStatus;
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            dueDate: newDateStr,
+            status: newStatus
+        }));
+    };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
@@ -235,6 +397,25 @@ export const CreateTaskModal = ({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Ensure due_date is populated if status corresponds to a date column
+        let finalDueDate = formData.dueDate;
+        const matchedCol = columns.find(c => c.id === formData.status || c.column_type === formData.status);
+        const colType = matchedCol?.column_type || formData.status;
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        if ((colType === 'date_today' || formData.status === 'today' || matchedCol?.label?.toLowerCase().includes('hôm nay')) && !finalDueDate) {
+            finalDueDate = todayStr;
+        } else if ((colType === 'date_tomorrow' || formData.status === 'tomorrow' || matchedCol?.label?.toLowerCase().includes('ngày mai')) && !finalDueDate) {
+            const tmr = new Date();
+            tmr.setDate(tmr.getDate() + 1);
+            finalDueDate = tmr.toISOString().split('T')[0];
+        } else if ((colType === 'date_this_week' || formData.status === 'this_week' || matchedCol?.label?.toLowerCase().includes('tuần này')) && !finalDueDate) {
+            const thisWeek = new Date();
+            thisWeek.setDate(thisWeek.getDate() + 4);
+            finalDueDate = thisWeek.toISOString().split('T')[0];
+        }
+
         onSave({
             id: initialData?.id,
             title: formData.title,
@@ -244,13 +425,19 @@ export const CreateTaskModal = ({
             status: formData.status,
             stage: formData.stage,
             subtasks: subtasks,
-            due_date: formData.dueDate || null,
+            due_date: finalDueDate || null,
             note: packMetadataToNote(formData.description, subtasks, formData.stage),
             assignee_ids: formData.assigneeIds,
             leader_id: formData.leaderId || null,
             type: initialData?.type || taskType,
-            attachments: attachments // Pass attachments
+            attachments: attachments
         });
+
+        // Clear draft on successful submit
+        try {
+            localStorage.removeItem('lyhu_task_create_draft');
+        } catch (err) { }
+        setHasDraftRestored(false);
         onClose();
     };
 
@@ -268,9 +455,24 @@ export const CreateTaskModal = ({
             <div className="bg-white rounded-xl border border-slate-200 max-w-md w-full animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
                 <div className="p-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
                     <div>
-                        <h3 className="font-semibold text-lg text-slate-900">
-                            {isEditMode ? "✏️ Chỉnh sửa" : "➕ Thêm mới"}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-lg text-slate-900">
+                                {isEditMode ? "✏️ Chỉnh sửa" : "➕ Thêm mới"}
+                            </h3>
+                            {hasDraftRestored && !isEditMode && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[11px] font-medium">
+                                    <span>📝 Tự khôi phục</span>
+                                    <button
+                                        type="button"
+                                        onClick={handleClearDraft}
+                                        className="text-red-500 hover:text-red-700 underline ml-1 cursor-pointer"
+                                        title="Xóa bản nháp và nhập mới"
+                                    >
+                                        Xóa
+                                    </button>
+                                </span>
+                            )}
+                        </div>
                         {isEditMode && initialData?.title && (
                             <div className="text-sm text-slate-600 truncate max-w-[250px]">
                                 {initialData.title}
@@ -377,9 +579,9 @@ export const CreateTaskModal = ({
                                 Cột hiển thị (Kanban)
                             </label>
                             <select
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white cursor-pointer font-medium"
                                 value={formData.status}
-                                onChange={e => { setFormData(prev => ({ ...prev, status: e.target.value as TaskStatus })); setHasUserEdited(true); }}
+                                onChange={e => handleColumnChange(e.target.value)}
                             >
                                 {columns.length > 0 ? (
                                     columns.map(col => (
@@ -396,12 +598,12 @@ export const CreateTaskModal = ({
                             <label className="block text-xs font-semibold text-slate-700 mb-1">Hạn hoàn thành</label>
                             <input
                                 type="date"
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] text-slate-700"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] text-slate-700 cursor-pointer font-medium"
                                 value={formData.dueDate}
-                                onChange={e => { setFormData(prev => ({ ...prev, dueDate: e.target.value })); setHasUserEdited(true); }}
+                                onChange={e => handleDueDateChange(e.target.value)}
                             />
-                            {!formData.dueDate && !initialData?.id && (
-                                <p className="text-[10px] text-orange-500 mt-0.5">Không chọn ngày sẽ tự động vào "Hộp thư đến".</p>
+                            {!formData.dueDate && (
+                                <p className="text-[10px] text-slate-400 mt-0.5">Không chọn ngày sẽ tự động vào "Hộp thư đến".</p>
                             )}
                         </div>
                     </div>

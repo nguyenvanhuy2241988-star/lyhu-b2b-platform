@@ -471,6 +471,7 @@ export default function TelesalesTasksPage() {
     const [dbColumns, setDbColumns] = useState<DbColumn[]>([]);
     const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
     const [isLoading, setIsLoading] = useState(false);
+    const isInitialLoadDone = useRef(false);
 
     // Filters
     const [searchQuery, setSearchQuery] = useState("");
@@ -664,9 +665,11 @@ export default function TelesalesTasksPage() {
         }
     }, [user, session?.access_token, dbColumns, debouncedSearchQuery, filterPriority, filterDueDate, filterCustomerType]);
 
-    const refreshData = useCallback(async () => {
+    const refreshData = useCallback(async (isSilent = false) => {
         if (!user) return;
-        setIsLoading(true);
+        if (!isInitialLoadDone.current && !isSilent) {
+            setIsLoading(true);
+        }
 
         // Fetch profiles + columns from DB in parallel
         const [{ data: profileData }, fetchedDbCols] = await Promise.all([
@@ -717,6 +720,7 @@ export default function TelesalesTasksPage() {
             }
         }
 
+        isInitialLoadDone.current = true;
         setIsLoading(false);
     }, [user, loadTasksForColumn]);
 
@@ -1076,7 +1080,7 @@ export default function TelesalesTasksPage() {
             if (channel) supabase.removeChannel(channel);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user, session?.access_token, authIsLoading]); // Removed refreshData to prevent infinite loop
+    }, [user?.id, authIsLoading]); // Depend on user?.id instead of whole user/session to prevent re-running on window focus token refresh
 
     const handleLogCall = (task: TelesalesTask) => {
         setTaskToLog(task);
@@ -1130,11 +1134,41 @@ export default function TelesalesTasksPage() {
     };
 
     // Handle Save (Create or Update)
-    // Handle Save (Create or Update)
     const handleSaveTask = async (taskData: any) => {
         setIsLoading(true);
         savingRef.current = true;
         try {
+            // Find target column matching status / column ID
+            const targetCol = dbColumns.find(c => c.id === taskData.status || c.column_type === taskData.status || c.label.toLowerCase() === taskData.status?.toLowerCase());
+            const targetColType = targetCol?.column_type || taskData.status;
+
+            // Guarantee due date if selected column is today/tomorrow/this_week
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (targetColType === 'date_today' || taskData.status === 'today' || targetCol?.label?.toLowerCase().includes('hôm nay')) {
+                if (!taskData.due_date) taskData.due_date = todayStr;
+            } else if (targetColType === 'date_tomorrow' || taskData.status === 'tomorrow' || targetCol?.label?.toLowerCase().includes('ngày mai')) {
+                if (!taskData.due_date) {
+                    const tmr = new Date();
+                    tmr.setDate(tmr.getDate() + 1);
+                    taskData.due_date = tmr.toISOString().split('T')[0];
+                }
+            } else if (targetColType === 'date_this_week' || taskData.status === 'this_week' || targetCol?.label?.toLowerCase().includes('tuần này')) {
+                if (!taskData.due_date) {
+                    const thisWeek = new Date();
+                    thisWeek.setDate(thisWeek.getDate() + 4);
+                    taskData.due_date = thisWeek.toISOString().split('T')[0];
+                }
+            }
+
+            if (targetColType === 'system_done' || taskData.status === 'done') {
+                taskData.status = 'done';
+                if (!taskData.completed_at) taskData.completed_at = new Date().toISOString();
+            } else if (targetColType === 'system_inbox' || taskData.status === 'inbox') {
+                taskData.status = 'inbox';
+            }
+
+            const targetPlacementColId = targetCol ? targetCol.id : (createFromColumnId || null);
+
             if (taskData.id) {
                 await updateTaskSupabase(taskData.id, taskData, session?.access_token);
                 // Placements only belong to manual tasks in telesales_tasks. Deals do not use task_column_placements.
@@ -1145,6 +1179,9 @@ export default function TelesalesTasksPage() {
                     if (taskData.assigned_to) allUserIds.add(taskData.assigned_to);
                     if (taskData.leader_id) allUserIds.add(taskData.leader_id);
                     await createTaskPlacements(taskData.id, Array.from(allUserIds), session?.access_token);
+                    if (targetPlacementColId && user?.id) {
+                        await moveTaskToColumn(taskData.id, targetPlacementColId, session?.access_token);
+                    }
                 }
             } else {
                 // Create mode - then create placements for all assignees
@@ -1158,13 +1195,13 @@ export default function TelesalesTasksPage() {
                     if (taskData.assigned_to) allUserIds.add(taskData.assigned_to);
                     if (taskData.leader_id) allUserIds.add(taskData.leader_id);
                     await createTaskPlacements(taskId, Array.from(allUserIds), session?.access_token);
-                    // If creating from a specific column (not inbox), move creator's placement there
-                    if (createFromColumnId && user?.id) {
-                        await moveTaskToColumn(taskId, createFromColumnId, session?.access_token);
+                    // Move placement to target column
+                    if (targetPlacementColId && user?.id) {
+                        await moveTaskToColumn(taskId, targetPlacementColId, session?.access_token);
                     }
                 }
             }
-            await refreshData();
+            await refreshData(true);
             setIsCreateModalOpen(false);
             setIsSimpleModalOpen(false);
         } catch (error: any) {

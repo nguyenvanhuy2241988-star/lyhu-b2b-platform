@@ -57,11 +57,36 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
         return () => { mounted = false; };
     }, []);
 
-    // Reset loop
+    const [hasDraftRestored, setHasDraftRestored] = useState(false);
+
+    // Reset or restore draft
     useEffect(() => {
         if (isOpen) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const draftStr = typeof window !== 'undefined' ? localStorage.getItem('lyhu_task_simple_draft') : null;
+
+            if (draftStr) {
+                try {
+                    const draft = JSON.parse(draftStr);
+                    if (draft.title || draft.note || (draft.subtasks && draft.subtasks.length > 0)) {
+                        setTitle(draft.title || "");
+                        setDueDate(draft.dueDate !== undefined ? draft.dueDate : todayStr);
+                        setPriority(draft.priority || "normal");
+                        setStatus(draft.status || "today");
+                        setStage(draft.stage || "in_progress");
+                        setSubtasks(draft.subtasks || []);
+                        setNote(draft.note || "");
+                        setAssignedTo(draft.assignedTo || currentUser?.id || "");
+                        setAssigneeIds(draft.assigneeIds || (currentUser?.id ? [currentUser.id] : []));
+                        setLeaderId(draft.leaderId || "");
+                        setHasDraftRestored(true);
+                        return;
+                    }
+                } catch (e) { }
+            }
+
             setTitle("");
-            setDueDate("");
+            setDueDate(todayStr); // Default to today!
             setPriority("normal");
             setStatus("today");
             setStage("in_progress");
@@ -74,8 +99,74 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
             setAttachments([]);
             setIsAttachOpen(false);
             setLinkInput("");
+            setHasDraftRestored(false);
         }
     }, [isOpen, currentUser]);
+
+    // Auto-save draft
+    useEffect(() => {
+        if (isOpen) {
+            if (title || note || subtasks.length > 0) {
+                try {
+                    localStorage.setItem('lyhu_task_simple_draft', JSON.stringify({
+                        title, dueDate, priority, status, stage, subtasks, note, assignedTo, assigneeIds, leaderId
+                    }));
+                } catch (e) { }
+            }
+        }
+    }, [isOpen, title, dueDate, priority, status, stage, subtasks, note, assignedTo, assigneeIds, leaderId]);
+
+    const handleClearDraft = () => {
+        try {
+            localStorage.removeItem('lyhu_task_simple_draft');
+        } catch (e) { }
+        const todayStr = new Date().toISOString().split('T')[0];
+        setTitle("");
+        setDueDate(todayStr);
+        setPriority("normal");
+        setStatus("today");
+        setStage("in_progress");
+        setSubtasks([]);
+        setNewSubtaskTitle("");
+        setNote("");
+        setHasDraftRestored(false);
+    };
+
+    const handleStatusChange = (newStatus: string) => {
+        setStatus(newStatus);
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        if (newStatus === 'today') {
+            setDueDate(todayStr);
+        } else if (newStatus === 'tomorrow') {
+            const tmr = new Date(today);
+            tmr.setDate(tmr.getDate() + 1);
+            setDueDate(tmr.toISOString().split('T')[0]);
+        } else if (newStatus === 'this_week') {
+            const thisWeek = new Date(today);
+            thisWeek.setDate(today.getDate() + 4);
+            setDueDate(thisWeek.toISOString().split('T')[0]);
+        } else if (newStatus === 'inbox') {
+            setDueDate("");
+        }
+    };
+
+    const handleDueDateChange = (newDateStr: string) => {
+        setDueDate(newDateStr);
+        if (newDateStr) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const target = new Date(newDateStr);
+            target.setHours(0, 0, 0, 0);
+            const diffDays = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays === 0) setStatus('today');
+            else if (diffDays === 1) setStatus('tomorrow');
+            else if (diffDays > 1 && diffDays <= 7) setStatus('this_week');
+            else if (diffDays < 0) setStatus('inbox');
+        } else {
+            setStatus('inbox');
+        }
+    };
 
     const handleAddSubtask = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -100,6 +191,21 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
     const handleSave = async () => {
         if (!title.trim()) return alert("Vui lòng nhập tên công việc");
 
+        // Guarantee due_date for today/tomorrow/this_week
+        let finalDueDate = dueDate;
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (status === 'today' && !finalDueDate) {
+            finalDueDate = todayStr;
+        } else if (status === 'tomorrow' && !finalDueDate) {
+            const tmr = new Date();
+            tmr.setDate(tmr.getDate() + 1);
+            finalDueDate = tmr.toISOString().split('T')[0];
+        } else if (status === 'this_week' && !finalDueDate) {
+            const thisWeek = new Date();
+            thisWeek.setDate(thisWeek.getDate() + 4);
+            finalDueDate = thisWeek.toISOString().split('T')[0];
+        }
+
         try {
             await onSave({
                 title,
@@ -107,7 +213,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                 status: status as any || 'today',
                 stage,
                 subtasks,
-                due_date: dueDate ? new Date(dueDate).toISOString() : null,
+                due_date: finalDueDate ? new Date(finalDueDate).toISOString() : null,
                 note: packMetadataToNote(note, subtasks, stage),
                 type: 'task',
                 assigned_to: assignedTo || currentUser?.id,
@@ -115,7 +221,10 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                 leader_id: leaderId,
                 attachments: attachments
             });
-            // FIX: Close modal after successful save to trigger reset on next open
+            try {
+                localStorage.removeItem('lyhu_task_simple_draft');
+            } catch (e) { }
+            setHasDraftRestored(false);
             onClose();
         } catch (error) {
             console.error("Error saving task:", error);
@@ -174,7 +283,22 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
             <div className="bg-white rounded-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/50">
-                    <h3 className="font-semibold text-slate-900">Thêm việc mới</h3>
+                    <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-slate-900">Thêm việc mới</h3>
+                        {hasDraftRestored && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[11px] font-medium">
+                                <span>📝 Tự khôi phục</span>
+                                <button
+                                    type="button"
+                                    onClick={handleClearDraft}
+                                    className="text-red-500 hover:text-red-700 underline ml-1 cursor-pointer"
+                                    title="Xóa bản nháp và nhập mới"
+                                >
+                                    Xóa
+                                </button>
+                            </span>
+                        )}
+                    </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-200 rounded-full transition-colors">
                         <X className="w-5 h-5" />
                     </button>
@@ -199,7 +323,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                         <div>
                             <label className="block text-xs font-semibold text-slate-600 mb-1">Độ ưu tiên</label>
                             <select
-                                className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white"
+                                className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white cursor-pointer"
                                 value={priority}
                                 onChange={e => setPriority(e.target.value)}
                             >
@@ -212,7 +336,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                         <div>
                             <label className="block text-xs font-semibold text-slate-600 mb-1">Giai đoạn</label>
                             <select
-                                className="w-full px-2.5 py-1.5 border border-teal-200 bg-teal-50/50 rounded-lg text-xs sm:text-sm font-medium text-teal-800 focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
+                                className="w-full px-2.5 py-1.5 border border-teal-200 bg-teal-50/50 rounded-lg text-xs sm:text-sm font-medium text-teal-800 focus:outline-none focus:ring-2 focus:ring-[#00AFA9] cursor-pointer"
                                 value={stage}
                                 onChange={e => setStage(e.target.value)}
                             >
@@ -225,9 +349,9 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                         <div>
                             <label className="block text-xs font-semibold text-slate-600 mb-1">Cột Kanban</label>
                             <select
-                                className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white"
+                                className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white cursor-pointer font-medium"
                                 value={status}
-                                onChange={e => setStatus(e.target.value)}
+                                onChange={e => handleStatusChange(e.target.value)}
                             >
                                 <option value="today">Hôm nay</option>
                                 <option value="tomorrow">Ngày mai</option>
@@ -245,7 +369,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                                 type="date"
                                 className={`w-full px-3 py-1.5 border rounded-lg text-sm transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#00AFA9] font-medium ${dueDate ? 'bg-white border-[#00AFA9] text-[#00AFA9]' : 'bg-slate-50 border-dashed border-slate-300 text-slate-400'}`}
                                 value={dueDate}
-                                onChange={(e) => setDueDate(e.target.value)}
+                                onChange={(e) => handleDueDateChange(e.target.value)}
                                 title="Thời gian hoàn thành"
                             />
                         </div>
