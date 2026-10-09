@@ -219,6 +219,11 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
             finalDueDate = thisWeek.toISOString().split('T')[0];
         }
 
+        const effectiveAssignees = assigneeIds && assigneeIds.length > 0
+            ? assigneeIds
+            : (assignedTo ? [assignedTo] : (currentUser?.id ? [currentUser.id] : []));
+        const effectiveAssignedTo = assignedTo || effectiveAssignees[0] || currentUser?.id || null;
+
         try {
             await onSave({
                 title,
@@ -229,8 +234,8 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                 due_date: finalDueDate ? new Date(finalDueDate).toISOString() : null,
                 note: packMetadataToNote(note, finalSubtasks, stage),
                 type: 'task',
-                assigned_to: assignedTo || currentUser?.id,
-                assignee_ids: assigneeIds,
+                assigned_to: effectiveAssignedTo,
+                assignee_ids: effectiveAssignees,
                 leader_id: leaderId,
                 attachments: attachments
             });

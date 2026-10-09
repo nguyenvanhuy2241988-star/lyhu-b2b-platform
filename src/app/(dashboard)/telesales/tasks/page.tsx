@@ -599,6 +599,40 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
 // Optimization #1: Memoize TaskCard to reduce re-renders
 const MemoizedTaskCard = React.memo(TaskCard);
 
+// --- Helper Functions ---
+function parseAssigneeIds(raw: any): string[] {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.map(String).filter(Boolean);
+    if (typeof raw === 'string') {
+        let cleaned = raw.trim();
+        if (cleaned.startsWith('{') && cleaned.endsWith('}')) {
+            cleaned = cleaned.slice(1, -1);
+        }
+        if (!cleaned) return [];
+        return cleaned.split(',').map((id: string) => id.trim().replace(/['"]/g, '')).filter(Boolean);
+    }
+    return [];
+}
+
+function isTaskRelevantToUser(task: any, currentUserId?: string | null): boolean {
+    if (!currentUserId || !task) return false;
+    if (task.user_id === currentUserId) return true;
+    if (task.owner_id === currentUserId) return true;
+    if (task.assigned_to === currentUserId) return true;
+    if (task.leader_id === currentUserId) return true;
+    const aIds = parseAssigneeIds(task.assignee_ids);
+    if (aIds.includes(currentUserId)) return true;
+    return false;
+}
+
+function isColumnDone(col?: { column_type?: string; id?: string; label?: string } | null, colId?: string): boolean {
+    if (!col && !colId) return false;
+    if (col?.column_type === 'system_done') return true;
+    if (col?.id === 'done' || colId === 'done') return true;
+    const label = col?.label?.toLowerCase() || '';
+    return label.includes('hoàn') || label.includes('xong');
+}
+
 // --- Use Debounce Hook ---
 function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -663,7 +697,9 @@ export default function TelesalesTasksPage() {
     const [doneMonthFilter, setDoneMonthFilter] = useState<string>(currentYearMonth);
 
     const getTaskCompletedMonth = useCallback((task: TelesalesTask): string => {
-        const rawDate = task.completed_at || task.handled_date || task.updated_at || task.created_at;
+        // Priority: completed_at -> handled_date -> due_date -> created_at
+        // Do NOT use updated_at, because touching an old task updates updated_at to the current month!
+        const rawDate = task.completed_at || task.handled_date || task.due_date || task.created_at;
         if (!rawDate) return '';
         try {
             const d = new Date(rawDate);
@@ -746,7 +782,7 @@ export default function TelesalesTasksPage() {
             const newColumnTasks = { ...prev };
             for (const colId in newColumnTasks) {
                 const colDef = dbColumns.find(c => c.id === colId);
-                const isDoneCol = colDef?.column_type === 'system_done' || colId === 'done';
+                const isDoneCol = isColumnDone(colDef, colId);
                 if (newStatus === 'done') {
                     if (isDoneCol) {
                         const exists = newColumnTasks[colId]?.some(t => t.id === taskId);
@@ -780,8 +816,9 @@ export default function TelesalesTasksPage() {
 
         // Also move placement to done/inbox column for manual tasks
         if (task.type !== 'deal') {
-            const targetColType = isDone ? 'system_inbox' : 'system_done';
-            const targetCol = dbColumns.find(c => c.column_type === targetColType);
+            const targetCol = isDone
+                ? dbColumns.find(c => c.column_type === 'system_inbox')
+                : (dbColumns.find(c => c.column_type === 'system_done') || dbColumns.find(c => isColumnDone(c, c.id)));
             if (targetCol) {
                 await moveTaskToColumn(taskId, targetCol.id, session?.access_token);
             }
@@ -863,9 +900,14 @@ export default function TelesalesTasksPage() {
                 // PLACEMENT COLUMNS: fetch via RPC get_column_tasks
                 const data = await fetchColumnTasks(colId, 50, isLoadMore ? (pageNum - 1) * 50 : 0, session.access_token);
                 // For non-done columns (e.g. inbox, custom), exclude completed tasks
-                const filteredData = columnType === 'system_done'
+                const colDef = dbColumns.find(c => c.id === colId);
+                const isDone = columnType === 'system_done' || isColumnDone(colDef, colId);
+                const nonDoneData = isDone
                     ? (data || [])
                     : (data || []).filter((t: any) => t.status !== 'done');
+
+                // Enforce relevance: only tasks belonging to this user should appear in their columns
+                const filteredData = nonDoneData.filter((t: any) => isTaskRelevantToUser(t, user.id));
 
                 setColumnTasks(prev => ({
                     ...prev,
@@ -954,6 +996,38 @@ export default function TelesalesTasksPage() {
                     console.warn('[Tasks] healMisplacedDatePlacements error:', err);
                 }
             }
+
+            // Auto-heal: Remove placements for current user where user is neither owner, creator, nor assignee
+            try {
+                const { data: myPlacements } = await supabase
+                    .from('task_column_placements')
+                    .select('task_id')
+                    .eq('user_id', user.id);
+
+                if (myPlacements && myPlacements.length > 0) {
+                    const myTaskIds = myPlacements.map((p: any) => p.task_id);
+                    const { data: myTasks } = await supabase
+                        .from('telesales_tasks')
+                        .select('id, user_id, owner_id, assigned_to, leader_id, assignee_ids')
+                        .in('id', myTaskIds);
+
+                    if (myTasks) {
+                        const unassignedIds = myTasks
+                            .filter((t: any) => !isTaskRelevantToUser(t, user.id))
+                            .map((t: any) => t.id);
+
+                        if (unassignedIds.length > 0) {
+                            await supabase
+                                .from('task_column_placements')
+                                .delete()
+                                .eq('user_id', user.id)
+                                .in('task_id', unassignedIds);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('[Tasks] healUnassignedPlacements error:', err);
+            }
         }
 
         // Load each visible column independently
@@ -1039,6 +1113,66 @@ export default function TelesalesTasksPage() {
                     (payload: any) => {
                         console.log('[Tasks Page] Realtime Event:', payload);
 
+                        const checkTaskBelongsToColumn = (task: any, colId: string, currentList: any[]): boolean => {
+                            const colDef = columnsRef.current.find(c => c.id === colId);
+                            const cType = colDef?.column_type || colId;
+
+                            if (task.status === 'done' && (cType === 'system_done' || colId === 'done' || isColumnDone(colDef, colId))) return true;
+                            if (task.status === 'done') return false; // Done tasks only in Done column usually
+
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const taskDate = task.due_date ? new Date(task.due_date) : null;
+                            if (taskDate) taskDate.setHours(0, 0, 0, 0);
+
+                            if (cType === 'date_today' || colId === 'today') {
+                                return taskDate ? taskDate.getTime() === today.getTime() : false;
+                            }
+                            if (cType === 'date_tomorrow' || colId === 'tomorrow') {
+                                const tmr = new Date(today);
+                                tmr.setDate(tmr.getDate() + 1);
+                                return taskDate ? taskDate.getTime() === tmr.getTime() : false;
+                            }
+                            if (cType === 'date_this_week' || colId === 'this_week') {
+                                // If already in this column, keep it unless due date explicitly changed to today, tomorrow, or overdue
+                                if (currentList.some(t => t.id === task.id) && task.status !== 'done') {
+                                    if (taskDate) {
+                                        const tmr = new Date(today);
+                                        tmr.setDate(tmr.getDate() + 1);
+                                        if (taskDate.getTime() === today.getTime() || taskDate.getTime() === tmr.getTime() || taskDate.getTime() < today.getTime()) {
+                                            return false;
+                                        }
+                                    }
+                                    return true;
+                                }
+                                if (!taskDate) return false;
+                                const startWeek = new Date(today);
+                                startWeek.setDate(today.getDate() + 2);
+                                const endWeek = new Date(today);
+                                endWeek.setDate(today.getDate() + 7);
+                                endWeek.setHours(23, 59, 59, 999);
+                                return taskDate.getTime() >= startWeek.getTime() && taskDate.getTime() <= endWeek.getTime();
+                            }
+                            if (cType === 'date_overdue' || colId === 'overdue') {
+                                return taskDate ? taskDate.getTime() < today.getTime() : false;
+                            }
+                            if (cType === 'system_inbox' || colId === 'inbox') {
+                                if (currentList.some(t => t.id === task.id) && task.status !== 'done') return true;
+                                if (taskDate) {
+                                    const inSevenDays = new Date(today);
+                                    inSevenDays.setDate(inSevenDays.getDate() + 7);
+                                    return taskDate.getTime() > inSevenDays.getTime();
+                                }
+                                return task.status === 'inbox' || !task.due_date;
+                            }
+                            if (cType === 'custom') {
+                                return currentList.some(t => t.id === task.id) && task.status !== 'done';
+                            }
+
+                            // Default/Legacy columns: match status
+                            return task.status === colId;
+                        };
+
                         // Handle INSERT
                         if (payload.eventType === 'INSERT') {
                             if (savingRef.current) {
@@ -1046,136 +1180,86 @@ export default function TelesalesTasksPage() {
                                 return;
                             }
                             const newTask = payload.new as any;
-                            const userId = user.id;
-                            const isRelevant =
-                                newTask.user_id === userId ||
-                                newTask.owner_id === userId ||
-                                newTask.assigned_to === userId ||
-                                newTask.leader_id === userId ||
-                                (newTask.assignee_ids && Array.isArray(newTask.assignee_ids) && newTask.assignee_ids.includes(userId));
+                            const isRelevant = isTaskRelevantToUser(newTask, user.id);
 
                             if (isRelevant) {
-                                // Add to inbox column (first placement column found)
+                                const normalizedAssignees = parseAssigneeIds(newTask.assignee_ids);
+                                const meta = extractTaskMetadata(newTask);
+                                const normalizedTask = {
+                                    ...newTask,
+                                    assignee_ids: normalizedAssignees,
+                                    subtasks: meta.subtasks,
+                                    stage: meta.stage,
+                                    department: (newTask as any).department || meta.department
+                                };
+
                                 setColumnTasks(prev => {
-                                    // If already exists anywhere, skip
                                     for (const col in prev) {
                                         if (prev[col]?.some(t => t.id === newTask.id)) return prev;
                                     }
-                                    // Find inbox column ID from current columns
-                                    const inboxCol = columns.find((c: any) => c.column_type === 'system_inbox');
-                                    if (inboxCol) {
-                                        return {
-                                            ...prev,
-                                            [inboxCol.id]: [newTask, ...(prev[inboxCol.id] || [])]
-                                        };
+                                    const newCols = { ...prev };
+                                    let placed = false;
+                                    for (const col of columnsRef.current) {
+                                        if (checkTaskBelongsToColumn(normalizedTask, col.id, newCols[col.id] || [])) {
+                                            newCols[col.id] = [normalizedTask, ...(newCols[col.id] || [])];
+                                            placed = true;
+                                            break;
+                                        }
                                     }
-                                    return prev;
+                                    if (!placed) {
+                                        const inboxCol = columnsRef.current.find((c: any) => c.column_type === 'system_inbox');
+                                        if (inboxCol) {
+                                            newCols[inboxCol.id] = [normalizedTask, ...(newCols[inboxCol.id] || [])];
+                                        }
+                                    }
+                                    return newCols;
                                 });
                             }
                         }
 
                         // Handle UPDATE
                         if (payload.eventType === 'UPDATE') {
-                            // Helper to check column belonging
                             const updatedTask = payload.new as any;
+                            const isRelevant = isTaskRelevantToUser(updatedTask, user.id);
 
-                            // DEBUG LOGS & Robust Relevance Check
-                            const userId = user.id;
-
-                            // Parse assignee_ids safely (handle string vs array)
-                            let assigneeIds: string[] = [];
-                            try {
-                                if (updatedTask.assignee_ids) {
-                                    if (Array.isArray(updatedTask.assignee_ids)) {
-                                        assigneeIds = updatedTask.assignee_ids;
-                                    } else if (typeof updatedTask.assignee_ids === 'string') {
-                                        // Handle Postgres array format "{uuid,uuid}" or JSON string
-                                        let cleaned = updatedTask.assignee_ids;
-                                        if (cleaned.startsWith('{') && cleaned.endsWith('}')) {
-                                            cleaned = cleaned.slice(1, -1); // remove {}
-                                        }
-                                        if (cleaned) {
-                                            assigneeIds = cleaned.split(',').map((id: string) => id.trim().replace(/['"]/g, ''));
+                            // CRITICAL: If task is NOT relevant to current user, ensure it is completely removed from all columns
+                            if (!isRelevant) {
+                                setColumnTasks(prev => {
+                                    const newCols = { ...prev };
+                                    let changed = false;
+                                    for (const colId in newCols) {
+                                        if (newCols[colId]?.some(t => t.id === updatedTask.id)) {
+                                            newCols[colId] = newCols[colId].filter(t => t.id !== updatedTask.id);
+                                            changed = true;
                                         }
                                     }
-                                }
-                            } catch (e) {
-                                console.error('Error parsing assignee_ids:', e);
+                                    return changed ? newCols : prev;
+                                });
+                                setEditingTask(current => (current?.id === updatedTask.id ? null : current));
+                                return;
                             }
-
-                            const isRelevant =
-                                updatedTask.user_id === userId ||
-                                updatedTask.owner_id === userId ||
-                                updatedTask.assigned_to === userId ||
-                                updatedTask.leader_id === userId ||
-                                assigneeIds.includes(userId);
-
-                            console.log('[Realtime DEBUG] Update received for task:', updatedTask.id);
-                            console.log('[Realtime DEBUG] Task Title:', updatedTask.title);
-                            console.log('[Realtime DEBUG] Payload Assignee Ids (raw):', updatedTask.assignee_ids, typeof updatedTask.assignee_ids);
-                            console.log('[Realtime DEBUG] Parsed Assignee Ids:', assigneeIds);
-                            console.log('[Realtime DEBUG] Is Relevant?:', isRelevant, 'User ID:', userId);
-
-                            console.log('[Realtime DEBUG] Update received for task:', updatedTask.id);
-                            console.log('[Realtime DEBUG] Task Title:', updatedTask.title);
-                            console.log('[Realtime DEBUG] Attachments count:', updatedTask.attachments ? updatedTask.attachments.length : 0);
-                            console.log('[Realtime DEBUG] Attachments FULL:', JSON.stringify(updatedTask.attachments));
-                            console.log('[Realtime DEBUG] Is Relevant?:', isRelevant, 'User ID:', userId);
 
                             // Update Modal State if Open
                             setEditingTask(current => {
                                 if (current && current.id === updatedTask.id) {
-                                    console.log('[Realtime DEBUG] Updating open modal for task:', updatedTask.id);
-
-                                    // Parse keys explicitly to ensure no casing issues
                                     const nextNote = updatedTask.note !== undefined ? updatedTask.note : current.note;
-
-                                    // FIX: Don't replace existing attachments with empty array from stale Realtime update
-                                    // If current has attachments and Realtime sends empty, keep current (likely stale update race condition)
-                                    // Only replace if Realtime sends non-empty OR current is empty
                                     const rtAttachments = updatedTask.attachments;
                                     const currentAttachments = current.attachments || [];
                                     let nextAttachments;
                                     if (rtAttachments === undefined) {
-                                        // Realtime didn't include attachments
                                         nextAttachments = currentAttachments;
                                     } else if (Array.isArray(rtAttachments) && rtAttachments.length === 0 && currentAttachments.length > 0) {
-                                        // Realtime sent empty but we have attachments - likely stale, keep current
-                                        console.log('[Realtime DEBUG] PRESERVING current attachments (RT sent empty but current has items)');
                                         nextAttachments = currentAttachments;
                                     } else {
-                                        // Realtime sent actual data - use it
                                         nextAttachments = rtAttachments;
                                     }
 
-                                    console.log('[Realtime DEBUG] Old Note:', current.note);
-                                    console.log('[Realtime DEBUG] Update Payload Note:', updatedTask.note);
-                                    console.log('[Realtime DEBUG] Final Next Note:', nextNote);
-                                    console.log('[Realtime DEBUG] ====== ATTACHMENTS MERGE TRACE ======');
-                                    console.log('[Realtime DEBUG] current.attachments COUNT:', currentAttachments.length);
-                                    console.log('[Realtime DEBUG] updatedTask.attachments COUNT:', rtAttachments ? rtAttachments.length : 'undefined');
-                                    console.log('[Realtime DEBUG] nextAttachments COUNT:', nextAttachments ? nextAttachments.length : 0);
-                                    console.log('[Realtime DEBUG] =====================================');
-
-                                    // Normalize assignee_ids to Array if string
-                                    let normalizedAssignees = updatedTask.assignee_ids;
-                                    if (typeof normalizedAssignees === 'string') {
-                                        let cleaned = normalizedAssignees;
-                                        if (cleaned.startsWith('{') && cleaned.endsWith('}')) {
-                                            cleaned = cleaned.slice(1, -1);
-                                        }
-                                        if (cleaned) {
-                                            normalizedAssignees = cleaned.split(',').map((id: string) => id.trim().replace(/['"]/g, ''));
-                                        } else {
-                                            normalizedAssignees = [];
-                                        }
-                                    }
-
-                                    const nextAssignees = normalizedAssignees !== undefined ? normalizedAssignees : current.assignee_ids;
+                                    const normalizedAssignees = parseAssigneeIds(updatedTask.assignee_ids);
+                                    const nextAssignees = normalizedAssignees.length > 0 ? normalizedAssignees : current.assignee_ids;
 
                                     const meta = extractTaskMetadata({ ...current, ...updatedTask, note: nextNote });
                                     const nextSubtasks = (meta.subtasks && meta.subtasks.length > 0) ? meta.subtasks : (current.subtasks || []);
-                                    const nextState = {
+                                    return {
                                         ...current,
                                         ...updatedTask,
                                         assignee_ids: nextAssignees,
@@ -1184,73 +1268,12 @@ export default function TelesalesTasksPage() {
                                         customer_name: updatedTask.customer_name !== undefined ? updatedTask.customer_name : current.customer_name,
                                         due_date: updatedTask.due_date !== undefined ? updatedTask.due_date : current.due_date,
                                         subtasks: nextSubtasks,
-                                        stage: meta.stage || current.stage || 'in_progress'
+                                        stage: meta.stage || current.stage || 'in_progress',
+                                        department: (updatedTask as any).department || meta.department || current.department
                                     };
-
-                                    console.log('[Realtime DEBUG] Final Merged State:', nextState);
-                                    return nextState;
                                 }
                                 return current;
                             });
-
-                            const checkTaskBelongsToColumn = (task: any, colId: string, currentList: any[]): boolean => {
-                                const colDef = columnsRef.current.find(c => c.id === colId);
-                                const cType = colDef?.column_type || colId;
-
-                                if (task.status === 'done' && (cType === 'system_done' || colId === 'done')) return true;
-                                if (task.status === 'done') return false; // Done tasks only in Done column usually
-
-                                const today = new Date();
-                                today.setHours(0, 0, 0, 0);
-                                const taskDate = task.due_date ? new Date(task.due_date) : null;
-                                if (taskDate) taskDate.setHours(0, 0, 0, 0);
-
-                                if (cType === 'date_today' || colId === 'today') {
-                                    return taskDate ? taskDate.getTime() === today.getTime() : false;
-                                }
-                                if (cType === 'date_tomorrow' || colId === 'tomorrow') {
-                                    const tmr = new Date(today);
-                                    tmr.setDate(tmr.getDate() + 1);
-                                    return taskDate ? taskDate.getTime() === tmr.getTime() : false;
-                                }
-                                if (cType === 'date_this_week' || colId === 'this_week') {
-                                    // If already in this column, keep it unless due date explicitly changed to today, tomorrow, or overdue
-                                    if (currentList.some(t => t.id === task.id) && task.status !== 'done') {
-                                        if (taskDate) {
-                                            const tmr = new Date(today);
-                                            tmr.setDate(tmr.getDate() + 1);
-                                            if (taskDate.getTime() === today.getTime() || taskDate.getTime() === tmr.getTime() || taskDate.getTime() < today.getTime()) {
-                                                return false;
-                                            }
-                                        }
-                                        return true;
-                                    }
-                                    if (!taskDate) return false;
-                                    const startWeek = new Date(today);
-                                    startWeek.setDate(today.getDate() + 2);
-                                    const endWeek = new Date(today);
-                                    endWeek.setDate(today.getDate() + 7);
-                                    endWeek.setHours(23, 59, 59, 999);
-                                    return taskDate.getTime() >= startWeek.getTime() && taskDate.getTime() <= endWeek.getTime();
-                                }
-                                if (cType === 'date_overdue' || colId === 'overdue') {
-                                    return taskDate ? taskDate.getTime() < today.getTime() : false;
-                                }
-                                if (cType === 'system_inbox' || colId === 'inbox') {
-                                    // For inbox, it usually matches status 'inbox' OR it is placed there.
-                                    // But realistically, if it's already there and we do an update (like tick handled_date), keep it.
-                                    if (currentList.some(t => t.id === task.id) && task.status !== 'done') return true;
-                                    return task.status === 'inbox';
-                                }
-                                if (cType === 'custom') {
-                                    // We can't know custom placements from task payload alone.
-                                    // So if it's currently in this column, and not marked 'done', it belongs.
-                                    return currentList.some(t => t.id === task.id) && task.status !== 'done';
-                                }
-
-                                // Default/Legacy columns: match status
-                                return task.status === colId;
-                            };
 
                             // Update ALL columns
                             setColumnTasks(prev => {
@@ -1488,7 +1511,7 @@ export default function TelesalesTasksPage() {
                     const isDone = taskData.status === 'done';
                     for (const cId in newCols) {
                         const colDef = dbColumns.find(c => c.id === cId);
-                        const isDoneCol = colDef?.column_type === 'system_done' || cId === 'done';
+                        const isDoneCol = isColumnDone(colDef, cId);
                         if (isDone) {
                             if (isDoneCol) {
                                 const exists = newCols[cId]?.some(t => t.id === taskData.id);
@@ -1523,16 +1546,34 @@ export default function TelesalesTasksPage() {
                 if (taskData.type !== 'deal') {
                     const allUserIds = new Set<string>();
                     if (user?.id) allUserIds.add(user.id);
-                    if (taskData.assignee_ids) taskData.assignee_ids.forEach((id: string) => allUserIds.add(id));
+                    if (taskData.user_id) allUserIds.add(taskData.user_id);
+                    if (taskData.owner_id) allUserIds.add(taskData.owner_id);
+                    if (taskData.assignee_ids) taskData.assignee_ids.forEach((id: string) => { if (id) allUserIds.add(id); });
                     if (taskData.assigned_to) allUserIds.add(taskData.assigned_to);
                     if (taskData.leader_id) allUserIds.add(taskData.leader_id);
-                    await createTaskPlacements(taskData.id, Array.from(allUserIds), session?.access_token);
+
+                    const validIds = Array.from(allUserIds);
+
+                    // Clean up stale placements for users who are no longer associated with this task
+                    if (validIds.length > 0) {
+                        try {
+                            await supabase
+                                .from('task_column_placements')
+                                .delete()
+                                .eq('task_id', taskData.id)
+                                .not('user_id', 'in', `(${validIds.join(',')})`);
+                        } catch (cleanErr) {
+                            console.warn('[handleSaveTask] Error cleaning stale placements:', cleanErr);
+                        }
+                    }
+
+                    await createTaskPlacements(taskData.id, validIds, session?.access_token);
                     if (taskData.status === 'done') {
-                        const doneCol = dbColumns.find(c => c.column_type === 'system_done');
+                        const doneCol = dbColumns.find(c => c.column_type === 'system_done' || isColumnDone(c, c.id));
                         if (doneCol) await moveTaskToColumn(taskData.id, doneCol.id, session?.access_token);
                     } else if (targetPlacementColId && user?.id) {
                         const targetCol = dbColumns.find(c => c.id === targetPlacementColId);
-                        if (targetCol?.column_type === 'system_done') {
+                        if (targetCol?.column_type === 'system_done' || isColumnDone(targetCol, targetCol?.id)) {
                             const inboxCol = dbColumns.find(c => c.column_type === 'system_inbox');
                             if (inboxCol) await moveTaskToColumn(taskData.id, inboxCol.id, session?.access_token);
                         } else {
@@ -1548,7 +1589,9 @@ export default function TelesalesTasksPage() {
                     // Collect all user IDs: owner + assignees
                     const allUserIds = new Set<string>();
                     if (user?.id) allUserIds.add(user.id);
-                    if (taskData.assignee_ids) taskData.assignee_ids.forEach((id: string) => allUserIds.add(id));
+                    if (taskData.user_id) allUserIds.add(taskData.user_id);
+                    if (taskData.owner_id) allUserIds.add(taskData.owner_id);
+                    if (taskData.assignee_ids) taskData.assignee_ids.forEach((id: string) => { if (id) allUserIds.add(id); });
                     if (taskData.assigned_to) allUserIds.add(taskData.assigned_to);
                     if (taskData.leader_id) allUserIds.add(taskData.leader_id);
                     await createTaskPlacements(taskId, Array.from(allUserIds), session?.access_token);
@@ -1669,7 +1712,7 @@ export default function TelesalesTasksPage() {
                     newStatus = 'today';
                 }
                 newCompletedAt = null;
-            } else if (targetColType === 'system_done') {
+            } else if (targetColType === 'system_done' || isColumnDone(targetCol, targetColId)) {
                 newStatus = 'done';
                 newCompletedAt = new Date().toISOString();
             } else if (targetColType === 'system_inbox') {
@@ -1842,6 +1885,13 @@ export default function TelesalesTasksPage() {
             matchesCustomerType = !!(task.customer_name || task.phone);
         } else if (filterCustomerType === "personal") {
             matchesCustomerType = !task.customer_name && !task.phone;
+        }
+
+        // Done month filter
+        if (task.status === 'done' && doneMonthFilter !== 'all') {
+            if (getTaskCompletedMonth(task) !== doneMonthFilter) {
+                return false;
+            }
         }
 
         return matchesSearch && matchesPriority && matchesType && matchesDueDate && matchesCustomerType;
@@ -2093,7 +2143,7 @@ export default function TelesalesTasksPage() {
                         {visibleColumns.length > 0 && visibleColumns.map(col => {
                             // FIX: Use columnTasks directly because unified columns rely on RPC 'due_date' logic, NOT the string 'status' field!
                             // We intersect with `filteredTasks` to apply search and priority filters correctly.
-                            const isDoneCol = col.column_type === 'system_done' || col.id === 'done';
+                            const isDoneCol = isColumnDone(col, col.id);
                             const colList = columnTasks[col.id] || [];
                             const matchedTasks = colList.filter(t => filteredTasks.some(ft => ft.id === t.id));
                             const tasks = isDoneCol && doneMonthFilter !== 'all'

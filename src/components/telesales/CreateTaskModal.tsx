@@ -85,6 +85,9 @@ export const CreateTaskModal = ({
     const [formData, setFormData] = useState<TaskFormData>(() => {
         const { defStatus, defDueDate } = computeInitialDateAndStatus();
         const initialMeta = initialData ? extractTaskMetadata(initialData as any) : null;
+        const initialAssignees = initialData?.assignee_ids && initialData.assignee_ids.length > 0
+            ? initialData.assignee_ids
+            : (initialData?.assigned_to ? [initialData.assigned_to] : []);
         return {
             title: "",
             customerName: "",
@@ -95,7 +98,7 @@ export const CreateTaskModal = ({
             stage: "in_progress",
             description: "",
             department: (initialData as any)?.department || initialMeta?.department || "telesales",
-            assigneeIds: initialData?.assignee_ids || [],
+            assigneeIds: initialAssignees,
             leaderId: initialData?.leader_id || ""
         };
     });
@@ -207,6 +210,10 @@ export const CreateTaskModal = ({
                     ? (columns.find(c => c.column_type === 'system_done' || c.id === 'done')?.id || 'done')
                     : resolveColFromDate(initialDueDate, initialStatus);
 
+                const initialAssignees = (initialData.assignee_ids && initialData.assignee_ids.length > 0)
+                    ? initialData.assignee_ids
+                    : (initialData.assigned_to ? [initialData.assigned_to] : []);
+
                 setFormData({
                     title: initialData.title || "",
                     customerName: initialData.customer_name || "",
@@ -217,7 +224,7 @@ export const CreateTaskModal = ({
                     stage: meta.stage || (initialData.stage as string) || "in_progress",
                     description: meta.cleanNote || "",
                     department: (initialData as any).department || meta.department || "telesales",
-                    assigneeIds: initialData.assignee_ids || [],
+                    assigneeIds: initialAssignees,
                     leaderId: initialData.leader_id || ""
                 });
                 setSubtasks((meta.subtasks && meta.subtasks.length > 0) ? meta.subtasks : (Array.isArray(initialData.subtasks) ? initialData.subtasks : []));
@@ -273,6 +280,10 @@ export const CreateTaskModal = ({
                 ? (columns.find(c => c.column_type === 'system_done' || c.id === 'done')?.id || 'done')
                 : resolveColFromDate(initialDueDate, initialStatus);
 
+            const initialAssignees = (initialData.assignee_ids && initialData.assignee_ids.length > 0)
+                ? initialData.assignee_ids
+                : (initialData.assigned_to ? [initialData.assigned_to] : []);
+
             setFormData({
                 title: initialData.title || "",
                 customerName: initialData.customer_name || "",
@@ -283,7 +294,7 @@ export const CreateTaskModal = ({
                 stage: meta.stage || (initialData.stage as string) || "in_progress",
                 description: meta.cleanNote || "",
                 department: (initialData as any).department || meta.department || "telesales",
-                assigneeIds: initialData.assignee_ids || [],
+                assigneeIds: initialAssignees,
                 leaderId: initialData.leader_id || ""
             });
             setSubtasks((meta.subtasks && meta.subtasks.length > 0) ? meta.subtasks : (Array.isArray(initialData.subtasks) ? initialData.subtasks : []));
@@ -513,6 +524,11 @@ export const CreateTaskModal = ({
             }
         }
 
+        const effectiveAssignees = formData.assigneeIds && formData.assigneeIds.length > 0
+            ? formData.assigneeIds
+            : [];
+        const effectiveAssignedTo = effectiveAssignees[0] || null;
+
         onSave({
             id: initialData?.id,
             title: formData.title,
@@ -525,7 +541,8 @@ export const CreateTaskModal = ({
             subtasks: finalSubtasks,
             due_date: finalDueDate || null,
             note: packMetadataToNote(formData.description, finalSubtasks, formData.stage, formData.department),
-            assignee_ids: formData.assigneeIds,
+            assignee_ids: effectiveAssignees,
+            assigned_to: effectiveAssignedTo,
             leader_id: formData.leaderId || null,
             type: initialData?.type || taskType,
             attachments: attachments
