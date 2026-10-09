@@ -662,6 +662,20 @@ export default function TelesalesTasksPage() {
     const currentYearMonth = `${nowForFilter.getFullYear()}-${String(nowForFilter.getMonth() + 1).padStart(2, '0')}`;
     const [doneMonthFilter, setDoneMonthFilter] = useState<string>(currentYearMonth);
 
+    const getTaskCompletedMonth = useCallback((task: TelesalesTask): string => {
+        const rawDate = task.completed_at || task.handled_date || task.updated_at || task.created_at;
+        if (!rawDate) return '';
+        try {
+            const d = new Date(rawDate);
+            if (isNaN(d.getTime())) return '';
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            return `${y}-${m}`;
+        } catch {
+            return '';
+        }
+    }, []);
+
     // Modal states
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // Legacy full modal
     const [isSimpleModalOpen, setIsSimpleModalOpen] = useState(false); // New Simple Modal
@@ -2083,10 +2097,7 @@ export default function TelesalesTasksPage() {
                             const colList = columnTasks[col.id] || [];
                             const matchedTasks = colList.filter(t => filteredTasks.some(ft => ft.id === t.id));
                             const tasks = isDoneCol && doneMonthFilter !== 'all'
-                                ? matchedTasks.filter(t => {
-                                    const compDate = t.completed_at || t.updated_at || t.created_at;
-                                    return compDate ? compDate.startsWith(doneMonthFilter) : true;
-                                })
+                                ? matchedTasks.filter(t => getTaskCompletedMonth(t) === doneMonthFilter)
                                 : matchedTasks;
 
                             const isLoadingCol = loadingColumns[col.id];
@@ -2131,28 +2142,41 @@ export default function TelesalesTasksPage() {
                                                         title="Double click để sửa tên"
                                                     >
                                                         <h3 className="font-semibold text-slate-700 text-sm uppercase truncate">{col.label}</h3>
-                                                        <span className="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0">
+                                                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold flex-shrink-0 ${
+                                                            isDoneCol 
+                                                                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                                                                : 'bg-slate-200 text-slate-600'
+                                                        }`} title={isDoneCol && doneMonthFilter !== 'all' ? `Đã hoàn thành ${tasks.length} việc trong tháng đang xem` : `Tổng số việc`}>
                                                             {isDoneCol && doneMonthFilter !== 'all' ? tasks.length : (totalCounts[col.id] || 0)}
                                                         </span>
                                                     </div>
                                                     {isDoneCol && (
-                                                        <div className="mt-1" onMouseDown={e => e.stopPropagation()}>
-                                                            <select
-                                                                className="text-[11px] font-medium bg-white border border-slate-200 rounded px-1.5 py-0.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer"
-                                                                value={doneMonthFilter}
-                                                                onChange={e => setDoneMonthFilter(e.target.value)}
-                                                                title="Lọc việc hoàn thành theo tháng"
-                                                            >
-                                                                <option value={currentYearMonth}>Tháng này ({currentYearMonth})</option>
-                                                                {Array.from({ length: 4 }).map((_, idx) => {
-                                                                    const d = new Date();
-                                                                    d.setDate(1);
-                                                                    d.setMonth(d.getMonth() - (idx + 1));
-                                                                    const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                                                                    return <option key={val} value={val}>Tháng {d.getMonth() + 1}/{d.getFullYear()}</option>;
-                                                                })}
-                                                                <option value="all">Tất cả các tháng</option>
-                                                            </select>
+                                                        <div className="mt-1.5" onMouseDown={e => e.stopPropagation()}>
+                                                            <div className="relative inline-flex items-center w-full">
+                                                                <select
+                                                                    className="w-full text-xs font-semibold bg-white border border-slate-200 hover:border-emerald-400 rounded-md pl-2 pr-6 py-1 text-slate-700 shadow-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer appearance-none transition-colors"
+                                                                    value={doneMonthFilter}
+                                                                    onChange={e => setDoneMonthFilter(e.target.value)}
+                                                                    title="Lọc việc hoàn thành theo tháng"
+                                                                >
+                                                                    <option value={currentYearMonth}>
+                                                                        📅 Tháng này ({currentYearMonth.split('-')[1]}/{currentYearMonth.split('-')[0]})
+                                                                    </option>
+                                                                    {Array.from({ length: 11 }).map((_, idx) => {
+                                                                        const d = new Date();
+                                                                        d.setDate(1);
+                                                                        d.setMonth(d.getMonth() - (idx + 1));
+                                                                        const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                                                                        return (
+                                                                            <option key={val} value={val}>
+                                                                                Tháng {d.getMonth() + 1}/{d.getFullYear()}
+                                                                            </option>
+                                                                        );
+                                                                    })}
+                                                                    <option value="all">📂 Toàn bộ lịch sử (Tất cả)</option>
+                                                                </select>
+                                                                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 pointer-events-none" />
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
@@ -2185,13 +2209,43 @@ export default function TelesalesTasksPage() {
                                         </div>
                                     </div>
 
+                                    {/* Notice strip when viewing an archived or different month */}
+                                    {isDoneCol && doneMonthFilter !== currentYearMonth && (
+                                        <div className="mx-2 mt-2 px-2.5 py-1.5 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between text-xs text-amber-800 shadow-xs">
+                                            <span className="truncate">
+                                                {doneMonthFilter === 'all' ? (
+                                                    <>Đang xem <strong>toàn bộ lịch sử</strong></>
+                                                ) : (
+                                                    <>Đang xem <strong>Tháng {doneMonthFilter.split('-')[1]}/{doneMonthFilter.split('-')[0]}</strong></>
+                                                )}
+                                            </span>
+                                            <button
+                                                onClick={() => setDoneMonthFilter(currentYearMonth)}
+                                                className="text-[10px] font-bold text-amber-900 hover:text-amber-700 bg-amber-100 hover:bg-amber-200 px-1.5 py-0.5 rounded transition-colors ml-1 flex-shrink-0"
+                                                title="Quay lại tháng hiện tại"
+                                            >
+                                                Về tháng này
+                                            </button>
+                                        </div>
+                                    )}
+
                                     {/* Tasks Container */}
                                     <div className="p-2 flex-1 overflow-y-auto space-y-1 relative min-h-[100px]">
                                         {tasks.length === 0 && !isLoadingCol && !showAppendPlaceholder ? (
                                             <div className="text-center py-12 text-slate-400">
-                                                <div className="text-4xl mb-2">📝</div>
-                                                <p className="text-sm font-medium text-slate-500">Chưa có việc nào</p>
-                                                <p className="text-xs mt-1">Kéo thả hoặc click + để thêm</p>
+                                                <div className="text-4xl mb-2">{isDoneCol ? "🎉" : "📝"}</div>
+                                                <p className="text-sm font-medium text-slate-600">
+                                                    {isDoneCol
+                                                        ? (doneMonthFilter === currentYearMonth
+                                                            ? "Chưa có việc hoàn thành trong tháng này"
+                                                            : doneMonthFilter === 'all'
+                                                            ? "Chưa có việc nào hoàn thành"
+                                                            : `Không có việc hoàn thành trong tháng ${doneMonthFilter.split('-')[1]}/${doneMonthFilter.split('-')[0]}`)
+                                                        : "Chưa có việc nào"}
+                                                </p>
+                                                <p className="text-xs text-slate-400 mt-1">
+                                                    {isDoneCol ? "Các việc đã xong sẽ được lưu trữ tại đây" : "Kéo thả hoặc click + để thêm"}
+                                                </p>
                                             </div>
                                         ) : (
                                             <>
