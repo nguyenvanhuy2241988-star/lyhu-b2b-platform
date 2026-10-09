@@ -1,14 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Calendar, User, Phone, UserPlus, CheckCircle, AlertTriangle, Trash2, Eye, Download } from "lucide-react";
+import { X, Calendar, User, Phone, UserPlus, CheckCircle, AlertTriangle, Trash2, Eye, Download, CheckSquare, Plus } from "lucide-react";
 import {
     TaskStatus,
     TaskPriority,
     TASK_STATUS_LABELS,
     TelesalesTask,
     TelesalesColumn,
-    TaskType
+    TaskType,
+    SubtaskItem,
+    TASK_STAGE_LABELS,
+    extractTaskMetadata,
+    packMetadataToNote
 } from "@/lib/telesalesTasksStore";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -29,6 +33,7 @@ interface TaskFormData {
     priority: TaskPriority;
     dueDate: string;
     status: TaskStatus;
+    stage: string;
     description: string;
     assigneeIds: string[];
     leaderId: string;
@@ -58,10 +63,14 @@ export const CreateTaskModal = ({
         priority: "normal",
         dueDate: new Date().toISOString().split('T')[0],
         status: initialStatus,
+        stage: "in_progress",
         description: "",
         assigneeIds: initialData?.assignee_ids || [],
         leaderId: initialData?.leader_id || ""
     });
+
+    const [subtasks, setSubtasks] = useState<SubtaskItem[]>([]);
+    const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
 
     const [profiles, setProfiles] = useState<Profile[]>([]);
 
@@ -96,9 +105,7 @@ export const CreateTaskModal = ({
             const shouldSync = taskIdChanged || !hasUserEdited;
 
             if (shouldSync) {
-                console.log('[CreateTaskModal] Syncing form data. TaskIdChanged:', taskIdChanged, 'HasUserEdited:', hasUserEdited);
-                console.log('[CreateTaskModal] *** NOTE VALUE BEING SYNCED ***:', initialData?.note);
-                console.log('[CreateTaskModal] *** ATTACHMENTS ***:', initialData?.attachments);
+                const meta = extractTaskMetadata(initialData as any);
                 setFormData({
                     title: initialData.title || "",
                     customerName: initialData.customer_name || "",
@@ -106,10 +113,12 @@ export const CreateTaskModal = ({
                     priority: initialData.priority || "normal",
                     dueDate: initialData.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : "",
                     status: initialStatus,
-                    description: initialData.note || "",
+                    stage: meta.stage || "in_progress",
+                    description: meta.cleanNote || "",
                     assigneeIds: initialData.assignee_ids || [],
                     leaderId: initialData.leader_id || ""
                 });
+                setSubtasks(meta.subtasks || []);
                 setAttachments(initialData.attachments || []);
                 setLastSyncedTaskId(initialData.id || null);
 
@@ -117,13 +126,30 @@ export const CreateTaskModal = ({
                 if (taskIdChanged) {
                     setHasUserEdited(false);
                 }
-            } else {
-                console.log('[CreateTaskModal] Skipping sync (user has local edits)');
+            }
+        } else if (isOpen && !initialData) {
+            // Fresh create mode
+            if (!hasUserEdited) {
+                setFormData({
+                    title: "",
+                    customerName: "",
+                    phone: "",
+                    priority: "normal",
+                    dueDate: new Date().toISOString().split('T')[0],
+                    status: initialStatus,
+                    stage: "in_progress",
+                    description: "",
+                    assigneeIds: [],
+                    leaderId: ""
+                });
+                setSubtasks([]);
+                setAttachments([]);
             }
         } else if (!isOpen) {
             // Modal closed - reset dirty state for next open
             setHasUserEdited(false);
             setLastSyncedTaskId(null); // Reset so next open triggers fresh sync
+            setNewSubtaskTitle("");
         }
     }, [isOpen, initialStatus, initialData, hasUserEdited, lastSyncedTaskId]);
 
@@ -184,6 +210,29 @@ export const CreateTaskModal = ({
 
     if (!isOpen) return null;
 
+    const handleAddSubtask = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!newSubtaskTitle.trim()) return;
+        const newSub: SubtaskItem = {
+            id: `sub_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+            title: newSubtaskTitle.trim(),
+            completed: false
+        };
+        setSubtasks(prev => [...prev, newSub]);
+        setNewSubtaskTitle("");
+        setHasUserEdited(true);
+    };
+
+    const handleToggleSubtask = (subId: string) => {
+        setSubtasks(prev => prev.map(s => s.id === subId ? { ...s, completed: !s.completed } : s));
+        setHasUserEdited(true);
+    };
+
+    const handleDeleteSubtask = (subId: string) => {
+        setSubtasks(prev => prev.filter(s => s.id !== subId));
+        setHasUserEdited(true);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave({
@@ -193,8 +242,10 @@ export const CreateTaskModal = ({
             phone: formData.phone,
             priority: formData.priority,
             status: formData.status,
+            stage: formData.stage,
+            subtasks: subtasks,
             due_date: formData.dueDate || null,
-            note: formData.description,
+            note: packMetadataToNote(formData.description, subtasks, formData.stage),
             assignee_ids: formData.assigneeIds,
             leader_id: formData.leaderId || null,
             type: initialData?.type || taskType,
@@ -289,11 +340,12 @@ export const CreateTaskModal = ({
                         )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* Priority & Workflow Stage */}
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Độ ưu tiên</label>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Độ ưu tiên</label>
                             <select
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white"
                                 value={formData.priority}
                                 onChange={e => { setFormData(prev => ({ ...prev, priority: e.target.value as TaskPriority })); setHasUserEdited(true); }}
                             >
@@ -304,9 +356,28 @@ export const CreateTaskModal = ({
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Cột trạng thái</label>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Giai đoạn thực hiện</label>
                             <select
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
+                                className="w-full px-3 py-2 border border-teal-200 bg-teal-50/40 rounded-lg text-sm font-medium text-teal-900 focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
+                                value={formData.stage}
+                                onChange={e => { setFormData(prev => ({ ...prev, stage: e.target.value })); setHasUserEdited(true); }}
+                            >
+                                <option value="not_started">⚪ Chưa bắt đầu</option>
+                                <option value="in_progress">🔵 Đang thực hiện</option>
+                                <option value="waiting">🟠 Chờ đối tác / Chờ duyệt</option>
+                                <option value="completed">🟢 Đã hoàn thành</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Column placement & Due Date */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                Cột hiển thị (Kanban)
+                            </label>
+                            <select
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white"
                                 value={formData.status}
                                 onChange={e => { setFormData(prev => ({ ...prev, status: e.target.value as TaskStatus })); setHasUserEdited(true); }}
                             >
@@ -321,19 +392,97 @@ export const CreateTaskModal = ({
                                 )}
                             </select>
                         </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Hạn hoàn thành</label>
+                            <input
+                                type="date"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] text-slate-700"
+                                value={formData.dueDate}
+                                onChange={e => { setFormData(prev => ({ ...prev, dueDate: e.target.value })); setHasUserEdited(true); }}
+                            />
+                            {!formData.dueDate && !initialData?.id && (
+                                <p className="text-[10px] text-orange-500 mt-0.5">Không chọn ngày sẽ tự động vào "Hộp thư đến".</p>
+                            )}
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Hạn hoàn thành</label>
-                        <input
-                            type="date"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] text-sm text-slate-700"
-                            value={formData.dueDate}
-                            onChange={e => { setFormData(prev => ({ ...prev, dueDate: e.target.value })); setHasUserEdited(true); }}
-                        />
-                        {!formData.dueDate && !initialData?.id && (
-                            <p className="text-xs text-orange-500 mt-1">Không chọn ngày sẽ tự động vào "Hộp thư đến".</p>
+                    {/* Checklist / Subtasks (Công việc con) */}
+                    <div className="pt-2 border-t border-slate-100">
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                                <CheckSquare className="w-4 h-4 text-[#00AFA9]" />
+                                Các bước thực hiện ({subtasks.filter(s => s.completed).length}/{subtasks.length})
+                            </label>
+                            {subtasks.length > 0 && (
+                                <span className="text-xs font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100">
+                                    {Math.round((subtasks.filter(s => s.completed).length / subtasks.length) * 100)}% hoàn thành
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Progress Bar */}
+                        {subtasks.length > 0 && (
+                            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2.5">
+                                <div
+                                    className="bg-[#00AFA9] h-full transition-all duration-300"
+                                    style={{ width: `${(subtasks.filter(s => s.completed).length / subtasks.length) * 100}%` }}
+                                />
+                            </div>
                         )}
+
+                        {/* Subtasks List */}
+                        {subtasks.length > 0 && (
+                            <div className="space-y-1.5 max-h-40 overflow-y-auto mb-2.5">
+                                {subtasks.map((st) => (
+                                    <div
+                                        key={st.id}
+                                        className={`flex items-center gap-2 p-2 rounded-lg border text-sm transition-colors ${st.completed ? 'bg-slate-50 border-slate-200 text-slate-400' : 'bg-white border-slate-200 text-slate-800'}`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={st.completed}
+                                            onChange={() => handleToggleSubtask(st.id)}
+                                            className="w-4 h-4 text-[#00AFA9] rounded border-slate-300 focus:ring-[#00AFA9] cursor-pointer"
+                                        />
+                                        <span className={`flex-1 text-xs sm:text-sm ${st.completed ? 'line-through text-slate-400' : 'font-medium'}`}>
+                                            {st.title}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeleteSubtask(st.id)}
+                                            className="text-slate-400 hover:text-red-500 p-1 rounded hover:bg-slate-100 transition-colors"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Add Subtask Input */}
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                placeholder="Thêm bước (vd: 1. Làm đối chiếu công nợ)..."
+                                className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
+                                value={newSubtaskTitle}
+                                onChange={e => setNewSubtaskTitle(e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleAddSubtask();
+                                    }
+                                }}
+                            />
+                            <button
+                                type="button"
+                                onClick={handleAddSubtask}
+                                className="px-3 py-1.5 bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-[#00AFA9] text-xs font-semibold rounded-lg border border-slate-200 transition-colors flex items-center gap-1"
+                            >
+                                <Plus className="w-3.5 h-3.5" />
+                                Thêm bước
+                            </button>
+                        </div>
                     </div>
 
                     {/* Roles Assignment */}
@@ -496,6 +645,7 @@ export const CreateTaskModal = ({
                                 <button
                                     type="button"
                                     onClick={() => {
+                                        const completedSubtasks = subtasks.map(s => ({ ...s, completed: true }));
                                         onSave({
                                             id: initialData?.id,
                                             title: formData.title,
@@ -503,7 +653,10 @@ export const CreateTaskModal = ({
                                             phone: formData.phone,
                                             priority: formData.priority,
                                             due_date: formData.dueDate || null,
-                                            note: formData.description,
+                                            completed_at: new Date().toISOString(),
+                                            stage: 'completed',
+                                            subtasks: completedSubtasks,
+                                            note: packMetadataToNote(formData.description, completedSubtasks, 'completed'),
                                             status: 'done' as TaskStatus,  // Set to done
                                             assignee_ids: formData.assigneeIds,
                                             leader_id: formData.leaderId || null,

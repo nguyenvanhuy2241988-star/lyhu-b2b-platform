@@ -50,7 +50,9 @@ import {
     moveTaskToColumn,
     createTaskPlacements,
     isDateColumn,
-    isPlacementColumn
+    isPlacementColumn,
+    extractTaskMetadata,
+    SubtaskItem
 } from "@/lib/telesalesTasksStore";
 
 // --- Helper: Convert DbColumn to TelesalesColumn for UI compatibility ---
@@ -120,6 +122,27 @@ import { FileText, Link as LinkIcon, Image as ImageIcon, CheckCircle, ChevronDow
 
 // --- Components ---
 
+const StageBadge = ({ stage }: { stage?: string }) => {
+    if (!stage) return null;
+    const styles: Record<string, string> = {
+        not_started: "bg-slate-100 text-slate-600 border-slate-200",
+        in_progress: "bg-blue-50 text-blue-700 border-blue-200",
+        waiting: "bg-amber-50 text-amber-700 border-amber-200",
+        completed: "bg-teal-50 text-teal-700 border-teal-200",
+    };
+    const labels: Record<string, string> = {
+        not_started: "Chưa bắt đầu",
+        in_progress: "Đang làm",
+        waiting: "Chờ duyệt",
+        completed: "Đã xong",
+    };
+    return (
+        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${styles[stage] || styles.in_progress}`}>
+            {labels[stage] || stage}
+        </span>
+    );
+};
+
 const PriorityBadge = ({ priority }: { priority: TaskPriority }) => {
     const colors = {
         low: "bg-slate-100 text-slate-700",
@@ -173,6 +196,10 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
     const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const isHandledToday = task.handled_date === localDate;
 
+    const meta = extractTaskMetadata(task);
+    const completedSubtasks = meta.subtasks.filter(s => s.completed).length;
+    const totalSubtasks = meta.subtasks.length;
+
     return (
         <>
             {/* Ghost Placeholder Top */}
@@ -207,15 +234,18 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
             `}
             >
                 <div className="mb-2 flex items-center justify-between">
-                    {task.title.startsWith('📋 PV:') ? (
-                        <span className="inline-block px-2 py-0.5 bg-primary-50 text-primary-700 rounded text-xs font-medium border border-primary-200">
-                            📋 Phỏng vấn
-                        </span>
-                    ) : (
-                        <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200">
-                            Công việc
-                        </span>
-                    )}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        {task.title.startsWith('📋 PV:') ? (
+                            <span className="inline-block px-2 py-0.5 bg-primary-50 text-primary-700 rounded text-xs font-medium border border-primary-200">
+                                📋 Phỏng vấn
+                            </span>
+                        ) : (
+                            <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200">
+                                Công việc
+                            </span>
+                        )}
+                        <StageBadge stage={meta.stage} />
+                    </div>
                     {isHandledToday && (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-700 text-[10px] font-bold rounded border border-green-100">
                             <CheckSquare className="w-2.5 h-2.5" />
@@ -230,6 +260,27 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                     <PriorityBadge priority={task.priority} />
                 </div>
 
+                {/* Subtasks Progress on Card */}
+                {totalSubtasks > 0 && (
+                    <div className="mb-2 p-1.5 bg-slate-50 border border-slate-200/80 rounded-md">
+                        <div className="flex items-center justify-between text-[11px] mb-1">
+                            <span className="font-medium text-slate-700 flex items-center gap-1">
+                                <CheckSquare className={`w-3 h-3 ${completedSubtasks === totalSubtasks ? 'text-teal-600' : 'text-slate-400'}`} />
+                                Tiến độ: {completedSubtasks}/{totalSubtasks} bước
+                            </span>
+                            <span className={`text-[10px] font-bold ${completedSubtasks === totalSubtasks ? 'text-teal-700' : 'text-slate-500'}`}>
+                                {Math.round((completedSubtasks / totalSubtasks) * 100)}%
+                            </span>
+                        </div>
+                        <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                            <div
+                                className="bg-[#00AFA9] h-full transition-all duration-300"
+                                style={{ width: `${(completedSubtasks / totalSubtasks) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+                )}
+
                 {/* Adaptive Content - Phase B: Show phone if exists, else note snippet */}
                 {task.phone ? (
                     <div className="flex items-center gap-2 text-xs text-slate-600 mb-2 pointer-events-auto">
@@ -239,10 +290,10 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                             <span className="text-slate-400">• {task.customer_name}</span>
                         )}
                     </div>
-                ) : task.note ? (
+                ) : meta.cleanNote ? (
                     <div className="flex items-center gap-2 text-xs text-slate-500 mb-2 italic">
                         <FileText className="w-3 h-3 flex-shrink-0 text-slate-400" />
-                        <span className="truncate">{task.note}</span>
+                        <span className="truncate">{meta.cleanNote}</span>
                     </div>
                 ) : task.customer_name ? (
                     <div className="flex items-center gap-2 text-xs text-slate-600 mb-2">
@@ -429,6 +480,11 @@ export default function TelesalesTasksPage() {
     const [filterCustomerType, setFilterCustomerType] = useState<"all" | "customer" | "personal">("all"); // Phase B
     const [filterType, setFilterType] = useState<TaskType | "all">("all");
 
+    // Month filter for Done column (hide older completed tasks)
+    const nowForFilter = new Date();
+    const currentYearMonth = `${nowForFilter.getFullYear()}-${String(nowForFilter.getMonth() + 1).padStart(2, '0')}`;
+    const [doneMonthFilter, setDoneMonthFilter] = useState<string>(currentYearMonth);
+
     // Modal states
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // Legacy full modal
     const [isSimpleModalOpen, setIsSimpleModalOpen] = useState(false); // New Simple Modal
@@ -492,19 +548,23 @@ export default function TelesalesTasksPage() {
         const taskId = task.id;
         const isDone = task.status === 'done';
         const newStatus = isDone ? 'active' : 'done';
+        const completedAt = newStatus === 'done' ? new Date().toISOString() : null;
 
         // 🚀 Optimistic update
         setColumnTasks(prev => {
             const newColumnTasks = { ...prev };
             for (const colId in newColumnTasks) {
                 newColumnTasks[colId] = newColumnTasks[colId].map(t =>
-                    t.id === taskId ? { ...t, status: newStatus as TaskStatus } : t
+                    t.id === taskId ? { ...t, status: newStatus as TaskStatus, completed_at: completedAt } : t
                 );
             }
             return newColumnTasks;
         });
 
-        const success = await updateTaskSupabase(taskId, { status: newStatus as TaskStatus });
+        const success = await updateTaskSupabase(taskId, {
+            status: newStatus as TaskStatus,
+            completed_at: completedAt
+        });
 
         // Also move placement to done/inbox column for manual tasks
         if (task.type !== 'deal') {
@@ -877,7 +937,24 @@ export default function TelesalesTasksPage() {
                                     return taskDate ? taskDate.getTime() === tmr.getTime() : false;
                                 }
                                 if (cType === 'date_this_week' || colId === 'this_week') {
-                                    return false; // Skip complex week logic for now
+                                    // If already in this column, keep it unless due date explicitly changed to today, tomorrow, or overdue
+                                    if (currentList.some(t => t.id === task.id) && task.status !== 'done') {
+                                        if (taskDate) {
+                                            const tmr = new Date(today);
+                                            tmr.setDate(tmr.getDate() + 1);
+                                            if (taskDate.getTime() === today.getTime() || taskDate.getTime() === tmr.getTime() || taskDate.getTime() < today.getTime()) {
+                                                return false;
+                                            }
+                                        }
+                                        return true;
+                                    }
+                                    if (!taskDate) return false;
+                                    const startWeek = new Date(today);
+                                    startWeek.setDate(today.getDate() + 2);
+                                    const endWeek = new Date(today);
+                                    endWeek.setDate(today.getDate() + 7);
+                                    endWeek.setHours(23, 59, 59, 999);
+                                    return taskDate.getTime() >= startWeek.getTime() && taskDate.getTime() <= endWeek.getTime();
                                 }
                                 if (cType === 'date_overdue' || colId === 'overdue') {
                                     return taskDate ? taskDate.getTime() < today.getTime() : false;
@@ -1215,9 +1292,9 @@ export default function TelesalesTasksPage() {
                 }
                 // If moving to 'done' column, also update task status
                 if (targetColType === 'system_done') {
-                    await updateTaskSupabase(draggedTaskIdData, { status: 'done' as TaskStatus });
+                    await updateTaskSupabase(draggedTaskIdData, { status: 'done' as TaskStatus, completed_at: new Date().toISOString() });
                 } else if (targetColType === 'system_inbox') {
-                    await updateTaskSupabase(draggedTaskIdData, { status: 'active' as TaskStatus });
+                    await updateTaskSupabase(draggedTaskIdData, { status: 'active' as TaskStatus, completed_at: null });
                 }
             }
 
@@ -1587,8 +1664,15 @@ export default function TelesalesTasksPage() {
                         {visibleColumns.length > 0 && visibleColumns.map(col => {
                             // FIX: Use columnTasks directly because unified columns rely on RPC 'due_date' logic, NOT the string 'status' field!
                             // We intersect with `filteredTasks` to apply search and priority filters correctly.
+                            const isDoneCol = col.column_type === 'system_done' || col.id === 'done';
                             const colList = columnTasks[col.id] || [];
-                            const tasks = colList.filter(t => filteredTasks.some(ft => ft.id === t.id));
+                            const matchedTasks = colList.filter(t => filteredTasks.some(ft => ft.id === t.id));
+                            const tasks = isDoneCol && doneMonthFilter !== 'all'
+                                ? matchedTasks.filter(t => {
+                                    const compDate = t.completed_at || t.updated_at || t.created_at;
+                                    return compDate ? compDate.startsWith(doneMonthFilter) : true;
+                                })
+                                : matchedTasks;
 
                             const isLoadingCol = loadingColumns[col.id];
                             const hasMore = columnHasMore[col.id];
@@ -1625,15 +1709,37 @@ export default function TelesalesTasksPage() {
                                                     />
                                                 </div>
                                             ) : (
-                                                <div
-                                                    className="flex items-center gap-2 flex-1 min-w-0"
-                                                    onDoubleClick={() => startEditing(col)}
-                                                    title="Double click để sửa tên"
-                                                >
-                                                    <h3 className="font-semibold text-slate-700 text-sm uppercase truncate">{col.label}</h3>
-                                                    <span className="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0">
-                                                        {totalCounts[col.id] || 0}
-                                                    </span>
+                                                <div className="flex flex-col flex-1 min-w-0">
+                                                    <div
+                                                        className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
+                                                        onDoubleClick={() => startEditing(col)}
+                                                        title="Double click để sửa tên"
+                                                    >
+                                                        <h3 className="font-semibold text-slate-700 text-sm uppercase truncate">{col.label}</h3>
+                                                        <span className="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0">
+                                                            {isDoneCol && doneMonthFilter !== 'all' ? tasks.length : (totalCounts[col.id] || 0)}
+                                                        </span>
+                                                    </div>
+                                                    {isDoneCol && (
+                                                        <div className="mt-1" onMouseDown={e => e.stopPropagation()}>
+                                                            <select
+                                                                className="text-[11px] font-medium bg-white border border-slate-200 rounded px-1.5 py-0.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer"
+                                                                value={doneMonthFilter}
+                                                                onChange={e => setDoneMonthFilter(e.target.value)}
+                                                                title="Lọc việc hoàn thành theo tháng"
+                                                            >
+                                                                <option value={currentYearMonth}>Tháng này ({currentYearMonth})</option>
+                                                                {Array.from({ length: 4 }).map((_, idx) => {
+                                                                    const d = new Date();
+                                                                    d.setDate(1);
+                                                                    d.setMonth(d.getMonth() - (idx + 1));
+                                                                    const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                                                                    return <option key={val} value={val}>Tháng {d.getMonth() + 1}/{d.getFullYear()}</option>;
+                                                                })}
+                                                                <option value="all">Tất cả các tháng</option>
+                                                            </select>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>

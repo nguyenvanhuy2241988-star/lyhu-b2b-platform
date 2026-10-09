@@ -93,7 +93,21 @@ export const TASK_PRIORITY_LABELS: Record<string, string> = {
     urgent: 'Khẩn',
 };
 
-// Updated TelesalesColumn as per request
+export interface SubtaskItem {
+    id: string;
+    title: string;
+    completed: boolean;
+}
+
+export type TaskStage = 'not_started' | 'in_progress' | 'waiting' | 'completed';
+
+export const TASK_STAGE_LABELS: Record<TaskStage, string> = {
+    not_started: 'Chưa bắt đầu',
+    in_progress: 'Đang thực hiện',
+    waiting: 'Chờ đối tác / Chờ duyệt',
+    completed: 'Đã hoàn thành',
+};
+
 // Updated TelesalesColumn as per request
 export type TelesalesColumn = {
     id: string;
@@ -164,6 +178,8 @@ export type TelesalesTask = {
     status: TaskStatus;
     priority: TaskPriority;
     type: TaskType; // FIXED: Changed from task_type to type
+    stage?: TaskStage | string | null;
+    subtasks?: SubtaskItem[] | null;
 
     due_date?: string | null;      // ISO string
     completed_at?: string | null;  // ISO string
@@ -179,6 +195,66 @@ export type TelesalesTask = {
     created_at?: string;
     updated_at?: string;
 };
+
+// ---- Metadata Extraction & Serialization Helpers ----
+export function extractTaskMetadata(task: TelesalesTask | null | undefined): { subtasks: SubtaskItem[]; stage: string; cleanNote: string } {
+    if (!task) return { subtasks: [], stage: 'in_progress', cleanNote: '' };
+    let subtasks: SubtaskItem[] = Array.isArray(task.subtasks) ? [...task.subtasks] : [];
+    let stage: string = (task.stage as string) || 'in_progress';
+    let clean = task.note || '';
+
+    // Check for <!-- TASK_META:{...} -->
+    const metaMatch = clean.match(/<!--\s*TASK_META:([\s\S]*?)-->/);
+    if (metaMatch && metaMatch[1]) {
+        try {
+            const parsed = JSON.parse(metaMatch[1]);
+            if (Array.isArray(parsed.subtasks) && subtasks.length === 0) {
+                subtasks = parsed.subtasks;
+            }
+            if (parsed.stage && !task.stage) {
+                stage = parsed.stage;
+            }
+        } catch (e) { }
+        clean = clean.replace(/<!--\s*TASK_META:[\s\S]*?-->/g, '');
+    }
+
+    // Also check legacy/fallback SUBTASKS tag
+    const subMatch = clean.match(/<!--\s*SUBTASKS:([\s\S]*?)-->/);
+    if (subMatch && subMatch[1]) {
+        try {
+            const parsed = JSON.parse(subMatch[1]);
+            if (Array.isArray(parsed) && subtasks.length === 0) {
+                subtasks = parsed;
+            }
+        } catch (e) { }
+        clean = clean.replace(/<!--\s*SUBTASKS:[\s\S]*?-->/g, '');
+    }
+
+    return {
+        subtasks,
+        stage,
+        cleanNote: clean.trim()
+    };
+}
+
+export function cleanNoteText(note: string | null | undefined): string {
+    if (!note) return '';
+    return note
+        .replace(/<!--\s*TASK_META:[\s\S]*?-->/g, '')
+        .replace(/<!--\s*SUBTASKS:[\s\S]*?-->/g, '')
+        .trim();
+}
+
+export function packMetadataToNote(userNote: string | null | undefined, subtasks?: SubtaskItem[] | null, stage?: string | null): string {
+    const raw = userNote || '';
+    const clean = cleanNoteText(raw);
+    const meta: { subtasks?: SubtaskItem[]; stage?: string } = {};
+    if (subtasks && subtasks.length > 0) meta.subtasks = subtasks;
+    if (stage) meta.stage = stage;
+
+    if (Object.keys(meta).length === 0) return clean;
+    return `${clean}\n\n<!-- TASK_META:${JSON.stringify(meta)} -->`.trim();
+}
 
 // ---- helpers ----
 async function getUserIdSafe(): Promise<string | null> {
@@ -329,53 +405,25 @@ export async function createTaskSupabase(input: {
     priority?: TaskPriority;
     due_date?: string | null;
     type?: TaskType;
+    stage?: string;
+    subtasks?: SubtaskItem[];
     assigned_to?: string | null;
     assignee_ids?: string[];
     leader_id?: string | null;
     attachments?: any[]; // NEW
 }, token?: string): Promise<TelesalesTask> { // Added token param
-    const userId = await getUserIdSafe(); // Could pass this too, but for write mostly safe? Or use token payload?
-    // Write operations are less prone to "loading" deadlocks than "onMount" reads, but safer to use Pure Fetch.
-    // However, getting userId from token in Pure Fetch requires decoding.
-    // Let's stick to supabase client for Writes? 
-    // The deadlock usually happens on "await supabase.auth.getUser()" during page load.
-    // Writes happen on user interaction.
-    // BUT, if the WebSocket is trying to connect, ANY supabase client call might hang (mutex).
-    // So Pure Fetch is safer for Writes too.
-    // I need userId.
-
-    // Let's assume for Writes, we can get userId from the caller or keep using getUserIdSafe (might hang).
-    // Safest: Use Pure Fetch and pass userId explicitly if possible.
-    // If I can't change all signatures easily, I'll attempt Supabase Client for Writes but pass Token to helper?
-    // Ideally refactor all to Pure Fetch.
-
-    // For now, I'll implement Pure Fetch but still rely on getUserIdSafe if caller doesn't provide it...
-    // Wait, getUserIdSafe uses supabase.auth.getUser().
-    // If that hangs, this hangs.
-    // I'll update the signature to accept userId optionally, but I can't break existing callers easily yet.
-    // I'll use `supabase.auth.getSession()` in `getUserIdSafe` instead of getUser() maybe? 
-    // `getSession` reads from local storage/memory, `getUser` hits the server.
-    // `getUser` is the one that hangs.
-
-    // I will modify `getUserIdSafe` to try `getSession` first.
-
-    // ... Actually, I'll stick to: Refactor `createTaskSupabase` to use Pure Fetch and accept token.
-    // I will try to get userId from token if I can, or use logic.
-
-    // RE-STRATEGY: I will modify `getUserIdSafe` to be non-blocking (use getSession).
-    // And implement Pure Fetch for the HTTP request part.
-
     const activeUserId = await getUserIdSafe();
     if (!activeUserId) throw new Error('NOT_AUTHENTICATED');
 
     const headers = await getAuthHeaders(token);
-    const payload = {
+    const finalNote = packMetadataToNote(input.note, input.subtasks, input.stage);
+    const payload: any = {
         user_id: activeUserId,
         owner_id: activeUserId, // Explicitly set owner_id to ensure visibility logic matches
         title: input.title,
         customer_name: input.customer_name ?? null,
         phone: input.phone ?? null,
-        note: input.note ?? null,
+        note: finalNote || null,
         status: input.status ?? 'inbox',
         priority: input.priority ?? 'normal',
         due_date: input.due_date ?? null, // FIX: Don't auto-assign due_date based on status
@@ -458,11 +506,16 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
     }
 
     const headers = await getAuthHeaders(token);
+    let finalNote = patch.note;
+    if (patch.subtasks !== undefined || patch.stage !== undefined) {
+        finalNote = packMetadataToNote(patch.note !== undefined ? patch.note : '', patch.subtasks, patch.stage as string);
+    }
+
     const body = {
         title: patch.title,
         customer_name: patch.customer_name,
         phone: patch.phone,
-        note: patch.note,
+        note: finalNote,
         status: patch.status,
         priority: patch.priority,
         due_date: patch.due_date,
