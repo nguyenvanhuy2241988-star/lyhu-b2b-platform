@@ -901,6 +901,7 @@ export default function TelesalesTasksPage() {
                                     const nextAssignees = normalizedAssignees !== undefined ? normalizedAssignees : current.assignee_ids;
 
                                     const meta = extractTaskMetadata({ ...current, ...updatedTask, note: nextNote });
+                                    const nextSubtasks = (meta.subtasks && meta.subtasks.length > 0) ? meta.subtasks : (current.subtasks || []);
                                     const nextState = {
                                         ...current,
                                         ...updatedTask,
@@ -909,8 +910,8 @@ export default function TelesalesTasksPage() {
                                         attachments: nextAttachments,
                                         customer_name: updatedTask.customer_name !== undefined ? updatedTask.customer_name : current.customer_name,
                                         due_date: updatedTask.due_date !== undefined ? updatedTask.due_date : current.due_date,
-                                        subtasks: meta.subtasks,
-                                        stage: meta.stage
+                                        subtasks: nextSubtasks,
+                                        stage: meta.stage || current.stage || 'in_progress'
                                     };
 
                                     console.log('[Realtime DEBUG] Final Merged State:', nextState);
@@ -1010,6 +1011,7 @@ export default function TelesalesTasksPage() {
                                                     // Careful merge like setEditingTask
                                                     const rawNote = updatedTask.note !== undefined ? updatedTask.note : t.note;
                                                     const meta = extractTaskMetadata({ ...t, ...updatedTask, note: rawNote });
+                                                    const nextSubtasks = (meta.subtasks && meta.subtasks.length > 0) ? meta.subtasks : (t.subtasks || []);
                                                     return {
                                                         ...t,
                                                         ...updatedTask,
@@ -1017,8 +1019,8 @@ export default function TelesalesTasksPage() {
                                                         note: rawNote,
                                                         attachments: updatedTask.attachments !== undefined ? updatedTask.attachments : t.attachments,
                                                         customer_name: updatedTask.customer_name !== undefined ? updatedTask.customer_name : t.customer_name,
-                                                        subtasks: meta.subtasks,
-                                                        stage: meta.stage
+                                                        subtasks: nextSubtasks,
+                                                        stage: meta.stage || t.stage || 'in_progress'
                                                     };
                                                 }
                                                 return t;

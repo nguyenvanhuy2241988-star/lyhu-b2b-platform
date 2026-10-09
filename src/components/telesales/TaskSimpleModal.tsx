@@ -79,6 +79,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                         setAssignedTo(draft.assignedTo || currentUser?.id || "");
                         setAssigneeIds(draft.assigneeIds || (currentUser?.id ? [currentUser.id] : []));
                         setLeaderId(draft.leaderId || "");
+                        setAttachments(draft.attachments || []);
                         setHasDraftRestored(true);
                         return;
                     }
@@ -106,15 +107,15 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
     // Auto-save draft
     useEffect(() => {
         if (isOpen) {
-            if (title || note || subtasks.length > 0) {
+            if (title || note || subtasks.length > 0 || attachments.length > 0) {
                 try {
                     localStorage.setItem('lyhu_task_simple_draft', JSON.stringify({
-                        title, dueDate, priority, status, stage, subtasks, note, assignedTo, assigneeIds, leaderId
+                        title, dueDate, priority, status, stage, subtasks, note, assignedTo, assigneeIds, leaderId, attachments
                     }));
                 } catch (e) { }
             }
         }
-    }, [isOpen, title, dueDate, priority, status, stage, subtasks, note, assignedTo, assigneeIds, leaderId]);
+    }, [isOpen, title, dueDate, priority, status, stage, subtasks, note, assignedTo, assigneeIds, leaderId, attachments]);
 
     const handleClearDraft = () => {
         try {
@@ -251,6 +252,30 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
         }
     };
 
+    const getMimeType = (file: File): string => {
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        const mimeMap: Record<string, string> = {
+            pdf: 'application/pdf',
+            doc: 'application/msword',
+            docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            xls: 'application/vnd.ms-excel',
+            xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ppt: 'application/vnd.ms-powerpoint',
+            pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            txt: 'text/plain',
+            csv: 'text/csv',
+            png: 'image/png',
+            jpg: 'image/jpeg',
+            jpeg: 'image/jpeg',
+            webp: 'image/webp',
+            gif: 'image/gif',
+            zip: 'application/zip',
+            rar: 'application/x-rar-compressed'
+        };
+        if (ext && mimeMap[ext]) return mimeMap[ext];
+        return file.type || 'application/octet-stream';
+    };
+
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
 
@@ -258,11 +283,15 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `${fileName}`;
+        const determinedMime = getMimeType(file);
 
         try {
             const { data, error } = await supabase.storage
                 .from('task_attachments')
-                .upload(filePath, file);
+                .upload(filePath, file, {
+                    contentType: determinedMime,
+                    upsert: true
+                });
 
             if (error) throw error;
 
@@ -270,8 +299,8 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                 .from('task_attachments')
                 .getPublicUrl(filePath);
 
-            const type = file.type.startsWith('image/') ? 'image' : 'file';
-            setAttachments([...attachments, {
+            const type = determinedMime.startsWith('image/') ? 'image' : 'file';
+            setAttachments(prev => [...prev, {
                 type,
                 url: publicUrlData.publicUrl,
                 name: file.name
@@ -279,7 +308,9 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
             setIsAttachOpen(false);
         } catch (error: any) {
             console.error("Upload error:", error);
-            alert(`Lỗi upload: ${error.message}`);
+            alert(`Lỗi upload tài liệu/ảnh: ${error.message || JSON.stringify(error)}`);
+        } finally {
+            if (e.target) e.target.value = '';
         }
     };
 
@@ -521,7 +552,15 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                                     {att.type === 'image' && <ImageIcon className="w-3 h-3 text-[#00AFA9]" />}
                                     {att.type === 'file' && <FileText className="w-3 h-3 text-blue-500" />}
                                     {att.type === 'link' && <LinkIcon className="w-3 h-3 text-green-500" />}
-                                    <span className="truncate max-w-[150px]">{att.name}</span>
+                                    <a
+                                        href={att.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="truncate max-w-[150px] hover:text-[#00AFA9] hover:underline"
+                                        title={att.name}
+                                    >
+                                        {att.name}
+                                    </a>
                                     <button
                                         onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
                                         className="ml-1 text-slate-400 hover:text-red-500"

@@ -124,13 +124,13 @@ export const CreateTaskModal = ({
     // Draft Auto-Save: save whenever user inputs in Create mode
     useEffect(() => {
         if (!isEditMode && isOpen) {
-            if (formData.title || formData.customerName || formData.phone || formData.description || subtasks.length > 0) {
+            if (formData.title || formData.customerName || formData.phone || formData.description || subtasks.length > 0 || attachments.length > 0) {
                 try {
-                    localStorage.setItem('lyhu_task_create_draft', JSON.stringify({ formData, subtasks }));
+                    localStorage.setItem('lyhu_task_create_draft', JSON.stringify({ formData, subtasks, attachments }));
                 } catch (e) { }
             }
         }
-    }, [formData, subtasks, isEditMode, isOpen]);
+    }, [formData, subtasks, attachments, isEditMode, isOpen]);
 
     const handleClearDraft = () => {
         try {
@@ -150,23 +150,24 @@ export const CreateTaskModal = ({
             leaderId: ""
         });
         setSubtasks([]);
+        setAttachments([]);
         setHasDraftRestored(false);
         setHasUserEdited(false);
     };
 
-    // Smart sync logic:
-    // 1. ALWAYS sync when modal opens or task ID changes
-    // 2. In create mode: restore local draft if available so user doesn't lose progress!
-    useEffect(() => {
-        if (isOpen && initialData) {
-            const taskIdChanged = initialData.id !== lastSyncedTaskId;
-            const shouldSync = taskIdChanged || !hasUserEdited;
+    const prevIsOpenRef = React.useRef(false);
 
-            if (shouldSync) {
+    // Robust sync logic:
+    // 1. Sync on modal open or when target task ID changes
+    // 2. In create mode: restore local draft if available so user doesn't lose progress
+    // 3. DO NOT reset or re-sync while modal remains open
+    useEffect(() => {
+        if (isOpen && !prevIsOpenRef.current) {
+            prevIsOpenRef.current = true;
+            if (initialData) {
                 const meta = extractTaskMetadata(initialData as any);
                 const initialDueDate = initialData.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : "";
-                
-                // Find matching column ID for the task
+
                 let targetColId = initialStatus;
                 if (initialData.due_date) {
                     const todayStr = new Date().toISOString().split('T')[0];
@@ -197,49 +198,91 @@ export const CreateTaskModal = ({
                 setSubtasks((meta.subtasks && meta.subtasks.length > 0) ? meta.subtasks : (Array.isArray(initialData.subtasks) ? initialData.subtasks : []));
                 setAttachments(initialData.attachments || []);
                 setLastSyncedTaskId(initialData.id || null);
-
-                if (taskIdChanged) {
-                    setHasUserEdited(false);
-                }
-            }
-        } else if (isOpen && !initialData) {
-            // Fresh create mode - check for saved draft first
-            if (!hasUserEdited) {
+                setHasUserEdited(false);
+                setNewSubtaskTitle("");
+            } else {
+                // Fresh create mode - check for saved draft first
+                let restored = false;
                 const draftStr = typeof window !== 'undefined' ? localStorage.getItem('lyhu_task_create_draft') : null;
                 if (draftStr) {
                     try {
                         const draft = JSON.parse(draftStr);
-                        if (draft.formData?.title || draft.formData?.description || (draft.subtasks && draft.subtasks.length > 0)) {
+                        if (draft.formData?.title || draft.formData?.description || (draft.subtasks && draft.subtasks.length > 0) || (draft.attachments && draft.attachments.length > 0)) {
                             setFormData(draft.formData);
                             setSubtasks(draft.subtasks || []);
+                            setAttachments(draft.attachments || []);
                             setHasDraftRestored(true);
-                            return;
+                            restored = true;
                         }
                     } catch (e) { }
                 }
 
-                const { defStatus, defDueDate } = computeInitialDateAndStatus();
-                setFormData({
-                    title: "",
-                    customerName: "",
-                    phone: "",
-                    priority: "normal",
-                    dueDate: defDueDate,
-                    status: defStatus,
-                    stage: "in_progress",
-                    description: "",
-                    assigneeIds: [],
-                    leaderId: ""
-                });
-                setSubtasks([]);
-                setAttachments([]);
+                if (!restored) {
+                    const { defStatus, defDueDate } = computeInitialDateAndStatus();
+                    setFormData({
+                        title: "",
+                        customerName: "",
+                        phone: "",
+                        priority: "normal",
+                        dueDate: defDueDate,
+                        status: defStatus,
+                        stage: "in_progress",
+                        description: "",
+                        assigneeIds: [],
+                        leaderId: ""
+                    });
+                    setSubtasks([]);
+                    setAttachments([]);
+                    setHasDraftRestored(false);
+                }
+                setHasUserEdited(false);
+                setLastSyncedTaskId(null);
+                setNewSubtaskTitle("");
             }
+        } else if (isOpen && prevIsOpenRef.current && initialData && initialData.id !== lastSyncedTaskId) {
+            // Task changed while modal was open
+            const meta = extractTaskMetadata(initialData as any);
+            const initialDueDate = initialData.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : "";
+
+            let targetColId = initialStatus;
+            if (initialData.due_date) {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const tmr = new Date();
+                tmr.setDate(tmr.getDate() + 1);
+                const tmrStr = tmr.toISOString().split('T')[0];
+                if (initialDueDate === todayStr) {
+                    const col = columns.find(c => c.column_type === 'date_today' || c.id === 'today');
+                    if (col) targetColId = col.id as TaskStatus;
+                } else if (initialDueDate === tmrStr) {
+                    const col = columns.find(c => c.column_type === 'date_tomorrow' || c.id === 'tomorrow');
+                    if (col) targetColId = col.id as TaskStatus;
+                }
+            }
+
+            setFormData({
+                title: initialData.title || "",
+                customerName: initialData.customer_name || "",
+                phone: initialData.phone || "",
+                priority: initialData.priority || "normal",
+                dueDate: initialDueDate,
+                status: targetColId,
+                stage: meta.stage || (initialData.stage as string) || "in_progress",
+                description: meta.cleanNote || "",
+                assigneeIds: initialData.assignee_ids || [],
+                leaderId: initialData.leader_id || ""
+            });
+            setSubtasks((meta.subtasks && meta.subtasks.length > 0) ? meta.subtasks : (Array.isArray(initialData.subtasks) ? initialData.subtasks : []));
+            setAttachments(initialData.attachments || []);
+            setLastSyncedTaskId(initialData.id || null);
+            setHasUserEdited(false);
+            setNewSubtaskTitle("");
         } else if (!isOpen) {
+            prevIsOpenRef.current = false;
             setHasUserEdited(false);
             setLastSyncedTaskId(null);
             setNewSubtaskTitle("");
         }
-    }, [isOpen, initialStatus, initialData, hasUserEdited, lastSyncedTaskId, columns, computeInitialDateAndStatus]);
+    }, [isOpen, initialData?.id]);
 
     // Handle column selection with automatic due date synchronization
     const handleColumnChange = (selectedColId: string) => {
@@ -315,19 +358,48 @@ export const CreateTaskModal = ({
         }));
     };
 
+    const getMimeType = (file: File): string => {
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        const mimeMap: Record<string, string> = {
+            pdf: 'application/pdf',
+            doc: 'application/msword',
+            docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            xls: 'application/vnd.ms-excel',
+            xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ppt: 'application/vnd.ms-powerpoint',
+            pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            txt: 'text/plain',
+            csv: 'text/csv',
+            png: 'image/png',
+            jpg: 'image/jpeg',
+            jpeg: 'image/jpeg',
+            webp: 'image/webp',
+            gif: 'image/gif',
+            zip: 'application/zip',
+            rar: 'application/x-rar-compressed'
+        };
+        if (ext && mimeMap[ext]) return mimeMap[ext];
+        return file.type || 'application/octet-stream';
+    };
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
 
         setIsUploading(true);
+        setHasUserEdited(true);
         const file = e.target.files[0];
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `${fileName}`;
+        const determinedMime = getMimeType(file);
 
         try {
             const { data, error } = await supabase.storage
                 .from('task_attachments')
-                .upload(filePath, file);
+                .upload(filePath, file, {
+                    contentType: determinedMime,
+                    upsert: true
+                });
 
             if (error) throw error;
 
@@ -338,36 +410,34 @@ export const CreateTaskModal = ({
             const newAttachment = {
                 name: file.name,
                 url: publicUrlData.publicUrl,
-                type: file.type,
+                type: determinedMime,
                 size: file.size
             };
 
             setAttachments(prev => [...prev, newAttachment]);
         } catch (error: any) {
-            alert(`Lỗi upload: ${error.message}`);
+            console.error("Upload error:", error);
+            alert(`Lỗi upload tài liệu/ảnh: ${error.message || JSON.stringify(error)}`);
         } finally {
             setIsUploading(false);
+            if (e.target) e.target.value = '';
         }
     };
 
     const removeAttachment = (index: number) => {
         setAttachments(prev => prev.filter((_, i) => i !== index));
+        setHasUserEdited(true);
     };
 
-    const handleDownload = async (url: string, fileName: string) => {
-        try {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } catch (error) {
-            console.error("Download error:", error);
-            window.open(url, '_blank'); // Fallback
-        }
+    const handleDownload = (url: string, fileName: string) => {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     if (!isOpen) return null;
@@ -680,7 +750,7 @@ export const CreateTaskModal = ({
                                 placeholder="Thêm bước (vd: 1. Làm đối chiếu công nợ)..."
                                 className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                 value={newSubtaskTitle}
-                                onChange={e => setNewSubtaskTitle(e.target.value)}
+                                onChange={e => { setNewSubtaskTitle(e.target.value); setHasUserEdited(true); }}
                                 onKeyDown={e => {
                                     if (e.key === 'Enter') {
                                         e.preventDefault();
@@ -804,18 +874,20 @@ export const CreateTaskModal = ({
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                title="Xem"
+                                                title="Xem trực tiếp"
                                             >
                                                 <Eye className="w-4 h-4" />
                                             </a>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleDownload(file.url, file.name)}
+                                            <a
+                                                href={file.url}
+                                                download={file.name}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                                 className="p-1.5 text-slate-500 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
                                                 title="Tải xuống"
                                             >
                                                 <Download className="w-4 h-4" />
-                                            </button>
+                                            </a>
                                             <button
                                                 type="button"
                                                 onClick={() => removeAttachment(idx)}

@@ -199,7 +199,7 @@ export type TelesalesTask = {
 // ---- Metadata Extraction & Serialization Helpers ----
 export function extractTaskMetadata(task: TelesalesTask | null | undefined): { subtasks: SubtaskItem[]; stage: string; cleanNote: string } {
     if (!task) return { subtasks: [], stage: 'in_progress', cleanNote: '' };
-    let subtasks: SubtaskItem[] = Array.isArray(task.subtasks) ? [...task.subtasks] : [];
+    let subtasks: SubtaskItem[] = Array.isArray(task.subtasks) && task.subtasks.length > 0 ? [...task.subtasks] : [];
     let stage: string = (task.stage as string) || 'in_progress';
     let clean = task.note || '';
 
@@ -438,6 +438,8 @@ export async function createTaskSupabase(input: {
         assignee_ids: input.assignee_ids ?? [],
         leader_id: input.leader_id || null,
         attachments: input.attachments || [], // NEW
+        subtasks: input.subtasks || [],
+        stage: input.stage || 'in_progress',
         order: Math.floor(Date.now() / 1000),
     };
 
@@ -533,6 +535,8 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
         assignee_ids: patch.assignee_ids,
         leader_id: patch.leader_id,
         attachments: patch.attachments,
+        subtasks: patch.subtasks,
+        stage: patch.stage,
         updated_at: new Date().toISOString(),
     };
 
