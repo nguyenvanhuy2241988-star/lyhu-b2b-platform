@@ -191,6 +191,17 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
     const handleSave = async () => {
         if (!title.trim()) return alert("Vui lòng nhập tên công việc");
 
+        let finalSubtasks = [...subtasks];
+        if (newSubtaskTitle.trim()) {
+            finalSubtasks.push({
+                id: `sub_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+                title: newSubtaskTitle.trim(),
+                completed: false
+            });
+            setSubtasks(finalSubtasks);
+            setNewSubtaskTitle("");
+        }
+
         // Guarantee due_date for today/tomorrow/this_week
         let finalDueDate = dueDate;
         const todayStr = new Date().toISOString().split('T')[0];
@@ -212,9 +223,9 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                 priority: priority as any || 'normal',
                 status: status as any || 'today',
                 stage,
-                subtasks,
+                subtasks: finalSubtasks,
                 due_date: finalDueDate ? new Date(finalDueDate).toISOString() : null,
-                note: packMetadataToNote(note, subtasks, stage),
+                note: packMetadataToNote(note, finalSubtasks, stage),
                 type: 'task',
                 assigned_to: assignedTo || currentUser?.id,
                 assignee_ids: assigneeIds,
@@ -475,6 +486,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                                 onKeyDown={e => {
                                     if (e.key === 'Enter') {
                                         e.preventDefault();
+                                        e.stopPropagation();
                                         handleAddSubtask();
                                     }
                                 }}

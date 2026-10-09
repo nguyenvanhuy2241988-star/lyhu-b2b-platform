@@ -189,12 +189,12 @@ export const CreateTaskModal = ({
                     priority: initialData.priority || "normal",
                     dueDate: initialDueDate,
                     status: targetColId,
-                    stage: meta.stage || "in_progress",
+                    stage: meta.stage || (initialData.stage as string) || "in_progress",
                     description: meta.cleanNote || "",
                     assigneeIds: initialData.assignee_ids || [],
                     leaderId: initialData.leader_id || ""
                 });
-                setSubtasks(meta.subtasks || []);
+                setSubtasks((meta.subtasks && meta.subtasks.length > 0) ? meta.subtasks : (Array.isArray(initialData.subtasks) ? initialData.subtasks : []));
                 setAttachments(initialData.attachments || []);
                 setLastSyncedTaskId(initialData.id || null);
 
@@ -398,6 +398,18 @@ export const CreateTaskModal = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Auto-commit pending subtask from input if user typed but did not click "+ Thêm bước"
+        let finalSubtasks = [...subtasks];
+        if (newSubtaskTitle.trim()) {
+            finalSubtasks.push({
+                id: `sub_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+                title: newSubtaskTitle.trim(),
+                completed: false
+            });
+            setSubtasks(finalSubtasks);
+            setNewSubtaskTitle("");
+        }
+
         // Ensure due_date is populated if status corresponds to a date column
         let finalDueDate = formData.dueDate;
         const matchedCol = columns.find(c => c.id === formData.status || c.column_type === formData.status);
@@ -424,9 +436,9 @@ export const CreateTaskModal = ({
             priority: formData.priority,
             status: formData.status,
             stage: formData.stage,
-            subtasks: subtasks,
+            subtasks: finalSubtasks,
             due_date: finalDueDate || null,
-            note: packMetadataToNote(formData.description, subtasks, formData.stage),
+            note: packMetadataToNote(formData.description, finalSubtasks, formData.stage),
             assignee_ids: formData.assigneeIds,
             leader_id: formData.leaderId || null,
             type: initialData?.type || taskType,
@@ -672,6 +684,7 @@ export const CreateTaskModal = ({
                                 onKeyDown={e => {
                                     if (e.key === 'Enter') {
                                         e.preventDefault();
+                                        e.stopPropagation();
                                         handleAddSubtask();
                                     }
                                 }}
@@ -847,7 +860,16 @@ export const CreateTaskModal = ({
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        const completedSubtasks = subtasks.map(s => ({ ...s, completed: true }));
+                                        let currentSubtasks = [...subtasks];
+                                        if (newSubtaskTitle.trim()) {
+                                            currentSubtasks.push({
+                                                id: `sub_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+                                                title: newSubtaskTitle.trim(),
+                                                completed: false
+                                            });
+                                            setNewSubtaskTitle("");
+                                        }
+                                        const completedSubtasks = currentSubtasks.map(s => ({ ...s, completed: true }));
                                         onSave({
                                             id: initialData?.id,
                                             title: formData.title,

@@ -900,18 +900,17 @@ export default function TelesalesTasksPage() {
 
                                     const nextAssignees = normalizedAssignees !== undefined ? normalizedAssignees : current.assignee_ids;
 
+                                    const meta = extractTaskMetadata({ ...current, ...updatedTask, note: nextNote });
                                     const nextState = {
                                         ...current,
-                                        // Spread updatedTask but be careful not to overwrite with undefined if we handled it
-                                        // Actually, safest is to spread updatedTask check for specific keys?
-                                        // Let's spread updatedTask for scalar fields, but enforce our computed fields
                                         ...updatedTask,
                                         assignee_ids: nextAssignees,
                                         note: nextNote,
                                         attachments: nextAttachments,
-                                        // Ensure explicit mapping for camelCase if needed (though TelesalesTask uses snake_case mostly)
                                         customer_name: updatedTask.customer_name !== undefined ? updatedTask.customer_name : current.customer_name,
-                                        due_date: updatedTask.due_date !== undefined ? updatedTask.due_date : current.due_date
+                                        due_date: updatedTask.due_date !== undefined ? updatedTask.due_date : current.due_date,
+                                        subtasks: meta.subtasks,
+                                        stage: meta.stage
                                     };
 
                                     console.log('[Realtime DEBUG] Final Merged State:', nextState);
@@ -1009,13 +1008,17 @@ export default function TelesalesTasksPage() {
                                                     }
 
                                                     // Careful merge like setEditingTask
+                                                    const rawNote = updatedTask.note !== undefined ? updatedTask.note : t.note;
+                                                    const meta = extractTaskMetadata({ ...t, ...updatedTask, note: rawNote });
                                                     return {
                                                         ...t,
                                                         ...updatedTask,
                                                         assignee_ids: normalizedAssignees !== undefined ? normalizedAssignees : t.assignee_ids,
-                                                        note: updatedTask.note !== undefined ? updatedTask.note : t.note,
+                                                        note: rawNote,
                                                         attachments: updatedTask.attachments !== undefined ? updatedTask.attachments : t.attachments,
-                                                        customer_name: updatedTask.customer_name !== undefined ? updatedTask.customer_name : t.customer_name
+                                                        customer_name: updatedTask.customer_name !== undefined ? updatedTask.customer_name : t.customer_name,
+                                                        subtasks: meta.subtasks,
+                                                        stage: meta.stage
                                                     };
                                                 }
                                                 return t;
@@ -1030,14 +1033,17 @@ export default function TelesalesTasksPage() {
                                                     cleaned = cleaned.slice(1, -1);
                                                 }
                                                 if (cleaned) {
-                                                    normalizedAssignees = cleaned.split(',').map((id: string) => id.trim().replace(/['\"]/g, ''));
+                                                    normalizedAssignees = cleaned.split(',').map((id: string) => id.trim().replace(/['"]/g, ''));
                                                 } else {
                                                     normalizedAssignees = [];
                                                 }
                                             }
+                                            const meta = extractTaskMetadata(updatedTask);
                                             const normalizedTask = {
                                                 ...updatedTask,
-                                                assignee_ids: normalizedAssignees !== undefined ? normalizedAssignees : []
+                                                assignee_ids: normalizedAssignees !== undefined ? normalizedAssignees : [],
+                                                subtasks: meta.subtasks,
+                                                stage: meta.stage
                                             };
                                             newCols[colId] = [normalizedTask, ...currentList];
                                         }
@@ -1170,6 +1176,26 @@ export default function TelesalesTasksPage() {
             const targetPlacementColId = targetCol ? targetCol.id : (createFromColumnId || null);
 
             if (taskData.id) {
+                // 🚀 Optimistic update on columnTasks so UI and subtasks reflect immediately
+                setColumnTasks(prev => {
+                    const newCols = { ...prev };
+                    for (const cId in newCols) {
+                        newCols[cId] = newCols[cId].map(t => {
+                            if (t.id === taskData.id) {
+                                return {
+                                    ...t,
+                                    ...taskData,
+                                    note: taskData.note,
+                                    subtasks: taskData.subtasks,
+                                    stage: taskData.stage
+                                };
+                            }
+                            return t;
+                        });
+                    }
+                    return newCols;
+                });
+
                 await updateTaskSupabase(taskData.id, taskData, session?.access_token);
                 // Placements only belong to manual tasks in telesales_tasks. Deals do not use task_column_placements.
                 if (taskData.type !== 'deal') {
@@ -1202,6 +1228,7 @@ export default function TelesalesTasksPage() {
                 }
             }
             await refreshData(true);
+            setEditingTask(null);
             setIsCreateModalOpen(false);
             setIsSimpleModalOpen(false);
         } catch (error: any) {

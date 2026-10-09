@@ -208,10 +208,10 @@ export function extractTaskMetadata(task: TelesalesTask | null | undefined): { s
     if (metaMatch && metaMatch[1]) {
         try {
             const parsed = JSON.parse(metaMatch[1]);
-            if (Array.isArray(parsed.subtasks) && subtasks.length === 0) {
+            if (Array.isArray(parsed.subtasks) && (subtasks.length === 0 || parsed.subtasks.length > 0)) {
                 subtasks = parsed.subtasks;
             }
-            if (parsed.stage && !task.stage) {
+            if (parsed.stage) {
                 stage = parsed.stage;
             }
         } catch (e) { }
@@ -223,7 +223,7 @@ export function extractTaskMetadata(task: TelesalesTask | null | undefined): { s
     if (subMatch && subMatch[1]) {
         try {
             const parsed = JSON.parse(subMatch[1]);
-            if (Array.isArray(parsed) && subtasks.length === 0) {
+            if (Array.isArray(parsed) && (subtasks.length === 0 || parsed.length > 0)) {
                 subtasks = parsed;
             }
         } catch (e) { }
@@ -249,11 +249,11 @@ export function packMetadataToNote(userNote: string | null | undefined, subtasks
     const raw = userNote || '';
     const clean = cleanNoteText(raw);
     const meta: { subtasks?: SubtaskItem[]; stage?: string } = {};
-    if (subtasks && subtasks.length > 0) meta.subtasks = subtasks;
+    if (subtasks && Array.isArray(subtasks) && subtasks.length > 0) meta.subtasks = subtasks;
     if (stage) meta.stage = stage;
 
     if (Object.keys(meta).length === 0) return clean;
-    return `${clean}\n\n<!-- TASK_META:${JSON.stringify(meta)} -->`.trim();
+    return clean ? `${clean}\n\n<!-- TASK_META:${JSON.stringify(meta)} -->` : `<!-- TASK_META:${JSON.stringify(meta)} -->`;
 }
 
 // ---- helpers ----
@@ -372,23 +372,29 @@ export async function fetchUnifiedTasks(input: {
         }
 
         // Map RPC result to TelesalesTask interface
-        return (data || []).map((t: any) => ({
-            id: t.id,
-            user_id: activeUserId, // RPC filters by user anyway
-            title: t.title,
-            customer_name: t.customer_name,
-            phone: t.phone,
-            note: t.source_type === 'deal' ? (dealNotesMap[t.id] ?? t.note) : t.note, // FIXED: Enrich deal note
-            due_date: t.due_date,
-            status: t.status === 'won' ? 'done' : (t.status === 'lost' ? 'done' : (t.status || 'inbox')), // Map deal status to task status roughly
-            priority: t.priority || 'normal',
-            type: t.source_type, // 'deal' or 'task'
-            is_overdue: t.is_overdue,
-            assignee_ids: t.assignee_ids, // NEW
-            leader_id: t.leader_id,      // NEW
-            handled_date: t.handled_date, // NEW
-            attachments: t.attachments || [] // NEW
-        })) as TelesalesTask[];
+        return (data || []).map((t: any) => {
+            const rawNote = t.source_type === 'deal' ? (dealNotesMap[t.id] ?? t.note) : t.note;
+            const meta = extractTaskMetadata({ ...t, note: rawNote });
+            return {
+                id: t.id,
+                user_id: activeUserId, // RPC filters by user anyway
+                title: t.title,
+                customer_name: t.customer_name,
+                phone: t.phone,
+                note: rawNote, // FIXED: Enrich deal note
+                due_date: t.due_date,
+                status: t.status === 'won' ? 'done' : (t.status === 'lost' ? 'done' : (t.status || 'inbox')), // Map deal status to task status roughly
+                priority: t.priority || 'normal',
+                type: t.source_type, // 'deal' or 'task'
+                is_overdue: t.is_overdue,
+                assignee_ids: t.assignee_ids, // NEW
+                leader_id: t.leader_id,      // NEW
+                handled_date: t.handled_date, // NEW
+                attachments: t.attachments || [], // NEW
+                subtasks: meta.subtasks,
+                stage: meta.stage
+            };
+        }) as TelesalesTask[];
 
     } catch (err) {
         console.error('[fetchUnifiedTasks] exception:', err);
@@ -786,8 +792,16 @@ export async function fetchPaginatedTasks({
         const contentRange = res.headers.get('content-range');
         const count = contentRange ? parseInt(contentRange.split('/')[1], 10) : 0;
         const data = await res.json();
+        const mappedData = (data ?? []).map((t: any) => {
+            const meta = extractTaskMetadata(t);
+            return {
+                ...t,
+                subtasks: meta.subtasks,
+                stage: meta.stage
+            };
+        });
 
-        return { data: (data ?? []) as TelesalesTask[], count };
+        return { data: mappedData as TelesalesTask[], count };
     } catch (e) {
         logSupabaseError('fetchPaginatedTasks - Exception', e);
         return { data: [], count: 0 };
@@ -965,7 +979,15 @@ export async function fetchColumnTasks(columnId: string, limit = 50, offset = 0,
             console.error('[fetchColumnTasks] Error:', res.status);
             return [];
         }
-        return await res.json();
+        const data = await res.json();
+        return (data || []).map((t: any) => {
+            const meta = extractTaskMetadata(t);
+            return {
+                ...t,
+                subtasks: meta.subtasks,
+                stage: meta.stage
+            };
+        }) as TelesalesTask[];
     } catch (e) {
         logSupabaseError('fetchColumnTasks', e);
         return [];
