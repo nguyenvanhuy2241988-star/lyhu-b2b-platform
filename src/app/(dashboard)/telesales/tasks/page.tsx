@@ -556,13 +556,34 @@ export default function TelesalesTasksPage() {
         const newStatus = isDone ? 'active' : 'done';
         const completedAt = newStatus === 'done' ? new Date().toISOString() : null;
 
-        // 🚀 Optimistic update
+        // 🚀 Optimistic update: move task to done column or restore to active
         setColumnTasks(prev => {
             const newColumnTasks = { ...prev };
             for (const colId in newColumnTasks) {
-                newColumnTasks[colId] = newColumnTasks[colId].map(t =>
-                    t.id === taskId ? { ...t, status: newStatus as TaskStatus, completed_at: completedAt } : t
-                );
+                const colDef = dbColumns.find(c => c.id === colId);
+                const isDoneCol = colDef?.column_type === 'system_done' || colId === 'done';
+                if (newStatus === 'done') {
+                    if (isDoneCol) {
+                        const exists = newColumnTasks[colId]?.some(t => t.id === taskId);
+                        if (!exists) {
+                            newColumnTasks[colId] = [{ ...task, status: 'done', completed_at: completedAt }, ...(newColumnTasks[colId] || [])];
+                        } else {
+                            newColumnTasks[colId] = newColumnTasks[colId].map(t => t.id === taskId ? { ...t, status: 'done', completed_at: completedAt } : t);
+                        }
+                    } else {
+                        // Remove from active columns
+                        newColumnTasks[colId] = newColumnTasks[colId].filter(t => t.id !== taskId);
+                    }
+                } else {
+                    if (isDoneCol) {
+                        // Remove from done column when uncompleted
+                        newColumnTasks[colId] = newColumnTasks[colId].filter(t => t.id !== taskId);
+                    } else {
+                        newColumnTasks[colId] = newColumnTasks[colId].map(t =>
+                            t.id === taskId ? { ...t, status: newStatus as TaskStatus, completed_at: completedAt } : t
+                        );
+                    }
+                }
             }
             return newColumnTasks;
         });
@@ -647,21 +668,27 @@ export default function TelesalesTasksPage() {
 
                 const { fetchUnifiedTasks } = require("@/lib/telesalesTasksStore");
                 const data = await fetchUnifiedTasks({ userId: user.id, startDate, endDate }, session.access_token);
+                // Exclude completed tasks from date columns (completed tasks belong strictly in 'Đã xong')
+                const activeData = (data || []).filter((t: any) => t.status !== 'done');
 
-                setColumnTasks(prev => ({ ...prev, [colId]: data }));
+                setColumnTasks(prev => ({ ...prev, [colId]: activeData }));
                 setColumnHasMore(prev => ({ ...prev, [colId]: false }));
-                setTotalCounts(prev => ({ ...prev, [colId]: data.length }));
+                setTotalCounts(prev => ({ ...prev, [colId]: activeData.length }));
             } else if (isPlacementColumn(columnType)) {
                 // PLACEMENT COLUMNS: fetch via RPC get_column_tasks
                 const data = await fetchColumnTasks(colId, 50, isLoadMore ? (pageNum - 1) * 50 : 0, session.access_token);
+                // For non-done columns (e.g. inbox, custom), exclude completed tasks
+                const filteredData = columnType === 'system_done'
+                    ? (data || [])
+                    : (data || []).filter((t: any) => t.status !== 'done');
 
                 setColumnTasks(prev => ({
                     ...prev,
-                    [colId]: isLoadMore ? [...(prev[colId] || []), ...data] : data
+                    [colId]: isLoadMore ? [...(prev[colId] || []), ...filteredData] : filteredData
                 }));
-                setColumnHasMore(prev => ({ ...prev, [colId]: data.length >= 50 }));
+                setColumnHasMore(prev => ({ ...prev, [colId]: filteredData.length >= 50 }));
                 setColumnPages(prev => ({ ...prev, [colId]: pageNum }));
-                setTotalCounts(prev => ({ ...prev, [colId]: isLoadMore ? (prev[colId] || 0) : data.length }));
+                setTotalCounts(prev => ({ ...prev, [colId]: isLoadMore ? (prev[colId] || 0) : filteredData.length }));
             }
         } catch (error) {
             console.error(`[loadTasksForColumn] Error for ${colId}:`, error);
@@ -1186,19 +1213,35 @@ export default function TelesalesTasksPage() {
                 // 🚀 Optimistic update on columnTasks so UI and subtasks reflect immediately
                 setColumnTasks(prev => {
                     const newCols = { ...prev };
+                    const isDone = taskData.status === 'done';
                     for (const cId in newCols) {
-                        newCols[cId] = newCols[cId].map(t => {
-                            if (t.id === taskData.id) {
-                                return {
-                                    ...t,
-                                    ...taskData,
-                                    note: taskData.note,
-                                    subtasks: taskData.subtasks,
-                                    stage: taskData.stage
-                                };
+                        const colDef = dbColumns.find(c => c.id === cId);
+                        const isDoneCol = colDef?.column_type === 'system_done' || cId === 'done';
+                        if (isDone) {
+                            if (isDoneCol) {
+                                const exists = newCols[cId]?.some(t => t.id === taskData.id);
+                                if (!exists) {
+                                    newCols[cId] = [{ ...taskData, note: taskData.note, subtasks: taskData.subtasks, stage: taskData.stage }, ...(newCols[cId] || [])];
+                                } else {
+                                    newCols[cId] = newCols[cId].map(t => t.id === taskData.id ? { ...t, ...taskData, note: taskData.note, subtasks: taskData.subtasks, stage: taskData.stage } : t);
+                                }
+                            } else {
+                                newCols[cId] = newCols[cId].filter(t => t.id !== taskData.id);
                             }
-                            return t;
-                        });
+                        } else {
+                            newCols[cId] = newCols[cId].map(t => {
+                                if (t.id === taskData.id) {
+                                    return {
+                                        ...t,
+                                        ...taskData,
+                                        note: taskData.note,
+                                        subtasks: taskData.subtasks,
+                                        stage: taskData.stage
+                                    };
+                                }
+                                return t;
+                            });
+                        }
                     }
                     return newCols;
                 });
