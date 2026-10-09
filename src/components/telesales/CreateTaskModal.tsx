@@ -162,6 +162,37 @@ export const CreateTaskModal = ({
 
     const prevIsOpenRef = React.useRef(false);
 
+    // Helper: auto-resolve column ID based on due date
+    const resolveColFromDate = (dateStr: string, currentStatus?: string): string => {
+        if (!dateStr) {
+            const inboxCol = columns.find(c => c.column_type === 'system_inbox' || c.id === 'inbox');
+            return inboxCol ? inboxCol.id : 'inbox';
+        }
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const target = new Date(dateStr);
+        target.setHours(0, 0, 0, 0);
+        const diffDays = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+            const todayCol = columns.find(c => c.column_type === 'date_today' || c.id === 'today');
+            if (todayCol) return todayCol.id;
+        } else if (diffDays === 1) {
+            const tomorrowCol = columns.find(c => c.column_type === 'date_tomorrow' || c.id === 'tomorrow');
+            if (tomorrowCol) return tomorrowCol.id;
+        } else if (diffDays > 1 && diffDays <= 7) {
+            const thisWeekCol = columns.find(c => c.column_type === 'date_this_week' || c.id === 'this_week');
+            if (thisWeekCol) return thisWeekCol.id;
+        } else if (diffDays < 0) {
+            const overdueCol = columns.find(c => c.column_type === 'date_overdue' || c.id === 'overdue');
+            if (overdueCol) return overdueCol.id;
+        } else if (diffDays > 7) {
+            const inboxCol = columns.find(c => c.column_type === 'system_inbox' || c.id === 'inbox');
+            if (inboxCol) return inboxCol.id;
+        }
+        return currentStatus || 'inbox';
+    };
+
     // Robust sync logic:
     // 1. Sync on modal open or when target task ID changes
     // 2. In create mode: restore local draft if available so user doesn't lose progress
@@ -172,21 +203,9 @@ export const CreateTaskModal = ({
             if (initialData) {
                 const meta = extractTaskMetadata(initialData as any);
                 const initialDueDate = initialData.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : "";
-
-                let targetColId = initialStatus;
-                if (initialData.due_date) {
-                    const todayStr = new Date().toISOString().split('T')[0];
-                    const tmr = new Date();
-                    tmr.setDate(tmr.getDate() + 1);
-                    const tmrStr = tmr.toISOString().split('T')[0];
-                    if (initialDueDate === todayStr) {
-                        const col = columns.find(c => c.column_type === 'date_today' || c.id === 'today');
-                        if (col) targetColId = col.id as TaskStatus;
-                    } else if (initialDueDate === tmrStr) {
-                        const col = columns.find(c => c.column_type === 'date_tomorrow' || c.id === 'tomorrow');
-                        if (col) targetColId = col.id as TaskStatus;
-                    }
-                }
+                const targetColId = initialData.status === 'done'
+                    ? (columns.find(c => c.column_type === 'system_done' || c.id === 'done')?.id || 'done')
+                    : resolveColFromDate(initialDueDate, initialStatus);
 
                 setFormData({
                     title: initialData.title || "",
@@ -194,7 +213,7 @@ export const CreateTaskModal = ({
                     phone: initialData.phone || "",
                     priority: initialData.priority || "normal",
                     dueDate: initialDueDate,
-                    status: targetColId,
+                    status: targetColId as TaskStatus,
                     stage: meta.stage || (initialData.stage as string) || "in_progress",
                     description: meta.cleanNote || "",
                     department: (initialData as any).department || meta.department || "telesales",
@@ -250,21 +269,9 @@ export const CreateTaskModal = ({
             // Task changed while modal was open
             const meta = extractTaskMetadata(initialData as any);
             const initialDueDate = initialData.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : "";
-
-            let targetColId = initialStatus;
-            if (initialData.due_date) {
-                const todayStr = new Date().toISOString().split('T')[0];
-                const tmr = new Date();
-                tmr.setDate(tmr.getDate() + 1);
-                const tmrStr = tmr.toISOString().split('T')[0];
-                if (initialDueDate === todayStr) {
-                    const col = columns.find(c => c.column_type === 'date_today' || c.id === 'today');
-                    if (col) targetColId = col.id as TaskStatus;
-                } else if (initialDueDate === tmrStr) {
-                    const col = columns.find(c => c.column_type === 'date_tomorrow' || c.id === 'tomorrow');
-                    if (col) targetColId = col.id as TaskStatus;
-                }
-            }
+            const targetColId = initialData.status === 'done'
+                ? (columns.find(c => c.column_type === 'system_done' || c.id === 'done')?.id || 'done')
+                : resolveColFromDate(initialDueDate, initialStatus);
 
             setFormData({
                 title: initialData.title || "",
@@ -272,7 +279,7 @@ export const CreateTaskModal = ({
                 phone: initialData.phone || "",
                 priority: initialData.priority || "normal",
                 dueDate: initialDueDate,
-                status: targetColId,
+                status: targetColId as TaskStatus,
                 stage: meta.stage || (initialData.stage as string) || "in_progress",
                 description: meta.cleanNote || "",
                 department: (initialData as any).department || meta.department || "telesales",
@@ -315,7 +322,15 @@ export const CreateTaskModal = ({
             thisWeek.setDate(today.getDate() + 4);
             newDueDate = thisWeek.toISOString().split('T')[0];
         } else if (colType === 'system_inbox' || selectedColId === 'inbox' || matchedCol?.label?.toLowerCase().includes('hộp thư')) {
-            newDueDate = "";
+            // Keep existing future due date if > 7 days, otherwise clear
+            if (newDueDate) {
+                const targetDate = new Date(newDueDate);
+                targetDate.setHours(0, 0, 0, 0);
+                const diffDays = Math.round((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                if (diffDays <= 7 && diffDays >= 0) {
+                    newDueDate = "";
+                }
+            }
         } else if (colType === 'system_done' || selectedColId === 'done' || matchedCol?.label?.toLowerCase().includes('đã xong')) {
             newStage = 'completed';
         }
@@ -331,33 +346,7 @@ export const CreateTaskModal = ({
     // Handle due date selection with automatic column synchronization
     const handleDueDateChange = (newDateStr: string) => {
         setHasUserEdited(true);
-        let newStatus = formData.status;
-
-        if (newDateStr) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const targetDate = new Date(newDateStr);
-            targetDate.setHours(0, 0, 0, 0);
-
-            const diffDays = Math.round((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-            if (diffDays === 0) {
-                const todayCol = columns.find(c => c.column_type === 'date_today' || c.id === 'today');
-                if (todayCol) newStatus = todayCol.id as TaskStatus;
-            } else if (diffDays === 1) {
-                const tomorrowCol = columns.find(c => c.column_type === 'date_tomorrow' || c.id === 'tomorrow');
-                if (tomorrowCol) newStatus = tomorrowCol.id as TaskStatus;
-            } else if (diffDays > 1 && diffDays <= 7) {
-                const thisWeekCol = columns.find(c => c.column_type === 'date_this_week' || c.id === 'this_week');
-                if (thisWeekCol) newStatus = thisWeekCol.id as TaskStatus;
-            } else if (diffDays < 0) {
-                const overdueCol = columns.find(c => c.column_type === 'date_overdue' || c.id === 'overdue');
-                if (overdueCol) newStatus = overdueCol.id as TaskStatus;
-            }
-        } else {
-            const inboxCol = columns.find(c => c.column_type === 'system_inbox' || c.id === 'inbox');
-            if (inboxCol) newStatus = inboxCol.id as TaskStatus;
-        }
+        const newStatus = resolveColFromDate(newDateStr, formData.status) as TaskStatus;
 
         setFormData(prev => ({
             ...prev,
@@ -510,13 +499,27 @@ export const CreateTaskModal = ({
             finalDueDate = thisWeek.toISOString().split('T')[0];
         }
 
+        // Auto-route to system_inbox if due date is further than 7 days into the future
+        let finalStatus = formData.status;
+        if (finalDueDate && colType !== 'system_done' && colType !== 'custom' && formData.status !== 'done') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const targetDate = new Date(finalDueDate);
+            targetDate.setHours(0, 0, 0, 0);
+            const diffDays = Math.round((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays > 7) {
+                const inboxCol = columns.find(c => c.column_type === 'system_inbox' || c.id === 'inbox');
+                if (inboxCol) finalStatus = inboxCol.id as TaskStatus;
+            }
+        }
+
         onSave({
             id: initialData?.id,
             title: formData.title,
             customer_name: formData.customerName,
             phone: formData.phone,
             priority: formData.priority,
-            status: formData.status,
+            status: finalStatus,
             stage: formData.stage,
             department: formData.department,
             subtasks: finalSubtasks,
@@ -711,9 +714,23 @@ export const CreateTaskModal = ({
                                 value={formData.dueDate}
                                 onChange={e => handleDueDateChange(e.target.value)}
                             />
-                            {!formData.dueDate && (
+                            {!formData.dueDate ? (
                                 <p className="text-[10px] text-slate-400 mt-0.5">Không chọn ngày sẽ tự động vào "Hộp thư đến".</p>
-                            )}
+                            ) : (() => {
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                const target = new Date(formData.dueDate);
+                                target.setHours(0, 0, 0, 0);
+                                const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                                if (diff > 7) {
+                                    return (
+                                        <p className="text-[11px] text-blue-600 mt-1 font-medium flex items-center gap-1 bg-blue-50/60 p-1 rounded border border-blue-100">
+                                            <span>ℹ️</span> Hạn sau 7 ngày tự động chuyển vào <strong>"Hộp thư đến"</strong> chờ đến hạn.
+                                        </p>
+                                    );
+                                }
+                                return null;
+                            })()}
                         </div>
                     </div>
 

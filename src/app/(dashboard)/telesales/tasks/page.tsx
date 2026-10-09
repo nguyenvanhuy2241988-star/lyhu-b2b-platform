@@ -915,6 +915,31 @@ export default function TelesalesTasksPage() {
             } catch (err) {
                 console.warn('[Tasks] healOrphanedTasks error:', err);
             }
+
+            // Auto-heal tasks mistakenly placed in date columns:
+            // Date columns query by date range and do NOT read task_column_placements.
+            // Active tasks placed in date columns become invisible when their due_date is > 7 days or empty.
+            // Move any placements targeting date columns back to system_inbox.
+            const dateColIds = fetchedDbCols.filter(c => isDateColumn(c.column_type)).map(c => c.id);
+            if (dateColIds.length > 0) {
+                try {
+                    const { data: misplacedPlacements } = await supabase
+                        .from('task_column_placements')
+                        .select('id, task_id')
+                        .eq('user_id', user.id)
+                        .in('column_id', dateColIds);
+
+                    if (misplacedPlacements && misplacedPlacements.length > 0) {
+                        const misplacedIds = misplacedPlacements.map((p: any) => p.id);
+                        await supabase
+                            .from('task_column_placements')
+                            .update({ column_id: inboxCol.id })
+                            .in('id', misplacedIds);
+                    }
+                } catch (err) {
+                    console.warn('[Tasks] healMisplacedDatePlacements error:', err);
+                }
+            }
         }
 
         // Load each visible column independently
@@ -1384,34 +1409,63 @@ export default function TelesalesTasksPage() {
         try {
             // Find target column matching status / column ID
             const targetCol = dbColumns.find(c => c.id === taskData.status || c.column_type === taskData.status || c.label.toLowerCase() === taskData.status?.toLowerCase());
-            const targetColType = targetCol?.column_type || taskData.status;
+            let targetColType = targetCol?.column_type || taskData.status;
 
             // Guarantee due date if selected column is today/tomorrow/this_week
-            const todayStr = new Date().toISOString().split('T')[0];
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayStr = today.toISOString().split('T')[0];
+
             if (targetColType === 'date_today' || taskData.status === 'today' || targetCol?.label?.toLowerCase().includes('hôm nay')) {
                 if (!taskData.due_date) taskData.due_date = todayStr;
             } else if (targetColType === 'date_tomorrow' || taskData.status === 'tomorrow' || targetCol?.label?.toLowerCase().includes('ngày mai')) {
                 if (!taskData.due_date) {
-                    const tmr = new Date();
+                    const tmr = new Date(today);
                     tmr.setDate(tmr.getDate() + 1);
                     taskData.due_date = tmr.toISOString().split('T')[0];
                 }
             } else if (targetColType === 'date_this_week' || taskData.status === 'this_week' || targetCol?.label?.toLowerCase().includes('tuần này')) {
                 if (!taskData.due_date) {
-                    const thisWeek = new Date();
-                    thisWeek.setDate(thisWeek.getDate() + 4);
+                    const thisWeek = new Date(today);
+                    thisWeek.setDate(today.getDate() + 4);
                     taskData.due_date = thisWeek.toISOString().split('T')[0];
                 }
             }
 
+            // Calculate diffDays if due_date is present
+            let diffDays: number | null = null;
+            if (taskData.due_date) {
+                const targetDate = new Date(taskData.due_date);
+                targetDate.setHours(0, 0, 0, 0);
+                diffDays = Math.round((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            }
+
+            const inboxCol = dbColumns.find(c => c.column_type === 'system_inbox' || c.id === 'inbox');
+            const doneCol = dbColumns.find(c => c.column_type === 'system_done' || c.id === 'done');
+
             if (targetColType === 'system_done' || taskData.status === 'done') {
                 taskData.status = 'done';
                 if (!taskData.completed_at) taskData.completed_at = new Date().toISOString();
+            } else if (diffDays !== null && diffDays > 7 && targetColType !== 'custom') {
+                // Critical: Dates beyond 7 days belong in Inbox (backlog) so they don't get lost from Kanban
+                taskData.status = 'inbox';
+                targetColType = 'system_inbox';
             } else if (targetColType === 'system_inbox' || taskData.status === 'inbox') {
                 taskData.status = 'inbox';
             }
 
-            const targetPlacementColId = targetCol ? targetCol.id : (createFromColumnId || null);
+            // CRITICAL: Determine targetPlacementColId for task_column_placements
+            // Only 'system_inbox', 'system_done', and 'custom' columns use placements!
+            // Date columns (date_today, date_tomorrow, date_this_week, date_overdue) do NOT use placements;
+            // active tasks must have their placement set to system_inbox so get_column_tasks and date queries work harmoniously.
+            let targetPlacementColId: string | null = null;
+            if (taskData.status === 'done' || targetColType === 'system_done') {
+                targetPlacementColId = doneCol?.id || null;
+            } else if (targetColType === 'custom') {
+                targetPlacementColId = targetCol?.id || null;
+            } else {
+                targetPlacementColId = inboxCol?.id || null;
+            }
 
             if (taskData.id) {
                 // 🚀 Optimistic update on columnTasks so UI and subtasks reflect immediately

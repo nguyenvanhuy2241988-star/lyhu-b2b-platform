@@ -178,6 +178,25 @@ export const TaskEditModal = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const meta = extractTaskMetadata(initialData);
+
+        let finalStatus = formData.status;
+        if (formData.dueDate && finalStatus !== 'done') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const target = new Date(formData.dueDate);
+            target.setHours(0, 0, 0, 0);
+            const diffDays = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays > 7) {
+                finalStatus = 'inbox';
+            } else if (diffDays === 0) {
+                finalStatus = 'today';
+            } else if (diffDays === 1) {
+                finalStatus = 'tomorrow';
+            } else if (diffDays > 1 && diffDays <= 7) {
+                finalStatus = 'this_week';
+            }
+        }
+
         onSave({
             ...formData,
             id: initialData.id,
@@ -186,7 +205,7 @@ export const TaskEditModal = ({
             assignee_ids: formData.assigneeIds,
             leader_id: formData.leaderId,
             customer_name: formData.customerName,
-            status: formData.status,
+            status: finalStatus,
             priority: formData.priority,
             department: formData.department,
             note: packMetadataToNote(formData.description, initialData.subtasks, meta.stage, formData.department),
@@ -290,9 +309,23 @@ export const TaskEditModal = ({
                             value={formData.dueDate}
                             onChange={e => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
                         />
-                        {!formData.dueDate && (
+                        {!formData.dueDate ? (
                             <p className="text-xs text-slate-500 mt-1 italic">Không đặt hạn (Inbox)</p>
-                        )}
+                        ) : (() => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const target = new Date(formData.dueDate);
+                            target.setHours(0, 0, 0, 0);
+                            const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                            if (diff > 7) {
+                                return (
+                                    <p className="text-xs text-blue-600 mt-1 font-medium flex items-center gap-1">
+                                        <span>ℹ️</span> Hạn sau 7 ngày sẽ tự động lưu vào <strong>"Hộp thư đến"</strong> chờ đến hạn.
+                                    </p>
+                                );
+                            }
+                            return null;
+                        })()}
                     </div>
 
                     {/* Assignees Selection */}

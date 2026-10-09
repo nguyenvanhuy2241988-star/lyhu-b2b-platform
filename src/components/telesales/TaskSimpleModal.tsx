@@ -163,6 +163,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
             if (diffDays === 0) setStatus('today');
             else if (diffDays === 1) setStatus('tomorrow');
             else if (diffDays > 1 && diffDays <= 7) setStatus('this_week');
+            else if (diffDays > 7) setStatus('inbox');
             else if (diffDays < 0) setStatus('inbox');
         } else {
             setStatus('inbox');
@@ -414,6 +415,22 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                                 onChange={(e) => handleDueDateChange(e.target.value)}
                                 title="Thời gian hoàn thành"
                             />
+                            {(() => {
+                                if (!dueDate) return null;
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                const target = new Date(dueDate);
+                                target.setHours(0, 0, 0, 0);
+                                const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                                if (diff > 7) {
+                                    return (
+                                        <p className="text-[10px] text-blue-600 mt-0.5 font-medium">
+                                            ℹ️ Hạn sau 7 ngày sẽ lưu vào Hộp thư đến.
+                                        </p>
+                                    );
+                                }
+                                return null;
+                            })()}
                         </div>
 
                         {/* Assignees (Multi) */}
