@@ -553,7 +553,7 @@ export default function TelesalesTasksPage() {
     const handleToggleTaskStatus = async (task: TelesalesTask) => {
         const taskId = task.id;
         const isDone = task.status === 'done';
-        const newStatus = isDone ? 'active' : 'done';
+        const newStatus: TaskStatus = isDone ? (task.due_date ? 'today' : 'inbox') : 'done';
         const completedAt = newStatus === 'done' ? new Date().toISOString() : null;
 
         // 🚀 Optimistic update: move task to done column or restore to active
@@ -591,7 +591,7 @@ export default function TelesalesTasksPage() {
         const success = await updateTaskSupabase(taskId, {
             status: newStatus as TaskStatus,
             completed_at: completedAt
-        });
+        }, session?.access_token);
 
         // Also move placement to done/inbox column for manual tasks
         if (task.type !== 'deal') {
@@ -714,6 +714,37 @@ export default function TelesalesTasksPage() {
         setDbColumns(fetchedDbCols);
         const uiCols = fetchedDbCols.map(dbColToUiCol);
         setColumns(uiCols);
+
+        // Auto-heal tasks placed in system_inbox that have status === 'done'
+        // (e.g. tasks dragged from 'Đã xong' to date columns before, whose placement was moved to inbox but status stayed 'done')
+        const inboxCol = fetchedDbCols.find(c => c.column_type === 'system_inbox');
+        if (inboxCol && user && session?.access_token) {
+            try {
+                const { data: inboxPlacements } = await supabase
+                    .from('task_column_placements')
+                    .select('task_id')
+                    .eq('user_id', user.id)
+                    .eq('column_id', inboxCol.id);
+
+                if (inboxPlacements && inboxPlacements.length > 0) {
+                    const taskIds = inboxPlacements.map((p: any) => p.task_id);
+                    const { data: doneTasksInInbox } = await supabase
+                        .from('telesales_tasks')
+                        .select('id, due_date')
+                        .in('id', taskIds)
+                        .eq('status', 'done');
+
+                    if (doneTasksInInbox && doneTasksInInbox.length > 0) {
+                        for (const dt of doneTasksInInbox) {
+                            const restoredStatus: TaskStatus = dt.due_date ? 'today' : 'inbox';
+                            await updateTaskSupabase(dt.id, { status: restoredStatus, completed_at: null }, session.access_token);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('[Tasks] healOrphanedTasks error:', err);
+            }
+        }
 
         // Load each visible column independently
         const visibleCols = fetchedDbCols.filter(c => c.is_visible !== false);
@@ -1255,8 +1286,17 @@ export default function TelesalesTasksPage() {
                     if (taskData.assigned_to) allUserIds.add(taskData.assigned_to);
                     if (taskData.leader_id) allUserIds.add(taskData.leader_id);
                     await createTaskPlacements(taskData.id, Array.from(allUserIds), session?.access_token);
-                    if (targetPlacementColId && user?.id) {
-                        await moveTaskToColumn(taskData.id, targetPlacementColId, session?.access_token);
+                    if (taskData.status === 'done') {
+                        const doneCol = dbColumns.find(c => c.column_type === 'system_done');
+                        if (doneCol) await moveTaskToColumn(taskData.id, doneCol.id, session?.access_token);
+                    } else if (targetPlacementColId && user?.id) {
+                        const targetCol = dbColumns.find(c => c.id === targetPlacementColId);
+                        if (targetCol?.column_type === 'system_done') {
+                            const inboxCol = dbColumns.find(c => c.column_type === 'system_inbox');
+                            if (inboxCol) await moveTaskToColumn(taskData.id, inboxCol.id, session?.access_token);
+                        } else {
+                            await moveTaskToColumn(taskData.id, targetPlacementColId, session?.access_token);
+                        }
                     }
                 }
             } else {
@@ -1367,6 +1407,47 @@ export default function TelesalesTasksPage() {
             const targetCol = dbColumns.find(c => c.id === targetColId);
             const targetColType = targetCol?.column_type || 'custom';
 
+            const today = new Date();
+            const msOneDay = 24 * 60 * 60 * 1000;
+            let newDueDate: string | null = draggedTask.due_date || null;
+            let newStatus: TaskStatus = 'inbox';
+            let newCompletedAt: string | null = null;
+
+            if (isDateColumn(targetColType)) {
+                if (targetColType === 'date_today') {
+                    newDueDate = new Date().toISOString();
+                    newStatus = 'today';
+                } else if (targetColType === 'date_tomorrow') {
+                    newDueDate = new Date(today.getTime() + msOneDay).toISOString();
+                    newStatus = 'tomorrow';
+                } else if (targetColType === 'date_this_week') {
+                    newDueDate = new Date(today.getTime() + 2 * msOneDay).toISOString();
+                    newStatus = 'this_week';
+                } else if (targetColType === 'date_overdue') {
+                    newDueDate = draggedTask.due_date || new Date(today.getTime() - msOneDay).toISOString();
+                    newStatus = 'today';
+                }
+                newCompletedAt = null;
+            } else if (targetColType === 'system_done') {
+                newStatus = 'done';
+                newCompletedAt = new Date().toISOString();
+            } else if (targetColType === 'system_inbox') {
+                newDueDate = null;
+                newStatus = 'inbox';
+                newCompletedAt = null;
+            } else {
+                // Custom column
+                newStatus = 'inbox';
+                newCompletedAt = null;
+            }
+
+            const updatedTask: TelesalesTask = {
+                ...draggedTask,
+                due_date: newDueDate,
+                status: newStatus,
+                completed_at: newCompletedAt
+            };
+
             // Optimistic: move task between columns in UI
             setColumnTasks(prev => {
                 const newColumnTasks = { ...prev };
@@ -1375,23 +1456,17 @@ export default function TelesalesTasksPage() {
                         newColumnTasks[colId] = newColumnTasks[colId].filter(t => t.id !== draggedTaskIdData);
                     }
                 }
-                newColumnTasks[targetColId] = [...(Array.isArray(newColumnTasks[targetColId]) ? newColumnTasks[targetColId] : []), draggedTask];
+                newColumnTasks[targetColId] = [...(Array.isArray(newColumnTasks[targetColId]) ? newColumnTasks[targetColId] : []), updatedTask];
                 return newColumnTasks;
             });
 
-            // Handle based on target column type
+            // Handle DB updates based on target column type
             if (isDateColumn(targetColType)) {
-                // Date column: update due_date on the task
-                const today = new Date();
-                const msOneDay = 24 * 60 * 60 * 1000;
-                let newDueDate: string | null = null;
-
-                if (targetColType === 'date_today') newDueDate = new Date().toISOString();
-                else if (targetColType === 'date_tomorrow') newDueDate = new Date(today.getTime() + msOneDay).toISOString();
-                else if (targetColType === 'date_this_week') newDueDate = new Date(today.getTime() + 2 * msOneDay).toISOString();
-                else if (targetColType === 'date_overdue') newDueDate = draggedTask.due_date || null; // Keep existing
-
-                await updateTaskSupabase(draggedTaskIdData, { due_date: newDueDate } as any);
+                await updateTaskSupabase(draggedTaskIdData, {
+                    due_date: newDueDate,
+                    status: newStatus,
+                    completed_at: newCompletedAt
+                }, session?.access_token);
                 // Also move placement to inbox for manual tasks (inbox filters out tasks with due_date, so no duplication)
                 if (draggedTask?.type !== 'deal') {
                     const inboxCol = dbColumns.find(c => c.column_type === 'system_inbox');
@@ -1404,16 +1479,15 @@ export default function TelesalesTasksPage() {
                 if (draggedTask?.type !== 'deal') {
                     await moveTaskToColumn(draggedTaskIdData, targetColId, session?.access_token);
                 }
-                // If moving to 'done' column, also update task status
-                if (targetColType === 'system_done') {
-                    await updateTaskSupabase(draggedTaskIdData, { status: 'done' as TaskStatus, completed_at: new Date().toISOString() });
-                } else if (targetColType === 'system_inbox') {
-                    await updateTaskSupabase(draggedTaskIdData, { status: 'active' as TaskStatus, completed_at: null });
-                }
+                await updateTaskSupabase(draggedTaskIdData, {
+                    status: newStatus,
+                    completed_at: newCompletedAt,
+                    ...(targetColType === 'system_inbox' ? { due_date: null } : {})
+                }, session?.access_token);
             }
 
             // Refresh to sync
-            setTimeout(() => refreshData(), 500);
+            setTimeout(() => refreshData(true), 500);
         }
 
         // 2. Handle Column Drop (reorder)
