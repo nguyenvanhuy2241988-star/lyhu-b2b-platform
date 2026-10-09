@@ -52,7 +52,9 @@ import {
     isDateColumn,
     isPlacementColumn,
     extractTaskMetadata,
-    SubtaskItem
+    SubtaskItem,
+    TASK_DEPARTMENTS,
+    resolveDepartmentConfig
 } from "@/lib/telesalesTasksStore";
 
 // --- Helper: Convert DbColumn to TelesalesColumn for UI compatibility ---
@@ -161,7 +163,184 @@ interface Profile {
     id: string;
     full_name: string;
     email: string;
+    role?: string;
 }
+
+const DepartmentBadge = ({
+    task,
+    department,
+    profiles = []
+}: {
+    task: TelesalesTask;
+    department?: string;
+    profiles?: Profile[];
+}) => {
+    // 1. If explicit department exists
+    const explicitDept = department || (task as any).department;
+    if (explicitDept) {
+        const conf = resolveDepartmentConfig(explicitDept);
+        return (
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                <span>{conf.icon}</span>
+                <span>{conf.label}</span>
+            </span>
+        );
+    }
+
+    // 2. Special task prefixes
+    if (task.title.startsWith('📋 PV:') || task.title.startsWith('PV:') || (task as any).related_type === 'recruitment') {
+        const conf = resolveDepartmentConfig('hr');
+        return (
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                <span>{conf.icon}</span>
+                <span>{conf.label}</span>
+            </span>
+        );
+    }
+
+    // 3. CRM Deals
+    if (task.type === 'deal' || (task as any).source_type === 'deal') {
+        const conf = resolveDepartmentConfig('telesales');
+        return (
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                <span>{conf.icon}</span>
+                <span>{conf.label}</span>
+            </span>
+        );
+    }
+
+    // 4. Assignee / Owner resolution
+    const assigneeIds = [task.assigned_to, ...(task.assignee_ids || []), task.owner_id].filter(Boolean);
+    for (const aid of assigneeIds) {
+        const p = profiles.find((prof: any) => prof.id === aid);
+        if (p) {
+            const r = (p.role || '').toLowerCase();
+            const name = (p.full_name || '').toLowerCase();
+            const email = (p.email || '').toLowerCase();
+
+            if (r === 'accountant' || name.includes('toán') || email.includes('toan')) {
+                const conf = resolveDepartmentConfig('accountant');
+                return (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                        <span>{conf.icon}</span>
+                        <span>{conf.label}</span>
+                    </span>
+                );
+            }
+            if (r === 'recruiter' || r === 'hr' || name.includes('tuyển dụng') || email.includes('tuyendung')) {
+                const conf = resolveDepartmentConfig('hr');
+                return (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                        <span>{conf.icon}</span>
+                        <span>{conf.label}</span>
+                    </span>
+                );
+            }
+            if (r === 'telesales' || name.includes('telesale')) {
+                const conf = resolveDepartmentConfig('telesales');
+                return (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                        <span>{conf.icon}</span>
+                        <span>{conf.label}</span>
+                    </span>
+                );
+            }
+            if (r === 'sales_gt' || r === 'sales' || r === 'sale_admin' || name.includes('sales')) {
+                const conf = resolveDepartmentConfig('sales');
+                return (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                        <span>{conf.icon}</span>
+                        <span>{conf.label}</span>
+                    </span>
+                );
+            }
+            if (r === 'marketing' || r === 'media_creator' || name.includes('marketing')) {
+                const conf = resolveDepartmentConfig('marketing');
+                return (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                        <span>{conf.icon}</span>
+                        <span>{conf.label}</span>
+                    </span>
+                );
+            }
+            if (r === 'warehouse' || r === 'shipper' || name.includes('kho')) {
+                const conf = resolveDepartmentConfig('warehouse');
+                return (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                        <span>{conf.icon}</span>
+                        <span>{conf.label}</span>
+                    </span>
+                );
+            }
+            if (r === 'rnd') {
+                const conf = resolveDepartmentConfig('rnd');
+                return (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                        <span>{conf.icon}</span>
+                        <span>{conf.label}</span>
+                    </span>
+                );
+            }
+        }
+    }
+
+    // 5. Keyword Heuristics
+    const lowerTitle = (task.title || '').toLowerCase();
+    if (lowerTitle.includes('ngân hàng') || lowerTitle.includes('techcombank') || lowerTitle.includes('tp bank') || lowerTitle.includes('tpbank') || lowerTitle.includes('chứng từ') || lowerTitle.includes('sổ') || lowerTitle.includes('hóa đơn') || lowerTitle.includes('thuế')) {
+        const conf = resolveDepartmentConfig('accountant');
+        return (
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                <span>{conf.icon}</span>
+                <span>{conf.label}</span>
+            </span>
+        );
+    }
+    if (lowerTitle.includes('phỏng vấn') || lowerTitle.includes('ứng viên') || lowerTitle.includes('tuyển dụng')) {
+        const conf = resolveDepartmentConfig('hr');
+        return (
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                <span>{conf.icon}</span>
+                <span>{conf.label}</span>
+            </span>
+        );
+    }
+    if (lowerTitle.includes('hợp đồng') || lowerTitle.includes('báo giá') || lowerTitle.includes('chốt đơn') || lowerTitle.includes('đại lý') || lowerTitle.includes('npp')) {
+        const conf = resolveDepartmentConfig('sales');
+        return (
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                <span>{conf.icon}</span>
+                <span>{conf.label}</span>
+            </span>
+        );
+    }
+    if (lowerTitle.includes('video') || lowerTitle.includes('poster') || lowerTitle.includes('chạy ads') || lowerTitle.includes('fanpage')) {
+        const conf = resolveDepartmentConfig('marketing');
+        return (
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                <span>{conf.icon}</span>
+                <span>{conf.label}</span>
+            </span>
+        );
+    }
+    if (lowerTitle.includes('tồn kho') || lowerTitle.includes('nhập kho') || lowerTitle.includes('xuất kho') || lowerTitle.includes('vận đơn')) {
+        const conf = resolveDepartmentConfig('warehouse');
+        return (
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                <span>{conf.icon}</span>
+                <span>{conf.label}</span>
+            </span>
+        );
+    }
+
+    // 6. Default
+    const defaultConf = resolveDepartmentConfig('general');
+    return (
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${defaultConf.badgeBg} ${defaultConf.badgeText} ${defaultConf.badgeBorder}`}>
+            <span>{defaultConf.icon}</span>
+            <span>{defaultConf.label}</span>
+        </span>
+    );
+};
 
 const Star = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -235,15 +414,7 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
             >
                 <div className="mb-2 flex items-center justify-between">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                        {task.title.startsWith('📋 PV:') ? (
-                            <span className="inline-block px-2 py-0.5 bg-primary-50 text-primary-700 rounded text-xs font-medium border border-primary-200">
-                                📋 Phỏng vấn
-                            </span>
-                        ) : (
-                            <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200">
-                                Công việc
-                            </span>
-                        )}
+                        <DepartmentBadge task={task} department={meta.department} profiles={profiles} />
                         <StageBadge stage={meta.stage} />
                     </div>
                     {isHandledToday && (
@@ -705,7 +876,7 @@ export default function TelesalesTasksPage() {
 
         // Fetch profiles + columns from DB in parallel
         const [{ data: profileData }, fetchedDbCols] = await Promise.all([
-            supabase.from('profiles').select('id, full_name, email'),
+            supabase.from('profiles').select('id, full_name, email, role'),
             fetchUserColumns(session?.access_token)
         ]);
         if (profileData) setProfiles(profileData);
@@ -1083,7 +1254,8 @@ export default function TelesalesTasksPage() {
                                                         attachments: updatedTask.attachments !== undefined ? updatedTask.attachments : t.attachments,
                                                         customer_name: updatedTask.customer_name !== undefined ? updatedTask.customer_name : t.customer_name,
                                                         subtasks: nextSubtasks,
-                                                        stage: meta.stage || t.stage || 'in_progress'
+                                                        stage: meta.stage || t.stage || 'in_progress',
+                                                        department: (updatedTask as any).department || meta.department || t.department
                                                     };
                                                 }
                                                 return t;
@@ -1108,7 +1280,8 @@ export default function TelesalesTasksPage() {
                                                 ...updatedTask,
                                                 assignee_ids: normalizedAssignees !== undefined ? normalizedAssignees : [],
                                                 subtasks: meta.subtasks,
-                                                stage: meta.stage
+                                                stage: meta.stage,
+                                                department: (updatedTask as any).department || meta.department
                                             };
                                             newCols[colId] = [normalizedTask, ...currentList];
                                         }

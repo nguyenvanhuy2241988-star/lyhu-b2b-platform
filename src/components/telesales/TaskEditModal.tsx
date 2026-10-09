@@ -7,7 +7,10 @@ import {
     TaskPriority,
     TASK_STATUS_LABELS,
     TelesalesTask,
-    TelesalesColumn
+    TelesalesColumn,
+    TASK_DEPARTMENTS,
+    extractTaskMetadata,
+    packMetadataToNote
 } from "@/lib/telesalesTasksStore";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -46,6 +49,7 @@ export const TaskEditModal = ({
         dueDate: "",
         status: "today" as TaskStatus,
         description: "",
+        department: "telesales",
         assignedTo: "",
         assigneeIds: [] as string[],
         leaderId: "",
@@ -68,6 +72,7 @@ export const TaskEditModal = ({
 
     useEffect(() => {
         if (isOpen && initialData) {
+            const meta = extractTaskMetadata(initialData);
             setFormData({
                 title: initialData.title || "",
                 customerName: initialData.customer_name || "",
@@ -75,7 +80,8 @@ export const TaskEditModal = ({
                 priority: (initialData.priority as TaskPriority) || "normal",
                 dueDate: initialData.due_date ? initialData.due_date.split('T')[0] : "",
                 status: (initialData.status as TaskStatus) || 'today',
-                description: initialData.note || "",
+                description: meta.cleanNote || initialData.note || "",
+                department: (initialData as any).department || meta.department || "telesales",
                 assignedTo: initialData.assigned_to || "",
                 assigneeIds: initialData.assignee_ids || [],
                 leaderId: initialData.leader_id || "",
@@ -171,6 +177,7 @@ export const TaskEditModal = ({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const meta = extractTaskMetadata(initialData);
         onSave({
             ...formData,
             id: initialData.id,
@@ -181,7 +188,8 @@ export const TaskEditModal = ({
             customer_name: formData.customerName,
             status: formData.status,
             priority: formData.priority,
-            note: formData.description,
+            department: formData.department,
+            note: packMetadataToNote(formData.description, initialData.subtasks, meta.stage, formData.department),
             phone: formData.phone,
             attachments: attachments // Sync attachments
         });
@@ -224,12 +232,12 @@ export const TaskEditModal = ({
                         />
                     </div>
 
-                    {/* Status & Priority Row */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* Status, Priority & Department Row */}
+                    <div className="grid grid-cols-3 gap-3">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Trạng thái</label>
                             <select
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white text-sm"
                                 value={formData.status}
                                 onChange={e => setFormData(prev => ({ ...prev, status: e.target.value as TaskStatus }))}
                             >
@@ -247,7 +255,7 @@ export const TaskEditModal = ({
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Độ ưu tiên</label>
                             <select
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white text-sm"
                                 value={formData.priority}
                                 onChange={e => setFormData(prev => ({ ...prev, priority: e.target.value as TaskPriority }))}
                             >
@@ -255,6 +263,20 @@ export const TaskEditModal = ({
                                 <option value="normal">Bình thường</option>
                                 <option value="high">Cao</option>
                                 <option value="urgent">Khẩn cấp</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Phòng ban</label>
+                            <select
+                                className="w-full px-3 py-2 border border-indigo-200 bg-indigo-50/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00AFA9] text-sm font-medium text-indigo-950"
+                                value={formData.department || 'telesales'}
+                                onChange={e => setFormData(prev => ({ ...prev, department: e.target.value }))}
+                            >
+                                {TASK_DEPARTMENTS.map(d => (
+                                    <option key={d.id} value={d.id}>
+                                        {d.icon} {d.label}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>

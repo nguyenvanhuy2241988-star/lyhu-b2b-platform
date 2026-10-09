@@ -12,7 +12,8 @@ import {
     SubtaskItem,
     TASK_STAGE_LABELS,
     extractTaskMetadata,
-    packMetadataToNote
+    packMetadataToNote,
+    TASK_DEPARTMENTS
 } from "@/lib/telesalesTasksStore";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -35,6 +36,7 @@ interface TaskFormData {
     status: TaskStatus;
     stage: string;
     description: string;
+    department?: string;
     assigneeIds: string[];
     leaderId: string;
 }
@@ -82,6 +84,7 @@ export const CreateTaskModal = ({
 
     const [formData, setFormData] = useState<TaskFormData>(() => {
         const { defStatus, defDueDate } = computeInitialDateAndStatus();
+        const initialMeta = initialData ? extractTaskMetadata(initialData as any) : null;
         return {
             title: "",
             customerName: "",
@@ -91,6 +94,7 @@ export const CreateTaskModal = ({
             status: defStatus,
             stage: "in_progress",
             description: "",
+            department: (initialData as any)?.department || initialMeta?.department || "telesales",
             assigneeIds: initialData?.assignee_ids || [],
             leaderId: initialData?.leader_id || ""
         };
@@ -146,6 +150,7 @@ export const CreateTaskModal = ({
             status: defStatus,
             stage: "in_progress",
             description: "",
+            department: "telesales",
             assigneeIds: [],
             leaderId: ""
         });
@@ -192,6 +197,7 @@ export const CreateTaskModal = ({
                     status: targetColId,
                     stage: meta.stage || (initialData.stage as string) || "in_progress",
                     description: meta.cleanNote || "",
+                    department: (initialData as any).department || meta.department || "telesales",
                     assigneeIds: initialData.assignee_ids || [],
                     leaderId: initialData.leader_id || ""
                 });
@@ -228,6 +234,7 @@ export const CreateTaskModal = ({
                         status: defStatus,
                         stage: "in_progress",
                         description: "",
+                        department: "telesales",
                         assigneeIds: [],
                         leaderId: ""
                     });
@@ -268,6 +275,7 @@ export const CreateTaskModal = ({
                 status: targetColId,
                 stage: meta.stage || (initialData.stage as string) || "in_progress",
                 description: meta.cleanNote || "",
+                department: (initialData as any).department || meta.department || "telesales",
                 assigneeIds: initialData.assignee_ids || [],
                 leaderId: initialData.leader_id || ""
             });
@@ -510,9 +518,10 @@ export const CreateTaskModal = ({
             priority: formData.priority,
             status: formData.status,
             stage: formData.stage,
+            department: formData.department,
             subtasks: finalSubtasks,
             due_date: finalDueDate || null,
-            note: packMetadataToNote(formData.description, finalSubtasks, formData.stage),
+            note: packMetadataToNote(formData.description, finalSubtasks, formData.stage, formData.department),
             assignee_ids: formData.assigneeIds,
             leader_id: formData.leaderId || null,
             type: initialData?.type || taskType,
@@ -628,12 +637,12 @@ export const CreateTaskModal = ({
                         )}
                     </div>
 
-                    {/* Priority & Workflow Stage */}
-                    <div className="grid grid-cols-2 gap-3">
+                    {/* Priority, Workflow Stage & Department */}
+                    <div className="grid grid-cols-3 gap-2.5">
                         <div>
                             <label className="block text-xs font-semibold text-slate-700 mb-1">Độ ưu tiên</label>
                             <select
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white"
+                                className="w-full px-2.5 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9] bg-white"
                                 value={formData.priority}
                                 onChange={e => { setFormData(prev => ({ ...prev, priority: e.target.value as TaskPriority })); setHasUserEdited(true); }}
                             >
@@ -644,16 +653,30 @@ export const CreateTaskModal = ({
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-700 mb-1">Giai đoạn thực hiện</label>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Giai đoạn</label>
                             <select
-                                className="w-full px-3 py-2 border border-teal-200 bg-teal-50/40 rounded-lg text-sm font-medium text-teal-900 focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
+                                className="w-full px-2.5 py-2 border border-teal-200 bg-teal-50/40 rounded-lg text-sm font-medium text-teal-900 focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                 value={formData.stage}
                                 onChange={e => { setFormData(prev => ({ ...prev, stage: e.target.value })); setHasUserEdited(true); }}
                             >
                                 <option value="not_started">⚪ Chưa bắt đầu</option>
-                                <option value="in_progress">🔵 Đang thực hiện</option>
-                                <option value="waiting">🟠 Chờ đối tác / Chờ duyệt</option>
-                                <option value="completed">🟢 Đã hoàn thành</option>
+                                <option value="in_progress">🔵 Đang làm</option>
+                                <option value="waiting">🟠 Chờ duyệt</option>
+                                <option value="completed">🟢 Đã xong</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">Phòng ban</label>
+                            <select
+                                className="w-full px-2.5 py-2 border border-indigo-200 bg-indigo-50/30 rounded-lg text-sm font-medium text-indigo-950 focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
+                                value={formData.department || 'telesales'}
+                                onChange={e => { setFormData(prev => ({ ...prev, department: e.target.value })); setHasUserEdited(true); }}
+                            >
+                                {TASK_DEPARTMENTS.map(d => (
+                                    <option key={d.id} value={d.id}>
+                                        {d.icon} {d.label}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -955,8 +978,9 @@ export const CreateTaskModal = ({
                                             due_date: formData.dueDate || null,
                                             completed_at: new Date().toISOString(),
                                             stage: 'completed',
+                                            department: formData.department,
                                             subtasks: completedSubtasks,
-                                            note: packMetadataToNote(formData.description, completedSubtasks, 'completed'),
+                                            note: packMetadataToNote(formData.description, completedSubtasks, 'completed', formData.department),
                                             status: 'done' as TaskStatus,  // Set to done
                                             assignee_ids: formData.assigneeIds,
                                             leader_id: formData.leaderId || null,

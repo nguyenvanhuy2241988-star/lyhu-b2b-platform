@@ -192,15 +192,128 @@ export type TelesalesTask = {
 
     order?: number | null;
 
+    department?: string | null;
+
     created_at?: string;
     updated_at?: string;
 };
 
+// =====================================================
+// DEPARTMENT CONFIGURATION & HELPERS
+// =====================================================
+export interface DepartmentConfig {
+    id: string;
+    label: string;
+    icon: string;
+    badgeBg: string;
+    badgeText: string;
+    badgeBorder: string;
+}
+
+export const TASK_DEPARTMENTS: DepartmentConfig[] = [
+    {
+        id: 'accountant',
+        label: 'Kế toán',
+        icon: '💼',
+        badgeBg: 'bg-emerald-50',
+        badgeText: 'text-emerald-700',
+        badgeBorder: 'border-emerald-200'
+    },
+    {
+        id: 'hr',
+        label: 'Nhân sự',
+        icon: '👥',
+        badgeBg: 'bg-purple-50',
+        badgeText: 'text-purple-700',
+        badgeBorder: 'border-purple-200'
+    },
+    {
+        id: 'telesales',
+        label: 'Telesales',
+        icon: '📞',
+        badgeBg: 'bg-blue-50',
+        badgeText: 'text-blue-700',
+        badgeBorder: 'border-blue-200'
+    },
+    {
+        id: 'sales',
+        label: 'Kinh doanh',
+        icon: '🤝',
+        badgeBg: 'bg-indigo-50',
+        badgeText: 'text-indigo-700',
+        badgeBorder: 'border-indigo-200'
+    },
+    {
+        id: 'marketing',
+        label: 'Marketing',
+        icon: '📢',
+        badgeBg: 'bg-pink-50',
+        badgeText: 'text-pink-700',
+        badgeBorder: 'border-pink-200'
+    },
+    {
+        id: 'warehouse',
+        label: 'Kho vận',
+        icon: '📦',
+        badgeBg: 'bg-amber-50',
+        badgeText: 'text-amber-700',
+        badgeBorder: 'border-amber-200'
+    },
+    {
+        id: 'admin',
+        label: 'Ban Quản trị',
+        icon: '🏢',
+        badgeBg: 'bg-rose-50',
+        badgeText: 'text-rose-700',
+        badgeBorder: 'border-rose-200'
+    },
+    {
+        id: 'rnd',
+        label: 'R&D',
+        icon: '🔬',
+        badgeBg: 'bg-cyan-50',
+        badgeText: 'text-cyan-700',
+        badgeBorder: 'border-cyan-200'
+    },
+    {
+        id: 'general',
+        label: 'Nội bộ',
+        icon: '📌',
+        badgeBg: 'bg-slate-100',
+        badgeText: 'text-slate-700',
+        badgeBorder: 'border-slate-200'
+    }
+];
+
+export function resolveDepartmentConfig(deptIdOrName?: string | null): DepartmentConfig {
+    if (!deptIdOrName) return TASK_DEPARTMENTS.find(d => d.id === 'general')!;
+    const lower = deptIdOrName.toLowerCase().trim();
+    const found = TASK_DEPARTMENTS.find(d => d.id === lower || d.label.toLowerCase() === lower);
+    if (found) return found;
+    // Map common aliases
+    if (lower.includes('toan') || lower.includes('kế toán')) return TASK_DEPARTMENTS.find(d => d.id === 'accountant')!;
+    if (lower.includes('nhan su') || lower.includes('tuyen dung') || lower.includes('hr') || lower.includes('phỏng vấn')) return TASK_DEPARTMENTS.find(d => d.id === 'hr')!;
+    if (lower.includes('tele')) return TASK_DEPARTMENTS.find(d => d.id === 'telesales')!;
+    if (lower.includes('kinh doanh') || lower.includes('sales')) return TASK_DEPARTMENTS.find(d => d.id === 'sales')!;
+    if (lower.includes('marketing') || lower.includes('media')) return TASK_DEPARTMENTS.find(d => d.id === 'marketing')!;
+    if (lower.includes('kho') || lower.includes('warehouse')) return TASK_DEPARTMENTS.find(d => d.id === 'warehouse')!;
+    if (lower.includes('admin') || lower.includes('giám đốc') || lower.includes('giam doc')) return TASK_DEPARTMENTS.find(d => d.id === 'admin')!;
+    return {
+        id: lower,
+        label: deptIdOrName,
+        icon: '📌',
+        badgeBg: 'bg-slate-100',
+        badgeText: 'text-slate-700',
+        badgeBorder: 'border-slate-200'
+    };
+}
+
 // ---- Metadata Extraction & Serialization Helpers ----
-export function extractTaskMetadata(task: TelesalesTask | null | undefined): { subtasks: SubtaskItem[]; stage: string; cleanNote: string } {
+export function extractTaskMetadata(task: TelesalesTask | null | undefined): { subtasks: SubtaskItem[]; stage: string; cleanNote: string; department?: string } {
     if (!task) return { subtasks: [], stage: 'in_progress', cleanNote: '' };
     let subtasks: SubtaskItem[] = Array.isArray(task.subtasks) && task.subtasks.length > 0 ? [...task.subtasks] : [];
     let stage: string = (task.stage as string) || 'in_progress';
+    let department: string | undefined = (task as any)?.department || undefined;
     let clean = task.note || '';
 
     // Check for <!-- TASK_META:{...} -->
@@ -213,6 +326,9 @@ export function extractTaskMetadata(task: TelesalesTask | null | undefined): { s
             }
             if (parsed.stage) {
                 stage = parsed.stage;
+            }
+            if (parsed.department) {
+                department = parsed.department;
             }
         } catch (e) { }
         clean = clean.replace(/<!--\s*TASK_META:[\s\S]*?-->/g, '');
@@ -233,7 +349,8 @@ export function extractTaskMetadata(task: TelesalesTask | null | undefined): { s
     return {
         subtasks,
         stage,
-        cleanNote: clean.trim()
+        cleanNote: clean.trim(),
+        department
     };
 }
 
@@ -245,12 +362,18 @@ export function cleanNoteText(note: string | null | undefined): string {
         .trim();
 }
 
-export function packMetadataToNote(userNote: string | null | undefined, subtasks?: SubtaskItem[] | null, stage?: string | null): string {
+export function packMetadataToNote(
+    userNote: string | null | undefined,
+    subtasks?: SubtaskItem[] | null,
+    stage?: string | null,
+    department?: string | null
+): string {
     const raw = userNote || '';
     const clean = cleanNoteText(raw);
-    const meta: { subtasks?: SubtaskItem[]; stage?: string } = {};
+    const meta: { subtasks?: SubtaskItem[]; stage?: string; department?: string } = {};
     if (subtasks && Array.isArray(subtasks) && subtasks.length > 0) meta.subtasks = subtasks;
     if (stage) meta.stage = stage;
+    if (department) meta.department = department;
 
     if (Object.keys(meta).length === 0) return clean;
     return clean ? `${clean}\n\n<!-- TASK_META:${JSON.stringify(meta)} -->` : `<!-- TASK_META:${JSON.stringify(meta)} -->`;
@@ -325,7 +448,8 @@ export async function fetchTasks(userId?: string, token?: string, filters?: { st
                     ...t,
                     attachments: t.attachments || [],
                     subtasks: meta.subtasks,
-                    stage: meta.stage
+                    stage: meta.stage,
+                    department: meta.department
                 };
             }) as TelesalesTask[];
         } catch (e) {
@@ -425,7 +549,8 @@ export async function fetchUnifiedTasks(input: {
                 handled_date: t.handled_date, // NEW
                 attachments: attachments,
                 subtasks: meta.subtasks,
-                stage: meta.stage
+                stage: meta.stage,
+                department: meta.department
             };
         }) as TelesalesTask[];
 
@@ -546,8 +671,13 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
 
     const headers = await getAuthHeaders(token);
     let finalNote = patch.note;
-    if (patch.subtasks !== undefined || patch.stage !== undefined) {
-        finalNote = packMetadataToNote(patch.note !== undefined ? patch.note : '', patch.subtasks, patch.stage as string);
+    if (patch.subtasks !== undefined || patch.stage !== undefined || (patch as any).department !== undefined) {
+        finalNote = packMetadataToNote(
+            patch.note !== undefined ? patch.note : '',
+            patch.subtasks,
+            patch.stage as string,
+            (patch as any).department
+        );
     }
 
     const body = {
@@ -1019,7 +1149,8 @@ export async function fetchColumnTasks(columnId: string, limit = 50, offset = 0,
                 ...t,
                 attachments: t.attachments || [],
                 subtasks: meta.subtasks,
-                stage: meta.stage
+                stage: meta.stage,
+                department: meta.department
             };
         }) as TelesalesTask[];
     } catch (e) {
