@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Calendar, User, FileText, Paperclip, Link as LinkIcon, Image as ImageIcon, CheckSquare, Plus } from "lucide-react";
-import { TelesalesTask, SubtaskItem, packMetadataToNote } from "@/lib/telesalesTasksStore";
+import { TelesalesTask, SubtaskItem, packMetadataToNote, TASK_DEPARTMENTS } from "@/lib/telesalesTasksStore";
 import { supabase } from "@/lib/supabaseClient";
 
 interface TaskSimpleModalProps {
@@ -10,6 +10,7 @@ interface TaskSimpleModalProps {
     onClose: () => void;
     onSave: (task: Partial<TelesalesTask>) => void;
     currentUser: any; // User object from auth
+    defaultDepartment?: string;
 }
 
 interface Profile {
@@ -18,13 +19,14 @@ interface Profile {
     email: string;
 }
 
-export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSimpleModalProps) => {
+export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser, defaultDepartment = "admin" }: TaskSimpleModalProps) => {
     // const supabase = createClient(); // Switched to shared singleton
     const [title, setTitle] = useState("");
     const [dueDate, setDueDate] = useState<string>("");
     const [priority, setPriority] = useState("normal"); // Phase B: Added
     const [status, setStatus] = useState("today"); // Phase B: Added
     const [stage, setStage] = useState("in_progress");
+    const [department, setDepartment] = useState(defaultDepartment);
     const [subtasks, setSubtasks] = useState<SubtaskItem[]>([]);
     const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
     const [assignedTo, setAssignedTo] = useState("");
@@ -74,6 +76,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                         setPriority(draft.priority || "normal");
                         setStatus(draft.status || "today");
                         setStage(draft.stage || "in_progress");
+                        setDepartment(draft.department || defaultDepartment || "admin");
                         setSubtasks(draft.subtasks || []);
                         setNote(draft.note || "");
                         setAssignedTo(draft.assignedTo || currentUser?.id || "");
@@ -91,6 +94,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
             setPriority("normal");
             setStatus("today");
             setStage("in_progress");
+            setDepartment(defaultDepartment || "admin");
             setSubtasks([]);
             setNewSubtaskTitle("");
             setAssignedTo(currentUser?.id || "");
@@ -102,7 +106,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
             setLinkInput("");
             setHasDraftRestored(false);
         }
-    }, [isOpen, currentUser]);
+    }, [isOpen, currentUser, defaultDepartment]);
 
     // Auto-save draft
     useEffect(() => {
@@ -110,12 +114,12 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
             if (title || note || subtasks.length > 0 || attachments.length > 0) {
                 try {
                     localStorage.setItem('lyhu_task_simple_draft', JSON.stringify({
-                        title, dueDate, priority, status, stage, subtasks, note, assignedTo, assigneeIds, leaderId, attachments
+                        title, dueDate, priority, status, stage, department, subtasks, note, assignedTo, assigneeIds, leaderId, attachments
                     }));
                 } catch (e) { }
             }
         }
-    }, [isOpen, title, dueDate, priority, status, stage, subtasks, note, assignedTo, assigneeIds, leaderId, attachments]);
+    }, [isOpen, title, dueDate, priority, status, stage, department, subtasks, note, assignedTo, assigneeIds, leaderId, attachments]);
 
     const handleClearDraft = () => {
         try {
@@ -127,6 +131,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
         setPriority("normal");
         setStatus("today");
         setStage("in_progress");
+        setDepartment(defaultDepartment || "admin");
         setSubtasks([]);
         setNewSubtaskTitle("");
         setNote("");
@@ -247,9 +252,10 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                 priority: priority as any || 'normal',
                 status: status as any || 'today',
                 stage,
+                department,
                 subtasks: finalSubtasks,
                 due_date: finalDueDate ? new Date(finalDueDate).toISOString() : null,
-                note: packMetadataToNote(note, finalSubtasks, stage),
+                note: packMetadataToNote(note, finalSubtasks, stage, department),
                 type: 'task',
                 assigned_to: effectiveAssignedTo,
                 assignee_ids: effectiveAssignees,
@@ -383,8 +389,8 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                         />
                     </div>
 
-                    {/* Priority, Stage & Column */}
-                    <div className="grid grid-cols-3 gap-2">
+                    {/* Priority, Stage, Department & Column */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         <div>
                             <label className="block text-xs font-semibold text-slate-600 mb-1">Độ ưu tiên</label>
                             <select
@@ -409,6 +415,20 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                                 <option value="in_progress">Đang làm</option>
                                 <option value="waiting">Chờ duyệt</option>
                                 <option value="completed">Đã xong</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">Phòng ban</label>
+                            <select
+                                className="w-full px-2.5 py-1.5 border border-indigo-200 bg-indigo-50/40 rounded-lg text-xs sm:text-sm font-medium text-indigo-900 focus:outline-none focus:ring-2 focus:ring-[#00AFA9] cursor-pointer"
+                                value={department}
+                                onChange={e => setDepartment(e.target.value)}
+                            >
+                                {TASK_DEPARTMENTS.map(d => (
+                                    <option key={d.id} value={d.id}>
+                                        {d.icon} {d.label}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                         <div>

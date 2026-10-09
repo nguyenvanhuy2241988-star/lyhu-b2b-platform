@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createClient, supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider"; // ADDED // ADDED: For addLogSupabase
 
@@ -54,7 +54,8 @@ import {
     extractTaskMetadata,
     SubtaskItem,
     TASK_DEPARTMENTS,
-    resolveDepartmentConfig
+    resolveDepartmentConfig,
+    getDefaultDepartmentForContext
 } from "@/lib/telesalesTasksStore";
 
 // --- Standard Fixed 6 Columns Specification ---
@@ -240,7 +241,22 @@ const DepartmentBadge = ({
     // 1. If explicit department exists
     const explicitDept = department || (task as any).department;
     if (explicitDept) {
-        const conf = resolveDepartmentConfig(explicitDept);
+        let finalDept = explicitDept;
+        // Correct legacy tasks where department was defaulted to 'telesales' for admin owners
+        if (explicitDept === 'telesales' && task.type !== 'deal' && !task.phone) {
+            const allInvolvedIds = [task.user_id, task.owner_id, task.assigned_to, ...(task.assignee_ids || [])].filter(Boolean);
+            const isAdmin = allInvolvedIds.some(aid => {
+                const p = profiles.find((prof: any) => prof.id === aid);
+                const r = (p?.role || '').toLowerCase();
+                const n = (p?.full_name || '').toLowerCase();
+                return r === 'admin' || r === 'super_admin' || n.includes('admin');
+            });
+            const text = (task.title || '').toLowerCase();
+            if (isAdmin && !text.includes('tele') && !text.includes('gọi điện') && !text.includes('cuộc gọi')) {
+                finalDept = 'admin';
+            }
+        }
+        const conf = resolveDepartmentConfig(finalDept);
         return (
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
                 <span>{conf.icon}</span>
@@ -279,6 +295,16 @@ const DepartmentBadge = ({
             const r = (p.role || '').toLowerCase();
             const name = (p.full_name || '').toLowerCase();
             const email = (p.email || '').toLowerCase();
+
+            if (r === 'admin' || r === 'super_admin' || name.includes('admin') || email.includes('admin')) {
+                const conf = resolveDepartmentConfig('admin');
+                return (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${conf.badgeBg} ${conf.badgeText} ${conf.badgeBorder}`}>
+                        <span>{conf.icon}</span>
+                        <span>{conf.label}</span>
+                    </span>
+                );
+            }
 
             if (r === 'accountant' || name.includes('toán') || email.includes('toan')) {
                 const conf = resolveDepartmentConfig('accountant');
@@ -734,6 +760,13 @@ export default function TelesalesTasksPage() {
     const [totalCounts, setTotalCounts] = useState<Record<string, number>>({});
 
     const [profiles, setProfiles] = useState<Profile[]>([]);
+    const currentUserProfile = profiles.find(p => p.id === user?.id);
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    const userRole = currentUserProfile?.role || (currentPath.includes('/admin') ? 'admin' : undefined);
+    const defaultDepartment = useMemo(() => {
+        return getDefaultDepartmentForContext(userRole, currentPath);
+    }, [userRole, currentPath]);
+
     const [columns, setColumns] = useState<(TelesalesColumn & { column_type?: string })[]>(() => {
         const { standardizedUiCols } = standardizeColumns([], undefined);
         return standardizedUiCols;
@@ -1570,6 +1603,10 @@ export default function TelesalesTasksPage() {
         setIsLoading(true);
         savingRef.current = true;
         try {
+            if (!taskData.department) {
+                taskData.department = defaultDepartment;
+            }
+
             // Find target column matching status / column ID
             const targetCol = dbColumns.find(c => c.id === taskData.status || c.column_type === taskData.status || c.label.toLowerCase() === taskData.status?.toLowerCase());
             let targetColType = targetCol?.column_type || taskData.status;
@@ -2433,6 +2470,7 @@ export default function TelesalesTasksPage() {
                 onSave={handleSaveTask}
                 onDelete={editingTask ? () => handleDeleteTask(editingTask.id) : undefined}
                 columns={columns}
+                defaultDepartment={defaultDepartment}
             />
 
             {/* Log Call Modal */}
@@ -2463,6 +2501,7 @@ export default function TelesalesTasksPage() {
                 onClose={() => setIsSimpleModalOpen(false)}
                 onSave={handleSaveTask}
                 currentUser={user} // Pass user from useAuth
+                defaultDepartment={defaultDepartment}
             />
         </div>
     );

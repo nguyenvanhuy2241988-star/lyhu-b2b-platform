@@ -287,6 +287,33 @@ export function resolveDepartmentConfig(deptIdOrName?: string | null): Departmen
     };
 }
 
+export function getDefaultDepartmentForContext(role?: string, pathname?: string): string {
+    const p = (pathname || (typeof window !== 'undefined' ? window.location.pathname : '')).toLowerCase();
+    const r = (role || '').toLowerCase();
+
+    // 1. By current route
+    if (p.includes('/admin')) return 'admin';
+    if (p.includes('/accountant')) return 'accountant';
+    if (p.includes('/hr') || p.includes('/recruitment')) return 'hr';
+    if (p.includes('/media') || p.includes('/marketing')) return 'marketing';
+    if (p.includes('/sales-gt') || p.includes('/sale-admin') || p.includes('/sales')) return 'sales';
+    if (p.includes('/warehouse') || p.includes('/shipper')) return 'warehouse';
+    if (p.includes('/rnd')) return 'rnd';
+    if (p.includes('/telesales')) return 'telesales';
+
+    // 2. By user role
+    if (r === 'admin' || r === 'super_admin') return 'admin';
+    if (r === 'accountant') return 'accountant';
+    if (r === 'hr' || r === 'recruiter') return 'hr';
+    if (r === 'media_creator' || r === 'marketing') return 'marketing';
+    if (r === 'sales' || r === 'sales_gt' || r === 'sale_admin') return 'sales';
+    if (r === 'warehouse' || r === 'shipper') return 'warehouse';
+    if (r === 'rnd') return 'rnd';
+    if (r === 'telesales') return 'telesales';
+
+    return 'admin';
+}
+
 // ---- Metadata Extraction & Serialization Helpers ----
 export function extractTaskMetadata(task: TelesalesTask | null | undefined): { subtasks: SubtaskItem[]; stage: string; cleanNote: string; department?: string } {
     if (!task) return { subtasks: [], stage: 'in_progress', cleanNote: '' };
@@ -549,6 +576,7 @@ export async function createTaskSupabase(input: {
     due_date?: string | null;
     type?: TaskType;
     stage?: string;
+    department?: string;
     subtasks?: SubtaskItem[];
     assigned_to?: string | null;
     assignee_ids?: string[];
@@ -559,7 +587,7 @@ export async function createTaskSupabase(input: {
     if (!activeUserId) throw new Error('NOT_AUTHENTICATED');
 
     const headers = await getAuthHeaders(token);
-    const finalNote = packMetadataToNote(input.note, input.subtasks, input.stage);
+    const finalNote = packMetadataToNote(input.note, input.subtasks, input.stage, input.department);
     const payload: any = {
         user_id: activeUserId,
         owner_id: activeUserId, // Explicitly set owner_id to ensure visibility logic matches
@@ -593,7 +621,15 @@ export async function createTaskSupabase(input: {
 
         const data = await res.json();
         invalidateTasksCache();
-        return data[0] as TelesalesTask;
+        const createdRow = data[0];
+        const meta = extractTaskMetadata(createdRow);
+        return {
+            ...createdRow,
+            attachments: createdRow?.attachments || [],
+            subtasks: meta.subtasks,
+            stage: meta.stage,
+            department: meta.department || input.department
+        } as TelesalesTask;
     } catch (e: any) {
         console.error("createTaskSupabase Exception:", e);
         throw e;

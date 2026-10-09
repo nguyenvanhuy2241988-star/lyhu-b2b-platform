@@ -25,6 +25,7 @@ interface CreateTaskModalProps {
     initialStatus?: TaskStatus;
     initialData?: Partial<TelesalesTask>; // New: Pre-fill data
     columns?: (TelesalesColumn & { column_type?: string })[]; // Support dynamic columns
+    defaultDepartment?: string;
 }
 
 interface TaskFormData {
@@ -54,7 +55,8 @@ export const CreateTaskModal = ({
     onDelete,
     initialStatus = "today",
     initialData,
-    columns = []
+    columns = [],
+    defaultDepartment = "admin"
 }: CreateTaskModalProps) => {
     const isEditMode = !!initialData?.id;
 
@@ -97,7 +99,7 @@ export const CreateTaskModal = ({
             status: defStatus,
             stage: "in_progress",
             description: "",
-            department: (initialData as any)?.department || initialMeta?.department || "telesales",
+            department: (initialData as any)?.department || initialMeta?.department || defaultDepartment,
             assigneeIds: initialAssignees,
             leaderId: initialData?.leader_id || ""
         };
@@ -153,7 +155,7 @@ export const CreateTaskModal = ({
             status: defStatus,
             stage: "in_progress",
             description: "",
-            department: "telesales",
+            department: defaultDepartment,
             assigneeIds: [],
             leaderId: ""
         });
@@ -262,7 +264,7 @@ export const CreateTaskModal = ({
                         status: defStatus,
                         stage: "in_progress",
                         description: "",
-                        department: "telesales",
+                        department: defaultDepartment,
                         assigneeIds: [],
                         leaderId: ""
                     });
@@ -295,7 +297,7 @@ export const CreateTaskModal = ({
                 status: targetColId as TaskStatus,
                 stage: meta.stage || (initialData.stage as string) || "in_progress",
                 description: meta.cleanNote || "",
-                department: (initialData as any).department || meta.department || "telesales",
+                department: (initialData as any).department || meta.department || defaultDepartment,
                 assigneeIds: initialAssignees,
                 leaderId: initialData.leader_id || ""
             });
@@ -693,7 +695,7 @@ export const CreateTaskModal = ({
                             <label className="block text-xs font-semibold text-slate-700 mb-1">Phòng ban</label>
                             <select
                                 className="w-full px-2.5 py-2 border border-indigo-200 bg-indigo-50/30 rounded-lg text-sm font-medium text-indigo-950 focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
-                                value={formData.department || 'telesales'}
+                                value={formData.department || defaultDepartment || 'admin'}
                                 onChange={e => { setFormData(prev => ({ ...prev, department: e.target.value })); setHasUserEdited(true); }}
                             >
                                 {TASK_DEPARTMENTS.map(d => (
