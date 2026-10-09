@@ -332,17 +332,22 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                     </div>
                 )}
 
-                {/* Attachments Indicator - DISABLED */}
-                {/* {task.attachments && task.attachments.length > 0 && (
-                    <div className="flex gap-2 mb-2">
-                        {task.attachments.map((att, i) => (
-                            <div key={i} className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded flex items-center gap-1 text-slate-500 truncate max-w-[100px]">
-                                {att.type === 'link' ? <LinkIcon className="w-2.5 h-2.5" /> : <Paperclip className="w-2.5 h-2.5" />}
+                {/* Attachments Indicator */}
+                {task.attachments && task.attachments.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                        {task.attachments.slice(0, 2).map((att: any, i: number) => (
+                            <div key={i} className="text-[10px] bg-slate-50 hover:bg-slate-100 px-1.5 py-0.5 rounded flex items-center gap-1 text-slate-600 truncate max-w-[130px] border border-slate-200">
+                                {att.type === 'link' ? <LinkIcon className="w-2.5 h-2.5 flex-shrink-0 text-blue-500" /> : <Paperclip className="w-2.5 h-2.5 flex-shrink-0 text-[#00AFA9]" />}
                                 <span className="truncate">{att.name}</span>
                             </div>
                         ))}
+                        {task.attachments.length > 2 && (
+                            <span className="text-[10px] bg-slate-50 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">
+                                +{task.attachments.length - 2}
+                            </span>
+                        )}
                     </div>
-                )} */}
+                )}
 
                 {/* Footer & Quick Actions */}
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs text-slate-400 pointer-events-auto">

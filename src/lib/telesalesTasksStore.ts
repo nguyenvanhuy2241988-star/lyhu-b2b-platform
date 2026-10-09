@@ -208,7 +208,7 @@ export function extractTaskMetadata(task: TelesalesTask | null | undefined): { s
     if (metaMatch && metaMatch[1]) {
         try {
             const parsed = JSON.parse(metaMatch[1]);
-            if (Array.isArray(parsed.subtasks) && (subtasks.length === 0 || parsed.subtasks.length > 0)) {
+            if (Array.isArray(parsed.subtasks)) {
                 subtasks = parsed.subtasks;
             }
             if (parsed.stage) {
@@ -223,7 +223,7 @@ export function extractTaskMetadata(task: TelesalesTask | null | undefined): { s
     if (subMatch && subMatch[1]) {
         try {
             const parsed = JSON.parse(subMatch[1]);
-            if (Array.isArray(parsed) && (subtasks.length === 0 || parsed.length > 0)) {
+            if (Array.isArray(parsed) && subtasks.length === 0) {
                 subtasks = parsed;
             }
         } catch (e) { }
@@ -319,7 +319,15 @@ export async function fetchTasks(userId?: string, token?: string, filters?: { st
 
             const data = await res.json();
             console.log(`[Tasks Store] ✅ Fetched successfully: ${data?.length || 0} tasks`);
-            return (data ?? []) as TelesalesTask[];
+            return (data ?? []).map((t: any) => {
+                const meta = extractTaskMetadata(t);
+                return {
+                    ...t,
+                    attachments: t.attachments || [],
+                    subtasks: meta.subtasks,
+                    stage: meta.stage
+                };
+            }) as TelesalesTask[];
         } catch (e) {
             logSupabaseError('fetchTasks - Exception', e);
             return [];
@@ -371,9 +379,34 @@ export async function fetchUnifiedTasks(input: {
             }
         }
 
+        // Enrich manual tasks directly from telesales_tasks table to guarantee note (with subtasks/stage) and attachments are never lost
+        const taskIds = (data || []).filter((t: any) => t.source_type !== 'deal').map((t: any) => t.id);
+        const taskEnrichMap: Record<string, { note?: string; attachments?: any[] }> = {};
+        if (taskIds.length > 0) {
+            try {
+                const { data: tasksData, error: tasksErr } = await supabase
+                    .from('telesales_tasks')
+                    .select('id, note, attachments')
+                    .in('id', taskIds);
+                if (tasksData && !tasksErr) {
+                    tasksData.forEach((td: any) => {
+                        taskEnrichMap[td.id] = {
+                            note: td.note,
+                            attachments: td.attachments
+                        };
+                    });
+                }
+            } catch (err) {
+                console.warn('[fetchUnifiedTasks] Could not enrich task notes/attachments:', err);
+            }
+        }
+
         // Map RPC result to TelesalesTask interface
         return (data || []).map((t: any) => {
-            const rawNote = t.source_type === 'deal' ? (dealNotesMap[t.id] ?? t.note) : t.note;
+            const isDeal = t.source_type === 'deal';
+            const enriched = taskEnrichMap[t.id];
+            const rawNote = isDeal ? (dealNotesMap[t.id] ?? t.note) : (enriched?.note !== undefined ? enriched.note : t.note);
+            const attachments = isDeal ? [] : (enriched?.attachments !== undefined ? enriched.attachments : (t.attachments || []));
             const meta = extractTaskMetadata({ ...t, note: rawNote });
             return {
                 id: t.id,
@@ -381,7 +414,7 @@ export async function fetchUnifiedTasks(input: {
                 title: t.title,
                 customer_name: t.customer_name,
                 phone: t.phone,
-                note: rawNote, // FIXED: Enrich deal note
+                note: rawNote, // FIXED: Enrich deal note & task note
                 due_date: t.due_date,
                 status: t.status === 'won' ? 'done' : (t.status === 'lost' ? 'done' : (t.status || 'inbox')), // Map deal status to task status roughly
                 priority: t.priority || 'normal',
@@ -390,7 +423,7 @@ export async function fetchUnifiedTasks(input: {
                 assignee_ids: t.assignee_ids, // NEW
                 leader_id: t.leader_id,      // NEW
                 handled_date: t.handled_date, // NEW
-                attachments: t.attachments || [], // NEW
+                attachments: attachments,
                 subtasks: meta.subtasks,
                 stage: meta.stage
             };
@@ -984,6 +1017,7 @@ export async function fetchColumnTasks(columnId: string, limit = 50, offset = 0,
             const meta = extractTaskMetadata(t);
             return {
                 ...t,
+                attachments: t.attachments || [],
                 subtasks: meta.subtasks,
                 stage: meta.stage
             };

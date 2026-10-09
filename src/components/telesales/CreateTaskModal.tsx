@@ -387,34 +387,38 @@ export const CreateTaskModal = ({
 
         setIsUploading(true);
         setHasUserEdited(true);
-        const file = e.target.files[0];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `${fileName}`;
-        const determinedMime = getMimeType(file);
+        const files = Array.from(e.target.files);
 
         try {
-            const { data, error } = await supabase.storage
-                .from('task_attachments')
-                .upload(filePath, file, {
-                    contentType: determinedMime,
-                    upsert: true
+            const uploadedItems: any[] = [];
+            for (const file of files) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                const filePath = `${fileName}`;
+                const determinedMime = getMimeType(file);
+
+                const { data, error } = await supabase.storage
+                    .from('task_attachments')
+                    .upload(filePath, file, {
+                        contentType: determinedMime,
+                        upsert: true
+                    });
+
+                if (error) throw error;
+
+                const { data: publicUrlData } = supabase.storage
+                    .from('task_attachments')
+                    .getPublicUrl(filePath);
+
+                uploadedItems.push({
+                    name: file.name,
+                    url: publicUrlData.publicUrl,
+                    type: determinedMime,
+                    size: file.size
                 });
+            }
 
-            if (error) throw error;
-
-            const { data: publicUrlData } = supabase.storage
-                .from('task_attachments')
-                .getPublicUrl(filePath);
-
-            const newAttachment = {
-                name: file.name,
-                url: publicUrlData.publicUrl,
-                type: determinedMime,
-                size: file.size
-            };
-
-            setAttachments(prev => [...prev, newAttachment]);
+            setAttachments(prev => [...prev, ...uploadedItems]);
         } catch (error: any) {
             console.error("Upload error:", error);
             alert(`Lỗi upload tài liệu/ảnh: ${error.message || JSON.stringify(error)}`);
