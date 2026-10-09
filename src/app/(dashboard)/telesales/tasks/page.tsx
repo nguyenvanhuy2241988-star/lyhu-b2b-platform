@@ -874,24 +874,32 @@ export default function TelesalesTasksPage() {
 
                 if (columnType === 'date_today') {
                     endDate.setHours(23, 59, 59, 999);
-                } else if (columnType === 'date_tomorrow') {
-                    startDate.setDate(today.getDate() + 1);
-                    endDate.setDate(today.getDate() + 1);
-                    endDate.setHours(23, 59, 59, 999);
                 } else if (columnType === 'date_this_week') {
-                    startDate.setDate(today.getDate() + 2);
+                    startDate.setDate(today.getDate() + 1);
                     endDate.setDate(today.getDate() + 7);
                     endDate.setHours(23, 59, 59, 999);
+                } else if (columnType === 'date_this_month') {
+                    startDate.setDate(today.getDate() + 8);
+                    const curYear = today.getFullYear();
+                    const curMonth = today.getMonth();
+                    endDate = new Date(curYear, curMonth + 1, 0, 23, 59, 59, 999);
                 } else if (columnType === 'date_overdue') {
                     startDate = new Date('2000-01-01');
                     endDate.setDate(today.getDate() - 1);
                     endDate.setHours(23, 59, 59, 999);
+                } else if (columnType === 'date_tomorrow') {
+                    startDate.setDate(today.getDate() + 1);
+                    endDate.setDate(today.getDate() + 1);
+                    endDate.setHours(23, 59, 59, 999);
                 }
 
-                const { fetchUnifiedTasks } = require("@/lib/telesalesTasksStore");
-                const data = await fetchUnifiedTasks({ userId: user.id, startDate, endDate }, session.access_token);
-                // Exclude completed tasks from date columns (completed tasks belong strictly in 'Đã xong')
-                const activeData = (data || []).filter((t: any) => t.status !== 'done');
+                let activeData: any[] = [];
+                if (startDate.getTime() <= endDate.getTime()) {
+                    const { fetchUnifiedTasks } = require("@/lib/telesalesTasksStore");
+                    const data = await fetchUnifiedTasks({ userId: user.id, startDate, endDate }, session.access_token);
+                    // Exclude completed tasks from date columns (completed tasks belong strictly in 'Đã xong')
+                    activeData = (data || []).filter((t: any) => t.status !== 'done');
+                }
 
                 setColumnTasks(prev => ({ ...prev, [colId]: activeData }));
                 setColumnHasMore(prev => ({ ...prev, [colId]: false }));
@@ -1128,40 +1136,40 @@ export default function TelesalesTasksPage() {
                             if (cType === 'date_today' || colId === 'today') {
                                 return taskDate ? taskDate.getTime() === today.getTime() : false;
                             }
-                            if (cType === 'date_tomorrow' || colId === 'tomorrow') {
-                                const tmr = new Date(today);
-                                tmr.setDate(tmr.getDate() + 1);
-                                return taskDate ? taskDate.getTime() === tmr.getTime() : false;
-                            }
                             if (cType === 'date_this_week' || colId === 'this_week') {
-                                // If already in this column, keep it unless due date explicitly changed to today, tomorrow, or overdue
-                                if (currentList.some(t => t.id === task.id) && task.status !== 'done') {
-                                    if (taskDate) {
-                                        const tmr = new Date(today);
-                                        tmr.setDate(tmr.getDate() + 1);
-                                        if (taskDate.getTime() === today.getTime() || taskDate.getTime() === tmr.getTime() || taskDate.getTime() < today.getTime()) {
-                                            return false;
-                                        }
-                                    }
-                                    return true;
-                                }
                                 if (!taskDate) return false;
                                 const startWeek = new Date(today);
-                                startWeek.setDate(today.getDate() + 2);
+                                startWeek.setDate(today.getDate() + 1);
                                 const endWeek = new Date(today);
                                 endWeek.setDate(today.getDate() + 7);
                                 endWeek.setHours(23, 59, 59, 999);
                                 return taskDate.getTime() >= startWeek.getTime() && taskDate.getTime() <= endWeek.getTime();
                             }
+                            if (cType === 'date_this_month' || colId === 'this_month') {
+                                if (!taskDate) return false;
+                                const startMonth = new Date(today);
+                                startMonth.setDate(today.getDate() + 8);
+                                const endMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+                                if (startMonth.getTime() > endMonth.getTime()) return false;
+                                return taskDate.getTime() >= startMonth.getTime() && taskDate.getTime() <= endMonth.getTime();
+                            }
                             if (cType === 'date_overdue' || colId === 'overdue') {
                                 return taskDate ? taskDate.getTime() < today.getTime() : false;
+                            }
+                            if (cType === 'date_tomorrow' || colId === 'tomorrow') {
+                                const tmr = new Date(today);
+                                tmr.setDate(tmr.getDate() + 1);
+                                return taskDate ? taskDate.getTime() === tmr.getTime() : false;
                             }
                             if (cType === 'system_inbox' || colId === 'inbox') {
                                 if (currentList.some(t => t.id === task.id) && task.status !== 'done') return true;
                                 if (taskDate) {
+                                    const endMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
                                     const inSevenDays = new Date(today);
                                     inSevenDays.setDate(inSevenDays.getDate() + 7);
-                                    return taskDate.getTime() > inSevenDays.getTime();
+                                    inSevenDays.setHours(23, 59, 59, 999);
+                                    const maxBound = endMonth.getTime() > inSevenDays.getTime() ? endMonth : inSevenDays;
+                                    return taskDate.getTime() > maxBound.getTime();
                                 }
                                 return task.status === 'inbox' || !task.due_date;
                             }
@@ -1455,17 +1463,24 @@ export default function TelesalesTasksPage() {
 
             if (targetColType === 'date_today' || taskData.status === 'today' || targetCol?.label?.toLowerCase().includes('hôm nay')) {
                 if (!taskData.due_date) taskData.due_date = todayStr;
+            } else if (targetColType === 'date_this_week' || taskData.status === 'this_week' || targetCol?.label?.toLowerCase().includes('tuần này')) {
+                if (!taskData.due_date) {
+                    const thisWeek = new Date(today);
+                    thisWeek.setDate(today.getDate() + 3);
+                    taskData.due_date = thisWeek.toISOString().split('T')[0];
+                }
+            } else if (targetColType === 'date_this_month' || taskData.status === 'this_month' || targetCol?.label?.toLowerCase().includes('tháng này')) {
+                if (!taskData.due_date) {
+                    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    const target = new Date(today);
+                    target.setDate(today.getDate() + 10);
+                    taskData.due_date = (target <= endOfMonth ? target : endOfMonth).toISOString().split('T')[0];
+                }
             } else if (targetColType === 'date_tomorrow' || taskData.status === 'tomorrow' || targetCol?.label?.toLowerCase().includes('ngày mai')) {
                 if (!taskData.due_date) {
                     const tmr = new Date(today);
                     tmr.setDate(tmr.getDate() + 1);
                     taskData.due_date = tmr.toISOString().split('T')[0];
-                }
-            } else if (targetColType === 'date_this_week' || taskData.status === 'this_week' || targetCol?.label?.toLowerCase().includes('tuần này')) {
-                if (!taskData.due_date) {
-                    const thisWeek = new Date(today);
-                    thisWeek.setDate(today.getDate() + 4);
-                    taskData.due_date = thisWeek.toISOString().split('T')[0];
                 }
             }
 
@@ -1483,10 +1498,22 @@ export default function TelesalesTasksPage() {
             if (targetColType === 'system_done' || taskData.status === 'done') {
                 taskData.status = 'done';
                 if (!taskData.completed_at) taskData.completed_at = new Date().toISOString();
-            } else if (diffDays !== null && diffDays > 7 && targetColType !== 'custom') {
-                // Critical: Dates beyond 7 days belong in Inbox (backlog) so they don't get lost from Kanban
-                taskData.status = 'inbox';
-                targetColType = 'system_inbox';
+            } else if (diffDays !== null && targetColType !== 'custom') {
+                const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+                const targetDate = new Date(taskData.due_date!);
+                targetDate.setHours(0, 0, 0, 0);
+                if (diffDays < 0) {
+                    targetColType = 'date_overdue';
+                } else if (diffDays === 0) {
+                    targetColType = 'date_today';
+                } else if (diffDays <= 7) {
+                    targetColType = 'date_this_week';
+                } else if (targetDate.getTime() <= endOfMonth.getTime()) {
+                    targetColType = 'date_this_month';
+                } else {
+                    taskData.status = 'inbox';
+                    targetColType = 'system_inbox';
+                }
             } else if (targetColType === 'system_inbox' || taskData.status === 'inbox') {
                 taskData.status = 'inbox';
             }
@@ -1701,15 +1728,21 @@ export default function TelesalesTasksPage() {
                 if (targetColType === 'date_today') {
                     newDueDate = new Date().toISOString();
                     newStatus = 'today';
-                } else if (targetColType === 'date_tomorrow') {
-                    newDueDate = new Date(today.getTime() + msOneDay).toISOString();
-                    newStatus = 'tomorrow';
                 } else if (targetColType === 'date_this_week') {
                     newDueDate = new Date(today.getTime() + 2 * msOneDay).toISOString();
                     newStatus = 'this_week';
+                } else if (targetColType === 'date_this_month') {
+                    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 18, 0, 0, 0);
+                    const targetDay = new Date(today.getTime() + 10 * msOneDay);
+                    targetDay.setHours(18, 0, 0, 0);
+                    newDueDate = (targetDay <= endOfMonth ? targetDay : endOfMonth).toISOString();
+                    newStatus = 'this_month';
                 } else if (targetColType === 'date_overdue') {
                     newDueDate = draggedTask.due_date || new Date(today.getTime() - msOneDay).toISOString();
-                    newStatus = 'today';
+                    newStatus = 'inbox';
+                } else if (targetColType === 'date_tomorrow') {
+                    newDueDate = new Date(today.getTime() + msOneDay).toISOString();
+                    newStatus = 'tomorrow';
                 }
                 newCompletedAt = null;
             } else if (targetColType === 'system_done' || isColumnDone(targetCol, targetColId)) {
@@ -1774,20 +1807,7 @@ export default function TelesalesTasksPage() {
             setTimeout(() => refreshData(true), 500);
         }
 
-        // 2. Handle Column Drop (reorder)
-        if (draggedColId && draggedColId !== targetColId) {
-            const currentCols = [...columns];
-            const sourceIndex = currentCols.findIndex(c => c.id === draggedColId);
-            const targetIndex = currentCols.findIndex(c => c.id === targetColId);
-
-            if (sourceIndex >= 0 && targetIndex >= 0) {
-                const [movedCol] = currentCols.splice(sourceIndex, 1);
-                currentCols.splice(targetIndex, 0, movedCol);
-                setColumns(currentCols);
-                // Save order to DB
-                reorderUserColumns(currentCols.map((c, i) => ({ id: c.id, position: i })), session?.access_token);
-            }
-        }
+        // Columns are fixed and locked: column reordering is disabled
     };
 
     // --- Column Management ---
@@ -2002,59 +2022,7 @@ export default function TelesalesTasksPage() {
                         </>
                     )}
 
-                    {/* Settings Menu */}
-                    <div className="relative z-[60]">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(!isSettingsOpen); }}
-                            className={`bg-white border p-2 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors ${isSettingsOpen ? 'ring-2 ring-primary-100 border-primary-500' : ''}`}
-                            title="Cài đặt cột"
-                        >
-                            <Settings className="w-4 h-4" />
-                        </button>
 
-                        {isSettingsOpen && (
-                            <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl border border-slate-200 p-2 z-[9999]" onClick={(e) => e.stopPropagation()}>
-                                <h4 className="text-xs font-semibold text-slate-500 uppercase px-2 py-1 mb-1">Hiển thị cột</h4>
-                                <div className="max-h-[300px] overflow-y-auto space-y-1">
-                                    {columns.map(col => (
-                                        <div key={col.id} className="flex items-center justify-between px-2 py-1.5 hover:bg-slate-50 rounded text-sm text-slate-700">
-                                            <span>{col.label}</span>
-                                            <button
-                                                onClick={() => toggleColumnVisibility(col.id, col.isVisible !== false)}
-                                                className={`transition-colors ${col.isVisible !== false ? 'text-primary-600' : 'text-slate-300'}`}
-                                            >
-                                                {col.isVisible !== false ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="border-t border-slate-100 my-2 pt-2">
-                                    <button
-                                        onClick={() => { handleAddColumn(); setIsSettingsOpen(false); }}
-                                        className="w-full flex items-center justify-center gap-2 text-sm text-primary-600 hover:bg-primary-50 py-2 rounded font-medium"
-                                    >
-                                        <Plus className="w-4 h-4" /> Thêm cột mới
-                                    </button>
-                                    <button
-                                        onClick={async () => {
-                                            if (window.confirm('Khôi phục tất cả cột về mặc định? Cột tùy chỉnh sẽ bị xóa.')) {
-                                                // Delete all custom columns, refresh will reload defaults
-                                                const customCols = dbColumns.filter(c => c.column_type === 'custom');
-                                                for (const col of customCols) {
-                                                    await deleteUserColumn(col.id, session?.access_token);
-                                                }
-                                                await refreshData();
-                                            }
-                                            setIsSettingsOpen(false);
-                                        }}
-                                        className="w-full flex items-center justify-center gap-2 text-sm text-slate-500 hover:bg-slate-50 py-2 rounded font-medium hover:text-red-600 mt-1"
-                                    >
-                                        <RotateCcw className="w-4 h-4" /> Khôi phục mặc định
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
 
                     <div className="hidden lg:flex bg-white border p-1 rounded-lg">
                         <button
@@ -2158,9 +2126,7 @@ export default function TelesalesTasksPage() {
                             return (
                                 <div
                                     key={col.id}
-                                    draggable={!editingColumnId}
-                                    onDragStart={(e) => handleColumnDragStart(e, col.id)}
-                                    onDragEnd={handleColumnDragEnd}
+                                    draggable={false}
                                     onDragOver={(e) => handleDragOverColumn(e, col.id)}
                                     onDrop={(e) => handleDrop(e, col.id)}
                                     className={`flex-1 min-w-[280px] bg-slate-50/50 rounded-xl flex flex-col max-h-[calc(100vh-280px)] group/col border-2 transition-colors 
@@ -2168,87 +2134,53 @@ export default function TelesalesTasksPage() {
                                     `}
                                 >
                                     {/* Column Header */}
-                                    <div className="p-3 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-slate-50/95 backdrop-blur-sm rounded-t-xl z-20 cursor-grab active:cursor-grabbing">
+                                    <div className="p-3 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-slate-50/95 backdrop-blur-sm rounded-t-xl z-20 cursor-default">
                                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                                            {editingColumnId === col.id ? (
-                                                <div className="flex items-center gap-1 w-full" onMouseDown={e => e.stopPropagation()}>
-                                                    <input
-                                                        ref={editInputRef}
-                                                        className="w-full text-sm font-semibold px-2 py-1 border border-primary-500 rounded focus:outline-none"
-                                                        value={editingTitle}
-                                                        onChange={(e) => setEditingTitle(e.target.value)}
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') saveEditing(col.id);
-                                                            if (e.key === 'Escape') cancelEditing();
-                                                        }}
-                                                        onBlur={() => saveEditing(col.id)}
-                                                    />
+                                            <div className="flex flex-col flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                    <h3 className="font-semibold text-slate-700 text-sm uppercase truncate">{col.label}</h3>
+                                                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold flex-shrink-0 ${
+                                                        isDoneCol 
+                                                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                                                            : 'bg-slate-200 text-slate-600'
+                                                    }`} title={isDoneCol && doneMonthFilter !== 'all' ? `Đã hoàn thành ${tasks.length} việc trong tháng đang xem` : `Tổng số việc`}>
+                                                        {isDoneCol && doneMonthFilter !== 'all' ? tasks.length : (totalCounts[col.id] || 0)}
+                                                    </span>
                                                 </div>
-                                            ) : (
-                                                <div className="flex flex-col flex-1 min-w-0">
-                                                    <div
-                                                        className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
-                                                        onDoubleClick={() => startEditing(col)}
-                                                        title="Double click để sửa tên"
-                                                    >
-                                                        <h3 className="font-semibold text-slate-700 text-sm uppercase truncate">{col.label}</h3>
-                                                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold flex-shrink-0 ${
-                                                            isDoneCol 
-                                                                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
-                                                                : 'bg-slate-200 text-slate-600'
-                                                        }`} title={isDoneCol && doneMonthFilter !== 'all' ? `Đã hoàn thành ${tasks.length} việc trong tháng đang xem` : `Tổng số việc`}>
-                                                            {isDoneCol && doneMonthFilter !== 'all' ? tasks.length : (totalCounts[col.id] || 0)}
-                                                        </span>
-                                                    </div>
-                                                    {isDoneCol && (
-                                                        <div className="mt-1.5" onMouseDown={e => e.stopPropagation()}>
-                                                            <div className="relative inline-flex items-center w-full">
-                                                                <select
-                                                                    className="w-full text-xs font-semibold bg-white border border-slate-200 hover:border-emerald-400 rounded-md pl-2 pr-6 py-1 text-slate-700 shadow-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer appearance-none transition-colors"
-                                                                    value={doneMonthFilter}
-                                                                    onChange={e => setDoneMonthFilter(e.target.value)}
-                                                                    title="Lọc việc hoàn thành theo tháng"
-                                                                >
-                                                                    <option value={currentYearMonth}>
-                                                                        📅 Tháng này ({currentYearMonth.split('-')[1]}/{currentYearMonth.split('-')[0]})
-                                                                    </option>
-                                                                    {Array.from({ length: 11 }).map((_, idx) => {
-                                                                        const d = new Date();
-                                                                        d.setDate(1);
-                                                                        d.setMonth(d.getMonth() - (idx + 1));
-                                                                        const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                                                                        return (
-                                                                            <option key={val} value={val}>
-                                                                                Tháng {d.getMonth() + 1}/{d.getFullYear()}
-                                                                            </option>
-                                                                        );
-                                                                    })}
-                                                                    <option value="all">📂 Toàn bộ lịch sử (Tất cả)</option>
-                                                                </select>
-                                                                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 pointer-events-none" />
-                                                            </div>
+                                                {isDoneCol && (
+                                                    <div className="mt-1.5" onMouseDown={e => e.stopPropagation()}>
+                                                        <div className="relative inline-flex items-center w-full">
+                                                            <select
+                                                                className="w-full text-xs font-semibold bg-white border border-slate-200 hover:border-emerald-400 rounded-md pl-2 pr-6 py-1 text-slate-700 shadow-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer appearance-none transition-colors"
+                                                                value={doneMonthFilter}
+                                                                onChange={e => setDoneMonthFilter(e.target.value)}
+                                                                title="Lọc việc hoàn thành theo tháng"
+                                                            >
+                                                                <option value={currentYearMonth}>
+                                                                    📅 Tháng này ({currentYearMonth.split('-')[1]}/{currentYearMonth.split('-')[0]})
+                                                                </option>
+                                                                {Array.from({ length: 11 }).map((_, idx) => {
+                                                                    const d = new Date();
+                                                                    d.setDate(1);
+                                                                    d.setMonth(d.getMonth() - (idx + 1));
+                                                                    const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                                                                    return (
+                                                                        <option key={val} value={val}>
+                                                                            Tháng {d.getMonth() + 1}/{d.getFullYear()}
+                                                                        </option>
+                                                                    );
+                                                                })}
+                                                                <option value="all">📂 Toàn bộ lịch sử (Tất cả)</option>
+                                                            </select>
+                                                            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 pointer-events-none" />
                                                         </div>
-                                                    )}
-                                                </div>
-                                            )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Actions */}
                                         <div className="flex items-center gap-0.5 opacity-0 group-hover/col:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => startEditing(col)}
-                                                className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-blue-600"
-                                                title="Sửa tên"
-                                            >
-                                                <Edit2 className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => deleteColumnHandler(col.id, col.isDefault)}
-                                                className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-red-600"
-                                                title="Xóa cột"
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
                                             <button
                                                 onClick={() => openCreateModal('inbox' as TaskStatus, col.id)}
                                                 className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-200 rounded ml-1"
@@ -2352,11 +2284,7 @@ export default function TelesalesTasksPage() {
                                 </div>
                             );
                         })}
-                        <div className="min-w-[50px] flex items-start justify-center pt-2">
-                            <button onClick={() => handleAddColumn()} className="p-2 rounded-full hover:bg-slate-200 text-slate-400" title="Thêm cột mới">
-                                <Plus className="w-6 h-6" />
-                            </button>
-                        </div>
+
                     </div>
                 </div>
 

@@ -75,15 +75,17 @@ export const TABLE = 'telesales_tasks' as const;
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
 
 // Updated TaskStatus as per latest request (omitting 'later' if that was intent, but safely keeping it if legacy data exists? User prompt was specific: "inbox" | "today" | "tomorrow" | "this_week" | "done")
-export type TaskStatus = 'inbox' | 'today' | 'tomorrow' | 'this_week' | 'done';
+export type TaskStatus = 'inbox' | 'today' | 'tomorrow' | 'this_week' | 'this_month' | 'done';
 export type TaskType = 'task' | 'deal';
 
-export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+export const TASK_STATUS_LABELS: Record<string, string> = {
     inbox: 'Hộp thư đến',
     today: 'Hôm nay',
-    tomorrow: 'Ngày mai',
     this_week: 'Tuần này',
-    done: 'Hoàn tất',
+    this_month: 'Tháng này',
+    overdue: 'Quá hạn',
+    done: 'Hoàn thành',
+    tomorrow: 'Ngày mai',
 };
 
 export const TASK_PRIORITY_LABELS: Record<string, string> = {
@@ -119,12 +121,12 @@ export type TelesalesColumn = {
 };
 
 export const DEFAULT_COLUMNS: TelesalesColumn[] = [
-    { id: 'inbox', label: 'Hộp thư đến', status: 'inbox', order: 10, isDefault: true, isVisible: true },
-    { id: 'today', label: 'Hôm nay', status: 'today', order: 20, isDefault: true, isVisible: true },
-    { id: 'tomorrow', label: 'Ngày mai', status: 'tomorrow', order: 30, isDefault: true, isVisible: true },
-    { id: 'this_week', label: 'Tuần này', status: 'this_week', order: 40, isDefault: true, isVisible: true },
-    { id: 'done', label: 'Đã xong', status: 'done', order: 50, isDefault: true, isVisible: true },
-    { id: 'overdue', label: 'Quá hạn', status: 'inbox', order: 5, isDefault: true, isVisible: true }, // Added Overdue
+    { id: 'inbox', label: 'Hộp thư đến', status: 'inbox', order: 0, isDefault: true, isVisible: true },
+    { id: 'today', label: 'Hôm nay', status: 'today', order: 10, isDefault: true, isVisible: true },
+    { id: 'this_week', label: 'Tuần này', status: 'this_week', order: 20, isDefault: true, isVisible: true },
+    { id: 'this_month', label: 'Tháng này', status: 'this_month', order: 30, isDefault: true, isVisible: true },
+    { id: 'overdue', label: 'Quá hạn', status: 'inbox', order: 40, isDefault: true, isVisible: true },
+    { id: 'done', label: 'Hoàn thành', status: 'done', order: 50, isDefault: true, isVisible: true },
 ];
 
 const COLUMNS_KEY = 'lyhu:telesales:task_columns:v1';
@@ -1015,7 +1017,7 @@ export interface DbColumn {
     id: string;
     user_id: string;
     label: string;
-    column_type: string; // 'system_inbox' | 'system_done' | 'date_overdue' | 'date_today' | 'date_tomorrow' | 'date_this_week' | 'custom'
+    column_type: string; // 'system_inbox' | 'system_done' | 'date_overdue' | 'date_today' | 'date_this_week' | 'date_this_month' | 'date_tomorrow' | 'custom'
     position: number;
     color: string | null;
     is_visible: boolean;
@@ -1041,7 +1043,21 @@ export async function fetchUserColumns(token?: string): Promise<DbColumn[]> {
             console.error('[fetchUserColumns] Error:', res.status);
             return [];
         }
-        return await res.json();
+        let cols: DbColumn[] = await res.json();
+        // If user has no columns or missing date_this_month, auto-init default columns
+        const hasInbox = cols.some(c => c.column_type === 'system_inbox');
+        const hasThisMonth = cols.some(c => c.column_type === 'date_this_month');
+        if (cols.length === 0 || !hasInbox || !hasThisMonth) {
+            const userId = await getUserIdSafe();
+            if (userId) {
+                await supabase.rpc('create_default_task_columns', { p_user_id: userId });
+                const retryRes = await fetch(`${SUPABASE_URL}/rest/v1/task_user_columns?select=*&order=position.asc`, { headers });
+                if (retryRes.ok) {
+                    cols = await retryRes.json();
+                }
+            }
+        }
+        return cols;
     } catch (e) {
         logSupabaseError('fetchUserColumns', e);
         return [];

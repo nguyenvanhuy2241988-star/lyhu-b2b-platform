@@ -139,14 +139,19 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
         const todayStr = today.toISOString().split('T')[0];
         if (newStatus === 'today') {
             setDueDate(todayStr);
+        } else if (newStatus === 'this_week') {
+            const thisWeek = new Date(today);
+            thisWeek.setDate(today.getDate() + 3);
+            setDueDate(thisWeek.toISOString().split('T')[0]);
+        } else if (newStatus === 'this_month') {
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            const target = new Date(today);
+            target.setDate(today.getDate() + 10);
+            setDueDate((target <= endOfMonth ? target : endOfMonth).toISOString().split('T')[0]);
         } else if (newStatus === 'tomorrow') {
             const tmr = new Date(today);
             tmr.setDate(tmr.getDate() + 1);
             setDueDate(tmr.toISOString().split('T')[0]);
-        } else if (newStatus === 'this_week') {
-            const thisWeek = new Date(today);
-            thisWeek.setDate(today.getDate() + 4);
-            setDueDate(thisWeek.toISOString().split('T')[0]);
         } else if (newStatus === 'inbox') {
             setDueDate("");
         }
@@ -161,10 +166,17 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
             target.setHours(0, 0, 0, 0);
             const diffDays = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
             if (diffDays === 0) setStatus('today');
-            else if (diffDays === 1) setStatus('tomorrow');
-            else if (diffDays > 1 && diffDays <= 7) setStatus('this_week');
-            else if (diffDays > 7) setStatus('inbox');
-            else if (diffDays < 0) setStatus('inbox');
+            else if (diffDays >= 1 && diffDays <= 7) setStatus('this_week');
+            else if (diffDays > 7) {
+                const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+                if (target.getTime() <= endOfMonth.getTime()) {
+                    setStatus('this_month');
+                } else {
+                    setStatus('inbox');
+                }
+            } else if (diffDays < 0) {
+                setStatus('inbox');
+            }
         } else {
             setStatus('inbox');
         }
@@ -204,19 +216,24 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
             setNewSubtaskTitle("");
         }
 
-        // Guarantee due_date for today/tomorrow/this_week
+        // Guarantee due_date for today/this_week/this_month
         let finalDueDate = dueDate;
         const todayStr = new Date().toISOString().split('T')[0];
         if (status === 'today' && !finalDueDate) {
             finalDueDate = todayStr;
+        } else if (status === 'this_week' && !finalDueDate) {
+            const thisWeek = new Date();
+            thisWeek.setDate(thisWeek.getDate() + 3);
+            finalDueDate = thisWeek.toISOString().split('T')[0];
+        } else if (status === 'this_month' && !finalDueDate) {
+            const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+            const target = new Date();
+            target.setDate(target.getDate() + 10);
+            finalDueDate = (target <= endOfMonth ? target : endOfMonth).toISOString().split('T')[0];
         } else if (status === 'tomorrow' && !finalDueDate) {
             const tmr = new Date();
             tmr.setDate(tmr.getDate() + 1);
             finalDueDate = tmr.toISOString().split('T')[0];
-        } else if (status === 'this_week' && !finalDueDate) {
-            const thisWeek = new Date();
-            thisWeek.setDate(thisWeek.getDate() + 4);
-            finalDueDate = thisWeek.toISOString().split('T')[0];
         }
 
         const effectiveAssignees = assigneeIds && assigneeIds.length > 0
@@ -401,10 +418,10 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                                 value={status}
                                 onChange={e => handleStatusChange(e.target.value)}
                             >
-                                <option value="today">Hôm nay</option>
-                                <option value="tomorrow">Ngày mai</option>
-                                <option value="this_week">Tuần này</option>
                                 <option value="inbox">Hộp thư đến</option>
+                                <option value="today">Hôm nay</option>
+                                <option value="this_week">Tuần này</option>
+                                <option value="this_month">Tháng này</option>
                             </select>
                         </div>
                     </div>

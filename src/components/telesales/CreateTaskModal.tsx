@@ -177,19 +177,21 @@ export const CreateTaskModal = ({
         target.setHours(0, 0, 0, 0);
         const diffDays = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-        if (diffDays === 0) {
-            const todayCol = columns.find(c => c.column_type === 'date_today' || c.id === 'today');
-            if (todayCol) return todayCol.id;
-        } else if (diffDays === 1) {
-            const tomorrowCol = columns.find(c => c.column_type === 'date_tomorrow' || c.id === 'tomorrow');
-            if (tomorrowCol) return tomorrowCol.id;
-        } else if (diffDays > 1 && diffDays <= 7) {
-            const thisWeekCol = columns.find(c => c.column_type === 'date_this_week' || c.id === 'this_week');
-            if (thisWeekCol) return thisWeekCol.id;
-        } else if (diffDays < 0) {
+        if (diffDays < 0) {
             const overdueCol = columns.find(c => c.column_type === 'date_overdue' || c.id === 'overdue');
             if (overdueCol) return overdueCol.id;
-        } else if (diffDays > 7) {
+        } else if (diffDays === 0) {
+            const todayCol = columns.find(c => c.column_type === 'date_today' || c.id === 'today');
+            if (todayCol) return todayCol.id;
+        } else if (diffDays >= 1 && diffDays <= 7) {
+            const thisWeekCol = columns.find(c => c.column_type === 'date_this_week' || c.id === 'this_week');
+            if (thisWeekCol) return thisWeekCol.id;
+        } else {
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+            if (target.getTime() <= endOfMonth.getTime()) {
+                const thisMonthCol = columns.find(c => c.column_type === 'date_this_month' || c.id === 'this_month');
+                if (thisMonthCol) return thisMonthCol.id;
+            }
             const inboxCol = columns.find(c => c.column_type === 'system_inbox' || c.id === 'inbox');
             if (inboxCol) return inboxCol.id;
         }
@@ -324,14 +326,19 @@ export const CreateTaskModal = ({
 
         if (colType === 'date_today' || selectedColId === 'today' || matchedCol?.label?.toLowerCase().includes('hôm nay')) {
             newDueDate = todayStr;
+        } else if (colType === 'date_this_week' || selectedColId === 'this_week' || matchedCol?.label?.toLowerCase().includes('tuần này')) {
+            const thisWeek = new Date(today);
+            thisWeek.setDate(today.getDate() + 3);
+            newDueDate = thisWeek.toISOString().split('T')[0];
+        } else if (colType === 'date_this_month' || selectedColId === 'this_month' || matchedCol?.label?.toLowerCase().includes('tháng này')) {
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            const target = new Date(today);
+            target.setDate(today.getDate() + 10);
+            newDueDate = (target <= endOfMonth ? target : endOfMonth).toISOString().split('T')[0];
         } else if (colType === 'date_tomorrow' || selectedColId === 'tomorrow' || matchedCol?.label?.toLowerCase().includes('ngày mai')) {
             const tmr = new Date(today);
             tmr.setDate(tmr.getDate() + 1);
             newDueDate = tmr.toISOString().split('T')[0];
-        } else if (colType === 'date_this_week' || selectedColId === 'this_week' || matchedCol?.label?.toLowerCase().includes('tuần này')) {
-            const thisWeek = new Date(today);
-            thisWeek.setDate(today.getDate() + 4);
-            newDueDate = thisWeek.toISOString().split('T')[0];
         } else if (colType === 'system_inbox' || selectedColId === 'inbox' || matchedCol?.label?.toLowerCase().includes('hộp thư')) {
             // Keep existing future due date if > 7 days, otherwise clear
             if (newDueDate) {
@@ -500,28 +507,25 @@ export const CreateTaskModal = ({
 
         if ((colType === 'date_today' || formData.status === 'today' || matchedCol?.label?.toLowerCase().includes('hôm nay')) && !finalDueDate) {
             finalDueDate = todayStr;
+        } else if ((colType === 'date_this_week' || formData.status === 'this_week' || matchedCol?.label?.toLowerCase().includes('tuần này')) && !finalDueDate) {
+            const thisWeek = new Date();
+            thisWeek.setDate(thisWeek.getDate() + 3);
+            finalDueDate = thisWeek.toISOString().split('T')[0];
+        } else if ((colType === 'date_this_month' || formData.status === 'this_month' || matchedCol?.label?.toLowerCase().includes('tháng này')) && !finalDueDate) {
+            const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+            const target = new Date();
+            target.setDate(target.getDate() + 10);
+            finalDueDate = (target <= endOfMonth ? target : endOfMonth).toISOString().split('T')[0];
         } else if ((colType === 'date_tomorrow' || formData.status === 'tomorrow' || matchedCol?.label?.toLowerCase().includes('ngày mai')) && !finalDueDate) {
             const tmr = new Date();
             tmr.setDate(tmr.getDate() + 1);
             finalDueDate = tmr.toISOString().split('T')[0];
-        } else if ((colType === 'date_this_week' || formData.status === 'this_week' || matchedCol?.label?.toLowerCase().includes('tuần này')) && !finalDueDate) {
-            const thisWeek = new Date();
-            thisWeek.setDate(thisWeek.getDate() + 4);
-            finalDueDate = thisWeek.toISOString().split('T')[0];
         }
 
-        // Auto-route to system_inbox if due date is further than 7 days into the future
+        // Auto-route to appropriate column if due date is specified
         let finalStatus = formData.status;
         if (finalDueDate && colType !== 'system_done' && colType !== 'custom' && formData.status !== 'done') {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const targetDate = new Date(finalDueDate);
-            targetDate.setHours(0, 0, 0, 0);
-            const diffDays = Math.round((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-            if (diffDays > 7) {
-                const inboxCol = columns.find(c => c.column_type === 'system_inbox' || c.id === 'inbox');
-                if (inboxCol) finalStatus = inboxCol.id as TaskStatus;
-            }
+            finalStatus = resolveColFromDate(finalDueDate, formData.status) as TaskStatus;
         }
 
         const effectiveAssignees = formData.assigneeIds && formData.assigneeIds.length > 0
