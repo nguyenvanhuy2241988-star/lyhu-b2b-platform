@@ -445,9 +445,17 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                                 target.setHours(0, 0, 0, 0);
                                 const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                                 if (diff > 7) {
+                                    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+                                    if (target.getTime() <= endOfMonth.getTime()) {
+                                        return (
+                                            <p className="text-[10px] text-teal-600 mt-0.5 font-medium">
+                                                ℹ️ Hạn trong tháng sẽ hiển thị ở cột Tháng này.
+                                            </p>
+                                        );
+                                    }
                                     return (
                                         <p className="text-[10px] text-blue-600 mt-0.5 font-medium">
-                                            ℹ️ Hạn sau 7 ngày sẽ lưu vào Hộp thư đến.
+                                            ℹ️ Hạn sang tháng sau sẽ lưu vào Hộp thư đến.
                                         </p>
                                     );
                                 }

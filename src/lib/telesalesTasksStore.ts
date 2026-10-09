@@ -132,39 +132,16 @@ export const DEFAULT_COLUMNS: TelesalesColumn[] = [
 const COLUMNS_KEY = 'lyhu:telesales:task_columns:v1';
 
 export function loadColumns(): TelesalesColumn[] {
-    if (typeof window === 'undefined') return DEFAULT_COLUMNS;
-    try {
-        const raw = localStorage.getItem(COLUMNS_KEY);
-        if (!raw) return DEFAULT_COLUMNS;
-
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_COLUMNS;
-
-        // Clean and ensure label exists
-        const cleaned = parsed
-            .filter((c: any) => c && typeof c.id === 'string')
-            .map((c: any) => ({
-                id: String(c.id),
-                // Ensure label is derived from label -> title -> id to prevent "disappearing name"
-                label: (typeof c.label === 'string' && c.label.trim()) ? c.label : (c.title || String(c.id)),
-                // Preserve status and order for board logic
-                status: (c.status as TaskStatus) || (c.id as TaskStatus),
-                order: typeof c.order === 'number' ? c.order : 0,
-                isDefault: !!c.isDefault,
-                isVisible: c.isVisible !== false
-            }));
-
-        return cleaned.length > 0 ? cleaned : DEFAULT_COLUMNS;
-    } catch {
-        return DEFAULT_COLUMNS;
+    if (typeof window !== 'undefined') {
+        try {
+            localStorage.removeItem(COLUMNS_KEY);
+        } catch { }
     }
+    return DEFAULT_COLUMNS;
 }
 
-export function saveColumns(cols: TelesalesColumn[]) {
-    if (typeof window === 'undefined') return;
-    try {
-        localStorage.setItem(COLUMNS_KEY, JSON.stringify(cols ?? DEFAULT_COLUMNS));
-    } catch { }
+export function saveColumns(_cols: TelesalesColumn[]) {
+    // Columns are permanently locked and standardized across all roles; no custom column caching
 }
 
 export type TelesalesTask = {

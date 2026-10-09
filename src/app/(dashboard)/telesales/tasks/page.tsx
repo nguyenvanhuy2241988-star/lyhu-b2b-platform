@@ -57,7 +57,70 @@ import {
     resolveDepartmentConfig
 } from "@/lib/telesalesTasksStore";
 
-// --- Helper: Convert DbColumn to TelesalesColumn for UI compatibility ---
+// --- Standard Fixed 6 Columns Specification ---
+const STANDARD_COLUMN_SPECS = [
+    { type: 'system_inbox', label: 'Hộp thư đến', position: 0, defaultId: 'inbox' },
+    { type: 'date_today', label: 'Hôm nay', position: 10, defaultId: 'today' },
+    { type: 'date_this_week', label: 'Tuần này', position: 20, defaultId: 'this_week' },
+    { type: 'date_this_month', label: 'Tháng này', position: 30, defaultId: 'this_month' },
+    { type: 'date_overdue', label: 'Quá hạn', position: 40, defaultId: 'overdue' },
+    { type: 'system_done', label: 'Hoàn thành', position: 50, defaultId: 'done' },
+] as const;
+
+function standardizeColumns(fetchedDbCols: DbColumn[] = [], userId?: string): { standardizedDbCols: DbColumn[]; standardizedUiCols: (TelesalesColumn & { column_type?: string })[] } {
+    const standardizedDbCols: DbColumn[] = [];
+    const standardizedUiCols: (TelesalesColumn & { column_type?: string })[] = [];
+
+    for (const spec of STANDARD_COLUMN_SPECS) {
+        let match = (fetchedDbCols || []).find(c => c.column_type === spec.type);
+        if (!match) {
+            if (spec.type === 'system_inbox') {
+                match = (fetchedDbCols || []).find(c => c.column_type === 'system_inbox' || c.label.toLowerCase().includes('hộp thư'));
+            } else if (spec.type === 'system_done') {
+                match = (fetchedDbCols || []).find(c => c.column_type === 'system_done' || c.label.toLowerCase().includes('hoàn') || c.label.toLowerCase().includes('xong'));
+            } else if (spec.type === 'date_today') {
+                match = (fetchedDbCols || []).find(c => c.column_type === 'date_today' || c.label.toLowerCase().includes('hôm nay'));
+            } else if (spec.type === 'date_this_week') {
+                match = (fetchedDbCols || []).find(c => c.column_type === 'date_this_week' || c.label.toLowerCase().includes('tuần'));
+            } else if (spec.type === 'date_this_month') {
+                match = (fetchedDbCols || []).find(c => c.column_type === 'date_this_month' || c.label.toLowerCase().includes('tháng'));
+            } else if (spec.type === 'date_overdue') {
+                match = (fetchedDbCols || []).find(c => c.column_type === 'date_overdue' || c.label.toLowerCase().includes('quá hạn'));
+            }
+        }
+
+        const colId = match ? match.id : (userId ? `${userId}_${spec.type}` : spec.defaultId);
+
+        const dbCol: DbColumn = {
+            id: colId,
+            user_id: match?.user_id || userId || '',
+            label: spec.label,
+            column_type: spec.type,
+            position: spec.position,
+            color: match?.color || null,
+            is_visible: true,
+            created_at: match?.created_at || new Date().toISOString()
+        };
+
+        const uiCol: TelesalesColumn & { column_type?: string } = {
+            id: colId,
+            label: spec.label,
+            status: spec.type === 'system_inbox' ? 'inbox' as TaskStatus
+                : spec.type === 'system_done' ? 'done' as TaskStatus
+                    : spec.defaultId as any,
+            order: spec.position,
+            isDefault: true,
+            isVisible: true,
+            column_type: spec.type
+        };
+
+        standardizedDbCols.push(dbCol);
+        standardizedUiCols.push(uiCol);
+    }
+
+    return { standardizedDbCols, standardizedUiCols };
+}
+
 function dbColToUiCol(col: DbColumn): TelesalesColumn {
     return {
         id: col.id,
@@ -66,9 +129,8 @@ function dbColToUiCol(col: DbColumn): TelesalesColumn {
             : col.column_type === 'system_done' ? 'done' as TaskStatus
                 : col.id as any,
         order: col.position,
-        isDefault: col.column_type !== 'custom',
-        isVisible: col.is_visible,
-        // Store column_type for the new system
+        isDefault: true,
+        isVisible: true,
         ...(({ column_type: col.column_type }) as any)
     };
 }
@@ -672,13 +734,19 @@ export default function TelesalesTasksPage() {
     const [totalCounts, setTotalCounts] = useState<Record<string, number>>({});
 
     const [profiles, setProfiles] = useState<Profile[]>([]);
-    const [columns, setColumns] = useState<(TelesalesColumn & { column_type?: string })[]>([]);
+    const [columns, setColumns] = useState<(TelesalesColumn & { column_type?: string })[]>(() => {
+        const { standardizedUiCols } = standardizeColumns([], undefined);
+        return standardizedUiCols;
+    });
     const columnsRef = useRef<(TelesalesColumn & { column_type?: string })[]>([]);
     useEffect(() => {
         columnsRef.current = columns;
     }, [columns]);
 
-    const [dbColumns, setDbColumns] = useState<DbColumn[]>([]);
+    const [dbColumns, setDbColumns] = useState<DbColumn[]>(() => {
+        const { standardizedDbCols } = standardizeColumns([], undefined);
+        return standardizedDbCols;
+    });
     const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
     const [isLoading, setIsLoading] = useState(false);
     const isInitialLoadDone = useRef(false);
@@ -945,14 +1013,64 @@ export default function TelesalesTasksPage() {
         ]);
         if (profileData) setProfiles(profileData);
 
-        // Convert DB columns to UI format
-        setDbColumns(fetchedDbCols);
-        const uiCols = fetchedDbCols.map(dbColToUiCol);
-        setColumns(uiCols);
+        // Standardize columns strictly to the 6 fixed columns in exact required order
+        const { standardizedDbCols, standardizedUiCols } = standardizeColumns(fetchedDbCols, user.id);
+        setDbColumns(standardizedDbCols);
+        setColumns(standardizedUiCols);
+        columnsRef.current = standardizedUiCols;
+
+        // Background: Reconcile DB task_user_columns asynchronously to match standard specs
+        (async () => {
+            try {
+                for (const spec of STANDARD_COLUMN_SPECS) {
+                    const match = (fetchedDbCols || []).find(c => c.column_type === spec.type);
+                    if (match) {
+                        if (match.label !== spec.label || match.position !== spec.position || !match.is_visible) {
+                            await updateUserColumn(match.id, { label: spec.label, position: spec.position, is_visible: true }, session?.access_token);
+                        }
+                    } else if (user?.id) {
+                        try {
+                            const headers: Record<string, string> = {
+                                'Content-Type': 'application/json',
+                                'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+                            };
+                            if (session?.access_token) {
+                                headers['Authorization'] = `Bearer ${session.access_token}`;
+                            }
+                            await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/task_user_columns`, {
+                                method: 'POST',
+                                headers,
+                                body: JSON.stringify({
+                                    user_id: user.id,
+                                    label: spec.label,
+                                    column_type: spec.type,
+                                    position: spec.position,
+                                    is_visible: true
+                                })
+                            });
+                        } catch (err) {
+                            console.warn('[refreshData] insert missing column error:', err);
+                        }
+                    }
+                }
+                // If system_done was named 'Đã xong', rename to 'Hoàn thành'
+                const legacyDone = (fetchedDbCols || []).find(c => c.column_type === 'system_done' && c.label !== 'Hoàn thành');
+                if (legacyDone) {
+                    await updateUserColumn(legacyDone.id, { label: 'Hoàn thành', position: 50 }, session?.access_token);
+                }
+                // Clean up deprecated columns from DB (date_tomorrow, custom)
+                const obsoleteCols = (fetchedDbCols || []).filter(c => c.column_type === 'date_tomorrow' || c.column_type === 'custom');
+                for (const obsolete of obsoleteCols) {
+                    await deleteUserColumn(obsolete.id, session?.access_token);
+                }
+            } catch (e) {
+                console.warn('[refreshData] sync columns to DB error:', e);
+            }
+        })();
 
         // Auto-heal tasks placed in system_inbox that have status === 'done'
         // (e.g. tasks dragged from 'Đã xong' to date columns before, whose placement was moved to inbox but status stayed 'done')
-        const inboxCol = fetchedDbCols.find(c => c.column_type === 'system_inbox');
+        const inboxCol = standardizedDbCols.find(c => c.column_type === 'system_inbox');
         if (inboxCol && user && session?.access_token) {
             try {
                 const { data: inboxPlacements } = await supabase
@@ -1039,7 +1157,7 @@ export default function TelesalesTasksPage() {
         }
 
         // Load each visible column independently
-        const visibleCols = fetchedDbCols.filter(c => c.is_visible !== false);
+        const visibleCols = standardizedDbCols.filter(c => c.is_visible !== false);
         await Promise.all(visibleCols.map(col => loadTasksForColumn(col.id, 1, false, col.column_type)));
 
         // Admin-only: Inject interview candidates into inbox column
@@ -1047,13 +1165,13 @@ export default function TelesalesTasksPage() {
         console.log('[Interview Sync] pathname:', currentPath);
         if (currentPath.includes('/admin/tasks')) {
             console.log('[Interview Sync] ✅ Admin tasks page detected, fetching interview candidates...');
-            console.log('[Interview Sync] Available columns:', fetchedDbCols.map(c => ({ id: c.id, type: c.column_type, label: c.label })));
+            console.log('[Interview Sync] Available columns:', standardizedDbCols.map(c => ({ id: c.id, type: c.column_type, label: c.label })));
             try {
                 const res = await fetch('/api/recruitment/sync-interview-tasks');
                 const data = await res.json();
                 console.log('[Interview Sync] API response:', JSON.stringify(data));
                 if (data.success && data.tasks?.length > 0) {
-                    const inboxCol = fetchedDbCols.find(c => c.column_type === 'system_inbox');
+                    const inboxCol = standardizedDbCols.find(c => c.column_type === 'system_inbox');
                     console.log('[Interview Sync] Inbox column found:', inboxCol?.id, inboxCol?.label);
                     if (inboxCol) {
                         setColumnTasks(prev => {
