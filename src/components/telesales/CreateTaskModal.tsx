@@ -107,6 +107,7 @@ export const CreateTaskModal = ({
 
     const [subtasks, setSubtasks] = useState<SubtaskItem[]>([]);
     const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+    const [newSubtaskAssignee, setNewSubtaskAssignee] = useState("");
 
     const [profiles, setProfiles] = useState<Profile[]>([]);
 
@@ -161,6 +162,8 @@ export const CreateTaskModal = ({
         });
         setSubtasks([]);
         setAttachments([]);
+        setNewSubtaskTitle("");
+        setNewSubtaskAssignee("");
         setHasDraftRestored(false);
         setHasUserEdited(false);
     };
@@ -227,7 +230,7 @@ export const CreateTaskModal = ({
                     status: targetColId as TaskStatus,
                     stage: meta.stage || (initialData.stage as string) || "in_progress",
                     description: meta.cleanNote || "",
-                    department: (initialData as any).department || meta.department || "telesales",
+                    department: (initialData as any).department || meta.department || defaultDepartment,
                     assigneeIds: initialAssignees,
                     leaderId: initialData.leader_id || ""
                 });
@@ -236,6 +239,7 @@ export const CreateTaskModal = ({
                 setLastSyncedTaskId(initialData.id || null);
                 setHasUserEdited(false);
                 setNewSubtaskTitle("");
+                setNewSubtaskAssignee("");
             } else {
                 // Fresh create mode - check for saved draft first
                 let restored = false;
@@ -275,6 +279,7 @@ export const CreateTaskModal = ({
                 setHasUserEdited(false);
                 setLastSyncedTaskId(null);
                 setNewSubtaskTitle("");
+                setNewSubtaskAssignee("");
             }
         } else if (isOpen && prevIsOpenRef.current && initialData && initialData.id !== lastSyncedTaskId) {
             // Task changed while modal was open
@@ -306,11 +311,13 @@ export const CreateTaskModal = ({
             setLastSyncedTaskId(initialData.id || null);
             setHasUserEdited(false);
             setNewSubtaskTitle("");
+            setNewSubtaskAssignee("");
         } else if (!isOpen) {
             prevIsOpenRef.current = false;
             setHasUserEdited(false);
             setLastSyncedTaskId(null);
             setNewSubtaskTitle("");
+            setNewSubtaskAssignee("");
         }
     }, [isOpen, initialData?.id]);
 
@@ -466,13 +473,28 @@ export const CreateTaskModal = ({
     const handleAddSubtask = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!newSubtaskTitle.trim()) return;
+        const assignedUser = newSubtaskAssignee || null;
         const newSub: SubtaskItem = {
             id: `sub_${Date.now()}_${Math.random().toString(36).substring(7)}`,
             title: newSubtaskTitle.trim(),
-            completed: false
+            completed: false,
+            assigned_to: assignedUser
         };
         setSubtasks(prev => [...prev, newSub]);
+        if (assignedUser && !formData.assigneeIds.includes(assignedUser)) {
+            setFormData(prev => ({ ...prev, assigneeIds: [...prev.assigneeIds, assignedUser] }));
+        }
         setNewSubtaskTitle("");
+        setNewSubtaskAssignee("");
+        setHasUserEdited(true);
+    };
+
+    const handleUpdateSubtaskAssignee = (subId: string, assignedTo: string) => {
+        const targetUserId = assignedTo || null;
+        setSubtasks(prev => prev.map(s => s.id === subId ? { ...s, assigned_to: targetUserId } : s));
+        if (targetUserId && !formData.assigneeIds.includes(targetUserId)) {
+            setFormData(prev => ({ ...prev, assigneeIds: [...prev.assigneeIds, targetUserId] }));
+        }
         setHasUserEdited(true);
     };
 
@@ -492,13 +514,19 @@ export const CreateTaskModal = ({
         // Auto-commit pending subtask from input if user typed but did not click "+ Thêm bước"
         let finalSubtasks = [...subtasks];
         if (newSubtaskTitle.trim()) {
+            const pendingAssignee = newSubtaskAssignee || null;
             finalSubtasks.push({
                 id: `sub_${Date.now()}_${Math.random().toString(36).substring(7)}`,
                 title: newSubtaskTitle.trim(),
-                completed: false
+                completed: false,
+                assigned_to: pendingAssignee
             });
+            if (pendingAssignee && !formData.assigneeIds.includes(pendingAssignee)) {
+                formData.assigneeIds = [...formData.assigneeIds, pendingAssignee];
+            }
             setSubtasks(finalSubtasks);
             setNewSubtaskTitle("");
+            setNewSubtaskAssignee("");
         }
 
         // Ensure due_date is populated if status corresponds to a date column
@@ -530,9 +558,13 @@ export const CreateTaskModal = ({
             finalStatus = resolveColFromDate(finalDueDate, formData.status) as TaskStatus;
         }
 
-        const effectiveAssignees = formData.assigneeIds && formData.assigneeIds.length > 0
-            ? formData.assigneeIds
-            : [];
+        // Union all subtask step assignees into effectiveAssignees
+        const subtaskAssignees = finalSubtasks
+            .map(s => s.assigned_to)
+            .filter((id): id is string => Boolean(id));
+        const allAssigneeIds = Array.from(new Set([...formData.assigneeIds, ...subtaskAssignees]));
+
+        const effectiveAssignees = allAssigneeIds.length > 0 ? allAssigneeIds : [];
         const effectiveAssignedTo = effectiveAssignees[0] || null;
 
         onSave({
@@ -793,15 +825,28 @@ export const CreateTaskModal = ({
                                             type="checkbox"
                                             checked={st.completed}
                                             onChange={() => handleToggleSubtask(st.id)}
-                                            className="w-4 h-4 text-[#00AFA9] rounded border-slate-300 focus:ring-[#00AFA9] cursor-pointer"
+                                            className="w-4 h-4 text-[#00AFA9] rounded border-slate-300 focus:ring-[#00AFA9] cursor-pointer flex-shrink-0"
                                         />
-                                        <span className={`flex-1 text-xs sm:text-sm ${st.completed ? 'line-through text-slate-400' : 'font-medium'}`}>
+                                        <span className={`flex-1 text-xs sm:text-sm min-w-0 break-words ${st.completed ? 'line-through text-slate-400' : 'font-medium'}`}>
                                             {st.title}
                                         </span>
+                                        <select
+                                            value={st.assigned_to || ""}
+                                            onChange={(e) => handleUpdateSubtaskAssignee(st.id, e.target.value)}
+                                            className="text-[11px] px-1.5 py-1 border border-slate-200 rounded bg-slate-50 hover:bg-white text-slate-600 focus:outline-none focus:ring-1 focus:ring-[#00AFA9] max-w-[110px] sm:max-w-[130px] truncate flex-shrink-0 cursor-pointer"
+                                            title="Giao người phụ trách bước này"
+                                        >
+                                            <option value="">👤 Người làm</option>
+                                            {profiles.map(p => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.full_name || p.email}
+                                                </option>
+                                            ))}
+                                        </select>
                                         <button
                                             type="button"
                                             onClick={() => handleDeleteSubtask(st.id)}
-                                            className="text-slate-400 hover:text-red-500 p-1 rounded hover:bg-slate-100 transition-colors"
+                                            className="text-slate-400 hover:text-red-500 p-1 rounded hover:bg-slate-100 transition-colors flex-shrink-0"
                                         >
                                             <X className="w-3.5 h-3.5" />
                                         </button>
@@ -811,11 +856,11 @@ export const CreateTaskModal = ({
                         )}
 
                         {/* Add Subtask Input */}
-                        <div className="flex gap-2">
+                        <div className="flex gap-1.5 sm:gap-2">
                             <input
                                 type="text"
                                 placeholder="Thêm bước (vd: 1. Làm đối chiếu công nợ)..."
-                                className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
+                                className="flex-1 min-w-0 px-3 py-1.5 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                 value={newSubtaskTitle}
                                 onChange={e => { setNewSubtaskTitle(e.target.value); setHasUserEdited(true); }}
                                 onKeyDown={e => {
@@ -826,13 +871,27 @@ export const CreateTaskModal = ({
                                     }
                                 }}
                             />
+                            <select
+                                value={newSubtaskAssignee}
+                                onChange={e => { setNewSubtaskAssignee(e.target.value); setHasUserEdited(true); }}
+                                className="text-xs px-2 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#00AFA9] max-w-[110px] sm:max-w-[130px] truncate cursor-pointer flex-shrink-0"
+                                title="Chọn người phụ trách bước này"
+                            >
+                                <option value="">👤 Người làm</option>
+                                {profiles.map(p => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.full_name || p.email}
+                                    </option>
+                                ))}
+                            </select>
                             <button
                                 type="button"
                                 onClick={handleAddSubtask}
-                                className="px-3 py-1.5 bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-[#00AFA9] text-xs font-semibold rounded-lg border border-slate-200 transition-colors flex items-center gap-1"
+                                className="px-2.5 sm:px-3 py-1.5 bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-[#00AFA9] text-xs font-semibold rounded-lg border border-slate-200 transition-colors flex items-center gap-1 flex-shrink-0"
                             >
                                 <Plus className="w-3.5 h-3.5" />
-                                Thêm bước
+                                <span className="hidden sm:inline">Thêm bước</span>
+                                <span className="sm:hidden">Thêm</span>
                             </button>
                         </div>
                     </div>

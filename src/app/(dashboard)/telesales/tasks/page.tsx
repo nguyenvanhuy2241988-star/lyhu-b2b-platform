@@ -537,6 +537,32 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                                 style={{ width: `${(completedSubtasks / totalSubtasks) * 100}%` }}
                             />
                         </div>
+                        {/* Next Pending Step with Step Assignee */}
+                        {(() => {
+                            const nextPending = meta.subtasks.find(s => !s.completed);
+                            if (!nextPending) return null;
+                            const stepAssignee = nextPending.assigned_to
+                                ? profiles.find(p => p.id === nextPending.assigned_to)
+                                : null;
+                            const assigneeName = stepAssignee
+                                ? (stepAssignee.full_name?.split(' ').pop() || stepAssignee.email?.split('@')[0])
+                                : null;
+                            return (
+                                <div className="mt-1.5 pt-1 border-t border-slate-200/60 flex items-center justify-between text-[10px] text-slate-600 gap-1">
+                                    <span className="truncate max-w-[150px] font-medium text-slate-700" title={nextPending.title}>
+                                        👉 {nextPending.title}
+                                    </span>
+                                    {assigneeName ? (
+                                        <span className="inline-flex items-center gap-0.5 px-1 py-0.2 bg-teal-50 text-teal-700 border border-teal-200 rounded text-[9px] font-medium flex-shrink-0" title={`Phụ trách bước: ${stepAssignee?.full_name || stepAssignee?.email}`}>
+                                            <User className="w-2.5 h-2.5" />
+                                            {assigneeName}
+                                        </span>
+                                    ) : (
+                                        <span className="text-[9px] text-slate-400 italic flex-shrink-0">Chưa giao</span>
+                                    )}
+                                </div>
+                            );
+                        })()}
                     </div>
                 )}
 
@@ -710,6 +736,13 @@ function isTaskRelevantToUser(task: any, currentUserId?: string | null): boolean
     if (task.leader_id === currentUserId) return true;
     const aIds = parseAssigneeIds(task.assignee_ids);
     if (aIds.includes(currentUserId)) return true;
+    if (task.subtasks && Array.isArray(task.subtasks)) {
+        if (task.subtasks.some((st: any) => st.assigned_to === currentUserId)) return true;
+    }
+    if (task.note && typeof task.note === 'string' && task.note.includes('<!-- TASK_META:')) {
+        const meta = extractTaskMetadata(task);
+        if (meta.subtasks?.some((st: any) => st.assigned_to === currentUserId)) return true;
+    }
     return false;
 }
 
@@ -1607,6 +1640,18 @@ export default function TelesalesTasksPage() {
                 taskData.department = defaultDepartment;
             }
 
+            // Consolidate subtask step assignees into taskData.assignee_ids
+            if (taskData.subtasks && Array.isArray(taskData.subtasks)) {
+                const stepAssignees = taskData.subtasks.map((s: any) => s.assigned_to).filter(Boolean);
+                if (stepAssignees.length > 0) {
+                    const mergedAssignees = Array.from(new Set([...(taskData.assignee_ids || []), ...stepAssignees]));
+                    taskData.assignee_ids = mergedAssignees;
+                    if (!taskData.assigned_to && mergedAssignees.length > 0) {
+                        taskData.assigned_to = mergedAssignees[0];
+                    }
+                }
+            }
+
             // Find target column matching status / column ID
             const targetCol = dbColumns.find(c => c.id === taskData.status || c.column_type === taskData.status || c.label.toLowerCase() === taskData.status?.toLowerCase());
             let targetColType = targetCol?.column_type || taskData.status;
@@ -1733,6 +1778,9 @@ export default function TelesalesTasksPage() {
                     if (taskData.assignee_ids) taskData.assignee_ids.forEach((id: string) => { if (id) allUserIds.add(id); });
                     if (taskData.assigned_to) allUserIds.add(taskData.assigned_to);
                     if (taskData.leader_id) allUserIds.add(taskData.leader_id);
+                    if (taskData.subtasks && Array.isArray(taskData.subtasks)) {
+                        taskData.subtasks.forEach((st: any) => { if (st.assigned_to) allUserIds.add(st.assigned_to); });
+                    }
 
                     const validIds = Array.from(allUserIds);
 
@@ -1776,6 +1824,9 @@ export default function TelesalesTasksPage() {
                     if (taskData.assignee_ids) taskData.assignee_ids.forEach((id: string) => { if (id) allUserIds.add(id); });
                     if (taskData.assigned_to) allUserIds.add(taskData.assigned_to);
                     if (taskData.leader_id) allUserIds.add(taskData.leader_id);
+                    if (taskData.subtasks && Array.isArray(taskData.subtasks)) {
+                        taskData.subtasks.forEach((st: any) => { if (st.assigned_to) allUserIds.add(st.assigned_to); });
+                    }
                     await createTaskPlacements(taskId, Array.from(allUserIds), session?.access_token);
                     // Move placement to target column
                     if (targetPlacementColId && user?.id) {

@@ -29,6 +29,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser, defaultD
     const [department, setDepartment] = useState(defaultDepartment);
     const [subtasks, setSubtasks] = useState<SubtaskItem[]>([]);
     const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+    const [newSubtaskAssignee, setNewSubtaskAssignee] = useState("");
     const [assignedTo, setAssignedTo] = useState("");
     const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
     const [leaderId, setLeaderId] = useState("");
@@ -97,6 +98,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser, defaultD
             setDepartment(defaultDepartment || "admin");
             setSubtasks([]);
             setNewSubtaskTitle("");
+            setNewSubtaskAssignee("");
             setAssignedTo(currentUser?.id || "");
             setAssigneeIds(currentUser?.id ? [currentUser.id] : []);
             setLeaderId("");
@@ -134,6 +136,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser, defaultD
         setDepartment(defaultDepartment || "admin");
         setSubtasks([]);
         setNewSubtaskTitle("");
+        setNewSubtaskAssignee("");
         setNote("");
         setHasDraftRestored(false);
     };
@@ -190,13 +193,27 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser, defaultD
     const handleAddSubtask = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!newSubtaskTitle.trim()) return;
+        const assignedUser = newSubtaskAssignee || null;
         const newSub: SubtaskItem = {
             id: `sub_${Date.now()}_${Math.random().toString(36).substring(7)}`,
             title: newSubtaskTitle.trim(),
-            completed: false
+            completed: false,
+            assigned_to: assignedUser
         };
         setSubtasks(prev => [...prev, newSub]);
+        if (assignedUser && !assigneeIds.includes(assignedUser)) {
+            setAssigneeIds(prev => [...prev, assignedUser]);
+        }
         setNewSubtaskTitle("");
+        setNewSubtaskAssignee("");
+    };
+
+    const handleUpdateSubtaskAssignee = (subId: string, assignedToUserId: string) => {
+        const targetUserId = assignedToUserId || null;
+        setSubtasks(prev => prev.map(s => s.id === subId ? { ...s, assigned_to: targetUserId } : s));
+        if (targetUserId && !assigneeIds.includes(targetUserId)) {
+            setAssigneeIds(prev => [...prev, targetUserId]);
+        }
     };
 
     const handleToggleSubtask = (subId: string) => {
@@ -212,13 +229,19 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser, defaultD
 
         let finalSubtasks = [...subtasks];
         if (newSubtaskTitle.trim()) {
+            const pendingAssignee = newSubtaskAssignee || null;
             finalSubtasks.push({
                 id: `sub_${Date.now()}_${Math.random().toString(36).substring(7)}`,
                 title: newSubtaskTitle.trim(),
-                completed: false
+                completed: false,
+                assigned_to: pendingAssignee
             });
+            if (pendingAssignee && !assigneeIds.includes(pendingAssignee)) {
+                assigneeIds.push(pendingAssignee);
+            }
             setSubtasks(finalSubtasks);
             setNewSubtaskTitle("");
+            setNewSubtaskAssignee("");
         }
 
         // Guarantee due_date for today/this_week/this_month
@@ -241,8 +264,14 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser, defaultD
             finalDueDate = tmr.toISOString().split('T')[0];
         }
 
-        const effectiveAssignees = assigneeIds && assigneeIds.length > 0
-            ? assigneeIds
+        // Union all subtask step assignees into effectiveAssignees
+        const subtaskAssignees = finalSubtasks
+            .map(s => s.assigned_to)
+            .filter((id): id is string => Boolean(id));
+        const allAssigneeIds = Array.from(new Set([...assigneeIds, ...subtaskAssignees]));
+
+        const effectiveAssignees = allAssigneeIds.length > 0
+            ? allAssigneeIds
             : (assignedTo ? [assignedTo] : (currentUser?.id ? [currentUser.id] : []));
         const effectiveAssignedTo = assignedTo || effectiveAssignees[0] || currentUser?.id || null;
 
@@ -550,21 +579,34 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser, defaultD
                                 {subtasks.map((st) => (
                                     <div
                                         key={st.id}
-                                        className={`flex items-center gap-2 p-1.5 rounded-md border text-xs transition-colors ${st.completed ? 'bg-slate-50 border-slate-200 text-slate-400' : 'bg-white border-slate-200 text-slate-800'}`}
+                                        className={`flex items-center gap-1.5 p-1.5 rounded-md border text-xs transition-colors ${st.completed ? 'bg-slate-50 border-slate-200 text-slate-400' : 'bg-white border-slate-200 text-slate-800'}`}
                                     >
                                         <input
                                             type="checkbox"
                                             checked={st.completed}
                                             onChange={() => handleToggleSubtask(st.id)}
-                                            className="w-3.5 h-3.5 text-[#00AFA9] rounded border-slate-300 focus:ring-[#00AFA9] cursor-pointer"
+                                            className="w-3.5 h-3.5 text-[#00AFA9] rounded border-slate-300 focus:ring-[#00AFA9] cursor-pointer flex-shrink-0"
                                         />
-                                        <span className={`flex-1 ${st.completed ? 'line-through text-slate-400' : 'font-medium'}`}>
+                                        <span className={`flex-1 min-w-0 break-words ${st.completed ? 'line-through text-slate-400' : 'font-medium'}`}>
                                             {st.title}
                                         </span>
+                                        <select
+                                            value={st.assigned_to || ""}
+                                            onChange={(e) => handleUpdateSubtaskAssignee(st.id, e.target.value)}
+                                            className="text-[10px] px-1 py-0.5 border border-slate-200 rounded bg-slate-50 hover:bg-white text-slate-600 focus:outline-none focus:ring-1 focus:ring-[#00AFA9] max-w-[100px] truncate flex-shrink-0 cursor-pointer"
+                                            title="Giao người phụ trách bước này"
+                                        >
+                                            <option value="">👤 Người làm</option>
+                                            {profiles.map(p => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.full_name || p.email}
+                                                </option>
+                                            ))}
+                                        </select>
                                         <button
                                             type="button"
                                             onClick={() => handleDeleteSubtask(st.id)}
-                                            className="text-slate-400 hover:text-red-500 p-0.5 rounded hover:bg-slate-100 transition-colors"
+                                            className="text-slate-400 hover:text-red-500 p-0.5 rounded hover:bg-slate-100 transition-colors flex-shrink-0"
                                         >
                                             <X className="w-3 h-3" />
                                         </button>
@@ -574,11 +616,11 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser, defaultD
                         )}
 
                         {/* Add Subtask Input */}
-                        <div className="flex gap-2 mb-2">
+                        <div className="flex gap-1.5 mb-2">
                             <input
                                 type="text"
                                 placeholder="Thêm bước (vd: 1. Làm đối chiếu công nợ)..."
-                                className="flex-1 px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
+                                className="flex-1 min-w-0 px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#00AFA9]"
                                 value={newSubtaskTitle}
                                 onChange={e => setNewSubtaskTitle(e.target.value)}
                                 onKeyDown={e => {
@@ -589,10 +631,23 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser, defaultD
                                     }
                                 }}
                             />
+                            <select
+                                value={newSubtaskAssignee}
+                                onChange={e => setNewSubtaskAssignee(e.target.value)}
+                                className="text-[11px] px-1.5 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#00AFA9] max-w-[105px] truncate cursor-pointer flex-shrink-0"
+                                title="Chọn người phụ trách bước này"
+                            >
+                                <option value="">👤 Người làm</option>
+                                {profiles.map(p => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.full_name || p.email}
+                                    </option>
+                                ))}
+                            </select>
                             <button
                                 type="button"
                                 onClick={handleAddSubtask}
-                                className="px-2.5 py-1.5 bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-[#00AFA9] text-xs font-semibold rounded-lg border border-slate-200 transition-colors flex items-center gap-1"
+                                className="px-2.5 py-1.5 bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-[#00AFA9] text-xs font-semibold rounded-lg border border-slate-200 transition-colors flex items-center gap-1 flex-shrink-0"
                             >
                                 <Plus className="w-3 h-3" />
                                 Thêm

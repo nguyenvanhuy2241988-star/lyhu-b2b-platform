@@ -99,6 +99,10 @@ export interface SubtaskItem {
     id: string;
     title: string;
     completed: boolean;
+    assigned_to?: string | null;
+    due_date?: string | null;
+    completed_at?: string | null;
+    completed_by?: string | null;
 }
 
 export type TaskStage = 'not_started' | 'in_progress' | 'waiting' | 'completed';
