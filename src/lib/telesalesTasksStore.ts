@@ -438,8 +438,6 @@ export async function createTaskSupabase(input: {
         assignee_ids: input.assignee_ids ?? [],
         leader_id: input.leader_id || null,
         attachments: input.attachments || [], // NEW
-        subtasks: input.subtasks || [],
-        stage: input.stage || 'in_progress',
         order: Math.floor(Date.now() / 1000),
     };
 
@@ -535,8 +533,6 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
         assignee_ids: patch.assignee_ids,
         leader_id: patch.leader_id,
         attachments: patch.attachments,
-        subtasks: patch.subtasks,
-        stage: patch.stage,
         updated_at: new Date().toISOString(),
     };
 
