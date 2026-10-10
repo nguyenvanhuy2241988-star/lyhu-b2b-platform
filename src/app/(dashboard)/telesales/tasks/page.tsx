@@ -875,6 +875,20 @@ export default function TelesalesTasksPage() {
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [activeNotifTab, setActiveNotifTab] = useState<'overdue' | 'today'>('overdue');
     const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
+    const notifDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close notification dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (notifDropdownRef.current && !notifDropdownRef.current.contains(event.target as Node)) {
+                setIsNotificationOpen(false);
+            }
+        }
+        if (isNotificationOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+            return () => document.removeEventListener("mousedown", handleClickOutside);
+        }
+    }, [isNotificationOpen]);
 
     const msToday = new Date().setHours(0, 0, 0, 0);
 
@@ -2141,18 +2155,132 @@ export default function TelesalesTasksPage() {
                         <span>Việc mới</span>
                     </button>
 
-                    {/* Notification Bell */}
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setIsNotificationOpen(true); }}
-                        className="relative p-2 bg-white border rounded-lg hover:bg-slate-50 text-slate-600"
-                    >
-                        <Bell className="w-4 h-4" />
-                        {(overdueCount + todayCount) > 0 && (
-                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-pulse">
-                                {overdueCount + todayCount}
-                            </span>
+                    {/* Notification Bell with Compact Dropdown (Styled identically to Header Notification) */}
+                    <div className="relative" ref={notifDropdownRef}>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsNotificationOpen(!isNotificationOpen); }}
+                            className="relative p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors shadow-xs active:scale-95"
+                            title="Thông báo công việc cần chú ý"
+                        >
+                            <Bell className="w-4 h-4" />
+                            {(overdueCount + todayCount) > 0 && (
+                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs animate-pulse">
+                                    {overdueCount + todayCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {isNotificationOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200/90 z-[120] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                                {/* Header */}
+                                <div className="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-sm text-slate-900">Việc cần chú ý</span>
+                                        {(overdueCount + todayCount) > 0 && (
+                                            <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-teal-100 text-[#00AFA9]">
+                                                {overdueCount + todayCount}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => setIsNotificationOpen(false)}
+                                        className="text-slate-400 hover:text-slate-700 p-1 rounded-md text-base leading-none"
+                                        title="Đóng"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+
+                                {/* Filter Tabs */}
+                                <div className="flex border-b border-slate-100 bg-white text-xs font-medium px-2 pt-1.5 gap-1">
+                                    <button
+                                        onClick={() => setActiveNotifTab('today')}
+                                        className={`flex-1 pb-2 pt-1 rounded-t-lg transition-colors border-b-2 flex items-center justify-center gap-1.5 ${
+                                            activeNotifTab === 'today'
+                                                ? 'border-[#00AFA9] text-[#00AFA9] font-semibold'
+                                                : 'border-transparent text-slate-500 hover:text-slate-800'
+                                        }`}
+                                    >
+                                        <span>Hôm nay</span>
+                                        {todayCount > 0 && (
+                                            <span className="bg-teal-100 text-[#00AFA9] text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                                                {todayCount}
+                                            </span>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveNotifTab('overdue')}
+                                        className={`flex-1 pb-2 pt-1 rounded-t-lg transition-colors border-b-2 flex items-center justify-center gap-1.5 ${
+                                            activeNotifTab === 'overdue'
+                                                ? 'border-rose-500 text-rose-600 font-semibold'
+                                                : 'border-transparent text-slate-500 hover:text-slate-800'
+                                        }`}
+                                    >
+                                        <span>Quá hạn</span>
+                                        {overdueCount > 0 && (
+                                            <span className="bg-rose-100 text-rose-600 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                                                {overdueCount}
+                                            </span>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* Content List */}
+                                <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-50">
+                                    {(() => {
+                                        const list = activeNotifTab === 'overdue'
+                                            ? Object.values(columnTasks).flat().filter(t => t.due_date && new Date(t.due_date).getTime() < msToday && t.status !== 'done')
+                                            : Object.values(columnTasks).flat().filter(t => t.due_date && new Date(t.due_date).setHours(0, 0, 0, 0) === msToday && t.status !== 'done');
+
+                                        if (list.length === 0) {
+                                            return (
+                                                <div className="p-8 text-center text-slate-400">
+                                                    <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                                                    <p className="text-xs font-medium">Không có công việc nào</p>
+                                                </div>
+                                            );
+                                        }
+
+                                        return list.map(t => (
+                                            <button
+                                                key={t.id}
+                                                onClick={() => {
+                                                    setIsNotificationOpen(false);
+                                                    handleLocateTask(t.id);
+                                                }}
+                                                className="w-full text-left p-3.5 hover:bg-slate-50 transition-colors cursor-pointer relative flex gap-3 group"
+                                            >
+                                                <div className={`mt-0.5 shrink-0 flex h-7 w-7 items-center justify-center rounded-xl ring-1 shadow-xs ${
+                                                    activeNotifTab === 'overdue'
+                                                        ? 'bg-rose-50 text-rose-600 ring-rose-500/20'
+                                                        : 'bg-teal-50 text-[#00AFA9] ring-teal-500/20'
+                                                }`}>
+                                                    <Calendar className="w-3.5 h-3.5" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-start justify-between gap-1">
+                                                        <h4 className="text-xs font-semibold text-slate-900 group-hover:text-[#00AFA9] transition-colors leading-snug line-clamp-2">
+                                                            {t.title}
+                                                        </h4>
+                                                        <PriorityBadge priority={t.priority as any} />
+                                                    </div>
+                                                    <div className="text-[11px] text-slate-500 mt-1 line-clamp-1">
+                                                        {t.customer_name || "Nhiệm vụ nội bộ"}
+                                                    </div>
+                                                    <div className={`text-[10px] font-medium flex items-center gap-1 mt-1.5 ${
+                                                        activeNotifTab === 'overdue' ? 'text-rose-600' : 'text-[#00AFA9]'
+                                                    }`}>
+                                                        <Calendar className="w-3 h-3" />
+                                                        <span>Hạn: {new Date(t.due_date!).toLocaleDateString('vi-VN')}</span>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        ));
+                                    })()}
+                                </div>
+                            </div>
                         )}
-                    </button>
+                    </div>
 
                     <div className="hidden lg:flex bg-white border p-1 rounded-lg">
                         <button
@@ -2478,76 +2606,6 @@ export default function TelesalesTasksPage() {
                 currentUser={user} // Pass user from useAuth
                 defaultDepartment={defaultDepartment}
             />
-
-            {/* Notification Panel (Slide-in) - Root Level z-[1000] */}
-            {isNotificationOpen && (
-                <>
-                    {/* Dark Overlay */}
-                    <div
-                        className="fixed inset-0 bg-black/40 z-[999] transition-opacity animate-in fade-in duration-200"
-                        onClick={() => setIsNotificationOpen(false)}
-                    />
-                    {/* Slide-in Panel */}
-                    <div className="fixed top-0 right-0 h-full w-[340px] sm:w-[380px] bg-white border-l border-slate-200 z-[1000] flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
-                        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
-                            <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                                <Bell className="w-4 h-4 text-[#00AFA9]" /> Thông báo công việc
-                            </h3>
-                            <button
-                                onClick={() => setIsNotificationOpen(false)}
-                                className="text-slate-400 hover:text-slate-700 p-1 rounded-md text-lg leading-none"
-                            >
-                                ×
-                            </button>
-                        </div>
-                        {/* Tabs */}
-                        <div className="flex border-b border-slate-100">
-                            <button
-                                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeNotifTab === 'overdue' ? 'border-red-500 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-                                onClick={() => setActiveNotifTab('overdue')}
-                            >
-                                Quá hạn <span className="ml-1 text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">{overdueCount}</span>
-                            </button>
-                            <button
-                                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeNotifTab === 'today' ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-                                onClick={() => setActiveNotifTab('today')}
-                            >
-                                Hôm nay <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">{todayCount}</span>
-                            </button>
-                        </div>
-                        {/* List */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
-                            {(() => {
-                                const list = activeNotifTab === 'overdue'
-                                    ? Object.values(columnTasks).flat().filter(t => t.due_date && new Date(t.due_date).getTime() < msToday && t.status !== 'done')
-                                    : Object.values(columnTasks).flat().filter(t => t.due_date && new Date(t.due_date).setHours(0, 0, 0, 0) === msToday && t.status !== 'done');
-
-                                if (list.length === 0) {
-                                    return <div className="text-center text-sm text-slate-400 py-8">Không có công việc nào.</div>
-                                }
-
-                                return list.map(t => (
-                                    <div
-                                        key={t.id}
-                                        onClick={() => handleLocateTask(t.id)}
-                                        className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-[#00AFA9] hover:shadow-md transition-all active:scale-[0.98]"
-                                    >
-                                        <div className="flex justify-between items-start mb-1">
-                                            <h4 className="text-sm font-medium text-slate-900 line-clamp-2">{t.title}</h4>
-                                            <PriorityBadge priority={t.priority as any} />
-                                        </div>
-                                        <div className="text-xs text-slate-500 mb-2">{t.customer_name || "Khách lẻ"}</div>
-                                        <div className={`text-xs font-medium flex items-center gap-1 ${activeNotifTab === 'overdue' ? 'text-red-600' : 'text-blue-600'}`}>
-                                            <Calendar className="w-3 h-3" />
-                                            {new Date(t.due_date!).toLocaleDateString('vi-VN')}
-                                        </div>
-                                    </div>
-                                ));
-                            })()}
-                        </div>
-                    </div>
-                </>
-            )}
         </div>
     );
 }
