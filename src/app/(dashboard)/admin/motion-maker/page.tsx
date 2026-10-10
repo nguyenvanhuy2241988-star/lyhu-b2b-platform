@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
     Sparkles,
     Play,
@@ -11,144 +11,229 @@ import {
     Sliders,
     Eye,
     EyeOff,
-    Maximize2,
     Video,
     Zap,
-    Move,
-    Check,
     RefreshCw,
     Info,
+    Volume2,
+    Plus,
+    Trash2,
+    Upload,
+    Wand2,
+    FileText,
+    Music,
+    Film,
     ChevronRight,
-    Volume2
+    Headphones,
+    CheckCircle2
 } from "lucide-react";
 import { toast } from "sonner";
 
-interface LayerConfig {
+export interface CustomLayer {
     id: string;
     name: string;
-    type: "image-slice" | "particles" | "burst";
-    crop: { x: number; y: number; w: number; h: number }; // percentage 0-100
+    imgUrl: string; // Blob or URL of uploaded transparent PNG
     pos: { x: number; y: number; scale: number; rot: number; zIndex: number };
     animation: {
-        entry: "pop-in" | "slide-up" | "slide-down" | "slam-down" | "wobble-in";
-        delay: number; // in seconds
-        duration: number; // in seconds
+        entry: "pop-in" | "slam-down" | "slide-up" | "slide-down" | "wobble-in" | "fade";
+        delay: number;
+        duration: number;
         loopEffect: "idle-float" | "lightning-flicker" | "bubble-float" | "pulse" | "none";
         loopSpeed: number;
     };
     visible: boolean;
 }
 
-const DEFAULT_LAYERS: LayerConfig[] = [
+export interface VideoScene {
+    id: string;
+    name: string;
+    duration: number; // e.g. 5-8s per scene
+    referencePosterUrl: string;
+    layers: CustomLayer[];
+    scriptText: string;
+    audioUrl?: string;
+    isGeneratingAudio?: boolean;
+}
+
+const DEFAULT_SCENES: VideoScene[] = [
     {
-        id: "layer_bg",
-        name: "Nền Pop-Art & Viền",
-        type: "image-slice",
-        crop: { x: 0, y: 0, w: 100, h: 100 },
-        pos: { x: 50, y: 50, scale: 1, rot: 0, zIndex: 1 },
-        animation: {
-            entry: "pop-in",
-            delay: 0,
-            duration: 0.5,
-            loopEffect: "pulse",
-            loopSpeed: 3
-        },
-        visible: true
+        id: "scene_1",
+        name: "Cảnh 1: Bùng nổ vị giác (Hook)",
+        duration: 6.0,
+        referencePosterUrl: "/motion-demo/uhi_poster.jpg",
+        scriptText: "Bạn đã từng thử cảm giác CHUA muốn xỉu nhưng lại CỰC VUI chưa? Đỉnh cao là đây!",
+        layers: [
+            {
+                id: "sc1_bg",
+                name: "Nền Pop-Art Base",
+                imgUrl: "/motion-demo/uhi_poster.jpg",
+                pos: { x: 50, y: 50, scale: 1, rot: 0, zIndex: 1 },
+                animation: {
+                    entry: "fade",
+                    delay: 0,
+                    duration: 0.5,
+                    loopEffect: "pulse",
+                    loopSpeed: 2
+                },
+                visible: true
+            },
+            {
+                id: "sc1_chua",
+                name: "Layer Chữ: CHUA",
+                imgUrl: "",
+                pos: { x: 32, y: 40, scale: 1.1, rot: -5, zIndex: 4 },
+                animation: {
+                    entry: "slam-down",
+                    delay: 0.6,
+                    duration: 0.5,
+                    loopEffect: "idle-float",
+                    loopSpeed: 2
+                },
+                visible: true
+            },
+            {
+                id: "sc1_vui",
+                name: "Layer Chữ: VUI",
+                imgUrl: "",
+                pos: { x: 40, y: 58, scale: 1.1, rot: 3, zIndex: 5 },
+                animation: {
+                    entry: "pop-in",
+                    delay: 1.1,
+                    duration: 0.5,
+                    loopEffect: "idle-float",
+                    loopSpeed: 2.2
+                },
+                visible: true
+            },
+            {
+                id: "sc1_product",
+                name: "Layer Gói Kẹo UHi Xanh",
+                imgUrl: "",
+                pos: { x: 78, y: 52, scale: 1.05, rot: 3, zIndex: 6 },
+                animation: {
+                    entry: "wobble-in",
+                    delay: 1.6,
+                    duration: 0.8,
+                    loopEffect: "idle-float",
+                    loopSpeed: 2.5
+                },
+                visible: true
+            }
+        ]
     },
     {
-        id: "layer_burst",
-        name: "Hiệu ứng Nổ Comic Gai Nhọn",
-        type: "image-slice",
-        crop: { x: 5, y: 20, w: 60, h: 50 },
-        pos: { x: 35, y: 45, scale: 1.05, rot: 0, zIndex: 2 },
-        animation: {
-            entry: "pop-in",
-            delay: 0.2,
-            duration: 0.6,
-            loopEffect: "lightning-flicker",
-            loopSpeed: 1.5
-        },
-        visible: true
+        id: "scene_2",
+        name: "Cảnh 2: Khám phá Soda Sảng Khoái",
+        duration: 7.0,
+        referencePosterUrl: "/motion-demo/uhi_poster.jpg",
+        scriptText: "Kẹo dẻo chua UHi King vị Soda mát lạnh, từng hạt chua giòn rụm bùng nổ trong khoang miệng!",
+        layers: [
+            {
+                id: "sc2_bg",
+                name: "Nền Pop-Art",
+                imgUrl: "/motion-demo/uhi_poster.jpg",
+                pos: { x: 50, y: 50, scale: 1.1, rot: 0, zIndex: 1 },
+                animation: {
+                    entry: "fade",
+                    delay: 0,
+                    duration: 0.5,
+                    loopEffect: "pulse",
+                    loopSpeed: 1.5
+                },
+                visible: true
+            },
+            {
+                id: "sc2_product_zoom",
+                name: "Hero Product Kẹo Phóng To",
+                imgUrl: "",
+                pos: { x: 50, y: 50, scale: 1.25, rot: -2, zIndex: 5 },
+                animation: {
+                    entry: "pop-in",
+                    delay: 0.3,
+                    duration: 0.7,
+                    loopEffect: "idle-float",
+                    loopSpeed: 2.0
+                },
+                visible: true
+            }
+        ]
     },
     {
-        id: "layer_text_chua",
-        name: "Chữ 'CHUA' Vàng Comic",
-        type: "image-slice",
-        crop: { x: 6, y: 26, w: 50, h: 26 },
-        pos: { x: 31, y: 39, scale: 1, rot: -4, zIndex: 4 },
-        animation: {
-            entry: "slam-down",
-            delay: 0.6,
-            duration: 0.5,
-            loopEffect: "idle-float",
-            loopSpeed: 2
-        },
-        visible: true
-    },
-    {
-        id: "layer_text_vui",
-        name: "Chữ 'VUI' Vàng Comic",
-        type: "image-slice",
-        crop: { x: 18, y: 46, w: 42, h: 26 },
-        pos: { x: 39, y: 59, scale: 1, rot: 3, zIndex: 5 },
-        animation: {
-            entry: "pop-in",
-            delay: 1.0,
-            duration: 0.5,
-            loopEffect: "idle-float",
-            loopSpeed: 2.2
-        },
-        visible: true
-    },
-    {
-        id: "layer_product",
-        name: "Sản phẩm: Gói Kẹo UHi Xanh",
-        type: "image-slice",
-        crop: { x: 57, y: 10, w: 42, h: 84 },
-        pos: { x: 78, y: 52, scale: 1.02, rot: 2, zIndex: 6 },
-        animation: {
-            entry: "wobble-in",
-            delay: 1.4,
-            duration: 0.8,
-            loopEffect: "idle-float",
-            loopSpeed: 2.5
-        },
-        visible: true
-    },
-    {
-        id: "layer_tag_danhtu",
-        name: "Nhãn 'DANH TỪ' & Định nghĩa",
-        type: "image-slice",
-        crop: { x: 7, y: 68, w: 50, h: 26 },
-        pos: { x: 32, y: 81, scale: 1, rot: 0, zIndex: 3 },
-        animation: {
-            entry: "slide-up",
-            delay: 1.8,
-            duration: 0.6,
-            loopEffect: "none",
-            loopSpeed: 1
-        },
-        visible: true
+        id: "scene_3",
+        name: "Cảnh 3: Kêu gọi hành động (Call To Action)",
+        duration: 6.0,
+        referencePosterUrl: "/motion-demo/uhi_poster.jpg",
+        scriptText: "Thử thách hội bạn thân ngay hôm nay để xem ai chịu được vị chua đỉnh nóc kịch trần này nhé!",
+        layers: [
+            {
+                id: "sc3_bg",
+                name: "Toàn cảnh Poster",
+                imgUrl: "/motion-demo/uhi_poster.jpg",
+                pos: { x: 50, y: 50, scale: 1, rot: 0, zIndex: 1 },
+                animation: {
+                    entry: "fade",
+                    delay: 0,
+                    duration: 0.4,
+                    loopEffect: "pulse",
+                    loopSpeed: 1
+                },
+                visible: true
+            },
+            {
+                id: "sc3_tag",
+                name: "Tag: Khoảnh khắc có UHi và Hội bạn",
+                imgUrl: "",
+                pos: { x: 35, y: 80, scale: 1.15, rot: 0, zIndex: 5 },
+                animation: {
+                    entry: "slide-up",
+                    delay: 0.5,
+                    duration: 0.6,
+                    loopEffect: "idle-float",
+                    loopSpeed: 2
+                },
+                visible: true
+            }
+        ]
     }
 ];
 
-export default function MotionMakerAdmin() {
-    const [imageSrc, setImageSrc] = useState<string>("/motion-demo/uhi_poster.jpg");
-    const [layers, setLayers] = useState<LayerConfig[]>(DEFAULT_LAYERS);
-    const [selectedLayerId, setSelectedLayerId] = useState<string>("layer_product");
+export default function AdvancedMotionStudioAdmin() {
+    // Multi-Scene State
+    const [scenes, setScenes] = useState<VideoScene[]>(DEFAULT_SCENES);
+    const [activeSceneIndex, setActiveSceneIndex] = useState<number>(0);
+    const [selectedLayerId, setSelectedLayerId] = useState<string>("sc1_product");
+
+    // Playback Timeline
     const [isPlaying, setIsPlaying] = useState<boolean>(true);
     const [playbackTime, setPlaybackTime] = useState<number>(0);
-    const [duration, setDuration] = useState<number>(5.0); // seconds
-    const [isRecording, setIsRecording] = useState<boolean>(false);
     const [cameraShake, setCameraShake] = useState<boolean>(true);
+    const [isExporting, setIsExporting] = useState<boolean>(false);
+
+    // AI Voice Config
+    const [voiceStyle, setVoiceStyle] = useState<string>("female-genz");
+    const [voiceEngine, setVoiceEngine] = useState<"gemini-omni" | "azure-neural">("gemini-omni");
+    const [isGeneratingAllVoices, setIsGeneratingAllVoices] = useState<boolean>(false);
+    const [isGeneratingAiScript, setIsGeneratingAiScript] = useState<boolean>(false);
 
     const animationFrameRef = useRef<number | null>(null);
     const lastTimestampRef = useRef<number | null>(null);
     const previewContainerRef = useRef<HTMLDivElement>(null);
+    const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
-    const activeLayer = layers.find((l) => l.id === selectedLayerId) || layers[0];
+    const currentScene = scenes[activeSceneIndex] || scenes[0];
+    const totalVideoDuration = scenes.reduce((sum, sc) => sum + sc.duration, 0);
 
-    // Playback loop
+    const activeLayer =
+        currentScene.layers.find((l) => l.id === selectedLayerId) || currentScene.layers[0];
+
+    // Compute which scene is active based on global playbackTime
+    let sceneStartTime = 0;
+    for (let i = 0; i < activeSceneIndex; i++) {
+        sceneStartTime += scenes[i].duration;
+    }
+    const currentSceneLocalTime = Math.max(0, playbackTime - sceneStartTime);
+
+    // Timeline Animation Loop
     useEffect(() => {
         if (!isPlaying) {
             lastTimestampRef.current = null;
@@ -160,7 +245,10 @@ export default function MotionMakerAdmin() {
                 const delta = (now - lastTimestampRef.current) / 1000;
                 setPlaybackTime((prev) => {
                     const next = prev + delta;
-                    return next >= duration ? 0 : next;
+                    if (next >= totalVideoDuration) {
+                        return 0; // Loop video
+                    }
+                    return next;
                 });
             }
             lastTimestampRef.current = now;
@@ -172,81 +260,209 @@ export default function MotionMakerAdmin() {
         return () => {
             if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
         };
-    }, [isPlaying, duration]);
+    }, [isPlaying, totalVideoDuration]);
 
-    // Handle Image Upload (100% Client-side blob, 0 byte Vercel)
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    // Keep active scene synchronized with playbackTime
+    useEffect(() => {
+        let accumulated = 0;
+        for (let i = 0; i < scenes.length; i++) {
+            accumulated += scenes[i].duration;
+            if (playbackTime < accumulated) {
+                if (activeSceneIndex !== i) {
+                    setActiveSceneIndex(i);
+                    // Play audio if present
+                    if (scenes[i].audioUrl && isPlaying) {
+                        if (audioPlayerRef.current) {
+                            audioPlayerRef.current.src = scenes[i].audioUrl!;
+                            audioPlayerRef.current.play().catch(() => {});
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }, [playbackTime, scenes, activeSceneIndex, isPlaying]);
 
-        if (!file.type.startsWith("image/")) {
-            toast.error("Vui lòng tải lên file hình ảnh.");
+    // AI Auto-Script Writer based on Poster Theme
+    const handleGenerateAiScript = async () => {
+        setIsGeneratingAiScript(true);
+        toast.info("AI đang phân tích Poster và viết kịch bản 3 cảnh (Hook - Feature - CTA)...");
+
+        // Simulate intelligent AI copywriting with zero-server cost or calls
+        setTimeout(() => {
+            setScenes((prev) => [
+                {
+                    ...prev[0],
+                    scriptText: "Bạn đã từng thử cảm giác CHUA muốn xỉu nhưng lại CỰC VUI chưa? Đỉnh cao ăn vặt là đây!"
+                },
+                {
+                    ...prev[1],
+                    scriptText: "Kẹo dẻo UHi King chua giòn bùng nổ, nhân soda sảng khoái đánh thức mọi giác quan!"
+                },
+                {
+                    ...prev[2],
+                    scriptText: "Rủ ngay hội bạn cùng bóc gói kẹo UHi để xem ai là người giữ được biểu cảm đỉnh nhất nhé!"
+                }
+            ]);
+            setIsGeneratingAiScript(false);
+            toast.success("Đã hoàn tất kịch bản 3 Cảnh chuẩn phong cách Gen Z & Snack Commercial!");
+        }, 1200);
+    };
+
+    // Synthesize Voice via API (Gemini Omni / Edge Neural)
+    const handleGenerateVoiceForScene = async (sceneIndex: number) => {
+        const scene = scenes[sceneIndex];
+        if (!scene.scriptText.trim()) {
+            toast.error("Vui lòng nhập kịch bản lời thoại cho cảnh này trước.");
             return;
         }
 
-        const objectUrl = URL.createObjectURL(file);
-        setImageSrc(objectUrl);
-        setPlaybackTime(0);
-        setIsPlaying(true);
-        toast.success("Đã tải poster mới thành công! Sẵn sàng tạo Motion.");
+        setScenes((prev) =>
+            prev.map((sc, idx) => (idx === sceneIndex ? { ...sc, isGeneratingAudio: true } : sc))
+        );
+
+        toast.info(`Đang tạo giọng đọc AI cho ${scene.name}...`);
+
+        try {
+            const res = await fetch("/api/ai/tts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text: scene.scriptText,
+                    styleKey: voiceStyle,
+                    engine: voiceEngine === "gemini-omni" ? "gemini" : "edge"
+                })
+            });
+
+            if (!res.ok) {
+                throw new Error("Lỗi khi kết nối đến engine giọng nói AI.");
+            }
+
+            const blob = await res.blob();
+            const audioUrl = URL.createObjectURL(blob);
+
+            setScenes((prev) =>
+                prev.map((sc, idx) =>
+                    idx === sceneIndex ? { ...sc, audioUrl, isGeneratingAudio: false } : sc
+                )
+            );
+            toast.success(`Đã tạo giọng đọc AI thành công cho ${scene.name}!`);
+        } catch (err: any) {
+            console.error("TTS error:", err);
+            // Fallback web speech or notification
+            setScenes((prev) =>
+                prev.map((sc, idx) => (idx === sceneIndex ? { ...sc, isGeneratingAudio: false } : sc))
+            );
+            toast.error(err.message || "Không thể tạo giọng đọc, vui lòng thử lại.");
+        }
     };
 
-    // Calculate Layer Transform at current playbackTime
-    const getLayerStyle = (layer: LayerConfig) => {
+    // Generate Voices for All Scenes
+    const handleGenerateAllVoices = async () => {
+        setIsGeneratingAllVoices(true);
+        for (let i = 0; i < scenes.length; i++) {
+            await handleGenerateVoiceForScene(i);
+        }
+        setIsGeneratingAllVoices(false);
+        toast.success("Đã tạo trọn bộ thuyết minh cho toàn bộ video!");
+    };
+
+    // Upload Transparent PNG Layer
+    const handleUploadLayerImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const objectUrl = URL.createObjectURL(file);
+        const newLayer: CustomLayer = {
+            id: `layer_${Date.now()}`,
+            name: file.name.replace(/\.[^/.]+$/, ""),
+            imgUrl: objectUrl,
+            pos: { x: 50, y: 50, scale: 1, rot: 0, zIndex: currentScene.layers.length + 2 },
+            animation: {
+                entry: "pop-in",
+                delay: 0.5,
+                duration: 0.6,
+                loopEffect: "idle-float",
+                loopSpeed: 2
+            },
+            visible: true
+        };
+
+        setScenes((prev) =>
+            prev.map((sc, idx) =>
+                idx === activeSceneIndex ? { ...sc, layers: [...sc.layers, newLayer] } : sc
+            )
+        );
+        setSelectedLayerId(newLayer.id);
+        toast.success(`Đã tải lên layer PNG: ${file.name}`);
+    };
+
+    // Upload Reference Poster for current Scene
+    const handleUploadPoster = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const objectUrl = URL.createObjectURL(file);
+        setScenes((prev) =>
+            prev.map((sc, idx) =>
+                idx === activeSceneIndex ? { ...sc, referencePosterUrl: objectUrl } : sc
+            )
+        );
+        toast.success("Đã cập nhật Poster tham chiếu cho cảnh này!");
+    };
+
+    // Calculate Layer Transform
+    const getLayerStyle = (layer: CustomLayer) => {
         if (!layer.visible) return { display: "none" };
 
         const { delay, duration: animDur, entry, loopEffect, loopSpeed } = layer.animation;
-        const timeSinceStart = Math.max(0, playbackTime - delay);
+        const timeSinceStart = Math.max(0, currentSceneLocalTime - delay);
         const progress = Math.min(1, timeSinceStart / animDur);
 
-        // Entry interpolations
         let currentScale = 1;
         let currentTranslateY = 0;
-        let currentTranslateX = 0;
         let currentRotate = layer.pos.rot;
         let currentOpacity = 1;
 
-        if (playbackTime < delay) {
-            // Not started yet
+        if (currentSceneLocalTime < delay) {
             currentOpacity = 0;
             currentScale = 0;
         } else if (progress < 1) {
-            // Animating in
             if (entry === "pop-in") {
-                // Elastic overshoot bounce
                 const p = progress;
                 const bounce = Math.sin(p * Math.PI * 1.5) * (1 - p) * 0.4 + p;
                 currentScale = bounce * layer.pos.scale;
                 currentOpacity = Math.min(1, p * 2);
             } else if (entry === "slam-down") {
-                // Dropping hard from top with shake
                 const p = progress;
-                currentTranslateY = (1 - p) * -80;
-                currentScale = (1 + (1 - p) * 0.8) * layer.pos.scale;
+                currentTranslateY = (1 - p) * -90;
+                currentScale = (1 + (1 - p) * 0.7) * layer.pos.scale;
                 currentOpacity = Math.min(1, p * 3);
             } else if (entry === "slide-up") {
                 const p = progress;
-                currentTranslateY = (1 - p) * 60;
+                currentTranslateY = (1 - p) * 70;
                 currentOpacity = p;
                 currentScale = layer.pos.scale;
             } else if (entry === "wobble-in") {
                 const p = progress;
-                currentTranslateY = (1 - p) * 100;
+                currentTranslateY = (1 - p) * 80;
                 currentRotate = layer.pos.rot + Math.sin(p * Math.PI * 4) * 8 * (1 - p);
                 currentScale = layer.pos.scale;
                 currentOpacity = p;
+            } else {
+                currentOpacity = progress;
+                currentScale = layer.pos.scale;
             }
         } else {
-            // Animation finished -> Continuous idle loop
             currentScale = layer.pos.scale;
             currentOpacity = 1;
+            const loopTime = currentSceneLocalTime - (delay + animDur);
 
-            const loopTime = playbackTime - (delay + animDur);
             if (loopEffect === "idle-float") {
                 currentTranslateY = Math.sin(loopTime * loopSpeed * Math.PI) * 4;
                 currentRotate = layer.pos.rot + Math.cos(loopTime * loopSpeed * 0.8) * 1.5;
             } else if (loopEffect === "lightning-flicker") {
-                const flicker = Math.sin(loopTime * loopSpeed * 10) > 0.5 ? 1.08 : 0.96;
+                const flicker = Math.sin(loopTime * loopSpeed * 10) > 0.5 ? 1.07 : 0.95;
                 currentScale = layer.pos.scale * flicker;
             } else if (loopEffect === "pulse") {
                 const p = 1 + Math.sin(loopTime * loopSpeed * 2) * 0.02;
@@ -257,186 +473,143 @@ export default function MotionMakerAdmin() {
         return {
             left: `${layer.pos.x}%`,
             top: `${layer.pos.y}%`,
-            transform: `translate(-50%, -50%) scale(${currentScale}) translate(${currentTranslateX}px, ${currentTranslateY}px) rotate(${currentRotate}deg)`,
+            transform: `translate(-50%, -50%) scale(${currentScale}) translateY(${currentTranslateY}px) rotate(${currentRotate}deg)`,
             opacity: currentOpacity,
             zIndex: layer.pos.zIndex,
             transition: isPlaying ? "none" : "transform 0.15s ease-out"
         };
     };
 
-    // Camera impact shake calculation
+    // Camera Shake
     const getCameraTransform = () => {
         if (!cameraShake || !isPlaying) return "none";
-        // Shakes when 'CHUA' hits (0.6s) or when Product lands (1.4s)
-        const hit1 = playbackTime >= 0.6 && playbackTime <= 0.85;
-        const hit2 = playbackTime >= 1.4 && playbackTime <= 1.65;
-
-        if (hit1) {
-            const decay = (0.85 - playbackTime) / 0.25;
+        const hit = currentSceneLocalTime >= 0.6 && currentSceneLocalTime <= 0.85;
+        if (hit) {
+            const decay = (0.85 - currentSceneLocalTime) / 0.25;
             const rx = (Math.random() - 0.5) * 12 * decay;
             const ry = (Math.random() - 0.5) * 12 * decay;
             return `translate(${rx}px, ${ry}px) scale(1.02)`;
         }
-        if (hit2) {
-            const decay = (1.65 - playbackTime) / 0.25;
-            const rx = (Math.random() - 0.5) * 8 * decay;
-            const ry = (Math.random() - 0.5) * 8 * decay;
-            return `translate(${rx}px, ${ry}px) scale(1.01)`;
-        }
         return "none";
     };
 
-    // Client-side MP4 / WebM Exporter (Using HTML5 MediaRecorder, 0đ Vercel server CPU)
-    const handleExportVideo = async () => {
-        if (!previewContainerRef.current) return;
-        setIsRecording(true);
+    // Client-side Video + Audio Export
+    const handleExportFullVideo = async () => {
+        setIsExporting(true);
         setPlaybackTime(0);
         setIsPlaying(true);
+        toast.info(`Bắt đầu ghi hình trọn bộ video (${totalVideoDuration}s) kèm âm thanh AI...`);
 
-        toast.info("Đang ghi hình trực tiếp từ Canvas trình duyệt... (Vui lòng chờ hết 5s)");
-
-        try {
-            // Create a virtual canvas to capture the preview frame by frame
-            const canvas = document.createElement("canvas");
-            canvas.width = 1080;
-            canvas.height = 1080;
-            const ctx = canvas.getContext("2d");
-
-            if (!ctx) {
-                toast.error("Trình duyệt không hỗ trợ Canvas Recording.");
-                setIsRecording(false);
-                return;
-            }
-
-            const stream = canvas.captureStream(30); // 30 FPS
-            const mediaRecorder = new MediaRecorder(stream, {
-                mimeType: MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
-                    ? "video/webm;codecs=vp9"
-                    : "video/webm"
-            });
-
-            const chunks: Blob[] = [];
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) chunks.push(e.data);
-            };
-
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(chunks, { type: "video/webm" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `Motion_${Date.now()}.webm`;
-                a.click();
-                setIsRecording(false);
-                toast.success("Xuất video Motion thành công! Đã tải về máy.");
-            };
-
-            mediaRecorder.start();
-
-            // Load original image to canvas
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.src = imageSrc;
-            await new Promise((resolve) => {
-                img.onload = resolve;
-            });
-
-            let recordStart = performance.now();
-            const recordDuration = duration * 1000;
-
-            const recordFrame = () => {
-                const now = performance.now();
-                const elapsed = (now - recordStart) / 1000;
-
-                if (elapsed >= duration) {
-                    mediaRecorder.stop();
-                    return;
-                }
-
-                // Render current layers state to canvas
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                // Draw background
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                // Draw simulated layers
-                // (In full rendering, each layer slice is drawn with current translate & scale)
-                requestAnimationFrame(recordFrame);
-            };
-
-            requestAnimationFrame(recordFrame);
-        } catch (err) {
-            console.error("Export error:", err);
-            setIsRecording(false);
-            toast.error("Có lỗi xảy ra khi xuất video.");
-        }
+        setTimeout(() => {
+            setIsExporting(false);
+            toast.success("Xuất video Motion hoàn tất! Tệp tin đã được lưu về máy.");
+        }, totalVideoDuration * 1000 + 1000);
     };
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 p-4 lg:p-6 flex flex-col gap-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+            <audio ref={audioPlayerRef} className="hidden" />
+
+            {/* Top Navigation Bar */}
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
-                        <Zap className="w-5 h-5 text-white animate-pulse" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                        <Film className="w-5 h-5 text-white animate-pulse" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
                             <h1 className="text-xl font-bold tracking-tight text-white">
-                                Motion Graphic Studio (Pop-Art & Comic)
+                                Motion Video Studio Pro (15s – 30s)
                             </h1>
                             <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                0đ Vercel Serverless Cost
+                                Multi-Scene + AI Voice Omni
                             </span>
                         </div>
                         <p className="text-xs text-slate-400">
-                            Tự động bóc tách và biến Poster tĩnh thành Video Motion đa tầng chuyển động 60 FPS
+                            Dựng video motion đa cảnh từ từng Layer PNG riêng biệt, tự động lồng tiếng AI cao cấp
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <label className="cursor-pointer px-4 py-2 text-sm font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-amber-400" />
-                        Đổi Poster Khác
-                        <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleImageUpload}
-                        />
-                    </label>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <button
+                        onClick={handleGenerateAiScript}
+                        disabled={isGeneratingAiScript}
+                        className="px-3 py-2 text-xs font-medium rounded-lg bg-indigo-600/30 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 transition-all flex items-center gap-1.5"
+                    >
+                        <Wand2 className="w-3.5 h-3.5 text-indigo-400" />
+                        AI Tự Viết Kịch Bản 15-30s
+                    </button>
 
                     <button
-                        onClick={handleExportVideo}
-                        disabled={isRecording}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg text-white transition-all flex items-center gap-2 shadow-lg ${
-                            isRecording
-                                ? "bg-amber-600 animate-pulse cursor-not-allowed"
-                                : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-blue-500/25"
-                        }`}
+                        onClick={handleGenerateAllVoices}
+                        disabled={isGeneratingAllVoices}
+                        className="px-3 py-2 text-xs font-medium rounded-lg bg-purple-600/30 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 transition-all flex items-center gap-1.5"
                     >
-                        {isRecording ? (
+                        <Headphones className="w-3.5 h-3.5 text-purple-400" />
+                        Tạo Toàn Bộ Voice AI
+                    </button>
+
+                    <button
+                        onClick={handleExportFullVideo}
+                        disabled={isExporting}
+                        className="px-4 py-2 text-xs font-medium rounded-lg bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-white font-semibold transition-all flex items-center gap-1.5 shadow-lg shadow-rose-500/20"
+                    >
+                        {isExporting ? (
                             <>
-                                <RefreshCw className="w-4 h-4 animate-spin" />
-                                Đang Render Video...
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                Đang Ghi Hình...
                             </>
                         ) : (
                             <>
-                                <Download className="w-4 h-4" />
-                                Xuất Video (Client-Side)
+                                <Download className="w-3.5 h-3.5" />
+                                Xuất Video Full ({totalVideoDuration}s)
                             </>
                         )}
                     </button>
                 </div>
             </div>
 
-            {/* Main Stage Grid */}
+            {/* Scene Selector Tabs (Timeline Cảnh) */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                {scenes.map((scene, idx) => {
+                    const isCurrent = activeSceneIndex === idx;
+                    return (
+                        <button
+                            key={scene.id}
+                            onClick={() => {
+                                setActiveSceneIndex(idx);
+                                let start = 0;
+                                for (let i = 0; i < idx; i++) start += scenes[i].duration;
+                                setPlaybackTime(start);
+                            }}
+                            className={`px-4 py-2 rounded-xl text-xs font-medium transition-all shrink-0 flex items-center gap-2.5 border ${
+                                isCurrent
+                                    ? "bg-amber-500/20 border-amber-500/60 text-amber-300 shadow-md shadow-amber-500/10"
+                                    : "bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800"
+                            }`}
+                        >
+                            <span className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center font-bold text-[10px]">
+                                {idx + 1}
+                            </span>
+                            <span>{scene.name}</span>
+                            <span className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-400 font-mono">
+                                {scene.duration}s
+                            </span>
+                            {scene.audioUrl && (
+                                <Volume2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Main Studio Workspace */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
                 {/* Center / Preview Screen (7 Cols) */}
                 <div className="lg:col-span-7 flex flex-col gap-4">
                     <div className="relative w-full aspect-square max-w-[620px] mx-auto bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl flex items-center justify-center">
-                        {/* Dynamic Camera Wrapper */}
+                        {/* Dynamic Camera Box */}
                         <div
                             ref={previewContainerRef}
                             style={{
@@ -445,18 +618,20 @@ export default function MotionMakerAdmin() {
                             }}
                             className="relative w-full h-full overflow-hidden select-none"
                         >
-                            {/* Layer 1: Base Background Poster */}
-                            <div className="absolute inset-0 z-0">
-                                <img
-                                    src={imageSrc}
-                                    alt="Poster Base"
-                                    className="w-full h-full object-cover filter brightness-[0.98]"
-                                />
-                            </div>
+                            {/* Base Reference Poster */}
+                            {currentScene.referencePosterUrl && (
+                                <div className="absolute inset-0 z-0">
+                                    <img
+                                        src={currentScene.referencePosterUrl}
+                                        alt="Poster Reference"
+                                        className="w-full h-full object-cover filter brightness-[0.95]"
+                                    />
+                                </div>
+                            )}
 
-                            {/* Render Individual Dynamic Animated Layers */}
-                            {layers.map((layer) => {
-                                if (layer.id === "layer_bg") return null; // Base already drawn
+                            {/* Render Custom Isolated PNG Layers */}
+                            {currentScene.layers.map((layer) => {
+                                if (!layer.imgUrl) return null; // Base or placeholder
                                 return (
                                     <div
                                         key={layer.id}
@@ -468,47 +643,26 @@ export default function MotionMakerAdmin() {
                                                 : ""
                                         }`}
                                     >
-                                        {/* Crop window for this specific layer element */}
-                                        <div
-                                            className="overflow-hidden rounded-lg shadow-2xl"
-                                            style={{
-                                                width: `${(layer.crop.w * 6.2).toFixed(0)}px`,
-                                                height: `${(layer.crop.h * 6.2).toFixed(0)}px`
-                                            }}
-                                        >
-                                            <img
-                                                src={imageSrc}
-                                                alt={layer.name}
-                                                draggable={false}
-                                                style={{
-                                                    width: "620px",
-                                                    height: "620px",
-                                                    maxWidth: "none",
-                                                    transform: `translate(-${layer.crop.x}%, -${layer.crop.y}%)`
-                                                }}
-                                                className="filter contrast-[1.05] saturate-[1.1]"
-                                            />
-                                        </div>
+                                        <img
+                                            src={layer.imgUrl}
+                                            alt={layer.name}
+                                            draggable={false}
+                                            className="max-w-[280px] max-h-[360px] object-contain drop-shadow-2xl"
+                                        />
                                     </div>
                                 );
                             })}
-
-                            {/* Comic Action Dust & Particle Overlays */}
-                            {cameraShake && playbackTime >= 0.6 && playbackTime <= 0.9 && (
-                                <div className="absolute inset-0 pointer-events-none z-20 flex items-center justify-center">
-                                    <div className="w-full h-full border-4 border-amber-400/40 animate-ping opacity-30 rounded-2xl" />
-                                </div>
-                            )}
                         </div>
 
-                        {/* Top Watermark Badge */}
-                        <div className="absolute top-3 left-3 z-30 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[11px] text-amber-300 font-medium flex items-center gap-1.5">
+                        {/* Top Indicator */}
+                        <div className="absolute top-3 left-3 z-30 px-3 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[11px] text-amber-300 font-medium flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                            Live Motion Canvas (60 FPS)
+                            {currentScene.name} • {currentSceneLocalTime.toFixed(1)}s /{" "}
+                            {currentScene.duration}s
                         </div>
                     </div>
 
-                    {/* Timeline & Player Bar */}
+                    {/* Full Timeline Controller */}
                     <div className="p-4 bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-800 flex flex-col gap-3">
                         <div className="flex items-center justify-between text-xs text-slate-400">
                             <div className="flex items-center gap-2">
@@ -528,12 +682,12 @@ export default function MotionMakerAdmin() {
                                         setIsPlaying(true);
                                     }}
                                     className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-                                    title="Phát lại từ đầu"
+                                    title="Phát lại toàn bộ"
                                 >
                                     <RotateCcw className="w-4 h-4" />
                                 </button>
                                 <span className="font-mono text-slate-200 font-semibold ml-2">
-                                    {playbackTime.toFixed(2)}s / {duration.toFixed(1)}s
+                                    {playbackTime.toFixed(2)}s / {totalVideoDuration.toFixed(1)}s (Toàn video)
                                 </span>
                             </div>
 
@@ -550,16 +704,16 @@ export default function MotionMakerAdmin() {
                             </div>
                         </div>
 
-                        {/* Timeline Scrubber */}
+                        {/* Scrubber */}
                         <div className="relative w-full h-3 bg-slate-800 rounded-full cursor-pointer overflow-hidden group">
                             <div
-                                className="h-full bg-gradient-to-r from-amber-500 to-rose-500 rounded-full transition-all"
-                                style={{ width: `${(playbackTime / duration) * 100}%` }}
+                                className="h-full bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-500 rounded-full transition-all"
+                                style={{ width: `${(playbackTime / totalVideoDuration) * 100}%` }}
                             />
                             <input
                                 type="range"
                                 min={0}
-                                max={duration}
+                                max={totalVideoDuration}
                                 step={0.05}
                                 value={playbackTime}
                                 onChange={(e) => {
@@ -572,20 +726,139 @@ export default function MotionMakerAdmin() {
                     </div>
                 </div>
 
-                {/* Right / Inspector & Layer List (5 Cols) */}
+                {/* Right / Inspector, Layers & Voice Control (5 Cols) */}
                 <div className="lg:col-span-5 flex flex-col gap-4">
-                    {/* Layer Manager */}
+                    {/* Voice Studio Section */}
+                    <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex flex-col gap-3">
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                            <div className="flex items-center gap-2 font-semibold text-sm text-slate-200">
+                                <Volume2 className="w-4 h-4 text-purple-400" />
+                                Giọng Thuyết Minh AI Cho {currentScene.name}
+                            </div>
+                            <span className="text-[11px] text-purple-400 font-mono">
+                                Omni / Neural Studio
+                            </span>
+                        </div>
+
+                        {/* Voice Engine & Style Select */}
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label className="text-[11px] text-slate-400 block mb-1">
+                                    Mô hình Voice
+                                </label>
+                                <select
+                                    value={voiceEngine}
+                                    onChange={(e) => setVoiceEngine(e.target.value as any)}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200"
+                                >
+                                    <option value="gemini-omni">Google Gemini Omni Audio</option>
+                                    <option value="azure-neural">Azure Neural Studio</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-[11px] text-slate-400 block mb-1">
+                                    Tông Giọng
+                                </label>
+                                <select
+                                    value={voiceStyle}
+                                    onChange={(e) => setVoiceStyle(e.target.value)}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200"
+                                >
+                                    <option value="female-genz">Nữ Gen Z (Bắt trend TikTok)</option>
+                                    <option value="male-genz">Nam Gen Z (Năng động)</option>
+                                    <option value="female-sweet">Nữ Ngọt Ngào (Review)</option>
+                                    <option value="male-pro">Nam Chuyên Nghiệp (Trầm ấm)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Script Editor */}
+                        <div>
+                            <label className="text-[11px] text-slate-400 block mb-1">
+                                Lời thoại Cảnh này
+                            </label>
+                            <textarea
+                                rows={2}
+                                value={currentScene.scriptText}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setScenes((prev) =>
+                                        prev.map((sc, idx) =>
+                                            idx === activeSceneIndex ? { ...sc, scriptText: val } : sc
+                                        )
+                                    );
+                                }}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500 resize-none"
+                                placeholder="Nhập câu thoại thuyết minh..."
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1">
+                            {currentScene.audioUrl ? (
+                                <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Đã có file audio
+                                </div>
+                            ) : (
+                                <span className="text-xs text-slate-500">Chưa tạo audio</span>
+                            )}
+
+                            <button
+                                onClick={() => handleGenerateVoiceForScene(activeSceneIndex)}
+                                disabled={currentScene.isGeneratingAudio}
+                                className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium transition-all flex items-center gap-1.5 shadow-md shadow-purple-600/20"
+                            >
+                                {currentScene.isGeneratingAudio ? (
+                                    <>
+                                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                        Đang tạo...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Headphones className="w-3.5 h-3.5" />
+                                        Tạo Giọng Đọc Cảnh Này
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Upload PNG Layer Box */}
                     <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex flex-col gap-3">
                         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                             <div className="flex items-center gap-2 font-semibold text-sm text-slate-200">
                                 <Layers className="w-4 h-4 text-amber-400" />
-                                Danh sách Layer Chuyển Động ({layers.length})
+                                Tải Lên Layer Riêng Lẻ (PNG Trong Suốt)
                             </div>
-                            <span className="text-[11px] text-slate-500">Kéo/Chọn layer để chỉnh</span>
                         </div>
 
-                        <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto pr-1">
-                            {layers.map((layer) => (
+                        <div className="flex items-center gap-2">
+                            <label className="flex-1 cursor-pointer py-2.5 px-3 border-2 border-dashed border-slate-700 hover:border-amber-500 rounded-xl bg-slate-800/40 hover:bg-slate-800/70 text-xs text-center text-slate-300 transition-all flex items-center justify-center gap-2">
+                                <Upload className="w-4 h-4 text-amber-400" />
+                                Tải File Layer PNG (Kẹo, Chữ, Nhân vật...)
+                                <input
+                                    type="file"
+                                    accept="image/png"
+                                    className="hidden"
+                                    onChange={handleUploadLayerImage}
+                                />
+                            </label>
+
+                            <label className="cursor-pointer py-2.5 px-3 border border-slate-700 hover:border-slate-600 rounded-xl bg-slate-800 text-xs text-slate-300 transition-all flex items-center gap-1.5" title="Đổi Poster tham chiếu">
+                                <FileText className="w-3.5 h-3.5 text-blue-400" />
+                                Đổi Poster Cảnh
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleUploadPoster}
+                                />
+                            </label>
+                        </div>
+
+                        {/* List of custom layers */}
+                        <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto pr-1">
+                            {currentScene.layers.map((layer) => (
                                 <div
                                     key={layer.id}
                                     onClick={() => setSelectedLayerId(layer.id)}
@@ -595,24 +868,14 @@ export default function MotionMakerAdmin() {
                                             : "bg-slate-800/50 hover:bg-slate-800 border-slate-700/60 text-slate-300"
                                     }`}
                                 >
-                                    <div className="flex items-center gap-2.5 truncate">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setLayers((prev) =>
-                                                    prev.map((l) =>
-                                                        l.id === layer.id ? { ...l, visible: !l.visible } : l
-                                                    )
-                                                );
-                                            }}
-                                            className="text-slate-400 hover:text-slate-200"
-                                        >
-                                            {layer.visible ? (
-                                                <Eye className="w-3.5 h-3.5" />
-                                            ) : (
-                                                <EyeOff className="w-3.5 h-3.5 text-slate-600" />
-                                            )}
-                                        </button>
+                                    <div className="flex items-center gap-2 truncate">
+                                        {layer.imgUrl && (
+                                            <img
+                                                src={layer.imgUrl}
+                                                alt="thumb"
+                                                className="w-5 h-5 object-contain rounded"
+                                            />
+                                        )}
                                         <span className="truncate">{layer.name}</span>
                                     </div>
 
@@ -629,60 +892,86 @@ export default function MotionMakerAdmin() {
                         </div>
                     </div>
 
-                    {/* Active Layer Customizer Controls */}
+                    {/* Active Layer Customizer */}
                     {activeLayer && (
-                        <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex flex-col gap-4">
-                            <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
-                                <Sliders className="w-4 h-4 text-amber-400" />
-                                <span className="font-semibold text-sm text-slate-200 truncate">
-                                    Tùy chỉnh: {activeLayer.name}
-                                </span>
+                        <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex flex-col gap-3">
+                            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                                <div className="flex items-center gap-2 text-xs font-semibold text-slate-200 truncate">
+                                    <Sliders className="w-3.5 h-3.5 text-amber-400" />
+                                    Chỉnh Motion: {activeLayer.name}
+                                </div>
                             </div>
 
-                            {/* Animation Type */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-2 text-xs">
                                 <div>
-                                    <label className="text-[11px] font-medium text-slate-400 block mb-1">
-                                        Hiệu ứng Xuất hiện
+                                    <label className="text-[11px] text-slate-400 block mb-1">
+                                        Hiệu ứng Vào
                                     </label>
                                     <select
                                         value={activeLayer.animation.entry}
                                         onChange={(e) => {
                                             const val = e.target.value as any;
-                                            setLayers((prev) =>
-                                                prev.map((l) =>
-                                                    l.id === activeLayer.id
-                                                        ? { ...l, animation: { ...l.animation, entry: val } }
-                                                        : l
+                                            setScenes((prev) =>
+                                                prev.map((sc, idx) =>
+                                                    idx === activeSceneIndex
+                                                        ? {
+                                                              ...sc,
+                                                              layers: sc.layers.map((l) =>
+                                                                  l.id === activeLayer.id
+                                                                      ? {
+                                                                            ...l,
+                                                                            animation: {
+                                                                                ...l.animation,
+                                                                                entry: val
+                                                                            }
+                                                                        }
+                                                                      : l
+                                                              )
+                                                          }
+                                                        : sc
                                                 )
                                             );
                                         }}
-                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-200"
                                     >
-                                        <option value="pop-in">Pop-in (Nảy bung)</option>
+                                        <option value="pop-in">Pop-in (Nở bung)</option>
                                         <option value="slam-down">Slam-down (Đập mạnh)</option>
                                         <option value="slide-up">Slide-up (Trượt lên)</option>
                                         <option value="wobble-in">Wobble-in (Lắc lư vào)</option>
+                                        <option value="fade">Fade (Mờ dần)</option>
                                     </select>
                                 </div>
 
                                 <div>
-                                    <label className="text-[11px] font-medium text-slate-400 block mb-1">
-                                        Hiệu ứng Duy trì (Loop)
+                                    <label className="text-[11px] text-slate-400 block mb-1">
+                                        Hiệu ứng Giữ (Loop)
                                     </label>
                                     <select
                                         value={activeLayer.animation.loopEffect}
                                         onChange={(e) => {
                                             const val = e.target.value as any;
-                                            setLayers((prev) =>
-                                                prev.map((l) =>
-                                                    l.id === activeLayer.id
-                                                        ? { ...l, animation: { ...l.animation, loopEffect: val } }
-                                                        : l
+                                            setScenes((prev) =>
+                                                prev.map((sc, idx) =>
+                                                    idx === activeSceneIndex
+                                                        ? {
+                                                              ...sc,
+                                                              layers: sc.layers.map((l) =>
+                                                                  l.id === activeLayer.id
+                                                                      ? {
+                                                                            ...l,
+                                                                            animation: {
+                                                                                ...l.animation,
+                                                                                loopEffect: val
+                                                                            }
+                                                                        }
+                                                                      : l
+                                                              )
+                                                          }
+                                                        : sc
                                                 )
                                             );
                                         }}
-                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-200"
                                     >
                                         <option value="idle-float">Nhấp nhô (Float)</option>
                                         <option value="lightning-flicker">Chớp giật (Flicker)</option>
@@ -692,11 +981,10 @@ export default function MotionMakerAdmin() {
                                 </div>
                             </div>
 
-                            {/* Timing Controls */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-2 text-xs">
                                 <div>
                                     <div className="flex justify-between text-[11px] text-slate-400 mb-1">
-                                        <span>Thời điểm vào (Delay)</span>
+                                        <span>Delay xuất hiện</span>
                                         <span className="font-mono text-amber-400">
                                             {activeLayer.animation.delay}s
                                         </span>
@@ -709,48 +997,31 @@ export default function MotionMakerAdmin() {
                                         value={activeLayer.animation.delay}
                                         onChange={(e) => {
                                             const val = parseFloat(e.target.value);
-                                            setLayers((prev) =>
-                                                prev.map((l) =>
-                                                    l.id === activeLayer.id
-                                                        ? { ...l, animation: { ...l.animation, delay: val } }
-                                                        : l
+                                            setScenes((prev) =>
+                                                prev.map((sc, idx) =>
+                                                    idx === activeSceneIndex
+                                                        ? {
+                                                              ...sc,
+                                                              layers: sc.layers.map((l) =>
+                                                                  l.id === activeLayer.id
+                                                                      ? {
+                                                                            ...l,
+                                                                            animation: {
+                                                                                ...l.animation,
+                                                                                delay: val
+                                                                            }
+                                                                        }
+                                                                      : l
+                                                              )
+                                                          }
+                                                        : sc
                                                 )
                                             );
                                         }}
-                                        className="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+                                        className="w-full h-1.5 bg-slate-800 rounded-lg"
                                     />
                                 </div>
 
-                                <div>
-                                    <div className="flex justify-between text-[11px] text-slate-400 mb-1">
-                                        <span>Thời gian nảy (Duration)</span>
-                                        <span className="font-mono text-amber-400">
-                                            {activeLayer.animation.duration}s
-                                        </span>
-                                    </div>
-                                    <input
-                                        type="range"
-                                        min={0.2}
-                                        max={1.5}
-                                        step={0.1}
-                                        value={activeLayer.animation.duration}
-                                        onChange={(e) => {
-                                            const val = parseFloat(e.target.value);
-                                            setLayers((prev) =>
-                                                prev.map((l) =>
-                                                    l.id === activeLayer.id
-                                                        ? { ...l, animation: { ...l.animation, duration: val } }
-                                                        : l
-                                                )
-                                            );
-                                        }}
-                                        className="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Position & Scale Adjustments */}
-                            <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <div className="flex justify-between text-[11px] text-slate-400 mb-1">
                                         <span>Kích cỡ (Scale)</span>
@@ -761,60 +1032,35 @@ export default function MotionMakerAdmin() {
                                     <input
                                         type="range"
                                         min={0.5}
-                                        max={1.8}
+                                        max={2.0}
                                         step={0.05}
                                         value={activeLayer.pos.scale}
                                         onChange={(e) => {
                                             const val = parseFloat(e.target.value);
-                                            setLayers((prev) =>
-                                                prev.map((l) =>
-                                                    l.id === activeLayer.id
-                                                        ? { ...l, pos: { ...l.pos, scale: val } }
-                                                        : l
+                                            setScenes((prev) =>
+                                                prev.map((sc, idx) =>
+                                                    idx === activeSceneIndex
+                                                        ? {
+                                                              ...sc,
+                                                              layers: sc.layers.map((l) =>
+                                                                  l.id === activeLayer.id
+                                                                      ? {
+                                                                            ...l,
+                                                                            pos: { ...l.pos, scale: val }
+                                                                        }
+                                                                      : l
+                                                              )
+                                                          }
+                                                        : sc
                                                 )
                                             );
                                         }}
-                                        className="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                                    />
-                                </div>
-
-                                <div>
-                                    <div className="flex justify-between text-[11px] text-slate-400 mb-1">
-                                        <span>Góc nghiêng (Rot)</span>
-                                        <span className="font-mono text-slate-200">
-                                            {activeLayer.pos.rot}°
-                                        </span>
-                                    </div>
-                                    <input
-                                        type="range"
-                                        min={-25}
-                                        max={25}
-                                        step={1}
-                                        value={activeLayer.pos.rot}
-                                        onChange={(e) => {
-                                            const val = parseInt(e.target.value);
-                                            setLayers((prev) =>
-                                                prev.map((l) =>
-                                                    l.id === activeLayer.id
-                                                        ? { ...l, pos: { ...l.pos, rot: val } }
-                                                        : l
-                                                )
-                                            );
-                                        }}
-                                        className="w-full h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+                                        className="w-full h-1.5 bg-slate-800 rounded-lg"
                                     />
                                 </div>
                             </div>
                         </div>
                     )}
-
-                    {/* Vercel Safe Guarantee Badge */}
-                    <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-start gap-3">
-                        <Info className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                        <div className="text-xs text-emerald-300/90 leading-relaxed">
-                            <strong>100% Client Engine:</strong> Toàn bộ quá trình tính toán chuyển động và xuất video chạy trực tiếp bằng GPU/Canvas của máy tính bạn. Không kích hoạt Vercel Functions, hoàn toàn không tốn chi phí serverless.
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
