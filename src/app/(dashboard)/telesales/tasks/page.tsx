@@ -1113,9 +1113,17 @@ export default function TelesalesTasksPage() {
         setColumns(standardizedUiCols);
         columnsRef.current = standardizedUiCols;
 
-        // Background: Reconcile DB task_user_columns asynchronously to match standard specs
+        // 🚀 CRITICAL OPTIMIZATION: Load visible columns immediately so UI renders in <200ms
+        const visibleCols = standardizedDbCols.filter(c => c.is_visible !== false);
+        await Promise.all(visibleCols.map(col => loadTasksForColumn(col.id, 1, false, col.column_type)));
+
+        isInitialLoadDone.current = true;
+        setIsLoading(false);
+
+        // Run background reconciliation, healings, and interview sync asynchronously without blocking UI render
         (async () => {
             try {
+                // Background: Reconcile DB task_user_columns to match standard specs
                 for (const spec of STANDARD_COLUMN_SPECS) {
                     const match = (fetchedDbCols || []).find(c => c.column_type === spec.type);
                     if (match) {
@@ -1124,29 +1132,19 @@ export default function TelesalesTasksPage() {
                         }
                     } else if (user?.id) {
                         try {
-                            const headers: Record<string, string> = {
-                                'Content-Type': 'application/json',
-                                'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-                            };
-                            if (session?.access_token) {
-                                headers['Authorization'] = `Bearer ${session.access_token}`;
-                            }
-                            await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/task_user_columns`, {
-                                method: 'POST',
-                                headers,
-                                body: JSON.stringify({
-                                    user_id: user.id,
-                                    label: spec.label,
-                                    column_type: spec.type,
-                                    position: spec.position,
-                                    is_visible: true
-                                })
+                            await supabase.from('task_user_columns').insert({
+                                user_id: user.id,
+                                label: spec.label,
+                                column_type: spec.type,
+                                position: spec.position,
+                                is_visible: true
                             });
                         } catch (err) {
                             console.warn('[refreshData] insert missing column error:', err);
                         }
                     }
                 }
+
                 // If system_done was named 'Đã xong', rename to 'Hoàn thành'
                 const legacyDone = (fetchedDbCols || []).find(c => c.column_type === 'system_done' && c.label !== 'Hoàn thành');
                 if (legacyDone) {
@@ -1157,116 +1155,104 @@ export default function TelesalesTasksPage() {
                 for (const obsolete of obsoleteCols) {
                     await deleteUserColumn(obsolete.id, session?.access_token);
                 }
-            } catch (e) {
-                console.warn('[refreshData] sync columns to DB error:', e);
+
+                // Auto-heal tasks placed in system_inbox that have status === 'done'
+                const inboxCol = standardizedDbCols.find(c => c.column_type === 'system_inbox');
+                if (inboxCol && user && session?.access_token) {
+                    try {
+                        const { data: inboxPlacements } = await supabase
+                            .from('task_column_placements')
+                            .select('task_id')
+                            .eq('user_id', user.id)
+                            .eq('column_id', inboxCol.id);
+
+                        if (inboxPlacements && inboxPlacements.length > 0) {
+                            const taskIds = inboxPlacements.map((p: any) => p.task_id);
+                            const { data: doneTasksInInbox } = await supabase
+                                .from('telesales_tasks')
+                                .select('id, due_date')
+                                .in('id', taskIds)
+                                .eq('status', 'done');
+
+                            if (doneTasksInInbox && doneTasksInInbox.length > 0) {
+                                for (const dt of doneTasksInInbox) {
+                                    const restoredStatus: TaskStatus = dt.due_date ? 'today' : 'inbox';
+                                    await updateTaskSupabase(dt.id, { status: restoredStatus, completed_at: null }, session.access_token);
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('[Tasks] healOrphanedTasks error:', err);
+                    }
+
+                    // Auto-heal tasks mistakenly placed in date columns
+                    const dateColIds = fetchedDbCols.filter(c => isDateColumn(c.column_type)).map(c => c.id);
+                    if (dateColIds.length > 0) {
+                        try {
+                            const { data: misplacedPlacements } = await supabase
+                                .from('task_column_placements')
+                                .select('id, task_id')
+                                .eq('user_id', user.id)
+                                .in('column_id', dateColIds);
+
+                            if (misplacedPlacements && misplacedPlacements.length > 0) {
+                                const misplacedIds = misplacedPlacements.map((p: any) => p.id);
+                                await supabase
+                                    .from('task_column_placements')
+                                    .update({ column_id: inboxCol.id })
+                                    .in('id', misplacedIds);
+                            }
+                        } catch (err) {
+                            console.warn('[Tasks] healMisplacedDatePlacements error:', err);
+                        }
+                    }
+
+                    // Auto-heal: Remove placements for current user where user is neither owner, creator, nor assignee
+                    try {
+                        const { data: myPlacements } = await supabase
+                            .from('task_column_placements')
+                            .select('task_id')
+                            .eq('user_id', user.id);
+
+                        if (myPlacements && myPlacements.length > 0) {
+                            const myTaskIds = myPlacements.map((p: any) => p.task_id);
+                            const { data: myTasks } = await supabase
+                                .from('telesales_tasks')
+                                .select('id, user_id, owner_id, assigned_to, leader_id, assignee_ids')
+                                .in('id', myTaskIds);
+
+                            if (myTasks) {
+                                const unassignedIds = myTasks
+                                    .filter((t: any) => !isTaskRelevantToUser(t, user.id))
+                                    .map((t: any) => t.id);
+
+                                if (unassignedIds.length > 0) {
+                                    await supabase
+                                        .from('task_column_placements')
+                                        .delete()
+                                        .eq('user_id', user.id)
+                                        .in('task_id', unassignedIds);
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('[Tasks] healUnassignedPlacements error:', err);
+                    }
+                }
+
+                // Admin interview tasks sync in background
+                const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+                if (currentPath.includes('/admin/tasks')) {
+                    fetch('/api/recruitment/sync-interview-tasks').catch(e => {
+                        console.warn('[Interview Sync] Background sync failed:', e);
+                    });
+                }
+            } catch (bgErr) {
+                console.warn('[refreshData] background maintenance error:', bgErr);
             }
         })();
-
-        // Auto-heal tasks placed in system_inbox that have status === 'done'
-        // (e.g. tasks dragged from 'Đã xong' to date columns before, whose placement was moved to inbox but status stayed 'done')
-        const inboxCol = standardizedDbCols.find(c => c.column_type === 'system_inbox');
-        if (inboxCol && user && session?.access_token) {
-            try {
-                const { data: inboxPlacements } = await supabase
-                    .from('task_column_placements')
-                    .select('task_id')
-                    .eq('user_id', user.id)
-                    .eq('column_id', inboxCol.id);
-
-                if (inboxPlacements && inboxPlacements.length > 0) {
-                    const taskIds = inboxPlacements.map((p: any) => p.task_id);
-                    const { data: doneTasksInInbox } = await supabase
-                        .from('telesales_tasks')
-                        .select('id, due_date')
-                        .in('id', taskIds)
-                        .eq('status', 'done');
-
-                    if (doneTasksInInbox && doneTasksInInbox.length > 0) {
-                        for (const dt of doneTasksInInbox) {
-                            const restoredStatus: TaskStatus = dt.due_date ? 'today' : 'inbox';
-                            await updateTaskSupabase(dt.id, { status: restoredStatus, completed_at: null }, session.access_token);
-                        }
-                    }
-                }
-            } catch (err) {
-                console.warn('[Tasks] healOrphanedTasks error:', err);
-            }
-
-            // Auto-heal tasks mistakenly placed in date columns:
-            // Date columns query by date range and do NOT read task_column_placements.
-            // Active tasks placed in date columns become invisible when their due_date is > 7 days or empty.
-            // Move any placements targeting date columns back to system_inbox.
-            const dateColIds = fetchedDbCols.filter(c => isDateColumn(c.column_type)).map(c => c.id);
-            if (dateColIds.length > 0) {
-                try {
-                    const { data: misplacedPlacements } = await supabase
-                        .from('task_column_placements')
-                        .select('id, task_id')
-                        .eq('user_id', user.id)
-                        .in('column_id', dateColIds);
-
-                    if (misplacedPlacements && misplacedPlacements.length > 0) {
-                        const misplacedIds = misplacedPlacements.map((p: any) => p.id);
-                        await supabase
-                            .from('task_column_placements')
-                            .update({ column_id: inboxCol.id })
-                            .in('id', misplacedIds);
-                    }
-                } catch (err) {
-                    console.warn('[Tasks] healMisplacedDatePlacements error:', err);
-                }
-            }
-
-            // Auto-heal: Remove placements for current user where user is neither owner, creator, nor assignee
-            try {
-                const { data: myPlacements } = await supabase
-                    .from('task_column_placements')
-                    .select('task_id')
-                    .eq('user_id', user.id);
-
-                if (myPlacements && myPlacements.length > 0) {
-                    const myTaskIds = myPlacements.map((p: any) => p.task_id);
-                    const { data: myTasks } = await supabase
-                        .from('telesales_tasks')
-                        .select('id, user_id, owner_id, assigned_to, leader_id, assignee_ids')
-                        .in('id', myTaskIds);
-
-                    if (myTasks) {
-                        const unassignedIds = myTasks
-                            .filter((t: any) => !isTaskRelevantToUser(t, user.id))
-                            .map((t: any) => t.id);
-
-                        if (unassignedIds.length > 0) {
-                            await supabase
-                                .from('task_column_placements')
-                                .delete()
-                                .eq('user_id', user.id)
-                                .in('task_id', unassignedIds);
-                        }
-                    }
-                }
-            } catch (err) {
-                console.warn('[Tasks] healUnassignedPlacements error:', err);
-            }
-        }
-
-        // Admin-only: Ensure interview candidates are synced as real database tasks before loading
-        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-        if (currentPath.includes('/admin/tasks')) {
-            try {
-                await fetch('/api/recruitment/sync-interview-tasks');
-            } catch (e) {
-                console.warn('[Interview Sync] Background sync failed:', e);
-            }
-        }
-
-        // Load each visible column independently
-        const visibleCols = standardizedDbCols.filter(c => c.is_visible !== false);
-        await Promise.all(visibleCols.map(col => loadTasksForColumn(col.id, 1, false, col.column_type)));
-
-        isInitialLoadDone.current = true;
-        setIsLoading(false);
     }, [user, loadTasksForColumn]);
+
 
     // Helper to scroll to task
     const handleLocateTask = (taskId: string) => {

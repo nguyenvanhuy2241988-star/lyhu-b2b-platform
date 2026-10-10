@@ -1254,3 +1254,27 @@ export function parseAssigneeIds(raw: any): string[] {
     }
     return [];
 }
+
+export function isTaskAssignedToUser(task: any, currentUserId?: string | null): boolean {
+    if (!currentUserId || !task) return false;
+    if (task.assigned_to === currentUserId) return true;
+    const aIds = parseAssigneeIds(task.assignee_ids);
+    if (aIds.includes(currentUserId)) return true;
+    if (task.subtasks && Array.isArray(task.subtasks)) {
+        if (task.subtasks.some((st: any) => st.assigned_to === currentUserId)) return true;
+    }
+    if (task.note && typeof task.note === 'string' && task.note.includes('<!-- TASK_META:')) {
+        const meta = extractTaskMetadata(task);
+        if (meta.subtasks?.some((st: any) => st.assigned_to === currentUserId)) return true;
+    }
+    return false;
+}
+
+export function isTaskRelevantToUser(task: any, currentUserId?: string | null): boolean {
+    if (!currentUserId || !task) return false;
+    if (task.user_id === currentUserId) return true;
+    if (task.owner_id === currentUserId) return true;
+    if (task.leader_id === currentUserId) return true;
+    return isTaskAssignedToUser(task, currentUserId);
+}
+
