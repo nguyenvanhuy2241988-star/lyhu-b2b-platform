@@ -92,11 +92,11 @@ export async function generateMetadata(
     }
 
     return {
-        title: 'LYHU - Tổng Kho Phân Phối Bánh Kẹo & Nông Sản Sấy Giá Sỉ Tận Xưởng',
-        description: 'Tổng kho phân phối sỉ bánh kẹo, đồ ăn vặt và nông sản sấy đặc sản LYHU. Nguồn hàng tận xưởng, kết nối chân thành - hợp tác bền vững cho đại lý và siêu thị mini toàn quốc.',
+        title: 'LYHU | Kết Nối Chân Thành - Hợp Tác Bền Vững',
+        description: 'LYHU - Sản xuất, nhập khẩu và phân phối thực phẩm hàng đầu: Thương hiệu riêng BOYO, nhập khẩu độc quyền CVT & UHI, độc quyền Miền Bắc ABI SNACK. Triết lý Kết Nối Chân Thành - Hợp Tác Bền Vững.',
         openGraph: {
-            title: 'LYHU - Tổng Kho Phân Phối Bánh Kẹo & Nông Sản Sấy Giá Sỉ',
-            description: 'Nguồn hàng sỉ tận xưởng, chiết khấu cao, hỗ trợ giao hàng toàn quốc.',
+            title: 'LYHU | Kết Nối Chân Thành - Hợp Tác Bền Vững',
+            description: 'Sản xuất, nhập khẩu và phân phối thực phẩm: BOYO, CVT, ABI SNACK, UHI.',
             url: 'https://lyhu.com.vn',
             siteName: 'LYHU',
             type: 'website',

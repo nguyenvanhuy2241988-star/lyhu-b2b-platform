@@ -9,14 +9,14 @@ import { Suspense } from "react";
 export const metadata: Metadata = {
     metadataBase: new URL('https://lyhu.com.vn'),
     title: {
-        default: "LYHU - Tổng Kho Phân Phối Bánh Kẹo & Nông Sản Sấy Giá Sỉ Tận Xưởng",
+        default: "LYHU | Kết Nối Chân Thành - Hợp Tác Bền Vững",
         template: "%s | LYHU"
     },
-    description: "Tổng kho phân phối sỉ bánh kẹo, đồ ăn vặt và nông sản sấy đặc sản LYHU. Nguồn hàng tận xưởng, pháp lý VAT đầy đủ, chiết khấu cao cho siêu thị mini, tạp hóa và đại lý toàn quốc.",
-    keywords: ["LYHU", "bánh kẹo giá sỉ", "tổng kho sỉ bánh kẹo", "đồ ăn vặt giá sỉ", "nông sản sấy", "bán buôn tạp hóa", "kẹo dẻo UHi", "snack CVT"],
+    description: "LYHU - Doanh nghiệp sản xuất, nhập khẩu và phân phối thực phẩm hàng đầu: Thương hiệu riêng BOYO, nhập khẩu độc quyền CVT & UHI, độc quyền miền Bắc ABI SNACK. Kết nối chân thành - Hợp tác bền vững cùng đại lý toàn quốc.",
+    keywords: ["LYHU", "lyhu.vn", "BOYO", "CVT", "ABI SNACK", "UHI", "kẹo dẻo UHi", "snack CVT", "nhập khẩu thực phẩm", "phân phối thực phẩm"],
     openGraph: {
-        title: "LYHU - Tổng Kho Phân Phối Bánh Kẹo & Nông Sản Sấy Giá Sỉ",
-        description: "Nguồn hàng bánh kẹo, đồ ăn vặt và đặc sản giá sỉ tận xưởng cho siêu thị mini & tạp hóa toàn quốc.",
+        title: "LYHU | Kết Nối Chân Thành - Hợp Tác Bền Vững",
+        description: "Doanh nghiệp sản xuất, nhập khẩu và phân phối thực phẩm hàng đầu: BOYO, CVT, ABI SNACK, UHI. Kết nối chân thành - Hợp tác bền vững.",
         url: "https://lyhu.com.vn",
         siteName: "LYHU",
         locale: "vi_VN",
@@ -24,8 +24,8 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: "summary_large_image",
-        title: "LYHU - Tổng Kho Phân Phối Bánh Kẹo & Nông Sản Sấy Giá Sỉ",
-        description: "Nguồn hàng bánh kẹo, đồ ăn vặt và đặc sản giá sỉ tận xưởng.",
+        title: "LYHU | Kết Nối Chân Thành - Hợp Tác Bền Vững",
+        description: "Sản xuất, nhập khẩu và phân phối thực phẩm: BOYO, CVT, ABI SNACK, UHI.",
     },
     alternates: {
         canonical: "https://lyhu.com.vn",
