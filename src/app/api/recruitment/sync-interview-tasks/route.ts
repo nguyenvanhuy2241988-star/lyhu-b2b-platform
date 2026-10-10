@@ -82,7 +82,11 @@ export async function GET() {
                 existingCount++;
                 const existingTask = existingTasks[0];
                 // If schedule changed and task is not yet completed, update due date
-                if (scheduledAt && existingTask.status !== 'done' && existingTask.due_date !== scheduledAt) {
+                const existingTime = existingTask.due_date ? new Date(existingTask.due_date).getTime() : 0;
+                const newTime = scheduledAt ? new Date(scheduledAt).getTime() : 0;
+                const hasScheduleChanged = Math.abs(existingTime - newTime) > 60000;
+
+                if (scheduledAt && existingTask.status !== 'done' && hasScheduleChanged) {
                     await supabase
                         .from('telesales_tasks')
                         .update({ due_date: scheduledAt })

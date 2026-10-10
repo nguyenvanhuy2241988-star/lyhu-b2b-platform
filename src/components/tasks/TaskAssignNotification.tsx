@@ -29,15 +29,47 @@ export const TaskAssignNotification = () => {
     const knownAssignedTaskIdsRef = useRef<Set<string>>(new Set());
     const knownAssignedSubtaskIdsRef = useRef<Set<string>>(new Set());
     const isInitializedRef = useRef<boolean>(false);
+    const mountedAtRef = useRef<number>(Date.now());
+
+    // Helper for persisting already notified tasks across page refreshes in this browser session
+    const isSessionNotified = (taskId: string): boolean => {
+        if (typeof window === 'undefined') return false;
+        try {
+            const raw = sessionStorage.getItem('lyhu_notified_task_ids');
+            if (!raw) return false;
+            const list = JSON.parse(raw);
+            return Array.isArray(list) && list.includes(taskId);
+        } catch {
+            return false;
+        }
+    };
+
+    const markSessionNotified = (taskId: string) => {
+        if (typeof window === 'undefined') return;
+        try {
+            const raw = sessionStorage.getItem('lyhu_notified_task_ids');
+            const list = raw ? JSON.parse(raw) : [];
+            if (!list.includes(taskId)) {
+                list.push(taskId);
+                sessionStorage.setItem('lyhu_notified_task_ids', JSON.stringify(list));
+            }
+        } catch { }
+    };
 
     // Pre-cache profiles and existing assigned task IDs on mount
     useEffect(() => {
         if (!user?.id) return;
+        mountedAtRef.current = Date.now();
 
         const initializeData = async () => {
             try {
-                // 1. Fetch profiles cache
-                const { data: pData } = await supabase.from('profiles').select('id, full_name, email');
+                // 1. Fetch profiles cache & placements in parallel
+                const [{ data: pData }, { data: tData }, { data: placements }] = await Promise.all([
+                    supabase.from('profiles').select('id, full_name, email'),
+                    supabase.from('telesales_tasks').select('id, assigned_to, assignee_ids, note, metadata'),
+                    supabase.from('task_column_placements').select('task_id').eq('user_id', user.id)
+                ]);
+
                 if (pData) {
                     const cache: Record<string, string> = {};
                     pData.forEach((p: any) => {
@@ -46,15 +78,17 @@ export const TaskAssignNotification = () => {
                     profilesCacheRef.current = cache;
                 }
 
-                // 2. Fetch all tasks CURRENTLY assigned to user so existing tasks NEVER trigger false notifications
-                const { data: tData } = await supabase
-                    .from('telesales_tasks')
-                    .select('id, assigned_to, assignee_ids, note, metadata');
+                const taskIds = new Set<string>();
+                const subtaskKeys = new Set<string>();
+
+                // Add all tasks user has placements for
+                if (placements) {
+                    placements.forEach((p: any) => {
+                        if (p.task_id) taskIds.add(p.task_id);
+                    });
+                }
 
                 if (tData) {
-                    const taskIds = new Set<string>();
-                    const subtaskKeys = new Set<string>();
-
                     tData.forEach((t: any) => {
                         if (isTaskAssignedToUser(t, user.id)) {
                             taskIds.add(t.id);
@@ -66,10 +100,10 @@ export const TaskAssignNotification = () => {
                             }
                         });
                     });
-
-                    knownAssignedTaskIdsRef.current = taskIds;
-                    knownAssignedSubtaskIdsRef.current = subtaskKeys;
                 }
+
+                knownAssignedTaskIdsRef.current = taskIds;
+                knownAssignedSubtaskIdsRef.current = subtaskKeys;
             } catch (err) {
                 console.warn('[TaskAssignNotification] Failed to initialize known assignments:', err);
             } finally {
@@ -120,54 +154,61 @@ export const TaskAssignNotification = () => {
                     if (!isInitializedRef.current) return;
 
                     const task = payload.new as any;
+                    const oldTask = payload.old as any;
                     if (!task || !task.id) return;
 
-                    // If user is the creator/owner and nobody else was assigned, ignore self actions
+                    // 1. Never notify if already notified in this browser session
+                    if (isSessionNotified(task.id)) return;
+
+                    // 2. If user is the creator/owner and nobody else was assigned, ignore self actions
                     const isSelfCreator = (task.owner_id === user.id || task.user_id === user.id);
                     if (isSelfCreator && !task.assigned_to && (!task.assignee_ids || task.assignee_ids.length <= 1)) {
                         return;
                     }
 
-                    // Check assignment
+                    // 3. Check assignment in new state
                     const meta = extractTaskMetadata(task);
                     const assignedSubtask = meta.subtasks?.find(
                         (st: any) => st.assigned_to === user.id && !st.completed
                     );
                     const isAssigned = isTaskAssignedToUser(task, user.id);
-
                     if (!isAssigned) return;
+
+                    // 4. If payload.old had user already assigned, this UPDATE is NOT a new assignment
+                    if (payload.eventType === 'UPDATE' && oldTask && isTaskAssignedToUser(oldTask, user.id)) {
+                        return;
+                    }
 
                     const isAlreadyKnownTask = knownAssignedTaskIdsRef.current.has(task.id);
                     const subtaskKey = assignedSubtask ? `${task.id}_${assignedSubtask.id || assignedSubtask.title}` : null;
                     const isAlreadyKnownSubtask = subtaskKey ? knownAssignedSubtaskIdsRef.current.has(subtaskKey) : true;
 
-                    // STRICT FILTERING: Prevent false alarms on existing tagged tasks!
+                    // 5. STRICT FILTERING: Only notify if event occurred AFTER this component mounted
+                    const taskCreatedAtMs = task.created_at ? new Date(task.created_at).getTime() : 0;
+
                     if (payload.eventType === 'INSERT') {
-                        // For INSERT: only notify if task was created in last 2 minutes and not already known
-                        const createdAtMs = task.created_at ? new Date(task.created_at).getTime() : Date.now();
-                        const isRecentlyCreated = (Date.now() - createdAtMs) < 120000;
-                        if (!isRecentlyCreated || isAlreadyKnownTask) {
+                        // Task must be created AFTER the current tab was opened (with 3s buffer)
+                        if (taskCreatedAtMs < mountedAtRef.current - 3000 || isAlreadyKnownTask) {
                             return;
                         }
                     } else if (payload.eventType === 'UPDATE') {
-                        // For UPDATE:
-                        // Case A: User was ALREADY assigned to this task -> only notify if a BRAND NEW subtask step was assigned to user!
-                        if (isAlreadyKnownTask) {
+                        // If task was known before or created prior to this session:
+                        // Only notify if a brand new subtask step was assigned to user!
+                        if (isAlreadyKnownTask || taskCreatedAtMs < mountedAtRef.current - 10000) {
                             if (!assignedSubtask || isAlreadyKnownSubtask) {
-                                // Just a drag-drop, column update, status change, or note edit on an existing task. DO NOT NOTIFY.
                                 return;
                             }
                         }
-                        // Case B: User was NOT previously assigned, but IS NOW -> Real new assignment!
                     }
 
                     // Throttle repeated notifications for same task
-                    const noticeKey = `${task.id}_${subtaskKey || 'main'}_${Math.floor(Date.now() / 15000)}`;
+                    const noticeKey = `${task.id}_${subtaskKey || 'main'}`;
                     if (handledTaskIdsRef.current.has(noticeKey)) return;
                     handledTaskIdsRef.current.add(noticeKey);
 
-                    // Add to known sets immediately so subsequent updates don't re-trigger
+                    // Mark as notified in memory and sessionStorage
                     knownAssignedTaskIdsRef.current.add(task.id);
+                    markSessionNotified(task.id);
                     if (subtaskKey) knownAssignedSubtaskIdsRef.current.add(subtaskKey);
 
                     // Resolve creator/assigner name
