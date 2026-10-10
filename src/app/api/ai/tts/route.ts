@@ -85,7 +85,10 @@ async function synthesizeWithEdgeTTS(
     }
 
     const tts = new MsEdgeTTS();
-    await tts.setMetadata(preset.shortName, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+    await Promise.race([
+        tts.setMetadata(preset.shortName, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("MsEdgeTTS setMetadata timeout")), 3000))
+    ]);
     
     const { audioStream } = tts.toStream(text, {
         rate: computedRate,
