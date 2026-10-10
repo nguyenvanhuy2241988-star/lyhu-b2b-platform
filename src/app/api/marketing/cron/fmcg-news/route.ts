@@ -80,6 +80,26 @@ export async function GET(req: Request) {
             focusAreas = topicsData.map(t => t.content);
         }
 
+        // Nhóm chủ đề CÓ LƯỢNG TÌM KIẾM THẬT CAO trên Google (High Search Volume & Nhu cầu sỉ thực tế)
+        const highIntentTopics = [
+            "Nguồn sỉ kẹo dẻo siêu chua UHi: Báo giá thùng, các vị hot trend và chính sách đại lý",
+            "Đại lý phân phối khoai môn sấy tẩm vị CVT: Vị trứng cua, trứng muối, cay giòn cho tiệm tạp hóa",
+            "Tổng kho sỉ bánh tráng Abi Snack giá xưởng: Bánh tráng bơ, sa tế cay, da cá lắc cho cổng trường",
+            "Bột phô mai BOYO sỉ thùng: Báo giá chiết khấu, công thức lắc khoai tây, bắp rang bơ hút khách",
+            "Mở tiệm tạp hóa cần bao nhiêu vốn? Danh mục hàng hóa bán chạy quay vòng vốn nhanh nhất",
+            "Top mặt hàng ăn vặt cổng trường và tiệm tạp hóa bán chạy nhất có tỷ suất lợi nhuận cao",
+            "Cách tính lợi nhuận bán hàng tạp hóa và quản lý hạn sử dụng date bánh kẹo hiệu quả",
+            "Thủ tục xuất hóa đơn điện tử VAT và quy định quản lý thị trường cho tiệm tạp hóa bán lẻ",
+            "Kinh nghiệm chọn nhà phân phối bánh kẹo sỉ uy tín, vốn ít, hỗ trợ đổi trả cận date"
+        ];
+
+        // Bổ sung những chủ đề chưa có vào focusAreas
+        for (const topic of highIntentTopics) {
+            if (!focusAreas.includes(topic)) {
+                focusAreas.push(topic);
+            }
+        }
+
         // Fallback trong trường hợp DB rỗng hoặc lỗi
         if (focusAreas.length === 0) {
             focusAreas = [
@@ -96,9 +116,7 @@ export async function GET(req: Request) {
                 "Công nghệ bán lẻ & dữ liệu",
                 "Góc nhà phân phối & điểm bán",
                 "Nhân sự, tuyển dụng & việc làm ngành FMCG - Bán lẻ",
-                "Top mặt hàng ăn vặt và bánh kẹo bán chạy nhất",
-                "Hóa đơn điện tử, thuế và thủ tục pháp lý cho cửa hàng bán lẻ",
-                "Chính sách nhập sỉ vốn ít cho tiệm tạp hóa mới mở"
+                ...highIntentTopics
             ];
         }
 
@@ -128,33 +146,23 @@ export async function GET(req: Request) {
         const currentYear = now.toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric' });
 
         const prompt = `
-Bạn là "Chuyên gia phân tích thị trường B2B FMCG", làm việc cho LYHU - Nền tảng phân phối sỉ hàng tiêu dùng nhanh (FMCG) hàng đầu Việt Nam. Khán giả của bạn là các nhà phân phối, chủ tạp hóa, chủ siêu thị mini và các điểm bán lẻ truyền thống (GT).
+Bạn là "Chuyên gia phân tích thị trường B2B FMCG & Cố vấn kinh doanh bán lẻ", làm việc cho LYHU (lyhu.com.vn) - Nhà phân phối và nhập khẩu sỉ bánh kẹo, đồ ăn vặt và nguyên liệu hàng đầu Việt Nam. Khán giả của bạn là các chủ tiệm tạp hóa, chủ siêu thị mini, đại lý bán sỉ và các điểm bán lẻ truyền thống (GT).
 
-⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
-⚠️ LƯU Ý VỀ TIÊU ĐỀ: KHÔNG tự động chèn thêm năm vào cuối tiêu đề một cách máy móc. CHỈ ĐƯỢC PHÉP đưa năm vào tiêu đề nếu bản thân tin tức đó là báo cáo tài chính định kỳ, tổng kết quý/năm, hoặc xu hướng đặc thù của năm đó (Ví dụ: Báo cáo thị trường Quý 1/${currentYear}).
-⚠️ CHỐNG TRÙNG LẶP NỘI DUNG: Tiêu đề và nội dung PHẢI HOÀN TOÀN MỚI, ĐỘC ĐÁO, đào sâu vào một sự kiện hoặc góc nhìn cụ thể mới nhất. TUYỆT ĐỐI KHÔNG đặt tiêu đề chung chung hoặc lặp lại các tiêu đề cũ.
-⚠️ LƯU Ý VỀ VĂN PHONG: TUYỆT ĐỐI KHÔNG để lại các số trích dẫn nguồn dạng [1], [2], [3] trong bài viết. Bài viết phải trôi chảy tự nhiên như một bài báo thực thụ.
+⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu và bối cảnh PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}).
+⚠️ LƯU Ý VỀ TIÊU ĐỀ: Đặt tiêu đề hấp dẫn, đánh trúng 100% "Ý ĐỊNH TÌM KIẾM CỦA NGƯỜI DÙNG" trên Google (Ví dụ: Báo giá sỉ kẹo dẻo UHi, Kinh nghiệm mở tiệm tạp hóa vốn ít, Hướng dẫn xuất hóa đơn điện tử...). KHÔNG tự động chèn năm vào cuối câu nếu không cần thiết.
+⚠️ CHỐNG TRÙNG LẶP NỘI DUNG: Tiêu đề và nội dung PHẢI HOÀN TOÀN MỚI, ĐỘC ĐÁO, đào sâu vào góc nhìn thực chiến, số liệu và giải pháp cụ thể.
+⚠️ LƯU Ý VỀ VĂN PHONG: TUYỆT ĐỐI KHÔNG để lại các số trích dẫn nguồn dạng [1], [2], [3] trong bài viết. Bài viết phải trôi chảy, chuyên nghiệp, cấu trúc rõ ràng.
 
-BẮT BUỘC SỐ 1: Hãy tự động tìm kiếm trên Google các tin tức NÓNG NHẤT, MỚI NHẤT trong 24-48 giờ qua tại thị trường Việt Nam về chủ đề sau:
-CHỦ ĐỀ TẬP TRUNG: "${randomFocus}"
+CHỦ ĐỀ BÀI VIẾT: "${randomFocus}"
 
-Dựa trên thông tin tìm được, hãy viết một bài phân tích chuyên sâu (khoảng 800-1000 chữ). 
-TUYỆT ĐỐI tuân thủ cấu trúc 5 phần sau (hãy dùng tiêu đề cho từng phần):
-
-1. Chuyện gì đang xảy ra?
-(Tóm tắt tin tức, sự kiện hoặc xu hướng mới vừa diễn ra. Bám sát sự thật, có số liệu cụ thể).
-
-2. Vì sao điều này quan trọng?
-(Giải thích tác động đến thị trường FMCG, bán lẻ, nhà phân phối, điểm bán hoặc người tiêu dùng).
-
-3. Ảnh hưởng đến kênh GT/MT như thế nào?
-(Phân tích tác động đến tạp hóa, siêu thị mini, chuỗi bán lẻ, cửa hàng tiện lợi, nhà phân phối hoặc thương hiệu nhỏ. Ai được lợi, ai bị ép?).
-
-4. LYHU góc nhìn thực chiến
-(Đưa ra nhận định thực tế, khách quan từ góc nhìn nhà phân phối B2B và điểm bán: điểm bán nên làm gì, nhà phân phối nên chuẩn bị gì, các doanh nghiệp và chủ shop có cơ hội gì).
-
-5. Gợi ý hành động
-(Kết bài bằng 2-3 gợi ý hành động ngắn gọn, thiết thực, dễ áp dụng cho nhà bán lẻ/NPP. Ví dụ: Ưu tiên nhóm hàng nào? Cần thay đổi cách vận hành hoặc trưng bày ra sao?).
+HƯỚNG DẪN VIẾT BÀI THEO ĐÚNG LOẠI CHỦ ĐỀ:
+- NẾU CHỦ ĐỀ LÀ TIN TỨC THỊ TRƯỜNG: Hãy dùng Google Search tìm kiếm tin tức mới nhất trong ngành và viết bài phân tích 5 phần (1. Chuyện gì đang xảy ra? - 2. Vì sao quan trọng? - 3. Ảnh hưởng kênh GT/MT - 4. LYHU góc nhìn thực chiến - 5. Gợi ý hành động).
+- NẾU CHỦ ĐỀ LÀ HƯỚNG DẪN NGUỒN SỈ / KINH NGHIỆM BÁN LẺ / BÁO GIÁ: Hãy viết như một Cẩm nang thực chiến chuyên sâu dài 900-1200 chữ:
+  1. Tổng quan nhu cầu thị trường & sức hút của sản phẩm/mô hình đối với người mua.
+  2. Phân tích chi tiết danh mục, đặc điểm sản phẩm, các hương vị bán chạy nhất.
+  3. Chính sách nhập sỉ, chiết khấu, bài toán vốn & tỷ suất lợi nhuận thực tế cho chủ tiệm.
+  4. Các lưu ý quan trọng về pháp lý, xuất hóa đơn VAT điện tử, kiểm tra date và bảo quản hàng hóa.
+  5. Lời khuyên tối ưu bán lẻ và cách liên hệ nhập sỉ hàng chính hãng giá tốt.
 
 YÊU CẦU BẮT BUỘC VỀ FORMAT:
 1. CHỈ TRẢ VỀ mã HTML chuẩn. KHÔNG dùng Markdown (** hay #).
