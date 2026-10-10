@@ -83,17 +83,22 @@ export async function GET(req: Request) {
         // Fallback trong trường hợp DB rỗng hoặc lỗi
         if (focusAreas.length === 0) {
             focusAreas = [
-                "Kinh nghiệm mở và vận hành tiệm tạp hóa, siêu thị mini vốn ít tối ưu lợi nhuận",
-                "Top mặt hàng ăn vặt và bánh kẹo bán chạy nhất cổng trường học, tiệm tạp hóa",
-                "Quy định hóa đơn điện tử VAT, giấy tờ công bố và quản lý thị trường cho tiệm bán lẻ",
-                "Kênh tạp hóa, siêu thị mini & GT truyền thống: Cách cạnh tranh với chuỗi lớn",
-                "Bí quyết chọn nguồn hàng sỉ bánh kẹo, snack hot trend chiết khấu cao và quay vòng vốn nhanh",
-                "Thị trường FMCG Việt Nam & xu hướng tiêu dùng quà vặt, đồ ăn nhanh",
-                "Cửa hàng tiện lợi & hành vi tiêu dùng ăn vặt của Gen Z, học sinh sinh viên",
-                "Thương mại điện tử & Social Commerce FMCG đối với đại lý phân phối",
-                "Chính sách, pháp lý & tiêu chuẩn hàng hóa nhập khẩu chính ngạch",
-                "Chuỗi cung ứng, logistics giao hàng nhanh cho đại lý tạp hóa",
-                "Góc nhà phân phối & điểm bán: Tối ưu tồn kho và hạn sử dụng sản phẩm"
+                "Thị trường FMCG Việt Nam",
+                "Doanh nghiệp FMCG lớn",
+                "Hệ thống bán lẻ hiện đại",
+                "Cửa hàng tiện lợi & tiêu dùng Gen Z",
+                "Kênh tạp hóa, siêu thị mini & GT truyền thống",
+                "Thương mại điện tử & Social Commerce FMCG",
+                "Xu hướng người tiêu dùng",
+                "Ngành hàng FMCG trọng điểm",
+                "Chính sách, pháp lý & tiêu chuẩn hàng hóa",
+                "Chuỗi cung ứng, logistics & giá nguyên liệu",
+                "Công nghệ bán lẻ & dữ liệu",
+                "Góc nhà phân phối & điểm bán",
+                "Nhân sự, tuyển dụng & việc làm ngành FMCG - Bán lẻ",
+                "Top mặt hàng ăn vặt và bánh kẹo bán chạy nhất",
+                "Hóa đơn điện tử, thuế và thủ tục pháp lý cho cửa hàng bán lẻ",
+                "Chính sách nhập sỉ vốn ít cho tiệm tạp hóa mới mở"
             ];
         }
 
@@ -123,10 +128,10 @@ export async function GET(req: Request) {
         const currentYear = now.toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric' });
 
         const prompt = `
-Bạn là "Chuyên gia phân tích thị trường B2B FMCG & Cố vấn kinh doanh bán lẻ", làm việc cho LYHU (lyhu.com.vn) - Nhà nhập khẩu và phân phối sỉ bánh kẹo, đồ ăn vặt và nguyên liệu hàng đầu Việt Nam. Khán giả chính của bạn là các chủ tiệm tạp hóa, chủ siêu thị mini, đại lý bánh kẹo và các điểm bán lẻ truyền thống (GT).
+Bạn là "Chuyên gia phân tích thị trường B2B FMCG", làm việc cho LYHU - Nền tảng phân phối sỉ hàng tiêu dùng nhanh (FMCG) hàng đầu Việt Nam. Khán giả của bạn là các nhà phân phối, chủ tạp hóa, chủ siêu thị mini và các điểm bán lẻ truyền thống (GT).
 
 ⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
-⚠️ LƯU Ý VỀ TIÊU ĐỀ: Đặt tiêu đề hấp dẫn, đánh trúng "Ý ĐỊNH TÌM KIẾM CỦA CHỦ TIỆM" (Ví dụ: cách chọn nguồn sỉ, bí quyết bán chạy, tối ưu vốn, hóa đơn điện tử, mặt hàng hot trend kẹo dẻo/bánh tráng/snack khoai môn...). KHÔNG tự động chèn năm vào cuối tiêu đề một cách máy móc.
+⚠️ LƯU Ý VỀ TIÊU ĐỀ: KHÔNG tự động chèn thêm năm vào cuối tiêu đề một cách máy móc. CHỈ ĐƯỢC PHÉP đưa năm vào tiêu đề nếu bản thân tin tức đó là báo cáo tài chính định kỳ, tổng kết quý/năm, hoặc xu hướng đặc thù của năm đó (Ví dụ: Báo cáo thị trường Quý 1/${currentYear}).
 ⚠️ CHỐNG TRÙNG LẶP NỘI DUNG: Tiêu đề và nội dung PHẢI HOÀN TOÀN MỚI, ĐỘC ĐÁO, đào sâu vào một sự kiện hoặc góc nhìn cụ thể mới nhất. TUYỆT ĐỐI KHÔNG đặt tiêu đề chung chung hoặc lặp lại các tiêu đề cũ.
 ⚠️ LƯU Ý VỀ VĂN PHONG: TUYỆT ĐỐI KHÔNG để lại các số trích dẫn nguồn dạng [1], [2], [3] trong bài viết. Bài viết phải trôi chảy tự nhiên như một bài báo thực thụ.
 
@@ -139,17 +144,17 @@ TUYỆT ĐỐI tuân thủ cấu trúc 5 phần sau (hãy dùng tiêu đề cho 
 1. Chuyện gì đang xảy ra?
 (Tóm tắt tin tức, sự kiện hoặc xu hướng mới vừa diễn ra. Bám sát sự thật, có số liệu cụ thể).
 
-2. Vì sao điều này quan trọng với người bán lẻ?
-(Giải thích tác động trực tiếp đến dòng tiền, sức mua, thị hiếu khách hàng hoặc quy định quản lý đối với tạp hóa, siêu thị mini).
+2. Vì sao điều này quan trọng?
+(Giải thích tác động đến thị trường FMCG, bán lẻ, nhà phân phối, điểm bán hoặc người tiêu dùng).
 
-3. Phân tích thực tế kênh GT và các tiệm tạp hóa
-(Phân tích áp lực cạnh tranh, biên lợi nhuận, thói quen mua sắm của người tiêu dùng khu vực dân cư, trường học).
+3. Ảnh hưởng đến kênh GT/MT như thế nào?
+(Phân tích tác động đến tạp hóa, siêu thị mini, chuỗi bán lẻ, cửa hàng tiện lợi, nhà phân phối hoặc thương hiệu nhỏ. Ai được lợi, ai bị ép?).
 
 4. LYHU góc nhìn thực chiến
-(Đưa ra nhận định thực tế từ nhà phân phối: điểm bán nên tối ưu tồn kho thế nào, lựa chọn danh mục hàng quay vòng nhanh ra sao. Khéo léo liên hệ tới các dòng sản phẩm có sức tiêu thụ mạnh như kẹo dẻo siêu chua UHi, snack khoai môn CVT, bánh tráng Abi Snack, bột phô mai BOYO, cùng lợi thế nhập sỉ có hóa đơn VAT điện tử và chính sách hỗ trợ vốn ít).
+(Đưa ra nhận định thực tế, khách quan từ góc nhìn nhà phân phối B2B và điểm bán: điểm bán nên làm gì, nhà phân phối nên chuẩn bị gì, các doanh nghiệp và chủ shop có cơ hội gì).
 
-5. Gợi ý hành động cụ thể cho chủ tiệm
-(Kết bài bằng 2-3 gợi ý hành động ngắn gọn, dễ áp dụng ngay: Ưu tiên nhập nhóm hàng nào? Cách trưng bày kích thích mua thêm? Bí quyết đàm phán chính sách sỉ Mua 10 Tặng 1 để gia tăng lợi nhuận?).
+5. Gợi ý hành động
+(Kết bài bằng 2-3 gợi ý hành động ngắn gọn, thiết thực, dễ áp dụng cho nhà bán lẻ/NPP. Ví dụ: Ưu tiên nhóm hàng nào? Cần thay đổi cách vận hành hoặc trưng bày ra sao?).
 
 YÊU CẦU BẮT BUỘC VỀ FORMAT:
 1. CHỈ TRẢ VỀ mã HTML chuẩn. KHÔNG dùng Markdown (** hay #).

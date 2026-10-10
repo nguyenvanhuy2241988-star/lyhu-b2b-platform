@@ -12,7 +12,8 @@ interface ProductItem {
 export default function BlogProductGrid({ products }: { products: ProductItem[] }) {
     if (!products || products.length === 0) return null;
 
-    const hotlineZalo = '0969153015';
+    const zalo1 = '0969069798';
+    const zalo2 = '0368368834';
 
     return (
         <section aria-label="Sản phẩm chủ lực LYHU" className="mt-14 pt-8 border-t-2 border-primary-100">
@@ -37,7 +38,7 @@ export default function BlogProductGrid({ products }: { products: ProductItem[] 
 
             {/* Banner Chính Sách Đại Lý & Ưu Đãi Mua 10 Tặng 1 */}
             <div className="bg-gradient-to-r from-teal-800 via-teal-700 to-primary-700 text-white rounded-2xl p-4 sm:p-5 mb-6 shadow-sm">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
                             <span className="bg-yellow-400 text-teal-950 text-xs font-black px-2 py-0.5 rounded uppercase tracking-wider">
@@ -52,15 +53,24 @@ export default function BlogProductGrid({ products }: { products: ProductItem[] 
                             ✓ Xuất hóa đơn VAT điện tử hợp lệ &nbsp;|&nbsp; ✓ Hỗ trợ 100% đổi trả nếu cận date &nbsp;|&nbsp; ✓ Giao hàng nhanh toàn quốc
                         </p>
                     </div>
-                    <div className="flex items-center gap-2.5 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <a
-                            href={`https://zalo.me/${hotlineZalo}?text=${encodeURIComponent('Xin chào LYHU, tôi là chủ điểm bán cần tư vấn chính sách sỉ Mua 10 Tặng 1')}`}
+                            href={`https://zalo.me/${zalo1}?text=${encodeURIComponent('Xin chào LYHU, tôi là chủ điểm bán cần tư vấn chính sách sỉ Mua 10 Tặng 1')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="bg-yellow-400 hover:bg-yellow-300 text-teal-950 font-bold px-4 py-2.5 rounded-xl text-sm transition-transform active:scale-95 shadow-sm inline-flex items-center gap-2"
+                            className="bg-yellow-400 hover:bg-yellow-300 text-teal-950 font-bold px-3 py-2 rounded-xl text-xs sm:text-sm transition-transform active:scale-95 shadow-sm inline-flex items-center gap-1.5"
                         >
-                            <span>Nhận Báo Giá Zalo</span>
-                            <span className="text-xs bg-teal-900 text-yellow-300 px-1.5 py-0.5 rounded">0969.153.015</span>
+                            <span>Zalo 1:</span>
+                            <span className="bg-teal-900 text-yellow-300 px-1.5 py-0.5 rounded text-xs">0969.069.798</span>
+                        </a>
+                        <a
+                            href={`https://zalo.me/${zalo2}?text=${encodeURIComponent('Xin chào LYHU, tôi là chủ điểm bán cần tư vấn chính sách sỉ Mua 10 Tặng 1')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-white/10 hover:bg-white/20 text-white border border-white/30 font-bold px-3 py-2 rounded-xl text-xs sm:text-sm transition-transform active:scale-95 shadow-sm inline-flex items-center gap-1.5"
+                        >
+                            <span>Zalo 2:</span>
+                            <span className="bg-white text-teal-900 px-1.5 py-0.5 rounded text-xs">0368.368.834</span>
                         </a>
                     </div>
                 </div>
@@ -119,7 +129,7 @@ export default function BlogProductGrid({ products }: { products: ProductItem[] 
 
                                     <div className="grid grid-cols-1 gap-1.5 mt-1">
                                         <a
-                                            href={`https://zalo.me/${hotlineZalo}?text=${zaloMessage}`}
+                                            href={`https://zalo.me/${zalo1}?text=${zaloMessage}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-center w-full py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1"
@@ -143,21 +153,26 @@ export default function BlogProductGrid({ products }: { products: ProductItem[] 
                 })}
             </div>
 
-            {/* Cam kết B2B của LYHU */}
-            <div className="mt-5 p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs text-slate-700">
-                <span className="font-semibold text-slate-900">Cam kết phân phối LYHU:</span>
-                <span className="flex items-center gap-1.5">
-                    <span className="text-teal-600 font-bold">✔</span> Hàng chính hãng 100%
-                </span>
-                <span className="flex items-center gap-1.5">
-                    <span className="text-teal-600 font-bold">✔</span> Hóa đơn VAT điện tử
-                </span>
-                <span className="flex items-center gap-1.5">
-                    <span className="text-teal-600 font-bold">✔</span> Đổi trả cận date miễn phí
-                </span>
-                <span className="flex items-center gap-1.5">
-                    <span className="text-teal-600 font-bold">✔</span> Hỗ trợ tài liệu hình ảnh bán lẻ
-                </span>
+            {/* Cam kết B2B & Hotline Zalo của LYHU */}
+            <div className="mt-5 p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-700">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                    <span className="font-semibold text-slate-900">Cam kết LYHU:</span>
+                    <span className="flex items-center gap-1">
+                        <span className="text-teal-600 font-bold">✔</span> Hàng chính hãng 100%
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <span className="text-teal-600 font-bold">✔</span> Hóa đơn VAT điện tử
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <span className="text-teal-600 font-bold">✔</span> Đổi trả cận date miễn phí
+                    </span>
+                </div>
+                <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200">
+                    <span className="text-slate-500 font-medium">Hotline Zalo:</span>
+                    <a href={`https://zalo.me/${zalo1}`} target="_blank" rel="noopener noreferrer" className="font-bold text-teal-700 hover:underline">0969.069.798</a>
+                    <span className="text-slate-300">|</span>
+                    <a href={`https://zalo.me/${zalo2}`} target="_blank" rel="noopener noreferrer" className="font-bold text-teal-700 hover:underline">0368.368.834</a>
+                </div>
             </div>
         </section>
     );
