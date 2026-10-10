@@ -302,6 +302,22 @@ export default async function BlogPostPage({ params }: Props) {
                           post.content?.includes('[EMAGAZINE]') ||
                           post.keywords?.includes('eMagazine');
 
+    if (isEmagazine) {
+        return (
+            <div className="min-h-screen">
+                <ViewCounter postId={post.id} />
+                <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+                <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+                {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
+                <EmagazineLayout 
+                    post={post} 
+                    products={products} 
+                    readingTime={readingTime} 
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white min-h-screen pb-16">
             <ViewCounter postId={post.id} />
@@ -310,17 +326,9 @@ export default async function BlogPostPage({ params }: Props) {
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
             {recipeSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(recipeSchema) }} />}
-
-            {isEmagazine ? (
-                <EmagazineLayout 
-                    post={post} 
-                    products={products} 
-                    readingTime={readingTime} 
-                />
-            ) : (
-                <>
-                    {/* Breadcrumb Navigation */}
-                    <nav className="border-b border-gray-100 bg-gray-50/50 py-3 hidden md:block">
+            <>
+                {/* Breadcrumb Navigation */}
+                <nav className="border-b border-gray-100 bg-gray-50/50 py-3 hidden md:block">
                 <ol className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center space-x-2 text-sm text-gray-500">
                     <li><Link href="/" className="hover:text-primary-600">Trang chủ</Link></li>
                     <li><ChevronRight className="w-3.5 h-3.5" /></li>
@@ -505,7 +513,6 @@ export default async function BlogPostPage({ params }: Props) {
                 </aside>
             </div>
             </>
-            )}
         </div>
     );
 }

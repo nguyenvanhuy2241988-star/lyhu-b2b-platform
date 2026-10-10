@@ -173,7 +173,7 @@ export default async function BlogIndexPage({
     const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE);
 
     return (
-        <div className="space-y-8 overflow-hidden">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8 overflow-hidden">
             
             {/* Top Toolbar: Categories */}
             <div className="bg-white border-y border-gray-200 relative z-40" style={{ overflow: 'visible' }}>

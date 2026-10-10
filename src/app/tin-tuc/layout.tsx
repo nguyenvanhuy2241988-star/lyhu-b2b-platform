@@ -135,7 +135,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
                 </div>
             </header>
             
-            <main className="flex-1 w-full max-w-[1200px] mx-auto pt-6 pb-12 px-4 sm:px-6 lg:px-8">
+            <main className="flex-1 w-full">
                 {children}
             </main>
             

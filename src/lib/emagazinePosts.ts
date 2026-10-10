@@ -5,7 +5,7 @@ export const STATIC_EMAGAZINE_POSTS: Record<string, Partial<BlogPost>> = {
         id: 'emagazine-post-01',
         title: 'Từ chữ "Tâm" đến mạng lưới phân phối hàng nghìn điểm bán: Triết lý "Kết nối chân thành - Hợp tác bền vững" của người đứng sau LYHU giữa làn sóng biến động ngành bán lẻ',
         slug: 'emagazine-triet-ly-ket-noi-chan-thanh-hop-tac-ben-vung-lyhu',
-        thumbnail_url: '/emagazine/founder_warehouse.jpg',
+        thumbnail_url: '/emagazine/lyhu_wall.jpg',
         ai_summary: 'Giữa bối cảnh ngành bán lẻ và thị trường FMCG biến động không ngừng, cuộc cạnh tranh về giá và áp lực chi phí đè nặng lên từng tiệm tạp hóa, LYHU chọn cho mình một lối đi khác biệt: lấy sự chân thành làm gốc, lấy 4 cam kết vàng làm kim chỉ nam để đồng hành và bảo vệ các đối tác phân phối.',
         meta_title: 'eMagazine: Triết lý Kết Nối Chân Thành – Hợp Tác Bền Vững của LYHU',
         meta_description: 'Phóng sự eMagazine đặc biệt: Khám phá hành trình xây dựng mạng lưới phân phối và 4 Cam Kết Vàng của LYHU đồng hành cùng hàng nghìn điểm bán lẻ Việt.',
@@ -30,7 +30,7 @@ export const STATIC_EMAGAZINE_POSTS: Record<string, Partial<BlogPost>> = {
 
 [PULL_QUOTE: "Trong ngành phân phối thực phẩm, bán được một đơn hàng đầu tiên chỉ là sự khởi đầu. Giữ được sự tin cậy để đối tác gắn bó 5 năm, 10 năm mới là thành tựu thực sự. Sự chân thành không nằm ở lời hứa hoa mỹ, mà nằm ở từng kiện hàng nguyên vẹn, từng hóa đơn minh bạch và thái độ dám chịu trách nhiệm đến cùng khi thị trường biến động." | Tác giả: "Ban Lãnh Đạo LYHU"]
 
-[PHOTO_FULL: /emagazine/grocery_handshake.jpg | Chân thực nụ cười đối tác: Người giao hàng LYHU trao tận tay kiện hàng chính ngạch cho chủ tiệm tạp hóa truyền thống]
+[PHOTO_FULL: /emagazine/lyhu_truck.jpg | Hệ thống xe tải vận chuyển chuyên dụng mang nhận diện thương hiệu LYHU: Đảm bảo giao hàng chính ngạch, đúng hẹn đến từng điểm bán]
 
 <h2>I. Điểm tựa vững vàng: 4 Cam Kết Vàng kiến tạo niềm tin tuyệt đối</h2>
 
@@ -44,7 +44,9 @@ export const STATIC_EMAGAZINE_POSTS: Record<string, Partial<BlogPost>> = {
 
 <p><strong>04. ĐỒNG HÀNH BỀN VỮNG:</strong> Không bán đứt đoạn rồi bỏ mặc, LYHU cử chuyên viên hỗ trợ sắp xếp lại quầy kệ theo chuẩn trưng bày hiện đại, hỗ trợ thu hồi và đổi hàng lỗi date, đồng thời hướng dẫn chủ tiệm ứng dụng công nghệ để gia tăng doanh số.</p>
 
-[STAT_BOX: 100% - Nguồn Gốc Chính Ngạch | 24 - 48h - Giao Hàng Toàn Quốc | 4 Trụ Cột - Cam Kết Vàng Bảo Vệ Đối Tác | 0 Đồng - Đổi Hàng Lỗi Date]
+[STAT_BOX: 100% - Nguồn Gốc Chính Ngạch | 24 - 48h - Tốc Độ Giao Hàng | 4 Trụ Cột - Cam Kết Vàng | 0 Đồng - Đổi Trả Date]
+
+[PHOTO_FULL: /emagazine/lyhu_interior.jpg | Không gian bán lẻ tối giản, gọn gàng và chuẩn mực: Nơi các dòng sản phẩm phân phối bởi LYHU tiếp cận người tiêu dùng một cách trọn vẹn nhất]
 
 <h2>II. Dấu ấn từ 4 thương hiệu chủ lực: Đột phá hương vị, chiếm lĩnh thị trường</h2>
 
@@ -60,7 +62,7 @@ export const STATIC_EMAGAZINE_POSTS: Record<string, Partial<BlogPost>> = {
 
 <p><strong>4. Bột gia vị phô mai & trứng muối BOYO:</strong> "Vũ khí bí mật" của hàng nghìn quán ăn vặt, tiệm bắp rang bơ và xe khoai lắc. Hạt bột siêu mịn, màu sắc vàng óng tự nhiên cùng độ bám dính 360 độ hoàn hảo giúp nâng tầm mọi món chiên lắc lên chuẩn nhà hàng.</p>
 
-[PHOTO_DUO: https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775409196896_vkezzk.jpg | Bánh tráng bơ Abi: Sản phẩm ăn vặt quốc dân đạt chuẩn vệ sinh an toàn thực phẩm | https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775415193955_hjsz6m.jpg | Bột phô mai BOYO 65g: Nhỏ gọn, vừa túi tiền, khuấy đảo thị trường bán lẻ]
+[PHOTO_DUO: /emagazine/grocery_handshake.jpg | Sự gắn kết bền vững: Niềm vui của chủ tiệm tạp hóa khi tiếp nhận nguồn hàng FMCG chính hãng | https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775415193955_hjsz6m.jpg | Bột phô mai BOYO 65g: Nhỏ gọn, vừa túi tiền, khuấy đảo thị trường bán lẻ]
 
 <h2>III. Nhìn về phía trước: Hành trình số hóa vì một ngành bán lẻ Việt Nam tự cường</h2>
 
