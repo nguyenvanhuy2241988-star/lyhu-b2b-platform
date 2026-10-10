@@ -31,13 +31,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ];
 
     try {
-        // Fetch published blog posts
+        // Fetch published blog posts (Tăng limit để nạp toàn bộ 1.500+ bài viết)
         const { data: posts } = await supabase
             .from('blog_posts')
             .select('slug, updated_at, created_at')
             .eq('status', 'published')
             .order('created_at', { ascending: false })
-            .limit(1000);
+            .limit(5000);
 
         if (posts) {
             const postRoutes: MetadataRoute.Sitemap = posts.map(post => ({
@@ -54,7 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             .from('products')
             .select('id, updated_at, created_at')
             .eq('is_active', true)
-            .limit(1000);
+            .limit(2000);
 
         if (products) {
             const productRoutes: MetadataRoute.Sitemap = products.map(product => ({
