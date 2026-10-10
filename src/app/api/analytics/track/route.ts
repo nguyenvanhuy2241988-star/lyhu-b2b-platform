@@ -11,11 +11,11 @@ const getSupabaseAdmin = () => createClient(
 
 // Simple in-memory cache for IP geolocation to avoid hitting rate limits
 // Key: IP address, Value: { city, region, country, timestamp }
-const geoCache = new Map<string, { city: string | null; region: string | null; country: string | null; ts: number }>();
+const geoCache = new Map<string, { city: string | null; region: string | null; country: string | null; isHosting: boolean; org: string | null; ts: number }>();
 const GEO_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
-async function getGeoFromIP(ip: string): Promise<{ city: string | null; region: string | null; country: string | null }> {
-    const fallback = { city: null, region: null, country: null };
+async function getGeoFromIP(ip: string): Promise<{ city: string | null; region: string | null; country: string | null; isHosting: boolean; org: string | null }> {
+    const fallback = { city: null, region: null, country: null, isHosting: false, org: null };
 
     // Skip localhost / private IPs
     if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
@@ -25,16 +25,16 @@ async function getGeoFromIP(ip: string): Promise<{ city: string | null; region: 
     // Check cache first
     const cached = geoCache.get(ip);
     if (cached && (Date.now() - cached.ts) < GEO_CACHE_TTL) {
-        return { city: cached.city, region: cached.region, country: cached.country };
+        return { city: cached.city, region: cached.region, country: cached.country, isHosting: cached.isHosting, org: cached.org };
     }
 
     try {
-        // ip-api.com free tier — no API key needed, 45 req/min limit
+        // ip-api.com: lấy thêm trường hosting, org để nhận diện Datacenter / Cloud Server Farm
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 3000); // 3s timeout
 
         const response = await fetch(
-            `http://ip-api.com/json/${ip}?fields=status,city,regionName,country&lang=vi`,
+            `http://ip-api.com/json/${ip}?fields=status,city,regionName,country,hosting,org,as&lang=vi`,
             { signal: controller.signal }
         );
         clearTimeout(timeout);
@@ -44,10 +44,16 @@ async function getGeoFromIP(ip: string): Promise<{ city: string | null; region: 
         const data = await response.json();
 
         if (data.status === 'success') {
+            const isHosting = Boolean(data.hosting) || 
+                (data.org && /alibaba|tencent|baidu|huawei|amazon|google|microsoft|digitalocean|linode|ovh|cloudflare|vultr|hetzner/i.test(data.org)) ||
+                (data.as && /alibaba|tencent|baidu|huawei|amazon|google|microsoft|digitalocean|linode|ovh|cloudflare|vultr|hetzner/i.test(data.as));
+
             const result = {
                 city: data.city || null,
                 region: data.regionName || null,
                 country: data.country || null,
+                isHosting: Boolean(isHosting),
+                org: data.org || null,
             };
             // Cache the result
             geoCache.set(ip, { ...result, ts: Date.now() });
@@ -179,13 +185,19 @@ export async function POST(req: NextRequest) {
         const forwarded = req.headers.get("x-forwarded-for");
         const ip = forwarded ? forwarded.split(",")[0].trim() : req.headers.get("x-real-ip") || "";
         
-        // Only lookup geo for human visitors (bots don't need it)
-        let geo = { city: null as string | null, region: null as string | null, country: null as string | null };
-        if (!is_bot && ip) {
+        let geo = { city: null as string | null, region: null as string | null, country: null as string | null, isHosting: false, org: null as string | null };
+        if (ip) {
             geo = await getGeoFromIP(ip);
 
-            // Post-geo bot detection: Meta/Facebook crawlers often disguise as normal Desktop browsers 
-            // but originate from their datacenters to scrape OpenGraph tags for link previews.
+            // ── BẪY CHUẨN XÁC: NẾU ĐẾN TỪ DATACENTER / CLOUD HOSTING (Bắc Kinh, Alibaba, Tencent...) ──
+            // Người đọc báo thông thường dùng mạng dân dụng (Viettel, VNPT, FPT, China Telecom/Unicom cá nhân).
+            // Nếu truy cập từ máy chủ đám mây (Hosting=true) mà không có referrer hoặc hành vi cào liên tục -> Đánh dấu là Bot Scraper!
+            if (!is_bot && geo.isHosting) {
+                is_bot = true;
+                bot_name = geo.org ? `Cloud Scraper (${geo.org.split(' ')[0]})` : "Datacenter Scraper";
+            }
+
+            // Post-geo bot detection: Meta/Facebook crawlers
             const metaDatacenters = ["Prineville", "Fort Worth", "Forest City", "Luleå", "Ashburn", "Boardman", "Altoona", "Los Lunas", "New Albany", "Papillion", "Eagle Mountain", "Gallatin", "DeKalb", "Stanton", "Mesa", "Kuna", "Dublin", "Clonee", "Odense"];
             if (geo.city && metaDatacenters.includes(geo.city)) {
                 if (cleanReferrer && cleanReferrer.includes("facebook.com")) {
