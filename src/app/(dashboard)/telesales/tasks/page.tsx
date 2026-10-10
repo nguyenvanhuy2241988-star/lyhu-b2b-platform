@@ -2140,7 +2140,7 @@ export default function TelesalesTasksPage() {
     return (
         <div className="p-4 sm:p-6 space-y-6 h-full flex flex-col relative" onClick={() => setIsSettingsOpen(false)}>
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-10 relative">
+            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative ${isNotificationOpen ? 'z-40' : 'z-20'}`}>
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Việc cần làm</h1>
                     <p className="text-sm text-slate-500">Quản lý các đầu việc và cuộc gọi hằng ngày</p>
