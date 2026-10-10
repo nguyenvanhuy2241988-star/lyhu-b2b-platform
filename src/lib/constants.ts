@@ -191,6 +191,7 @@ export const NAV_ITEMS = {
         { label: "Kịch bản Media", href: "/media/scripts", icon: FileInput },
         { label: "Lồng tiếng AI (Voice)", href: "/media/voice-studio", icon: Mic },
         { label: "Dựng Video AI (Auto Cut)", href: "/media/video-studio", icon: Film },
+        { label: "Tạo Motion Poster", href: "/admin/motion-maker", icon: Zap },
         { label: "Tin tức & Blog", href: "/marketing/blog", icon: BookOpen },
         { label: "Chủ đề AI", href: "/marketing/ai-topics", icon: Sparkles },
         { label: "Tự động viết bài (AI)", href: "/marketing/ai-blog", icon: Sparkles },
