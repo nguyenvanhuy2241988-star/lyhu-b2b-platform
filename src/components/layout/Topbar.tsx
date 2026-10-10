@@ -52,7 +52,7 @@ export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps
     };
 
     return (
-        <header className="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-50">
+        <header className="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-[100]">
             <div className="flex items-center gap-3 sm:gap-4">
                 <button
                     onClick={onMenuClick}
