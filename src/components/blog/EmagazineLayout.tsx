@@ -101,29 +101,44 @@ export default function EmagazineLayout({ post, products, readingTime }: Emagazi
 
     // Parse custom eMagazine blocks from HTML content
     const renderContentBlocks = (htmlContent: string) => {
+        // Xóa sạch tag [EMAGAZINE] nếu nó nằm ở đầu nội dung
+        const cleanedHtml = htmlContent.replace(/\[EMAGAZINE\]\s*/gi, '').trim();
+
         // Split content by custom shortcode tags
-        const parts = htmlContent.split(/(\[PULL_QUOTE:[^\]]+\]|\[STAT_BOX:[^\]]+\]|\[PHOTO_DUO:[^\]]+\]|\[PHOTO_FULL:[^\]]+\])/gi);
+        const parts = cleanedHtml.split(/(\[PULL_QUOTE:[^\]]+\]|\[STAT_BOX:[^\]]+\]|\[PHOTO_DUO:[^\]]+\]|\[PHOTO_FULL:[^\]]+\])/gi);
 
         return parts.map((part, index) => {
-            if (!part.trim()) return null;
+            const trimmed = part.trim();
+            if (!trimmed) return null;
 
             // 1. PULL QUOTE BLOCK
-            if (part.startsWith('[PULL_QUOTE:')) {
-                const match = part.match(/\[PULL_QUOTE:\s*"(.*?)"\s*\|\s*Tác giả:\s*"(.*?)"\]/i) 
-                    || part.match(/\[PULL_QUOTE:\s*(.*?)\s*\|\s*(.*?)\]/i);
-                const quoteText = match ? match[1].replace(/^"|"$/g, '') : part.replace(/\[PULL_QUOTE:|\]/g, '');
-                const authorText = match ? match[2].replace(/^"|"$/g, '').replace(/^Tác giả:\s*/i, '') : 'LYHU';
+            if (trimmed.startsWith('[PULL_QUOTE:')) {
+                // Tách nội dung và tác giả
+                const contentMatch = trimmed.replace(/\[PULL_QUOTE:\s*|\]/gi, '');
+                let quoteText = '';
+                let authorText = 'LYHU';
+
+                if (contentMatch.includes('|')) {
+                    const splitIdx = contentMatch.indexOf('|');
+                    quoteText = contentMatch.substring(0, splitIdx).trim();
+                    authorText = contentMatch.substring(splitIdx + 1).replace(/Tác giả:\s*/i, '').trim();
+                } else {
+                    quoteText = contentMatch;
+                }
+
+                quoteText = quoteText.replace(/^["'“”]|["'“”]$/g, '').trim();
+                authorText = authorText.replace(/^["'“”]|["'“”]$/g, '').trim();
 
                 return (
-                    <figure key={`pull-quote-${index}`} className="my-10 p-6 sm:p-8 bg-slate-50 border-l-4 border-primary-500 rounded-r-2xl relative">
-                        <span className="text-5xl sm:text-6xl text-primary-200 font-serif absolute top-2 left-4 select-none leading-none">❝</span>
-                        <blockquote className="relative z-10 pt-4 pl-4 sm:pl-6">
-                            <p className="text-lg sm:text-xl md:text-2xl font-serif text-slate-800 leading-relaxed italic font-medium">
+                    <figure key={`pull-quote-${index}`} className="my-12 p-8 sm:p-10 bg-gradient-to-r from-teal-50/70 to-emerald-50/30 border-l-[6px] border-primary-500 rounded-r-2xl relative shadow-xs">
+                        <span className="text-6xl sm:text-7xl text-primary-300/40 font-serif absolute -top-3 left-4 select-none leading-none">“</span>
+                        <blockquote className="relative z-10 pl-2 sm:pl-4">
+                            <p className="text-xl sm:text-2xl font-serif text-slate-800 leading-relaxed italic font-medium">
                                 {quoteText}
                             </p>
                             {authorText && (
-                                <figcaption className="mt-4 text-xs sm:text-sm font-bold text-primary-700 tracking-wide uppercase flex items-center gap-2">
-                                    <span className="w-6 h-[2px] bg-primary-500 inline-block"></span>
+                                <figcaption className="mt-6 text-xs sm:text-sm font-bold text-primary-700 tracking-wider uppercase flex items-center gap-3">
+                                    <span className="w-8 h-[2px] bg-primary-500 inline-block"></span>
                                     {authorText}
                                 </figcaption>
                             )}
@@ -133,25 +148,28 @@ export default function EmagazineLayout({ post, products, readingTime }: Emagazi
             }
 
             // 2. STAT BOX BLOCK
-            if (part.startsWith('[STAT_BOX:')) {
-                const rawItems = part.replace(/\[STAT_BOX:\s*|\]/gi, '').split('|');
+            if (trimmed.startsWith('[STAT_BOX:')) {
+                const rawItems = trimmed.replace(/\[STAT_BOX:\s*|\]/gi, '').split('|');
                 const stats = rawItems.map(item => {
-                    const [val, label] = item.split('-').map(s => s.trim());
-                    return { value: val || '', label: label || '' };
-                });
+                    const parts = item.split('-');
+                    const val = parts[0]?.trim() || '';
+                    const label = parts.slice(1).join('-').trim() || '';
+                    return { value: val, label: label };
+                }).filter(s => s.value);
 
                 return (
-                    <div key={`stat-box-${index}`} className="my-12 p-6 bg-slate-900 text-white rounded-2xl shadow-sm">
-                        <div className="text-center text-xs font-bold text-secondary-400 uppercase tracking-widest mb-6">
-                            Số Liệu Cốt Lõi Vận Hành
+                    <div key={`stat-box-${index}`} className="my-14 p-8 sm:p-10 bg-slate-900 text-white rounded-2xl shadow-xl border border-slate-800">
+                        <div className="text-center text-xs font-bold text-secondary-400 uppercase tracking-widest mb-8 flex items-center justify-center gap-2">
+                            <span className="w-3 h-3 rounded-full bg-secondary-400 inline-block"></span>
+                            SỐ LIỆU CỐT LÕI VẬN HÀNH
                         </div>
-                        <div className={`grid grid-cols-2 md:grid-cols-${Math.min(stats.length, 4)} gap-6 text-center`}>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 text-center">
                             {stats.map((st, sIdx) => (
-                                <div key={sIdx} className="space-y-1">
+                                <div key={sIdx} className="space-y-2 p-4 rounded-xl bg-slate-800/40 border border-slate-700/50">
                                     <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight">
                                         {st.value}
                                     </div>
-                                    <div className="text-xs sm:text-sm text-slate-300 font-medium">
+                                    <div className="text-xs sm:text-sm text-slate-300 font-medium leading-snug">
                                         {st.label}
                                     </div>
                                 </div>
@@ -162,23 +180,27 @@ export default function EmagazineLayout({ post, products, readingTime }: Emagazi
             }
 
             // 3. PHOTO DUO BLOCK (Ảnh đôi phóng sự Zing/CafeF)
-            if (part.startsWith('[PHOTO_DUO:')) {
-                const raw = part.replace(/\[PHOTO_DUO:\s*|\]/gi, '').split('|').map(s => s.trim());
+            if (trimmed.startsWith('[PHOTO_DUO:')) {
+                const raw = trimmed.replace(/\[PHOTO_DUO:\s*|\]/gi, '').split('|').map(s => s.trim());
                 const img1 = raw[0];
                 const cap1 = raw[1] || '';
                 const img2 = raw[2];
                 const cap2 = raw[3] || '';
 
                 return (
-                    <div key={`photo-duo-${index}`} className="my-12 space-y-3">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <figure className="space-y-1.5">
-                                <img src={img1} alt={cap1} className="w-full h-72 object-cover rounded-xl" />
-                                {cap1 && <figcaption className="text-center text-xs text-slate-500 italic">{cap1}</figcaption>}
+                    <div key={`photo-duo-${index}`} className="my-14 space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <figure className="space-y-2 group">
+                                <div className="aspect-[4/3] w-full overflow-hidden rounded-xl bg-slate-100 border border-slate-200">
+                                    <img src={img1} alt={cap1} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                </div>
+                                {cap1 && <figcaption className="text-center text-xs sm:text-sm text-slate-500 italic px-2">{cap1}</figcaption>}
                             </figure>
-                            <figure className="space-y-1.5">
-                                <img src={img2} alt={cap2} className="w-full h-72 object-cover rounded-xl" />
-                                {cap2 && <figcaption className="text-center text-xs text-slate-500 italic">{cap2}</figcaption>}
+                            <figure className="space-y-2 group">
+                                <div className="aspect-[4/3] w-full overflow-hidden rounded-xl bg-slate-100 border border-slate-200">
+                                    <img src={img2} alt={cap2} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                </div>
+                                {cap2 && <figcaption className="text-center text-xs sm:text-sm text-slate-500 italic px-2">{cap2}</figcaption>}
                             </figure>
                         </div>
                     </div>
@@ -186,12 +208,14 @@ export default function EmagazineLayout({ post, products, readingTime }: Emagazi
             }
 
             // 4. PHOTO FULL BLOCK (Ảnh toàn màn hình)
-            if (part.startsWith('[PHOTO_FULL:')) {
-                const [imgUrl, caption] = part.replace(/\[PHOTO_FULL:\s*|\]/gi, '').split('|').map(s => s.trim());
+            if (trimmed.startsWith('[PHOTO_FULL:')) {
+                const [imgUrl, caption] = trimmed.replace(/\[PHOTO_FULL:\s*|\]/gi, '').split('|').map(s => s.trim());
                 return (
-                    <figure key={`photo-full-${index}`} className="my-12 space-y-2">
-                        <img src={imgUrl} alt={caption || post.title} className="w-full rounded-2xl object-cover max-h-[550px]" />
-                        {caption && <figcaption className="text-center text-xs text-slate-500 italic">{caption}</figcaption>}
+                    <figure key={`photo-full-${index}`} className="my-14 space-y-2 group">
+                        <div className="aspect-[16/9] w-full overflow-hidden rounded-2xl bg-slate-100 border border-slate-200">
+                            <img src={imgUrl} alt={caption || post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        </div>
+                        {caption && <figcaption className="text-center text-xs sm:text-sm text-slate-500 italic px-4">{caption}</figcaption>}
                     </figure>
                 );
             }
@@ -200,7 +224,7 @@ export default function EmagazineLayout({ post, products, readingTime }: Emagazi
             return (
                 <div 
                     key={`html-${index}`} 
-                    dangerouslySetInnerHTML={{ __html: part }} 
+                    dangerouslySetInnerHTML={{ __html: trimmed }} 
                     className="emagazine-prose"
                 />
             );
@@ -312,45 +336,52 @@ export default function EmagazineLayout({ post, products, readingTime }: Emagazi
             <div className="max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
                 <style jsx global>{`
                     .emagazine-prose {
-                        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                        font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                         color: #1e293b;
-                        line-height: 1.85;
-                        font-size: 1.125rem;
+                        line-height: 1.95;
+                        font-size: 1.15rem;
+                        letter-spacing: -0.01em;
                     }
                     .emagazine-prose p {
-                        margin-bottom: 1.5rem;
+                        margin-bottom: 1.75rem;
                         color: #334155;
                     }
                     .emagazine-prose h2 {
-                        font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-                        font-size: 1.875rem;
+                        font-family: var(--font-merriweather), Georgia, Cambria, "Times New Roman", Times, serif;
+                        font-size: 1.85rem;
                         font-weight: 800;
                         color: #0f172a;
-                        margin-top: 3rem;
-                        margin-bottom: 1.25rem;
-                        line-height: 1.35;
+                        margin-top: 3.5rem;
+                        margin-bottom: 1.5rem;
+                        line-height: 1.4;
                         letter-spacing: -0.02em;
-                        border-bottom: 1px solid #e2e8f0;
-                        padding-bottom: 0.75rem;
+                        border-bottom: 2px solid #f1f5f9;
+                        padding-bottom: 0.85rem;
                     }
                     .emagazine-prose h3 {
-                        font-size: 1.4rem;
+                        font-family: var(--font-inter), sans-serif;
+                        font-size: 1.35rem;
                         font-weight: 700;
                         color: #007b77;
-                        margin-top: 2rem;
+                        margin-top: 2.25rem;
                         margin-bottom: 1rem;
+                        line-height: 1.4;
                     }
                     .emagazine-prose strong {
                         color: #0f172a;
                         font-weight: 700;
                     }
+                    .emagazine-prose em {
+                        color: #475569;
+                    }
                     .emagazine-prose ul {
-                        margin-bottom: 1.5rem;
+                        margin-bottom: 1.75rem;
                         list-style-type: disc;
-                        padding-left: 1.5rem;
+                        padding-left: 1.75rem;
                     }
                     .emagazine-prose li {
-                        margin-bottom: 0.5rem;
+                        margin-bottom: 0.65rem;
+                        line-height: 1.8;
                     }
                 `}</style>
 

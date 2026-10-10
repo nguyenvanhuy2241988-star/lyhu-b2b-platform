@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Merriweather } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ToastProvider } from "@/components/ui/toast";
@@ -47,7 +47,14 @@ export const metadata: Metadata = {
     },
 };
 
-const inter = Inter({ subsets: ["latin", "vietnamese"] });
+const merriweather = Merriweather({
+    weight: ['300', '400', '700', '900'],
+    subsets: ['latin', 'vietnamese'],
+    variable: '--font-merriweather',
+    display: 'swap'
+});
+
+const inter = Inter({ subsets: ["latin", "vietnamese"], variable: '--font-inter', display: 'swap' });
 
 import WebTracker from "@/components/analytics/WebTracker";
 import AffiliateTracker from "@/components/analytics/AffiliateTracker";
@@ -59,7 +66,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="vi" className={cn(inter.variable, merriweather.variable)}>
             <body className={cn(inter.className, "min-h-screen bg-gray-50")}>
                 <AuthProvider>
                     <ToastProvider>

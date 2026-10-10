@@ -40,6 +40,10 @@ const config: Config = {
                     foreground: "#FFFFFF",
                 },
             },
+            fontFamily: {
+                sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                serif: ['var(--font-merriweather)', 'Georgia', 'Cambria', 'serif'],
+            },
         },
     },
     plugins: [
