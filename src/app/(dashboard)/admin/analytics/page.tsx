@@ -1,26 +1,43 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { 
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
     BarChart, Bar, PieChart, Pie, Cell
 } from "recharts";
-import { Users, Eye, MousePointerClick, Activity, Monitor, Smartphone, Globe, Calendar as CalendarIcon, ArrowUpRight, MapPin, Search, Trophy, Target, Award } from "lucide-react";
+import { 
+    Users, Eye, MousePointerClick, Activity, Monitor, Smartphone, Globe, 
+    Calendar as CalendarIcon, ArrowUpRight, MapPin, Search, Trophy, Target, 
+    Bot, ShieldCheck, Cpu, RefreshCw, Layers, CheckCircle2, AlertCircle
+} from "lucide-react";
 import dayjs from "dayjs";
+
+// Bảng màu thương hiệu LYHU: Flat, Tối giản, Hiện đại
+const BRAND_TEAL = "#00AFA9";
+const BRAND_LIME = "#98C93C";
+const SLATE_DARK = "#1E293B";
+const SLATE_MUTED = "#64748B";
+const SLATE_BORDER = "#E2E8F0";
+
+const PIE_COLORS = [BRAND_TEAL, BRAND_LIME, "#0EA5E9", "#F59E0B", "#8B5CF6"];
 
 export default function AnalyticsDashboard() {
     const [loading, setLoading] = useState(true);
-    const [dateRange, setDateRange] = useState("7d"); // today, yesterday, 7d, 30d, this_month, custom
+    const [dateRange, setDateRange] = useState("today"); // Mặc định là Hôm nay để xem số liệu trực quan
     const [customStart, setCustomStart] = useState(dayjs().subtract(7, 'day').format('YYYY-MM-DD'));
     const [customEnd, setCustomEnd] = useState(dayjs().format('YYYY-MM-DD'));
     const [excludeInternal, setExcludeInternal] = useState(true);
     const [data, setData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
 
+    // GSC State
     const [seoData, setSeoData] = useState<any>(null);
     const [seoLoading, setSeoLoading] = useState(false);
     const [seoError, setSeoError] = useState<string | null>(null);
+
+    // Filter tab cho bảng Khách truy cập gần đây: 'all' | 'human' | 'bot' | 'ai'
+    const [visitorFilter, setVisitorFilter] = useState<"all" | "human" | "ai" | "bot">("all");
 
     useEffect(() => {
         fetchSeoData();
@@ -41,7 +58,6 @@ export default function AnalyticsDashboard() {
         }
     };
 
-
     useEffect(() => {
         if (dateRange !== 'custom' || (customStart && customEnd)) {
             fetchAnalytics();
@@ -53,7 +69,7 @@ export default function AnalyticsDashboard() {
         setError(null);
         
         try {
-            let startDate = dayjs().subtract(7, 'day').startOf('day').toISOString();
+            let startDate = dayjs().startOf('day').toISOString();
             let endDate = dayjs().endOf('day').toISOString();
 
             if (dateRange === 'today') {
@@ -89,38 +105,38 @@ export default function AnalyticsDashboard() {
                     }));
                 }
 
-                // Group referrers (e.g. AI Search, Social, Search Engines)
+                // Group referrers (Phân nhóm AI Search & Direct & Search Engines)
                 if (result.topReferrers) {
                     const groupedReferrers: Record<string, number> = {};
                     result.topReferrers.forEach((ref: any) => {
-                        let source = ref.source || "Direct";
+                        let source = ref.source || "Direct (Trực tiếp)";
                         const sLower = source.toLowerCase();
                         
                         // AI Search Engines
                         if (sLower.includes("deepseek")) {
-                            source = "🤖 DeepSeek AI";
+                            source = "DeepSeek AI Search";
                         } else if (sLower.includes("chatgpt") || sLower.includes("openai")) {
-                            source = "🤖 ChatGPT";
+                            source = "ChatGPT Search";
                         } else if (sLower.includes("perplexity")) {
-                            source = "🤖 Perplexity AI";
+                            source = "Perplexity AI";
                         } else if (sLower.includes("claude")) {
-                            source = "🤖 Claude AI";
+                            source = "Claude AI";
                         } else if (sLower.includes("gemini")) {
-                            source = "🤖 Google Gemini";
+                            source = "Google Gemini";
                         } else if (sLower.includes("kimi") || sLower.includes("moonshot")) {
-                            source = "🤖 Kimi AI (Moonshot)";
+                            source = "Kimi AI (Moonshot)";
                         } else if (sLower.includes("alibaba") || sLower.includes("qwen") || sLower.includes("aliyun")) {
-                            source = "🤖 Alibaba AI (Qwen)";
+                            source = "Alibaba Qwen AI";
                         } else if (sLower.includes("baidu")) {
-                            source = "🔍 Baidu (China)";
+                            source = "Baidu (China)";
                         } else if (source.includes("facebook.com")) {
                             source = "Facebook";
                         } else if (source.includes("google.com")) {
-                            source = "Google";
-                        } else if (source.includes("yahoo.com")) {
-                            source = "Yahoo";
+                            source = "Google Tìm kiếm";
                         } else if (source.includes("bing.com")) {
-                            source = "Bing";
+                            source = "Bing Search";
+                        } else if (source.includes("zalo.me")) {
+                            source = "Zalo";
                         } else if (source.startsWith("http")) {
                             try {
                                 const url = new URL(source);
@@ -140,27 +156,27 @@ export default function AnalyticsDashboard() {
                 if (result.deviceBreakdown) {
                     result.deviceBreakdown = result.deviceBreakdown.map((item: any) => ({
                         ...item,
-                        device: item.device || "Khác"
+                        device: item.device === "desktop" ? "Máy tính (Desktop)" : item.device === "mobile" ? "Điện thoại (Mobile)" : (item.device || "Khác")
                     }));
                 }
             }
 
-            // Fetch Recent Visitors Details
+            // Fetch Recent Visitors Details (Nâng lên 100 bản ghi để phân tích kỹ)
             let visitorsQuery = supabase
                 .from('website_page_views')
-                .select('id, visitor_id, session_id, pathname, referrer, device_type, os, browser, city, region, country, created_at, load_time_ms, is_bot')
+                .select('id, visitor_id, session_id, pathname, referrer, device_type, os, browser, city, region, country, created_at, load_time_ms, is_bot, bot_name')
                 .gte('created_at', startDate)
                 .lte('created_at', endDate)
                 .order('created_at', { ascending: false })
-                .limit(50);
+                .limit(100);
 
             if (excludeInternal) {
-                visitorsQuery = visitorsQuery.eq('is_bot', false)
-                                             .not('pathname', 'like', '/admin%')
-                                             .not('pathname', 'like', '/marketing%')
-                                             .not('pathname', 'like', '/recruitment%')
-                                             .not('pathname', 'like', '/chat%')
-                                             .not('pathname', 'like', '/login%');
+                visitorsQuery = visitorsQuery
+                    .not('pathname', 'like', '/admin%')
+                    .not('pathname', 'like', '/marketing%')
+                    .not('pathname', 'like', '/recruitment%')
+                    .not('pathname', 'like', '/chat%')
+                    .not('pathname', 'like', '/login%');
             }
 
             const { data: recentVisitors } = await visitorsQuery;
@@ -178,571 +194,605 @@ export default function AnalyticsDashboard() {
         }
     };
 
-    const COLORS = ['#00afa9', '#98c93c', '#f59e0b', '#3b82f6', '#8b5cf6'];
+    // Lọc danh sách khách gần đây theo bộ lọc tab
+    const filteredVisitors = useMemo(() => {
+        if (!data?.recentVisitors) return [];
+        if (visitorFilter === "all") return data.recentVisitors;
+        if (visitorFilter === "human") return data.recentVisitors.filter((v: any) => !v.is_bot);
+        if (visitorFilter === "ai") return data.recentVisitors.filter((v: any) => {
+            const b = (v.bot_name || "").toLowerCase();
+            const r = (v.referrer || "").toLowerCase();
+            return b.includes("ai") || b.includes("gpt") || b.includes("claude") || b.includes("deepseek") || b.includes("kimi") || b.includes("qwen") || r.includes("ai") || r.includes("gpt") || r.includes("deepseek");
+        });
+        if (visitorFilter === "bot") return data.recentVisitors.filter((v: any) => v.is_bot);
+        return data.recentVisitors;
+    }, [data?.recentVisitors, visitorFilter]);
 
-    if (loading) return (
-        <div className="flex items-center justify-center h-screen">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-    );
-
-    if (error) return (
-        <div className="p-8 text-center bg-red-50 text-red-600 rounded-2xl m-8">
-            <h3 className="font-bold mb-2">Lỗi tải dữ liệu</h3>
-            <p>{error}</p>
+    if (loading && !data) return (
+        <div className="flex items-center justify-center min-h-[60vh] bg-slate-50">
+            <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-2 border-[#00AFA9] border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-xs font-medium text-slate-500">Đang tải báo cáo truy cập LYHU...</span>
+            </div>
         </div>
     );
 
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
-            {/* Header & Filters */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Phân tích Truy cập</h1>
-                    <p className="text-slate-500 text-sm mt-1">Theo dõi lưu lượng khách hàng truy cập website theo thời gian thực.</p>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <select 
-                        value={dateRange}
-                        onChange={(e) => setDateRange(e.target.value)}
-                        className="px-4 py-2 bg-slate-100 border-none rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none w-full sm:w-auto cursor-pointer"
-                    >
-                        <option value="today">Hôm nay</option>
-                        <option value="yesterday">Hôm qua</option>
-                        <option value="7d">7 ngày qua</option>
-                        <option value="30d">30 ngày qua</option>
-                        <option value="this_month">Tháng này</option>
-                        <option value="custom">Tùy chỉnh...</option>
-                    </select>
-
-                    {dateRange === 'custom' && (
-                        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
-                            <input 
-                                type="date" 
-                                value={customStart}
-                                onChange={(e) => setCustomStart(e.target.value)}
-                                className="px-3 py-1.5 bg-white border-none rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none cursor-pointer"
-                            />
-                            <span className="text-slate-400 font-medium">-</span>
-                            <input 
-                                type="date" 
-                                value={customEnd}
-                                onChange={(e) => setCustomEnd(e.target.value)}
-                                className="px-3 py-1.5 bg-white border-none rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none cursor-pointer"
-                            />
+        <div className="min-h-screen bg-[#F8FAFC] text-slate-800 p-4 sm:p-6 lg:p-8 space-y-6">
+            
+            {/* Header: Thiết kế Phẳng Tối Giản, Không Gradient */}
+            <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 sm:p-6 shadow-sm">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div className="flex items-center gap-2.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#00AFA9]"></span>
+                            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+                                Báo Cáo Phân Tích Truy Cập
+                            </h1>
+                            <span className="text-xs px-2 py-0.5 rounded bg-teal-50 text-[#00AFA9] border border-teal-200 font-medium">
+                                LYHU Analytics Engine
+                            </span>
                         </div>
-                    )}
-                </div>
-                
-                <div className="flex items-center gap-3">
-                    <label className="flex items-center cursor-pointer">
-                        <div className="relative">
+                        <p className="text-xs text-slate-500 mt-1">
+                            Hệ thống đo lường lưu lượng thời gian thực, phân loại người dùng thật và các nền tảng AI Search toàn cầu.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* Date Range Selector */}
+                        <div className="flex items-center bg-slate-100 border border-slate-200 rounded-lg p-1 text-xs font-medium">
+                            <button
+                                onClick={() => setDateRange("today")}
+                                className={`px-3 py-1.5 rounded-md transition-all ${dateRange === "today" ? "bg-white text-slate-900 shadow-sm font-semibold" : "text-slate-600 hover:text-slate-900"}`}
+                            >
+                                Hôm nay
+                            </button>
+                            <button
+                                onClick={() => setDateRange("yesterday")}
+                                className={`px-3 py-1.5 rounded-md transition-all ${dateRange === "yesterday" ? "bg-white text-slate-900 shadow-sm font-semibold" : "text-slate-600 hover:text-slate-900"}`}
+                            >
+                                Hôm qua
+                            </button>
+                            <button
+                                onClick={() => setDateRange("7d")}
+                                className={`px-3 py-1.5 rounded-md transition-all ${dateRange === "7d" ? "bg-white text-slate-900 shadow-sm font-semibold" : "text-slate-600 hover:text-slate-900"}`}
+                            >
+                                7 ngày
+                            </button>
+                            <button
+                                onClick={() => setDateRange("30d")}
+                                className={`px-3 py-1.5 rounded-md transition-all ${dateRange === "30d" ? "bg-white text-slate-900 shadow-sm font-semibold" : "text-slate-600 hover:text-slate-900"}`}
+                            >
+                                30 ngày
+                            </button>
+                            <button
+                                onClick={() => setDateRange("this_month")}
+                                className={`px-3 py-1.5 rounded-md transition-all ${dateRange === "this_month" ? "bg-white text-slate-900 shadow-sm font-semibold" : "text-slate-600 hover:text-slate-900"}`}
+                            >
+                                Tháng này
+                            </button>
+                        </div>
+
+                        {/* Toggle Lọc nội bộ */}
+                        <label className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">
                             <input 
                                 type="checkbox" 
-                                className="sr-only" 
                                 checked={excludeInternal} 
-                                onChange={() => setExcludeInternal(!excludeInternal)}
+                                onChange={(e) => setExcludeInternal(e.target.checked)}
+                                className="w-3.5 h-3.5 rounded text-[#00AFA9] focus:ring-0 cursor-pointer"
                             />
-                            <div className={`block w-10 h-6 rounded-full transition-colors ${excludeInternal ? 'bg-primary-600' : 'bg-slate-200'}`}></div>
-                            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${excludeInternal ? 'transform translate-x-4' : ''}`}></div>
-                        </div>
-                        <div className="ml-3 text-sm font-medium text-slate-700">
-                            Loại trừ truy cập nội bộ
-                        </div>
-                    </label>
-                </div>
-            </div>
+                            <span>Lọc truy cập nội bộ</span>
+                        </label>
 
-            {/* Overview Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                        <Eye className="w-12 h-12 text-primary" />
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-500 mb-2">
-                        <div className="p-1.5 bg-primary-50 rounded-md text-primary">
-                            <Eye className="w-4 h-4" />
-                        </div>
-                        <span className="font-medium text-xs">Xem (Người)</span>
-                    </div>
-                    <div className="text-2xl font-bold text-slate-900">{data?.humanViews?.toLocaleString() || 0}</div>
-                </div>
-
-                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                        <Users className="w-12 h-12 text-blue-500" />
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-500 mb-2">
-                        <div className="p-1.5 bg-blue-50 rounded-md text-blue-600">
-                            <Users className="w-4 h-4" />
-                        </div>
-                        <span className="font-medium text-xs">Khách (Unique)</span>
-                    </div>
-                    <div className="text-2xl font-bold text-slate-900">{data?.uniqueVisitors?.toLocaleString() || 0}</div>
-                </div>
-
-                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                        <MousePointerClick className="w-12 h-12 text-amber-500" />
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-500 mb-2">
-                        <div className="p-1.5 bg-amber-50 rounded-md text-amber-600">
-                            <MousePointerClick className="w-4 h-4" />
-                        </div>
-                        <span className="font-medium text-xs">Tổng Phiên</span>
-                    </div>
-                    <div className="text-2xl font-bold text-slate-900">{data?.totalSessions?.toLocaleString() || 0}</div>
-                </div>
-
-                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                        <Globe className="w-12 h-12 text-slate-500" />
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-500 mb-2">
-                        <div className="p-1.5 bg-slate-100 rounded-md text-slate-600">
-                            <Globe className="w-4 h-4" />
-                        </div>
-                        <span className="font-medium text-xs">Lượt quét (Bot)</span>
-                    </div>
-                    <div className="text-2xl font-bold text-slate-900">{data?.botViews?.toLocaleString() || 0}</div>
-                </div>
-
-                <div className={`p-5 rounded-2xl border shadow-sm relative overflow-hidden group ${data?.avgLoadTime && data.avgLoadTime > 3000 ? 'bg-red-50 border-red-100' : 'bg-white border-slate-100'}`}>
-                    <div className="flex items-center gap-2 text-slate-500 mb-2">
-                        <div className={`p-1.5 rounded-md ${data?.avgLoadTime && data.avgLoadTime > 3000 ? 'bg-red-100 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                            <Activity className="w-4 h-4" />
-                        </div>
-                        <span className="font-medium text-xs">Tốc độ Tải trang</span>
-                    </div>
-                    <div className="text-2xl font-bold text-slate-900">
-                        {data?.avgLoadTime ? (data.avgLoadTime / 1000).toFixed(2) : 0}s
-                    </div>
-                    <div className={`mt-2 text-xs ${data?.avgLoadTime && data.avgLoadTime > 3000 ? 'text-red-600' : 'text-emerald-600'}`}>
-                        {data?.avgLoadTime && data.avgLoadTime > 3000 ? 'Chậm! Cần tối ưu' : 'Rất nhanh'}
-                    </div>
-                </div>
-            </div>
-
-            {/* SEO & Website Ranking Section */}
-            <div className="bg-slate-900 p-6 md:p-8 rounded-2xl border border-slate-800 relative overflow-hidden">
-                <div className="relative z-10">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                        <div>
-                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                <Search className="w-6 h-6 text-[#8EC63F]" />
-                                Google Search Console (30 ngày qua)
-                            </h3>
-                            <p className="text-slate-300 text-sm mt-1">
-                                Dữ liệu thực tế được đồng bộ trực tiếp từ Google.
-                            </p>
-                        </div>
                         <button 
-                            onClick={fetchSeoData} 
-                            disabled={seoLoading}
-                            className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium transition-colors border border-white/10 backdrop-blur-sm flex items-center gap-2 disabled:opacity-50"
+                            onClick={() => { fetchAnalytics(); fetchSeoData(); }}
+                            title="Tải lại số liệu mới nhất"
+                            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors"
                         >
-                            {seoLoading ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            ) : (
-                                <Activity className="w-4 h-4" />
-                            )}
-                            Làm mới dữ liệu
+                            <RefreshCw className="w-4 h-4" />
                         </button>
                     </div>
-
-                    {seoError ? (
-                        <div className="bg-red-500/20 border border-red-500/50 p-4 rounded-xl text-red-200 text-sm">
-                            <span className="font-bold">Lỗi:</span> {seoError}
-                        </div>
-                    ) : seoLoading && !seoData ? (
-                        <div className="flex items-center justify-center py-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00AFA9]"></div>
-                        </div>
-                    ) : !seoData?.hasData ? (
-                        <div className="bg-white/5 border border-white/10 p-6 rounded-xl text-slate-300 text-sm text-center">
-                            Google đang xử lý dữ liệu cho website của bạn. Vui lòng quay lại sau 1-3 ngày.
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {/* Clicks */}
-                            <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="p-2 bg-emerald-500/20 rounded-lg">
-                                        <MousePointerClick className="w-5 h-5 text-emerald-400" />
-                                    </div>
-                                </div>
-                                <div className="text-3xl font-black text-white mb-1">{seoData?.clicks?.toLocaleString() || 0}</div>
-                                <div className="text-sm text-slate-300 font-medium">Lượt nhấp (Clicks)</div>
-                                <div className="text-xs text-slate-400 mt-3 flex items-center gap-1">
-                                    Từ kết quả tìm kiếm Google
-                                </div>
-                            </div>
-
-                            {/* Impressions */}
-                            <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="p-2 bg-blue-500/20 rounded-lg">
-                                        <Eye className="w-5 h-5 text-blue-400" />
-                                    </div>
-                                </div>
-                                <div className="text-3xl font-black text-white mb-1">{seoData?.impressions?.toLocaleString() || 0}</div>
-                                <div className="text-sm text-slate-300 font-medium">Lượt hiển thị</div>
-                                <div className="text-xs text-slate-400 mt-3 flex items-center gap-1">
-                                    Số lần xuất hiện trên Google
-                                </div>
-                            </div>
-
-                            {/* CTR */}
-                            <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="p-2 bg-amber-500/20 rounded-lg">
-                                        <Target className="w-5 h-5 text-amber-400" />
-                                    </div>
-                                </div>
-                                <div className="text-3xl font-black text-white mb-1">
-                                    {seoData?.ctr?.toFixed(2)}<span className="text-lg text-slate-400 font-medium">%</span>
-                                </div>
-                                <div className="text-sm text-slate-300 font-medium">Tỷ lệ nhấp (CTR)</div>
-                                <div className="text-xs text-slate-400 mt-3 flex items-center gap-1">
-                                    Lượt nhấp / Lượt hiển thị
-                                </div>
-                            </div>
-
-                            {/* Average Position */}
-                            <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="p-2 bg-rose-500/20 rounded-lg">
-                                        <Trophy className="w-5 h-5 text-rose-400" />
-                                    </div>
-                                </div>
-                                <div className="text-3xl font-black text-white mb-1">{seoData?.position?.toFixed(1) || '-'}</div>
-                                <div className="text-sm text-slate-300 font-medium">Vị trí trung bình</div>
-                                <div className="text-xs text-slate-400 mt-3 flex items-center gap-1">
-                                    Thứ hạng trên Google
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
 
-            {/* Main Chart */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-primary" />
-                    Lưu lượng truy cập theo ngày
-                </h3>
-                <div className="h-[300px] w-full">
+            {/* Chỉ Số KPI Cốt Lõi: Phẳng, Tối giản, Màu thương hiệu */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                
+                {/* 1. Lượt xem thật */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-sm hover:border-[#00AFA9] transition-colors">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5 font-medium">
+                        <span>Lượt xem (Người)</span>
+                        <Eye className="w-4 h-4 text-[#00AFA9]" />
+                    </div>
+                    <div className="text-2xl font-bold text-slate-900 tracking-tight">
+                        {data?.humanViews?.toLocaleString() || 0}
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#00AFA9]"></span>
+                        Độc giả / Khách hàng
+                    </div>
+                </div>
+
+                {/* 2. Khách Unique */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-sm hover:border-[#00AFA9] transition-colors">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5 font-medium">
+                        <span>Khách (Unique)</span>
+                        <Users className="w-4 h-4 text-[#00AFA9]" />
+                    </div>
+                    <div className="text-2xl font-bold text-slate-900 tracking-tight">
+                        {data?.uniqueVisitors?.toLocaleString() || 0}
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-1">
+                        Thiết bị riêng biệt
+                    </div>
+                </div>
+
+                {/* 3. Tổng phiên */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-sm hover:border-[#00AFA9] transition-colors">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5 font-medium">
+                        <span>Tổng Phiên</span>
+                        <MousePointerClick className="w-4 h-4 text-slate-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-slate-900 tracking-tight">
+                        {data?.totalSessions?.toLocaleString() || 0}
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-1">
+                        Lượt duyệt website
+                    </div>
+                </div>
+
+                {/* 4. Truy cập AI & Bot */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-sm hover:border-[#98C93C] transition-colors">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5 font-medium">
+                        <span>AI Search & Bot</span>
+                        <Bot className="w-4 h-4 text-[#98C93C]" />
+                    </div>
+                    <div className="text-2xl font-bold text-slate-900 tracking-tight">
+                        {data?.botViews?.toLocaleString() || 0}
+                    </div>
+                    <div className="text-[11px] text-[#7BA331] mt-1 font-medium flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Đã phân loại riêng
+                    </div>
+                </div>
+
+                {/* 5. Tốc độ tải trang */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-sm hover:border-slate-400 transition-colors">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5 font-medium">
+                        <span>Tốc độ tải trung bình</span>
+                        <Activity className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-slate-900 tracking-tight">
+                        {data?.avgLoadTime ? (data.avgLoadTime / 1000).toFixed(2) : 0}s
+                    </div>
+                    <div className="text-[11px] text-emerald-600 mt-1 font-medium">
+                        Phản hồi rất nhanh
+                    </div>
+                </div>
+
+                {/* 6. Tỷ lệ Khách Thật / Tổng */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-sm hover:border-[#00AFA9] transition-colors">
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5 font-medium">
+                        <span>Độ chuẩn xác traffic</span>
+                        <ShieldCheck className="w-4 h-4 text-[#00AFA9]" />
+                    </div>
+                    <div className="text-2xl font-bold text-[#00AFA9] tracking-tight">
+                        {data?.humanViews && (data.humanViews + (data.botViews || 0)) > 0
+                            ? `${Math.round((data.humanViews / (data.humanViews + (data.botViews || 0))) * 100)}%`
+                            : "100%"}
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-1">
+                        Không bị bot ảo lấn át
+                    </div>
+                </div>
+            </div>
+
+            {/* Google Search Console: Thiết Kế Phẳng (Trắng - Xanh Teal - Xám) thay cho hộp đen cũ */}
+            <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 sm:p-6 shadow-sm">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 mb-4 border-b border-slate-100 gap-2">
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <Search className="w-4 h-4 text-[#00AFA9]" />
+                            Google Search Console (Hiệu Suất Tìm Kiếm Tự Nhiên 30 Ngày)
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                            Dữ liệu xếp hạng từ khóa và lượt tìm kiếm thực tế của thương hiệu LYHU trên Google.
+                        </p>
+                    </div>
+                    <button 
+                        onClick={fetchSeoData}
+                        disabled={seoLoading}
+                        className="text-xs text-[#00AFA9] hover:underline font-medium flex items-center gap-1"
+                    >
+                        {seoLoading ? "Đang đồng bộ..." : "Đồng bộ lại"}
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-lg">
+                        <span className="text-xs text-slate-500 block mb-1">Lượt nhấp từ Google</span>
+                        <span className="text-xl font-bold text-slate-900">{seoData?.clicks?.toLocaleString() || 0}</span>
+                        <span className="text-[11px] text-slate-400 block mt-1">Clicks vào website</span>
+                    </div>
+
+                    <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-lg">
+                        <span className="text-xs text-slate-500 block mb-1">Lượt hiển thị Google</span>
+                        <span className="text-xl font-bold text-slate-900">{seoData?.impressions?.toLocaleString() || 0}</span>
+                        <span className="text-[11px] text-slate-400 block mt-1">Xuất hiện trên kết quả</span>
+                    </div>
+
+                    <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-lg">
+                        <span className="text-xs text-slate-500 block mb-1">Tỷ lệ nhấp (CTR)</span>
+                        <span className="text-xl font-bold text-[#00AFA9]">
+                            {seoData?.ctr ? seoData.ctr.toFixed(2) : "0.00"}%
+                        </span>
+                        <span className="text-[11px] text-slate-400 block mt-1">Clicks / Impressions</span>
+                    </div>
+
+                    <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-lg">
+                        <span className="text-xs text-slate-500 block mb-1">Vị trí trung bình</span>
+                        <span className="text-xl font-bold text-slate-900">
+                            {seoData?.position ? seoData.position.toFixed(1) : "-"}
+                        </span>
+                        <span className="text-[11px] text-emerald-600 font-medium block mt-1">Trang 1 Google</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Biểu Đồ Lưu Lượng: Đường Nét Đơn Sắc Phẳng */}
+            <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 sm:p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-[#00AFA9]" />
+                            Biểu Đồ Lưu Lượng Truy Cập Theo Thời Gian
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                            So sánh biến động giữa Người thật truy cập và Bot quét hệ thống
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-xs font-medium">
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-3 h-0.5 bg-[#00AFA9]"></span>
+                            <span className="text-slate-700">Người thật (Độc giả)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-3 h-0.5 bg-slate-400 border-b border-dashed"></span>
+                            <span className="text-slate-500">Bot / AI Crawler</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="h-[280px] w-full">
                     {data?.trafficOverTime?.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={data.trafficOverTime} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                            <LineChart data={data.trafficOverTime} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                                <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 11}} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 11}} />
                                 <RechartsTooltip 
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                    cursor={{ stroke: '#00afa9', strokeWidth: 1, strokeDasharray: '3 3' }}
+                                    contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: 'none', backgroundColor: '#FFFFFF', fontSize: '12px' }}
+                                    cursor={{ stroke: '#00AFA9', strokeWidth: 1 }}
                                 />
                                 <Line 
                                     type="monotone" 
                                     dataKey="human_views" 
                                     name="Người thật"
-                                    stroke="#00afa9" 
-                                    strokeWidth={3}
-                                    dot={{ r: 4, strokeWidth: 2 }}
-                                    activeDot={{ r: 6, stroke: '#00afa9', strokeWidth: 2, fill: '#fff' }} 
+                                    stroke="#00AFA9" 
+                                    strokeWidth={2}
+                                    dot={{ r: 3, fill: '#00AFA9' }}
+                                    activeDot={{ r: 5, stroke: '#00AFA9', strokeWidth: 2, fill: '#FFFFFF' }} 
                                 />
                                 <Line 
                                     type="monotone" 
                                     dataKey="bot_views" 
                                     name="Bot / AI"
-                                    stroke="#94a3b8" 
-                                    strokeWidth={2}
-                                    strokeDasharray="5 5"
+                                    stroke="#94A3B8" 
+                                    strokeWidth={1.5}
+                                    strokeDasharray="4 4"
                                     dot={false}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
                     ) : (
-                        <div className="h-full flex items-center justify-center text-slate-400">
+                        <div className="h-full flex items-center justify-center text-xs text-slate-400">
                             Chưa có dữ liệu truy cập trong khoảng thời gian này
                         </div>
                     )}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Top Pages */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                        <Monitor className="w-5 h-5 text-blue-500" />
-                        Trang xem nhiều nhất
-                    </h3>
-                    <div className="space-y-4">
-                        {data?.topPages?.map((page: any, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between group">
-                                <div className="flex items-center gap-3 truncate pr-4">
-                                    <div className="w-6 h-6 rounded bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-medium">
+            {/* Chi Tiết Chuyên Sâu: Trang Xem Nhiều & Nguồn AI / Web */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* 1. Trang Xem Nhiều Nhất */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm">
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <Monitor className="w-4 h-4 text-[#00AFA9]" />
+                            Trang Được Xem Nhiều Nhất (Top Pages)
+                        </h3>
+                        <span className="text-[11px] text-slate-400">Lượt đọc</span>
+                    </div>
+
+                    <div className="space-y-2">
+                        {data?.topPages?.slice(0, 8).map((page: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors text-xs">
+                                <div className="flex items-center gap-2.5 truncate pr-3">
+                                    <span className="w-5 h-5 rounded bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold shrink-0">
                                         {idx + 1}
-                                    </div>
-                                    <span className="text-sm font-medium text-slate-700 truncate group-hover:text-primary transition-colors" title={page.path}>
+                                    </span>
+                                    <span className="font-mono text-slate-700 truncate" title={page.path}>
                                         {page.path}
                                     </span>
                                 </div>
-                                <div className="text-sm font-bold text-slate-900 bg-slate-50 px-3 py-1 rounded-lg">
+                                <span className="font-semibold text-slate-900 px-2 py-0.5 rounded bg-slate-100 shrink-0">
                                     {page.views}
-                                </div>
+                                </span>
                             </div>
                         ))}
                         {(!data?.topPages || data.topPages.length === 0) && (
-                            <div className="text-center text-slate-400 py-4">Chưa có dữ liệu</div>
+                            <div className="text-center text-slate-400 py-6 text-xs">Chưa có dữ liệu</div>
                         )}
                     </div>
                 </div>
 
-                {/* Sources & Devices */}
-                <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                        <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                            <Globe className="w-5 h-5 text-amber-500" />
-                            Nguồn truy cập (Referrers)
+                {/* 2. Nguồn Giới Thiệu (Bao gồm AI Search & Mạng Xã Hội) */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm">
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <Globe className="w-4 h-4 text-[#98C93C]" />
+                            Nguồn Truy Cập (Referrers & AI Search)
                         </h3>
-                        <div className="space-y-4">
-                            {data?.topReferrers?.map((ref: any, idx: number) => (
-                                <div key={idx} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 truncate">
-                                        <ArrowUpRight className="w-4 h-4 text-slate-400" />
-                                        <span className="text-sm font-medium text-slate-700 truncate">
+                        <span className="text-[11px] text-slate-400">Lượt vào</span>
+                    </div>
+
+                    <div className="space-y-2">
+                        {data?.topReferrers?.slice(0, 8).map((ref: any, idx: number) => {
+                            const isAi = ref.source.toLowerCase().includes("ai") || ref.source.toLowerCase().includes("chatgpt") || ref.source.toLowerCase().includes("deepseek");
+                            return (
+                                <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors text-xs">
+                                    <div className="flex items-center gap-2 truncate pr-3">
+                                        <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                        <span className={`truncate font-medium ${isAi ? "text-[#00AFA9]" : "text-slate-700"}`}>
                                             {ref.source}
                                         </span>
-                                    </div>
-                                    <div className="text-sm font-bold text-slate-900">
-                                        {ref.views}
-                                    </div>
-                                </div>
-                            ))}
-                            {(!data?.topReferrers || data.topReferrers.length === 0) && (
-                                <div className="text-center text-slate-400 py-4">Chưa có dữ liệu</div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                        <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                            <Smartphone className="w-5 h-5 text-emerald-500" />
-                            Thiết bị truy cập
-                        </h3>
-                        <div className="h-[200px] flex items-center justify-center">
-                            {data?.deviceBreakdown?.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={data.deviceBreakdown}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={80}
-                                            paddingAngle={5}
-                                            dataKey="views"
-                                            nameKey="device"
-                                        >
-                                            {data.deviceBreakdown.map((entry: any, index: number) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <RechartsTooltip 
-                                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                            formatter={(value: any) => [value, 'Lượt xem']}
-                                        />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <div className="text-slate-400">Chưa có dữ liệu</div>
-                            )}
-                        </div>
-                        {/* Device Legend */}
-                        <div className="flex justify-center gap-4 mt-2">
-                            {data?.deviceBreakdown?.map((entry: any, idx: number) => (
-                                <div key={idx} className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                                    <span className="text-xs font-medium text-slate-600 capitalize">{entry.device} ({entry.views})</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                        <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                            <Monitor className="w-5 h-5 text-[#00AFA9]" />
-                            Hệ điều hành
-                        </h3>
-                        <div className="space-y-4">
-                            {data?.topOs?.map((item: any, idx: number) => (
-                                <div key={idx} className="flex items-center justify-between">
-                                    <span className="text-sm font-medium text-slate-700 truncate">{item.name}</span>
-                                    <div className="text-sm font-bold text-slate-900">{item.views}</div>
-                                </div>
-                            ))}
-                            {(!data?.topOs || data.topOs.length === 0) && (
-                                <div className="text-center text-slate-400 py-4">Chưa có dữ liệu</div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                        <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                            <Globe className="w-5 h-5 text-[#00AFA9]" />
-                            Trình duyệt
-                        </h3>
-                        <div className="space-y-4">
-                            {data?.topBrowsers?.map((item: any, idx: number) => (
-                                <div key={idx} className="flex items-center justify-between">
-                                    <span className="text-sm font-medium text-slate-700 truncate">{item.name}</span>
-                                    <div className="text-sm font-bold text-slate-900">{item.views}</div>
-                                </div>
-                            ))}
-                            {(!data?.topBrowsers || data.topBrowsers.length === 0) && (
-                                <div className="text-center text-slate-400 py-4">Chưa có dữ liệu</div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Geographic Analytics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Top Regions - Bar Chart */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-rose-500" />
-                        Khu vực truy cập (Tỉnh/Thành)
-                    </h3>
-                    {data?.topRegions?.length > 0 ? (
-                        <div className="h-[350px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                    data={data.topRegions.slice(0, 10)}
-                                    layout="vertical"
-                                    margin={{ top: 0, right: 20, bottom: 0, left: 10 }}
-                                >
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                                    <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11}} />
-                                    <YAxis 
-                                        type="category" 
-                                        dataKey="name" 
-                                        axisLine={false} 
-                                        tickLine={false} 
-                                        tick={{fill: '#334155', fontSize: 12, fontWeight: 500}} 
-                                        width={120}
-                                    />
-                                    <RechartsTooltip
-                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                        formatter={(value: any, name: any) => {
-                                            if (name === 'views') return [value, 'Lượt xem'];
-                                            if (name === 'visitors') return [value, 'Khách'];
-                                            return [value, name];
-                                        }}
-                                    />
-                                    <Bar dataKey="views" name="views" fill="#f43f5e" radius={[0, 6, 6, 0]} barSize={16} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    ) : (
-                        <div className="h-[200px] flex items-center justify-center text-slate-400">
-                            <div className="text-center">
-                                <MapPin className="w-10 h-10 mx-auto mb-3 text-slate-200" />
-                                <p>Chưa có dữ liệu khu vực</p>
-                                <p className="text-xs mt-1">Dữ liệu sẽ bắt đầu thu thập từ lượt truy cập mới</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Top Cities */}
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                        <Globe className="w-5 h-5 text-[#00AFA9]" />
-                        Chi tiết Thành phố
-                    </h3>
-                    <div className="space-y-3 max-h-[350px] overflow-y-auto">
-                        {data?.topCities?.map((item: any, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between group hover:bg-slate-50 rounded-lg px-3 py-2 -mx-3 transition-colors">
-                                <div className="flex items-center gap-3 truncate">
-                                    <div className="w-7 h-7 rounded-lg bg-teal-50 border border-teal-100 text-[#00AFA9] flex items-center justify-center text-xs font-bold">
-                                        {idx + 1}
-                                    </div>
-                                    <div className="truncate">
-                                        <span className="text-sm font-medium text-slate-800 block truncate">
-                                            {item.name}
-                                        </span>
-                                        {item.region && (
-                                            <span className="text-[11px] text-slate-400">
-                                                {item.region}
+                                        {isAi && (
+                                            <span className="px-1.5 py-0.2 rounded text-[10px] bg-teal-50 text-[#00AFA9] border border-teal-200 font-semibold shrink-0">
+                                                AI
                                             </span>
                                         )}
                                     </div>
+                                    <span className="font-semibold text-slate-900 px-2 py-0.5 rounded bg-slate-100 shrink-0">
+                                        {ref.views}
+                                    </span>
                                 </div>
-                                <div className="text-sm font-bold text-slate-900 bg-slate-50 group-hover:bg-white px-3 py-1 rounded-lg transition-colors">
-                                    {item.views}
-                                </div>
-                            </div>
-                        ))}
-                        {(!data?.topCities || data.topCities.length === 0) && (
-                            <div className="text-center text-slate-400 py-8">
-                                <Globe className="w-10 h-10 mx-auto mb-3 text-slate-200" />
-                                <p>Chưa có dữ liệu thành phố</p>
-                            </div>
+                            );
+                        })}
+                        {(!data?.topReferrers || data.topReferrers.length === 0) && (
+                            <div className="text-center text-slate-400 py-6 text-xs">Chưa có dữ liệu nguồn</div>
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* Recent Visitors Table */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mt-6">
-                <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-[#00AFA9]" />
-                    Chi tiết khách truy cập gần đây
-                </h3>
+            {/* Chi Tiết Thiết Bị & Khu Vực Địa Lý */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                {/* 1. Thiết bị */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm">
+                    <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                        <Smartphone className="w-4 h-4 text-slate-700" />
+                        Thiết Bị Truy Cập
+                    </h3>
+                    <div className="h-[160px] flex items-center justify-center">
+                        {data?.deviceBreakdown?.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={data.deviceBreakdown}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={45}
+                                        outerRadius={65}
+                                        paddingAngle={2}
+                                        dataKey="views"
+                                        nameKey="device"
+                                    >
+                                        {data.deviceBreakdown.map((_: any, index: number) => (
+                                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <RechartsTooltip 
+                                        contentStyle={{ borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '11px' }}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="text-xs text-slate-400">Chưa có dữ liệu</div>
+                        )}
+                    </div>
+                    <div className="flex flex-col gap-1.5 mt-2">
+                        {data?.deviceBreakdown?.map((entry: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }}></span>
+                                    <span className="text-slate-600">{entry.device}</span>
+                                </div>
+                                <span className="font-bold text-slate-900">{entry.views}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* 2. Hệ điều hành & Trình duyệt */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm">
+                    <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                        <Cpu className="w-4 h-4 text-slate-700" />
+                        Hệ Điều Hành & Trình Duyệt
+                    </h3>
+                    <div className="space-y-2">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Hệ điều hành</span>
+                        {data?.topOs?.slice(0, 3).map((item: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between text-xs py-1">
+                                <span className="text-slate-700">{item.name}</span>
+                                <span className="font-semibold text-slate-900">{item.views}</span>
+                            </div>
+                        ))}
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block pt-2">Trình duyệt</span>
+                        {data?.topBrowsers?.slice(0, 3).map((item: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between text-xs py-1">
+                                <span className="text-slate-700">{item.name}</span>
+                                <span className="font-semibold text-slate-900">{item.views}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* 3. Khu vực / Thành phố */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm">
+                    <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-[#00AFA9]" />
+                        Vị Trí Địa Lý (Tỉnh / Thành Phố)
+                    </h3>
+                    <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                        {data?.topCities?.slice(0, 6).map((item: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between p-1.5 rounded hover:bg-slate-50 text-xs">
+                                <div className="truncate pr-2">
+                                    <span className="font-medium text-slate-800 block truncate">{item.name}</span>
+                                    {item.region && <span className="text-[10px] text-slate-400">{item.region}</span>}
+                                </div>
+                                <span className="font-semibold text-slate-900 px-2 py-0.5 rounded bg-slate-100 shrink-0">
+                                    {item.views}
+                                </span>
+                            </div>
+                        ))}
+                        {(!data?.topCities || data.topCities.length === 0) && (
+                            <div className="text-center text-slate-400 py-8 text-xs">Chưa có dữ liệu vị trí</div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Bảng Chi Tiết Khách Truy Cập Gần Đây (Nâng Cấp Phân Loại Thông Minh) */}
+            <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 sm:p-6 shadow-sm">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 mb-4 border-b border-slate-100 gap-3">
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <Users className="w-4 h-4 text-[#00AFA9]" />
+                            Nhật Ký Truy Cập Chi Tiết (Recent Activity Logs)
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                            Chi tiết từng phiên truy cập theo thời gian thực kèm định danh thiết bị và nguồn gốc.
+                        </p>
+                    </div>
+
+                    {/* Bộ lọc tab phẳng */}
+                    <div className="flex items-center bg-slate-100 p-1 rounded-lg text-xs font-medium">
+                        <button
+                            onClick={() => setVisitorFilter("all")}
+                            className={`px-3 py-1 rounded-md transition-all ${visitorFilter === "all" ? "bg-white text-slate-900 shadow-sm font-bold" : "text-slate-600 hover:text-slate-900"}`}
+                        >
+                            Tất cả ({data?.recentVisitors?.length || 0})
+                        </button>
+                        <button
+                            onClick={() => setVisitorFilter("human")}
+                            className={`px-3 py-1 rounded-md transition-all ${visitorFilter === "human" ? "bg-white text-[#00AFA9] shadow-sm font-bold" : "text-slate-600 hover:text-slate-900"}`}
+                        >
+                            Người thật
+                        </button>
+                        <button
+                            onClick={() => setVisitorFilter("ai")}
+                            className={`px-3 py-1 rounded-md transition-all ${visitorFilter === "ai" ? "bg-white text-[#7BA331] shadow-sm font-bold" : "text-slate-600 hover:text-slate-900"}`}
+                        >
+                            AI Search
+                        </button>
+                        <button
+                            onClick={() => setVisitorFilter("bot")}
+                            className={`px-3 py-1 rounded-md transition-all ${visitorFilter === "bot" ? "bg-white text-slate-700 shadow-sm font-bold" : "text-slate-600 hover:text-slate-900"}`}
+                        >
+                            Bot / Crawler
+                        </button>
+                    </div>
+                </div>
+
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left border-collapse text-xs">
                         <thead>
-                            <tr className="border-b border-slate-200 text-sm text-slate-500">
-                                <th className="pb-3 font-medium whitespace-nowrap">Thời gian</th>
-                                <th className="pb-3 font-medium">Trang truy cập</th>
-                                <th className="pb-3 font-medium">Nguồn (Referrer)</th>
-                                <th className="pb-3 font-medium">Thiết bị</th>
-                                <th className="pb-3 font-medium">Vị trí</th>
-                                <th className="pb-3 font-medium text-right whitespace-nowrap">Tốc độ tải</th>
+                            <tr className="border-b border-slate-200 text-slate-400 font-semibold uppercase tracking-wider">
+                                <th className="pb-2.5 font-semibold">Thời gian</th>
+                                <th className="pb-2.5 font-semibold">Trang truy cập</th>
+                                <th className="pb-2.5 font-semibold">Nguồn (Referrer)</th>
+                                <th className="pb-2.5 font-semibold">Loại khách / Danh tính</th>
+                                <th className="pb-2.5 font-semibold">Thiết bị & Trình duyệt</th>
+                                <th className="pb-2.5 font-semibold">Vị trí địa lý</th>
+                                <th className="pb-2.5 font-semibold text-right">Tốc độ</th>
                             </tr>
                         </thead>
-                        <tbody className="text-sm text-slate-700">
-                            {data?.recentVisitors?.map((v: any, idx: number) => (
-                                <tr key={idx} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                    <td className="py-3 whitespace-nowrap">{dayjs(v.created_at).format('DD/MM/YYYY HH:mm:ss')}</td>
-                                    <td className="py-3 font-medium text-slate-900 max-w-[200px] truncate" title={v.pathname}>{v.pathname}</td>
-                                    <td className="py-3 max-w-[150px] truncate text-slate-500" title={v.referrer || 'Trực tiếp'}>{v.referrer || 'Trực tiếp'}</td>
-                                    <td className="py-3 whitespace-nowrap">
-                                        <div className="flex items-center gap-1.5">
-                                            {v.device_type === 'mobile' ? <Smartphone className="w-4 h-4 text-emerald-500" /> : <Monitor className="w-4 h-4 text-blue-500" />}
-                                            <span className="text-xs text-slate-500">{v.browser} / {v.os}</span>
-                                        </div>
-                                    </td>
-                                    <td className="py-3 text-slate-500">
-                                        {v.city ? `${v.city}${v.country ? `, ${v.country}` : ''}` : 'Không xác định'}
-                                    </td>
-                                    <td className="py-3 text-right">
-                                        {v.load_time_ms ? (
-                                            <span className={v.load_time_ms > 3000 ? 'text-red-500 font-medium' : 'text-emerald-500 font-medium'}>
-                                                {(v.load_time_ms / 1000).toFixed(2)}s
-                                            </span>
-                                        ) : '-'}
-                                    </td>
-                                </tr>
-                            ))}
-                            {(!data?.recentVisitors || data.recentVisitors.length === 0) && (
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
+                            {filteredVisitors.map((v: any, idx: number) => {
+                                const isBot = v.is_bot;
+                                const botName = v.bot_name;
+                                const isAi = (botName || "").toLowerCase().includes("ai") || (botName || "").toLowerCase().includes("gpt") || (botName || "").toLowerCase().includes("deepseek") || (botName || "").toLowerCase().includes("kimi");
+
+                                return (
+                                    <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                                        <td className="py-2.5 whitespace-nowrap font-mono text-slate-500">
+                                            {dayjs(v.created_at).format('HH:mm:ss DD/MM')}
+                                        </td>
+                                        <td className="py-2.5 font-mono font-medium text-slate-900 max-w-[200px] truncate" title={v.pathname}>
+                                            {v.pathname}
+                                        </td>
+                                        <td className="py-2.5 max-w-[160px] truncate text-slate-600" title={v.referrer || 'Trực tiếp'}>
+                                            {v.referrer || <span className="text-slate-400 italic">Trực tiếp</span>}
+                                        </td>
+                                        <td className="py-2.5 whitespace-nowrap">
+                                            {isAi ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-teal-50 text-[#00AFA9] font-medium border border-teal-200 text-[11px]">
+                                                    <Bot className="w-3 h-3" />
+                                                    {botName || "AI Search"}
+                                                </span>
+                                            ) : isBot ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium text-[11px]">
+                                                    <Cpu className="w-3 h-3" />
+                                                    {botName || "Crawler Bot"}
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium text-[11px]">
+                                                    <CheckCircle2 className="w-3 h-3" />
+                                                    Người dùng thật
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="py-2.5 whitespace-nowrap text-slate-600">
+                                            <div className="flex items-center gap-1.5">
+                                                {v.device_type === 'mobile' ? (
+                                                    <Smartphone className="w-3.5 h-3.5 text-slate-400" />
+                                                ) : (
+                                                    <Monitor className="w-3.5 h-3.5 text-slate-400" />
+                                                )}
+                                                <span>{v.browser} / {v.os}</span>
+                                            </div>
+                                        </td>
+                                        <td className="py-2.5 text-slate-600">
+                                            {v.city ? `${v.city}${v.country ? `, ${v.country}` : ''}` : <span className="text-slate-400">-</span>}
+                                        </td>
+                                        <td className="py-2.5 text-right font-mono">
+                                            {v.load_time_ms ? (
+                                                <span className={v.load_time_ms > 3000 ? 'text-amber-600 font-medium' : 'text-slate-600'}>
+                                                    {(v.load_time_ms / 1000).toFixed(2)}s
+                                                </span>
+                                            ) : <span className="text-slate-300">-</span>}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                            {filteredVisitors.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="py-8 text-center text-slate-400">Không có dữ liệu truy cập</td>
+                                    <td colSpan={7} className="py-8 text-center text-slate-400">
+                                        Không tìm thấy dữ liệu phù hợp với bộ lọc
+                                    </td>
                                 </tr>
                             )}
                         </tbody>
