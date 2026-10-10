@@ -205,9 +205,9 @@ export default function MotionMakerStudioAdmin() {
     const [isExporting, setIsExporting] = useState<boolean>(false);
     const [showReferencePoster, setShowReferencePoster] = useState<boolean>(false);
 
-    // AI Voice Config
+    // AI Voice Config (Đồng bộ 100% với Dựng Video AI & Lồng tiếng)
     const [voiceStyle, setVoiceStyle] = useState<string>("female-genz");
-    const [voiceEngine, setVoiceEngine] = useState<"gemini-omni" | "azure-neural">("gemini-omni");
+    const [voiceEngine, setVoiceEngine] = useState<"gemini" | "elevenlabs" | "edge">("gemini");
     const [isGeneratingAiScript, setIsGeneratingAiScript] = useState<boolean>(false);
 
     const animationFrameRef = useRef<number | null>(null);
@@ -376,11 +376,15 @@ export default function MotionMakerStudioAdmin() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    text: scene.scriptText,
+                    text: scene.scriptText.trim(),
+                    voice: voiceStyle,
                     style: voiceStyle,
-                    voice: voiceStyle.includes("male") ? "vi-VN-NamMinhNeural" : "vi-VN-HoaiMyNeural",
-                    engine: voiceEngine === "gemini-omni" ? "gemini" : "edge"
-                })
+                    engine: voiceEngine,
+                    rateMultiplier: 1.15,
+                    geminiApiKey: typeof window !== "undefined" ? localStorage.getItem("GEMINI_API_KEY") || undefined : undefined,
+                    elevenApiKey: typeof window !== "undefined" ? localStorage.getItem("ELEVENLABS_API_KEY") || undefined : undefined
+                }),
+                signal: AbortSignal.timeout(90000)
             });
 
             if (!res.ok) {
@@ -389,8 +393,8 @@ export default function MotionMakerStudioAdmin() {
             }
 
             const blob = await res.blob();
-            if (blob.size < 50) {
-                throw new Error("Dữ liệu âm thanh trả về rỗng.");
+            if (blob.size < 100) {
+                throw new Error("Dữ liệu âm thanh không hợp lệ, vui lòng thử lại!");
             }
             const audioUrl = URL.createObjectURL(blob);
 
@@ -399,7 +403,7 @@ export default function MotionMakerStudioAdmin() {
                     idx === sceneIndex ? { ...sc, audioUrl, isGeneratingAudio: false } : sc
                 )
             );
-            toast.success(`Đã tạo giọng đọc AI thành công cho ${scene.name}!`);
+            toast.success(`Đã thu giọng đọc AI thành công cho ${scene.name}!`);
         } catch (err: any) {
             console.error("TTS error:", err);
             setScenes((prev) =>
@@ -712,27 +716,29 @@ export default function MotionMakerStudioAdmin() {
 
                         <div className="grid grid-cols-2 gap-2 text-xs">
                             <div>
-                                <label className="text-[11px] text-slate-400 block mb-1">Mô hình Voice</label>
+                                <label className="text-[11px] font-bold text-slate-300 block mb-1">Công nghệ AI TTS:</label>
                                 <select
                                     value={voiceEngine}
                                     onChange={(e) => setVoiceEngine(e.target.value as any)}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200"
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200"
                                 >
-                                    <option value="gemini-omni">Google Gemini Omni Audio</option>
-                                    <option value="azure-neural">Azure Neural Studio</option>
+                                    <option value="gemini">Google Gemini Omni Audio (Đỉnh cao cảm xúc)</option>
+                                    <option value="elevenlabs">ElevenLabs Multilingual v2 (Flow Engine)</option>
+                                    <option value="edge">Microsoft Studio Neural (Hoài My & Nam Minh)</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="text-[11px] text-slate-400 block mb-1">Tông Giọng</label>
+                                <label className="text-[11px] font-bold text-slate-300 block mb-1">Giọng đọc tiếng Việt:</label>
                                 <select
                                     value={voiceStyle}
                                     onChange={(e) => setVoiceStyle(e.target.value)}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200"
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200"
                                 >
-                                    <option value="female-genz">Nữ Gen Z (Bắt trend TikTok)</option>
-                                    <option value="male-genz">Nam Gen Z (Năng động)</option>
-                                    <option value="female-sweet">Nữ Ngọt Ngào (Review)</option>
-                                    <option value="male-pro">Nam Chuyên Nghiệp (Trầm ấm)</option>
+                                    <option value="female-genz">Nữ Gen Z (Kore - Cuốn hút chuẩn TikTok)</option>
+                                    <option value="female-sweet">Nữ Dịu Dàng (Aoede - Ấm áp, truyền cảm)</option>
+                                    <option value="female-pro">Nữ Chuyên Nghiệp (Leda - Rõ ràng, tin cậy)</option>
+                                    <option value="male-genz">Nam Gen Z (Puck - Năng động, hài hước)</option>
+                                    <option value="male-pro">Nam Chuyên Nghiệp (Fenrir - Trầm ấm, uy tín)</option>
                                 </select>
                             </div>
                         </div>
