@@ -3,9 +3,22 @@
  * Styled according to LYHU brand guidelines: professional, non-intrusive, crystal clear.
  */
 
+const SCRIPT_LOAD_TIME = typeof window !== 'undefined' ? Date.now() : 0;
+let lastSoundPlayTime = 0;
+
 export const playNotificationSound = () => {
     try {
         if (typeof window === 'undefined') return;
+        const nowMs = Date.now();
+        // Silence any audio chime in the initial 5-second window after page load/refresh
+        if (nowMs - SCRIPT_LOAD_TIME < 5000) {
+            return;
+        }
+        if (nowMs - lastSoundPlayTime < 3000) {
+            return; // Cooldown to avoid duplicate beeps
+        }
+        lastSoundPlayTime = nowMs;
+
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
         if (!AudioContextClass) return;
 

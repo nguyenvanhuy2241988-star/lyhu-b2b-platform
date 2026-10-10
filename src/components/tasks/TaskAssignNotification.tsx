@@ -29,6 +29,7 @@ export const TaskAssignNotification = () => {
     const knownAssignedTaskIdsRef = useRef<Set<string>>(new Set());
     const knownAssignedSubtaskIdsRef = useRef<Set<string>>(new Set());
     const isInitializedRef = useRef<boolean>(false);
+    const isAudioReadyRef = useRef<boolean>(false);
     const mountedAtRef = useRef<number>(Date.now());
 
     // Helper for persisting already notified tasks across page refreshes in this browser session
@@ -60,13 +61,19 @@ export const TaskAssignNotification = () => {
     useEffect(() => {
         if (!user?.id) return;
         mountedAtRef.current = Date.now();
+        isAudioReadyRef.current = false;
+
+        // Startup window: keep sound and toast banners completely quiet for 6 seconds on reload
+        const audioTimer = setTimeout(() => {
+            isAudioReadyRef.current = true;
+        }, 6000);
 
         const initializeData = async () => {
             try {
                 // 1. Fetch profiles cache & placements in parallel
                 const [{ data: pData }, { data: tData }, { data: placements }] = await Promise.all([
                     supabase.from('profiles').select('id, full_name, email'),
-                    supabase.from('telesales_tasks').select('id, assigned_to, assignee_ids, note, metadata'),
+                    supabase.from('telesales_tasks').select('id, user_id, owner_id, assigned_to, assignee_ids, note, metadata, created_at'),
                     supabase.from('task_column_placements').select('task_id').eq('user_id', user.id)
                 ]);
 
@@ -90,7 +97,7 @@ export const TaskAssignNotification = () => {
 
                 if (tData) {
                     tData.forEach((t: any) => {
-                        if (isTaskAssignedToUser(t, user.id)) {
+                        if (isTaskAssignedToUser(t, user.id) || t.owner_id === user.id || t.user_id === user.id) {
                             taskIds.add(t.id);
                         }
                         const meta = extractTaskMetadata(t);
@@ -112,6 +119,10 @@ export const TaskAssignNotification = () => {
         };
 
         initializeData();
+
+        return () => {
+            clearTimeout(audioTimer);
+        };
     }, [user?.id]);
 
     const dismissNotice = useCallback((id: string) => {
@@ -151,18 +162,34 @@ export const TaskAssignNotification = () => {
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'telesales_tasks' },
                 async (payload: any) => {
-                    if (!isInitializedRef.current) return;
-
                     const task = payload.new as any;
                     const oldTask = payload.old as any;
                     if (!task || !task.id) return;
 
+                    // A. STARTUP COOLDOWN:
+                    // During the first 6 seconds of page load/reload, completely SILENCE audio chimes and toast banners.
+                    // Silently register any incoming tasks as known so they will never false-trigger afterwards either.
+                    if (!isAudioReadyRef.current || !isInitializedRef.current) {
+                        knownAssignedTaskIdsRef.current.add(task.id);
+                        markSessionNotified(task.id);
+                        const meta = extractTaskMetadata(task);
+                        meta.subtasks?.forEach((st: any) => {
+                            if (st.assigned_to === user.id) {
+                                knownAssignedSubtaskIdsRef.current.add(`${task.id}_${st.id || st.title}`);
+                            }
+                        });
+                        return;
+                    }
+
                     // 1. Never notify if already notified in this browser session
                     if (isSessionNotified(task.id)) return;
 
-                    // 2. If user is the creator/owner and nobody else was assigned, ignore self actions
-                    const isSelfCreator = (task.owner_id === user.id || task.user_id === user.id);
-                    if (isSelfCreator && !task.assigned_to && (!task.assignee_ids || task.assignee_ids.length <= 1)) {
+                    // 2. Ignore tasks created and assigned only to oneself
+                    const isCreatedBySelf = (task.owner_id === user.id || task.user_id === user.id);
+                    const assignees = parseAssigneeIds(task.assignee_ids);
+                    if (task.assigned_to) assignees.push(task.assigned_to);
+                    const isOnlyAssignedToSelf = assignees.length === 0 || assignees.every(id => id === user.id);
+                    if (isCreatedBySelf && isOnlyAssignedToSelf) {
                         return;
                     }
 
@@ -187,14 +214,14 @@ export const TaskAssignNotification = () => {
                     const taskCreatedAtMs = task.created_at ? new Date(task.created_at).getTime() : 0;
 
                     if (payload.eventType === 'INSERT') {
-                        // Task must be created AFTER the current tab was opened (with 3s buffer)
-                        if (taskCreatedAtMs < mountedAtRef.current - 3000 || isAlreadyKnownTask) {
+                        // Task must be created AFTER the current tab was opened
+                        if (taskCreatedAtMs < mountedAtRef.current || isAlreadyKnownTask) {
                             return;
                         }
                     } else if (payload.eventType === 'UPDATE') {
-                        // If task was known before or created prior to this session:
+                        // If task was known before or created prior to this tab session:
                         // Only notify if a brand new subtask step was assigned to user!
-                        if (isAlreadyKnownTask || taskCreatedAtMs < mountedAtRef.current - 10000) {
+                        if (isAlreadyKnownTask || taskCreatedAtMs < mountedAtRef.current) {
                             if (!assignedSubtask || isAlreadyKnownSubtask) {
                                 return;
                             }
