@@ -159,6 +159,14 @@ export default function AnalyticsDashboard() {
                         device: item.device === "desktop" ? "Máy tính (Desktop)" : item.device === "mobile" ? "Điện thoại (Mobile)" : (item.device || "Khác")
                     }));
                 }
+
+                // Lọc sạch các trang nội bộ khỏi Top Pages nếu bật "Loại trừ truy cập nội bộ"
+                if (excludeInternal && result.topPages) {
+                    const internalPrefixes = ['/login', '/sale-admin', '/admin', '/tasks', '/chat', '/portal', '/settings', '/telesales', '/debug-role', '/crm', '/recruitment'];
+                    result.topPages = result.topPages.filter((p: any) => 
+                        !internalPrefixes.some(prefix => p.path === prefix || p.path.startsWith(prefix + '/'))
+                    );
+                }
             }
 
             // Fetch Recent Visitors Details (Nâng lên 100 bản ghi để phân tích kỹ)
@@ -173,9 +181,14 @@ export default function AnalyticsDashboard() {
             if (excludeInternal) {
                 visitorsQuery = visitorsQuery
                     .not('pathname', 'like', '/admin%')
+                    .not('pathname', 'like', '/sale-admin%')
+                    .not('pathname', 'like', '/tasks%')
+                    .not('pathname', 'like', '/chat%')
+                    .not('pathname', 'like', '/portal%')
+                    .not('pathname', 'like', '/settings%')
                     .not('pathname', 'like', '/marketing%')
                     .not('pathname', 'like', '/recruitment%')
-                    .not('pathname', 'like', '/chat%')
+                    .not('pathname', 'like', '/telesales%')
                     .not('pathname', 'like', '/login%');
             }
 

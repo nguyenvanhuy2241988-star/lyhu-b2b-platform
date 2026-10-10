@@ -90,8 +90,19 @@ export default function WebTracker() {
             }
         };
 
-        // Don't track if we're inside the dashboard/admin to avoid skewing public traffic
-        if (pathname && !pathname.startsWith('/admin') && !pathname.startsWith('/telesales') && !pathname.startsWith('/settings')) {
+        // Don't track if we're inside the dashboard, admin, employee portal, or auth pages to avoid skewing public traffic
+        const isInternalRoute = 
+            pathname.startsWith('/admin') || 
+            pathname.startsWith('/sale-admin') ||
+            pathname.startsWith('/telesales') || 
+            pathname.startsWith('/settings') ||
+            pathname.startsWith('/chat') ||
+            pathname.startsWith('/tasks') ||
+            pathname.startsWith('/portal') ||
+            pathname.startsWith('/login') ||
+            pathname.startsWith('/debug-role');
+
+        if (pathname && !isInternalRoute) {
              trackPageView();
         }
         
