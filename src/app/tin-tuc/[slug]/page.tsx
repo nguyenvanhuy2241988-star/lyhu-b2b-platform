@@ -56,53 +56,43 @@ async function getPost(slug: string) {
         .select('*')
         .eq('is_active', true);
 
-    // Fetch contextual products (AI matching via keywords or title)
-    let productQuery = supabase
+    // ── ƯU TIÊN SỐ 1: 4 SẢN PHẨM CHỦ LỰC CHIẾN LƯỢC CỦA LYHU ──
+    // 1. Kẹo dẻo siêu chua UHi
+    // 2. Khoai môn tẩm vị CVT
+    // 3. Bánh tráng sa tế Abi Snack
+    // 4. Bột phô mai BOYO 65g
+    const flagshipIds = [
+        '3bb47e13-6709-403d-a484-00ad9d61db68', // Kẹo dẻo siêu chua vị Soda 40g (UHi)
+        'f1c24e4e-c5e3-4e4d-9eb5-1b03d8935cb2', // Thanh khoai môn vị cay 75g (CVT)
+        'ebfce57c-6016-4520-bc29-1322e2e346a7', // Bánh tráng sa tế cay Abi (Abi Snack)
+        'b2f6a52f-ea58-470c-8014-b49600298e11'  // Bột phô mai BOYO 65g (BOYO)
+    ];
+
+    let { data: flagshipProducts } = await supabase
         .from('products')
-        .select('id, name, price, image_url')
-        .eq('is_active', true);
+        .select('id, name, price, image_url, brand')
+        .in('id', flagshipIds);
 
-    const titleLower = (data.title || '').toLowerCase();
-    const keywordsLower = (data.keywords || '').toLowerCase();
-
-    if (titleLower.includes('phô mai') || keywordsLower.includes('phô mai')) {
-        productQuery = productQuery.ilike('name', '%phô mai%');
-    } else if (titleLower.includes('boyo') || keywordsLower.includes('boyo')) {
-        productQuery = productQuery.ilike('name', '%boyo%');
-    } else if (data.keywords) {
-        // To avoid overly broad matches (like "bánh" from "bánh kẹo" matching "Bánh tráng"),
-        // we use the very first word of the first keyword (e.g., "kẹo" from "kẹo chua UHi")
-        const firstKeyword = data.keywords.split(',')[0].trim();
-        const firstWord = firstKeyword.split(' ')[0];
-        
-        if (firstWord && firstWord.length >= 2) {
-            productQuery = productQuery.ilike('name', `%${firstWord}%`);
-        }
+    // Sắp xếp đúng thứ tự 4 sản phẩm chủ lực
+    let products: any[] = [];
+    if (flagshipProducts && flagshipProducts.length > 0) {
+        products = flagshipIds
+            .map(id => flagshipProducts!.find(p => p.id === id))
+            .filter(Boolean);
     }
 
-    let { data: products } = await productQuery.limit(6);
-
-    // Sort: if post mentions 65g or is a recipe, put BOYO 65g first, then 1kg
-    if (products && products.length > 0) {
-        products = products.sort((a, b) => {
-            const aName = a.name.toLowerCase();
-            const bName = b.name.toLowerCase();
-            if (aName.includes('65g') && !bName.includes('65g')) return -1;
-            if (!aName.includes('65g') && bName.includes('65g')) return 1;
-            if (aName.includes('1kg') && !bName.includes('1kg')) return -1;
-            if (!aName.includes('1kg') && bName.includes('1kg')) return 1;
-            return 0;
-        });
-    }
-
-    // Fallback if no matching products found
-    if (!products || products.length === 0) {
-        const { data: fallbackProducts } = await supabase
+    // Nếu thiếu, nạp thêm từ sản phẩm active khác
+    if (products.length < 4) {
+        const { data: extraProds } = await supabase
             .from('products')
-            .select('id, name, price, image_url')
+            .select('id, name, price, image_url, brand')
             .eq('is_active', true)
             .limit(4);
-        products = fallbackProducts || [];
+        (extraProds || []).forEach((p: any) => {
+            if (!products.some(fp => fp.id === p.id) && products.length < 4) {
+                products.push(p);
+            }
+        });
     }
 
     // Fetch active new customer offer
