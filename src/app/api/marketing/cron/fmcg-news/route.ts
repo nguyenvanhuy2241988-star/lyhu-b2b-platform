@@ -315,6 +315,14 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
+        // Bắn tín hiệu IndexNow tức thì (< 1s) tới Bing, Yahoo, Perplexity
+        try {
+            const { submitToIndexNow, SITE_HOST } = await import('@/lib/indexnow');
+            await submitToIndexNow(`https://${SITE_HOST}/tin-tuc/${slug}`);
+        } catch (idxErr) {
+            console.warn('[IndexNow Auto-Ping Warning]:', idxErr);
+        }
+
         return NextResponse.json({ 
             success: true, 
             message: 'Bản tin FMCG đã xuất bản',
