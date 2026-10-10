@@ -14,6 +14,7 @@ import BlogSidebarArticles from '@/components/blog/BlogSidebarArticles';
 import BlogSidebarNewCustomerPromo from '@/components/blog/BlogSidebarNewCustomerPromo';
 import DynamicBlogContent from '@/components/blog/DynamicBlogContent';
 import ViewCounter from '@/components/blog/ViewCounter';
+import EmagazineLayout from '@/components/blog/EmagazineLayout';
 export const revalidate = 60;
 type Props = {
     params: { slug: string }
@@ -286,6 +287,11 @@ export default async function BlogPostPage({ params }: Props) {
         };
     }
 
+    const isEmagazine = post.category?.slug === 'emagazine' || 
+                          post.slug?.startsWith('emagazine-') || 
+                          post.content?.includes('[EMAGAZINE]') ||
+                          post.keywords?.includes('eMagazine');
+
     return (
         <div className="bg-white min-h-screen pb-16">
             <ViewCounter postId={post.id} />
@@ -295,8 +301,16 @@ export default async function BlogPostPage({ params }: Props) {
             {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
             {recipeSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(recipeSchema) }} />}
 
-            {/* Breadcrumb Navigation */}
-            <nav className="border-b border-gray-100 bg-gray-50/50 py-3 hidden md:block">
+            {isEmagazine ? (
+                <EmagazineLayout 
+                    post={post} 
+                    products={products} 
+                    readingTime={readingTime} 
+                />
+            ) : (
+                <>
+                    {/* Breadcrumb Navigation */}
+                    <nav className="border-b border-gray-100 bg-gray-50/50 py-3 hidden md:block">
                 <ol className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center space-x-2 text-sm text-gray-500">
                     <li><Link href="/" className="hover:text-primary-600">Trang chủ</Link></li>
                     <li><ChevronRight className="w-3.5 h-3.5" /></li>
@@ -480,6 +494,8 @@ export default async function BlogPostPage({ params }: Props) {
                     </div>
                 </aside>
             </div>
+            </>
+            )}
         </div>
     );
 }
