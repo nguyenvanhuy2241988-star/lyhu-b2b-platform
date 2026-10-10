@@ -943,10 +943,38 @@ export default function TelesalesTasksPage() {
             return newColumnTasks;
         });
 
+        // Handle legacy mock candidate task id if present
+        if (taskId.startsWith('interview_')) {
+            const candidateId = taskId.replace('interview_', '');
+            try {
+                await supabase
+                    .from('recruitment_interviews')
+                    .update({ status: 'completed' })
+                    .eq('candidate_id', candidateId)
+                    .eq('status', 'scheduled');
+            } catch (e) { }
+            await refreshData(true);
+            return;
+        }
+
         const success = await updateTaskSupabase(taskId, {
             status: newStatus as TaskStatus,
             completed_at: completedAt
         }, session?.access_token);
+
+        // Also sync recruitment interview status if this task is linked to a candidate
+        const candMatch = task.note?.match(/<!-- CANDIDATE_ID:([^>]+) -->/);
+        if (candMatch && candMatch[1]) {
+            const candidateId = candMatch[1].trim();
+            try {
+                await supabase
+                    .from('recruitment_interviews')
+                    .update({ status: newStatus === 'done' ? 'completed' : 'scheduled' })
+                    .eq('candidate_id', candidateId);
+            } catch (e) {
+                console.warn('[handleToggleTaskStatus] Sync candidate interview error:', e);
+            }
+        }
 
         // Also move placement to done/inbox column for manual tasks
         if (task.type !== 'deal') {
@@ -1222,42 +1250,19 @@ export default function TelesalesTasksPage() {
             }
         }
 
+        // Admin-only: Ensure interview candidates are synced as real database tasks before loading
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        if (currentPath.includes('/admin/tasks')) {
+            try {
+                await fetch('/api/recruitment/sync-interview-tasks');
+            } catch (e) {
+                console.warn('[Interview Sync] Background sync failed:', e);
+            }
+        }
+
         // Load each visible column independently
         const visibleCols = standardizedDbCols.filter(c => c.is_visible !== false);
         await Promise.all(visibleCols.map(col => loadTasksForColumn(col.id, 1, false, col.column_type)));
-
-        // Admin-only: Inject interview candidates into inbox column
-        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-        console.log('[Interview Sync] pathname:', currentPath);
-        if (currentPath.includes('/admin/tasks')) {
-            console.log('[Interview Sync] ✅ Admin tasks page detected, fetching interview candidates...');
-            console.log('[Interview Sync] Available columns:', standardizedDbCols.map(c => ({ id: c.id, type: c.column_type, label: c.label })));
-            try {
-                const res = await fetch('/api/recruitment/sync-interview-tasks');
-                const data = await res.json();
-                console.log('[Interview Sync] API response:', JSON.stringify(data));
-                if (data.success && data.tasks?.length > 0) {
-                    const inboxCol = standardizedDbCols.find(c => c.column_type === 'system_inbox');
-                    console.log('[Interview Sync] Inbox column found:', inboxCol?.id, inboxCol?.label);
-                    if (inboxCol) {
-                        setColumnTasks(prev => {
-                            const existing = prev[inboxCol.id] || [];
-                            console.log('[Interview Sync] Existing inbox tasks:', existing.length);
-                            const newTasks = data.tasks.filter((t: any) => !existing.some((e: any) => e.id === t.id));
-                            console.log('[Interview Sync] New tasks to inject:', newTasks.length);
-                            if (newTasks.length === 0) return prev;
-                            return { ...prev, [inboxCol.id]: [...newTasks, ...existing] };
-                        });
-                    } else {
-                        console.warn('[Interview Sync] ❌ No inbox column found!');
-                    }
-                } else {
-                    console.log('[Interview Sync] No tasks to sync or API error');
-                }
-            } catch (e) {
-                console.error('[Interview Sync] ❌ Fetch failed:', e);
-            }
-        }
 
         isInitialLoadDone.current = true;
         setIsLoading(false);

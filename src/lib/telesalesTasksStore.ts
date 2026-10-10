@@ -1240,3 +1240,17 @@ export async function createTaskPlacements(taskId: string, userIds: string[], to
         return false;
     }
 }
+
+export function parseAssigneeIds(raw: any): string[] {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.map(String).filter(Boolean);
+    if (typeof raw === 'string') {
+        let cleaned = raw.trim();
+        if (cleaned.startsWith('{') && cleaned.endsWith('}')) {
+            cleaned = cleaned.slice(1, -1);
+        }
+        if (!cleaned) return [];
+        return cleaned.split(',').map((id: string) => id.trim().replace(/['"]/g, '')).filter(Boolean);
+    }
+    return [];
+}
