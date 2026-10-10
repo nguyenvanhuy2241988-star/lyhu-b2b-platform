@@ -140,7 +140,16 @@ async function generateSpiderArticle(feedItem: any, type: 'advisory' | 'news' | 
 Bạn là một chuyên gia về phân phối FMCG và kinh doanh bán lẻ. Tòa soạn vừa giao cho bạn một bản tin gốc (có thể bằng tiếng Anh hoặc tiếng Việt). Nhiệm vụ của bạn là xào bài, phân tích và viết lại một bài báo hoàn toàn mới bằng tiếng Việt, chuẩn SEO và chuyên sâu cho chuyên mục "LYHU Chuyển động FMCG 24/7".
 
 ⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
-⚠️ LƯU Ý VỀ TIÊU ĐỀ: TUYỆT ĐỐI KHÔNG chèn năm (ví dụ: "năm ${currentYear}", "${currentYear}") vào "new_title" hoặc "meta_title". Tiêu đề phải tự nhiên, không gắn cứng năm.
+⚠️ LƯU Ý VỀ TIÊU ĐỀ: TUYỆT ĐỐI KHÔNG chèn năm (ví dụ: "năm ${currentYear}", "${currentYear}") vào "new_title" hoặc "meta_title".
+
+🔥 NGHỆ THUẬT GIẬT TÍT KINH TẾ BẬC THẦY (BẮT BUỘC ÁP DỤNG 1 TRONG 5 CÔNG THỨC CAFEF):
+Tiêu đề mới ("new_title") và "meta_title" PHẢI áp dụng 1 trong 5 công thức giật tít kinh điển của báo kinh tế CafeF để đạt CTR cao nhất, giữ văn phong nghiêm túc chính thống:
+1. Cấu trúc 2 vế có dấu hai chấm ":": [Cú móc câu gây tò mò / Nghịch lý] : [Bối cảnh cụ thể hoặc con số chấn động]
+2. Con số tương phản gây sốc (vốn nhỏ vs lãi lớn, chi phí thấp vs giá trị cao, thời gian ngắn vs kết quả đột biến).
+3. "Không phải A, đây mới là B" (Phá vỡ định kiến người đọc).
+4. "Từ nay..." / "Động thái mới..." (Cảnh báo kiểm tra thị trường, thuế, chính sách ảnh hưởng trực tiếp đến người kinh doanh).
+5. Đặt câu hỏi mở thách thức ở cuối tiêu đề ("... - 'Game' khó hay dễ?", "Nước đi nào an toàn và bền vững?").
+
 ⚠️ LƯU Ý VỀ VĂN PHONG: TUYỆT ĐỐI KHÔNG để lại các số trích dẫn nguồn dạng [1], [2], [3] trong bài viết. Bài viết phải trôi chảy tự nhiên.
 
 Thông tin bản gốc:
@@ -165,9 +174,9 @@ ${specificInstructions}
 
 ---JSON_START---
 {
-  "new_title": "Tiêu đề bài viết mới bằng tiếng Việt (Hấp dẫn, chuẩn SEO, KHÔNG chứa năm hiện tại)",
+  "new_title": "Tiêu đề bài viết áp dụng chuẩn 1 trong 5 công thức CafeF (có dấu hai chấm, con số tương phản hoặc câu hỏi mở, dài 14-22 từ, KHÔNG gắn năm)",
   "sapo": "Đoạn tóm tắt mở bài khoảng 2-3 câu, nêu bật vấn đề chính...",
-  "meta_title": "Tiêu đề chuẩn SEO (KHÔNG chứa năm hiện tại)",
+  "meta_title": "Tiêu đề chuẩn SEO kích thích click chuột cao (tối đa 65 ký tự)",
   "meta_description": "Mô tả chuẩn SEO khoảng 150 ký tự",
   "keywords": "từ khóa 1, từ khóa 2",
   "image_search_keyword": "1 từ khóa tiếng Anh cực kỳ ngắn (1-2 chữ) để tìm ảnh minh họa trên Pexels (VD: supermarket, grocery)"
