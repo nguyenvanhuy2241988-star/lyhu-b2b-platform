@@ -64,6 +64,9 @@ export default function WebTracker() {
                     }
                 }
 
+                // Check for automated headless browsers (Selenium, Puppeteer, Playwright)
+                const isAutomated = typeof navigator !== 'undefined' && Boolean((navigator as any).webdriver);
+
                 await fetch("/api/analytics/track", {
                     method: "POST",
                     headers: {
@@ -77,6 +80,7 @@ export default function WebTracker() {
                         referrer: referrer,
                         screen_width: window.innerWidth,
                         load_time_ms: loadTimeMs,
+                        is_webdriver: isAutomated,
                     }),
                     // Keepalive ensures the request fires even if user navigates away quickly
                     keepalive: true 

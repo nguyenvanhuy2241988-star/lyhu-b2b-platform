@@ -89,12 +89,31 @@ export default function AnalyticsDashboard() {
                     }));
                 }
 
-                // Group referrers (e.g. m.facebook.com, l.facebook.com -> Facebook)
+                // Group referrers (e.g. AI Search, Social, Search Engines)
                 if (result.topReferrers) {
                     const groupedReferrers: Record<string, number> = {};
                     result.topReferrers.forEach((ref: any) => {
                         let source = ref.source || "Direct";
-                        if (source.includes("facebook.com")) {
+                        const sLower = source.toLowerCase();
+                        
+                        // AI Search Engines
+                        if (sLower.includes("deepseek")) {
+                            source = "🤖 DeepSeek AI";
+                        } else if (sLower.includes("chatgpt") || sLower.includes("openai")) {
+                            source = "🤖 ChatGPT";
+                        } else if (sLower.includes("perplexity")) {
+                            source = "🤖 Perplexity AI";
+                        } else if (sLower.includes("claude")) {
+                            source = "🤖 Claude AI";
+                        } else if (sLower.includes("gemini")) {
+                            source = "🤖 Google Gemini";
+                        } else if (sLower.includes("kimi") || sLower.includes("moonshot")) {
+                            source = "🤖 Kimi AI (Moonshot)";
+                        } else if (sLower.includes("alibaba") || sLower.includes("qwen") || sLower.includes("aliyun")) {
+                            source = "🤖 Alibaba AI (Qwen)";
+                        } else if (sLower.includes("baidu")) {
+                            source = "🔍 Baidu (China)";
+                        } else if (source.includes("facebook.com")) {
                             source = "Facebook";
                         } else if (source.includes("google.com")) {
                             source = "Google";

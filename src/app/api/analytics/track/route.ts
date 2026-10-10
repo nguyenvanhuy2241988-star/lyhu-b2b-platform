@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     try {
         const supabaseAdmin = getSupabaseAdmin();
         const body = await req.json();
-        const { session_id, visitor_id, url, pathname, referrer, screen_width, load_time_ms } = body;
+        const { session_id, visitor_id, url, pathname, referrer, screen_width, load_time_ms, is_webdriver } = body;
 
         if (!session_id || !visitor_id || !url || !pathname) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -100,20 +100,32 @@ export async function POST(req: NextRequest) {
         else if (userAgent.includes("iPhone") || userAgent.includes("iPad")) os = "iOS";
         else if (userAgent.includes("Linux")) os = "Linux";
 
-        // Detect Bots & AI Agents
-        let is_bot = false;
-        let bot_name = null;
+        // Detect Bots & AI Search Engines
+        let is_bot = Boolean(is_webdriver);
+        let bot_name = is_webdriver ? "Headless Scraper (Automated)" : null;
         const lowerUA = userAgent.toLowerCase();
         
+        // ── 1. CÔNG CỤ TÌM KIẾM CHÍNH THỐNG (SEO) ──
         if (lowerUA.includes("googlebot")) { is_bot = true; bot_name = "Googlebot"; }
         else if (lowerUA.includes("bingbot")) { is_bot = true; bot_name = "Bingbot"; }
         else if (lowerUA.includes("yandex")) { is_bot = true; bot_name = "YandexBot"; }
-        else if (lowerUA.includes("baiduspider")) { is_bot = true; bot_name = "BaiduSpider"; }
+        else if (lowerUA.includes("baiduspider")) { is_bot = true; bot_name = "Baidu Spider"; }
         else if (lowerUA.includes("facebookexternalhit") || lowerUA.includes("facebookcatalog")) { is_bot = true; bot_name = "Facebook Bot"; }
         else if (lowerUA.includes("zalo")) { is_bot = true; bot_name = "Zalo Bot"; }
-        else if (lowerUA.includes("chatgpt") || lowerUA.includes("gptbot")) { is_bot = true; bot_name = "ChatGPT"; }
+
+        // ── 2. CÁC NỀN TẢNG AI LỚN TOÀN CẦU & TRUNG QUỐC (AI Search Engines) ──
+        else if (lowerUA.includes("deepseek")) { is_bot = true; bot_name = "DeepSeek AI"; }
+        else if (lowerUA.includes("qwen") || lowerUA.includes("alispider") || lowerUA.includes("alibaba")) { is_bot = true; bot_name = "Alibaba Qwen AI"; }
+        else if (lowerUA.includes("kimi") || lowerUA.includes("moonshot")) { is_bot = true; bot_name = "Moonshot Kimi AI"; }
+        else if (lowerUA.includes("hunyuan")) { is_bot = true; bot_name = "Tencent Hunyuan AI"; }
+        else if (lowerUA.includes("chatgpt") || lowerUA.includes("gptbot") || lowerUA.includes("oai-searchbot")) { is_bot = true; bot_name = "ChatGPT / OpenAI"; }
         else if (lowerUA.includes("claude")) { is_bot = true; bot_name = "Claude AI"; }
+        else if (lowerUA.includes("perplexity")) { is_bot = true; bot_name = "Perplexity AI"; }
+        else if (lowerUA.includes("bytespider")) { is_bot = true; bot_name = "ByteDance AI (TikTok/Douyin)"; }
+
+        // ── 3. SCRAPERS RÁC VÔ DANH / CÔNG CỤ CÀO DỮ LIỆU THÔ ──
         else if (
+            lowerUA.includes("ccbot") || lowerUA.includes("turnitin") || lowerUA.includes("diffbot") ||
             lowerUA.includes("bot") || lowerUA.includes("crawler") || lowerUA.includes("spider") ||
             lowerUA.includes("vercel") || lowerUA.includes("lighthouse") || lowerUA.includes("headless") ||
             lowerUA.includes("postman") || lowerUA.includes("curl") || lowerUA.includes("python") ||
@@ -124,7 +136,7 @@ export async function POST(req: NextRequest) {
             bot_name = "Generic Bot / Tool"; 
         }
 
-        // Clean referrer (Filter out internal domains and auth providers)
+        // Clean referrer & Chuẩn hóa nguồn AI giới thiệu (Referrer)
         let cleanReferrer = referrer || null;
         if (cleanReferrer) {
             try {
@@ -138,8 +150,24 @@ export async function POST(req: NextRequest) {
                     host.includes('accounts.google.com')
                 ) {
                     cleanReferrer = null; // Mark as Direct
+                } else if (host.includes('deepseek.com')) {
+                    cleanReferrer = 'DeepSeek AI';
+                } else if (host.includes('chatgpt.com') || host.includes('openai.com')) {
+                    cleanReferrer = 'ChatGPT';
+                } else if (host.includes('perplexity.ai')) {
+                    cleanReferrer = 'Perplexity AI';
+                } else if (host.includes('claude.ai')) {
+                    cleanReferrer = 'Claude AI';
+                } else if (host.includes('gemini.google.com')) {
+                    cleanReferrer = 'Google Gemini';
+                } else if (host.includes('kimi.ai') || host.includes('moonshot.cn')) {
+                    cleanReferrer = 'Kimi AI (Moonshot)';
+                } else if (host.includes('aliyun.com') || host.includes('alibaba.com')) {
+                    cleanReferrer = 'Alibaba AI (Qwen)';
+                } else if (host.includes('baidu.com')) {
+                    cleanReferrer = 'Baidu Search / AI';
                 } else {
-                    // Only keep origin to avoid long messy referrers
+                    // Giữ lại origin chuẩn
                     cleanReferrer = refUrl.origin;
                 }
             } catch (e) {
