@@ -95,8 +95,8 @@ async function synthesizeWithEdgeTTS(
     return new Promise((resolve, reject) => {
         const chunks: Buffer[] = [];
         const timer = setTimeout(() => {
-            reject(new Error("Quá thời gian kết nối máy chủ giọng đọc Edge Neural TTS (35s)."));
-        }, 35000);
+            reject(new Error("Quá thời gian kết nối máy chủ giọng đọc Edge Neural TTS (5s)."));
+        }, 5000);
 
         audioStream.on("data", (chunk: Buffer) => {
             chunks.push(chunk);

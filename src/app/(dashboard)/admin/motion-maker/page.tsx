@@ -377,14 +377,21 @@ export default function MotionMakerStudioAdmin() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     text: scene.scriptText,
-                    styleKey: voiceStyle,
+                    style: voiceStyle,
+                    voice: voiceStyle.includes("male") ? "vi-VN-NamMinhNeural" : "vi-VN-HoaiMyNeural",
                     engine: voiceEngine === "gemini-omni" ? "gemini" : "edge"
                 })
             });
 
-            if (!res.ok) throw new Error("Lỗi kết nối giọng nói AI");
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || `Máy chủ giọng đọc báo lỗi (${res.status}).`);
+            }
 
             const blob = await res.blob();
+            if (blob.size < 50) {
+                throw new Error("Dữ liệu âm thanh trả về rỗng.");
+            }
             const audioUrl = URL.createObjectURL(blob);
 
             setScenes((prev) =>
