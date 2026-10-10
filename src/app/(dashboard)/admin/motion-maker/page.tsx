@@ -27,15 +27,22 @@ import {
     Headphones,
     CheckCircle2,
     FolderArchive,
-    FolderUp
+    FolderUp,
+    Smartphone,
+    Square,
+    Tv
 } from "lucide-react";
 import { toast } from "sonner";
+
+export type AspectRatio = "9:16" | "1:1" | "4:5" | "16:9";
 
 export interface CustomLayer {
     id: string;
     name: string;
     imgUrl: string;
-    pos: { x: number; y: number; scale: number; rot: number; zIndex: number };
+    // fullFrame = true: ảnh kích thước chuẩn canvas (1254x1254), chỉ cần phủ 100% là khớp tọa độ chuẩn
+    fullFrame?: boolean;
+    pos: { x: number; y: number; scale: number; rot: number; zIndex: number; width?: string };
     animation: {
         entry: "pop-in" | "slam-down" | "slide-up" | "slide-down" | "wobble-in" | "fade";
         delay: number;
@@ -57,37 +64,41 @@ export interface VideoScene {
     isGeneratingAudio?: boolean;
 }
 
-// Chuẩn hóa vị trí và thứ tự các layer theo HUONG_DAN.txt của bộ layer UHi
+// BỘ LAYER CHUẨN XÁC THEO TỌA ĐỘ POSTER
 const BUILT_IN_UHI_LAYERS: CustomLayer[] = [
     {
         id: "l_01a",
         name: "01a. Nền xanh chấm bi",
         imgUrl: "/uhi-layers/01a_nen_cham_bi.png",
+        fullFrame: true,
         pos: { x: 50, y: 50, scale: 1, rot: 0, zIndex: 1 },
-        animation: { entry: "fade", delay: 0, duration: 0.4, loopEffect: "pulse", loopSpeed: 1.5 },
+        animation: { entry: "fade", delay: 0, duration: 0.3, loopEffect: "pulse", loopSpeed: 1.5 },
         visible: true
     },
     {
         id: "l_01b",
         name: "01b. Cuốn sổ tay",
         imgUrl: "/uhi-layers/01b_cuon_so.png",
-        pos: { x: 42, y: 50, scale: 0.98, rot: 0, zIndex: 2 },
-        animation: { entry: "pop-in", delay: 0.2, duration: 0.5, loopEffect: "none", loopSpeed: 1 },
+        fullFrame: true,
+        pos: { x: 50, y: 50, scale: 1, rot: 0, zIndex: 2 },
+        animation: { entry: "pop-in", delay: 0.2, duration: 0.4, loopEffect: "none", loopSpeed: 1 },
         visible: true
     },
     {
         id: "l_01c",
         name: "01c. Mảng xanh tia nổ",
         imgUrl: "/uhi-layers/01c_mang_xanh_giua_so.png",
-        pos: { x: 38, y: 46, scale: 1.05, rot: 0, zIndex: 3 },
-        animation: { entry: "pop-in", delay: 0.4, duration: 0.5, loopEffect: "lightning-flicker", loopSpeed: 2 },
+        fullFrame: true,
+        pos: { x: 50, y: 50, scale: 1, rot: 0, zIndex: 3 },
+        animation: { entry: "pop-in", delay: 0.4, duration: 0.4, loopEffect: "lightning-flicker", loopSpeed: 2 },
         visible: true
     },
     {
         id: "l_02",
         name: "02. Tiêu đề TỪ ĐIỂN UHi",
         imgUrl: "/uhi-layers/02_tu_dien_UHi.png",
-        pos: { x: 32, y: 12, scale: 0.95, rot: -2, zIndex: 4 },
+        fullFrame: false,
+        pos: { x: 31, y: 11, scale: 1, rot: -4, zIndex: 4, width: "46%" },
         animation: { entry: "slide-down", delay: 0.6, duration: 0.4, loopEffect: "idle-float", loopSpeed: 1.8 },
         visible: true
     },
@@ -95,7 +106,8 @@ const BUILT_IN_UHI_LAYERS: CustomLayer[] = [
         id: "l_03a",
         name: "03a. Chữ 'CHUA' Vàng Comic",
         imgUrl: "/uhi-layers/03a_CHUA.png",
-        pos: { x: 32, y: 38, scale: 1.08, rot: -4, zIndex: 6 },
+        fullFrame: false,
+        pos: { x: 35, y: 39, scale: 1.05, rot: -4, zIndex: 6, width: "55%" },
         animation: { entry: "slam-down", delay: 0.8, duration: 0.5, loopEffect: "idle-float", loopSpeed: 2.2 },
         visible: true
     },
@@ -103,7 +115,8 @@ const BUILT_IN_UHI_LAYERS: CustomLayer[] = [
         id: "l_03b",
         name: "03b. Chữ 'VUI' Vàng Comic",
         imgUrl: "/uhi-layers/03b_VUI.png",
-        pos: { x: 38, y: 57, scale: 1.08, rot: 3, zIndex: 7 },
+        fullFrame: false,
+        pos: { x: 38, y: 58, scale: 1.05, rot: 3, zIndex: 7, width: "45%" },
         animation: { entry: "pop-in", delay: 1.2, duration: 0.5, loopEffect: "idle-float", loopSpeed: 2.0 },
         visible: true
     },
@@ -111,7 +124,8 @@ const BUILT_IN_UHI_LAYERS: CustomLayer[] = [
         id: "l_04",
         name: "04. Nhãn DANH TỪ",
         imgUrl: "/uhi-layers/04_DANH_TU.png",
-        pos: { x: 23, y: 73, scale: 0.95, rot: 0, zIndex: 5 },
+        fullFrame: true,
+        pos: { x: 50, y: 50, scale: 1, rot: 0, zIndex: 5 },
         animation: { entry: "slide-up", delay: 1.5, duration: 0.4, loopEffect: "none", loopSpeed: 1 },
         visible: true
     },
@@ -119,7 +133,8 @@ const BUILT_IN_UHI_LAYERS: CustomLayer[] = [
         id: "l_05",
         name: "05. Câu mô tả",
         imgUrl: "/uhi-layers/05_cau_mo_ta.png",
-        pos: { x: 32, y: 84, scale: 0.95, rot: 0, zIndex: 5 },
+        fullFrame: false,
+        pos: { x: 33, y: 84, scale: 1, rot: 0, zIndex: 5, width: "48%" },
         animation: { entry: "slide-up", delay: 1.7, duration: 0.4, loopEffect: "none", loopSpeed: 1 },
         visible: true
     },
@@ -127,7 +142,8 @@ const BUILT_IN_UHI_LAYERS: CustomLayer[] = [
         id: "l_08",
         name: "08. Bóng đen gói kẹo",
         imgUrl: "/uhi-layers/08_bong_goi_keo.png",
-        pos: { x: 77, y: 92, scale: 1, rot: 0, zIndex: 8 },
+        fullFrame: true,
+        pos: { x: 50, y: 50, scale: 1, rot: 0, zIndex: 8 },
         animation: { entry: "fade", delay: 1.9, duration: 0.3, loopEffect: "none", loopSpeed: 1 },
         visible: true
     },
@@ -135,7 +151,8 @@ const BUILT_IN_UHI_LAYERS: CustomLayer[] = [
         id: "l_06",
         name: "06. Gói kẹo UHi King (Hero)",
         imgUrl: "/uhi-layers/06_goi_keo_UHi.png",
-        pos: { x: 77, y: 52, scale: 1.04, rot: 2, zIndex: 9 },
+        fullFrame: true,
+        pos: { x: 50, y: 50, scale: 1.03, rot: 0, zIndex: 9 },
         animation: { entry: "wobble-in", delay: 2.0, duration: 0.8, loopEffect: "idle-float", loopSpeed: 2.5 },
         visible: true
     },
@@ -143,7 +160,8 @@ const BUILT_IN_UHI_LAYERS: CustomLayer[] = [
         id: "l_09",
         name: "09. Gạch vàng trên",
         imgUrl: "/uhi-layers/09_gach_vang_tren.png",
-        pos: { x: 38, y: 73, scale: 0.95, rot: 0, zIndex: 5 },
+        fullFrame: false,
+        pos: { x: 37, y: 73, scale: 1, rot: 0, zIndex: 5, width: "12%" },
         animation: { entry: "pop-in", delay: 2.3, duration: 0.3, loopEffect: "none", loopSpeed: 1 },
         visible: true
     },
@@ -151,7 +169,8 @@ const BUILT_IN_UHI_LAYERS: CustomLayer[] = [
         id: "l_10",
         name: "10. Gạch vàng dưới",
         imgUrl: "/uhi-layers/10_gach_vang_duoi.png",
-        pos: { x: 50, y: 88, scale: 0.95, rot: 0, zIndex: 5 },
+        fullFrame: false,
+        pos: { x: 50, y: 88, scale: 1, rot: 0, zIndex: 5, width: "12%" },
         animation: { entry: "pop-in", delay: 2.4, duration: 0.3, loopEffect: "none", loopSpeed: 1 },
         visible: true
     },
@@ -159,7 +178,8 @@ const BUILT_IN_UHI_LAYERS: CustomLayer[] = [
         id: "l_set_01",
         name: "Tia sét góc phải trên",
         imgUrl: "/uhi-layers/hieu_ung_rieng/tia_set_01.png",
-        pos: { x: 92, y: 10, scale: 1.1, rot: 5, zIndex: 10 },
+        fullFrame: false,
+        pos: { x: 92, y: 11, scale: 1.1, rot: 0, zIndex: 10, width: "16%" },
         animation: { entry: "pop-in", delay: 1.0, duration: 0.4, loopEffect: "lightning-flicker", loopSpeed: 3 },
         visible: true
     },
@@ -167,7 +187,8 @@ const BUILT_IN_UHI_LAYERS: CustomLayer[] = [
         id: "l_bb_02",
         name: "Bong bóng Soda sủi bọt",
         imgUrl: "/uhi-layers/hieu_ung_rieng/bong_bong_02.png",
-        pos: { x: 62, y: 58, scale: 1, rot: 0, zIndex: 10 },
+        fullFrame: false,
+        pos: { x: 60, y: 55, scale: 1, rot: 0, zIndex: 10, width: "10%" },
         animation: { entry: "pop-in", delay: 2.2, duration: 0.6, loopEffect: "bubble-float", loopSpeed: 2 },
         visible: true
     }
@@ -190,7 +211,7 @@ const DEFAULT_SCENES: VideoScene[] = [
         scriptText: "Kẹo dẻo chua UHi King vị Soda mát lạnh, từng hạt chua giòn rụm bùng nổ trong khoang miệng!",
         layers: BUILT_IN_UHI_LAYERS.map((l) =>
             l.id === "l_06"
-                ? { ...l, pos: { ...l.pos, scale: 1.25, x: 55, y: 50 }, animation: { ...l.animation, delay: 0.3 } }
+                ? { ...l, pos: { ...l.pos, scale: 1.15 }, animation: { ...l.animation, delay: 0.3 } }
                 : l
         )
     },
@@ -205,6 +226,9 @@ const DEFAULT_SCENES: VideoScene[] = [
 ];
 
 export default function AdvancedMotionStudioAdmin() {
+    // Aspect Ratio Selection: 9:16 (TikTok/Shorts), 1:1 (Square), 4:5 (Facebook/IG feed), 16:9 (Landscape)
+    const [aspectRatio, setAspectRatio] = useState<AspectRatio>("9:16");
+
     // Multi-Scene State
     const [scenes, setScenes] = useState<VideoScene[]>(DEFAULT_SCENES);
     const [activeSceneIndex, setActiveSceneIndex] = useState<number>(0);
@@ -223,7 +247,6 @@ export default function AdvancedMotionStudioAdmin() {
     // AI Voice Config
     const [voiceStyle, setVoiceStyle] = useState<string>("female-genz");
     const [voiceEngine, setVoiceEngine] = useState<"gemini-omni" | "azure-neural">("gemini-omni");
-    const [isGeneratingAllVoices, setIsGeneratingAllVoices] = useState<boolean>(false);
     const [isGeneratingAiScript, setIsGeneratingAiScript] = useState<boolean>(false);
 
     const animationFrameRef = useRef<number | null>(null);
@@ -303,7 +326,6 @@ export default function AdvancedMotionStudioAdmin() {
 
         fileArray.forEach((file, idx) => {
             if (file.name.endsWith(".txt")) {
-                // Đọc file hướng dẫn tự động
                 const reader = new FileReader();
                 reader.onload = (re) => {
                     const text = re.target?.result as string;
@@ -321,21 +343,29 @@ export default function AdvancedMotionStudioAdmin() {
             const objectUrl = URL.createObjectURL(file);
             const fileName = file.name.replace(/\.[^/.]+$/, "");
 
-            // Thông minh: Phán đoán vai trò layer theo tên file
             let zIndex = 5;
             let delay = 0.5 + idx * 0.15;
             let entry: CustomLayer["animation"]["entry"] = "pop-in";
             let loopEffect: CustomLayer["animation"]["loopEffect"] = "idle-float";
+            let fullFrame = false;
 
             if (fileName.includes("nen") || fileName.includes("01a")) {
                 zIndex = 1;
                 delay = 0;
                 entry = "fade";
                 loopEffect = "pulse";
+                fullFrame = true;
             } else if (fileName.includes("so") || fileName.includes("01b")) {
                 zIndex = 2;
                 delay = 0.2;
                 entry = "pop-in";
+                fullFrame = true;
+            } else if (fileName.includes("mang_xanh") || fileName.includes("01c")) {
+                zIndex = 3;
+                delay = 0.4;
+                entry = "pop-in";
+                loopEffect = "lightning-flicker";
+                fullFrame = true;
             } else if (fileName.includes("CHUA") || fileName.includes("03a")) {
                 zIndex = 6;
                 delay = 0.8;
@@ -348,6 +378,7 @@ export default function AdvancedMotionStudioAdmin() {
                 zIndex = 9;
                 delay = 1.8;
                 entry = "wobble-in";
+                fullFrame = true;
             } else if (fileName.includes("set") || fileName.includes("tia")) {
                 zIndex = 10;
                 delay = 1.0;
@@ -359,6 +390,7 @@ export default function AdvancedMotionStudioAdmin() {
                 id: `batch_${Date.now()}_${idx}`,
                 name: fileName,
                 imgUrl: objectUrl,
+                fullFrame,
                 pos: { x: 50, y: 50, scale: 1, rot: 0, zIndex },
                 animation: { entry, delay, duration: 0.5, loopEffect, loopSpeed: 2 },
                 visible: true
@@ -371,7 +403,7 @@ export default function AdvancedMotionStudioAdmin() {
                     idx === activeSceneIndex ? { ...sc, layers: [...sc.layers, ...newLayers] } : sc
                 )
             );
-            toast.success(`Đã nạp thành công ${newLayers.length} layer PNG vào cảnh hiện tại!`);
+            toast.success(`Đã nạp thành công ${newLayers.length} layer PNG!`);
         }
     };
 
@@ -511,9 +543,15 @@ export default function AdvancedMotionStudioAdmin() {
             }
         }
 
+        // Nếu fullFrame = true: luôn căn chính giữa 50% 50% phủ toàn khung
+        const leftPos = layer.fullFrame ? "50%" : `${layer.pos.x}%`;
+        const topPos = layer.fullFrame ? "50%" : `${layer.pos.y}%`;
+
         return {
-            left: `${layer.pos.x}%`,
-            top: `${layer.pos.y}%`,
+            left: leftPos,
+            top: topPos,
+            width: layer.fullFrame ? "100%" : (layer.pos.width || "auto"),
+            height: layer.fullFrame ? "100%" : "auto",
             transform: `translate(-50%, -50%) scale(${currentScale}) translateY(${currentTranslateY}px) rotate(${currentRotate}deg)`,
             opacity: currentOpacity,
             zIndex: layer.pos.zIndex,
@@ -534,6 +572,21 @@ export default function AdvancedMotionStudioAdmin() {
         return "none";
     };
 
+    // Aspect ratio container styles
+    const getAspectRatioClass = () => {
+        switch (aspectRatio) {
+            case "9:16":
+                return "aspect-[9/16] max-h-[720px] w-auto max-w-full";
+            case "4:5":
+                return "aspect-[4/5] max-h-[660px] w-auto max-w-full";
+            case "16:9":
+                return "aspect-[16/9] max-w-[720px] w-full h-auto";
+            case "1:1":
+            default:
+                return "aspect-square max-w-[620px] w-full h-auto";
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 p-4 lg:p-6 flex flex-col gap-6">
             <audio ref={audioPlayerRef} className="hidden" />
@@ -547,14 +600,14 @@ export default function AdvancedMotionStudioAdmin() {
                     <div>
                         <div className="flex items-center gap-2">
                             <h1 className="text-xl font-bold tracking-tight text-white">
-                                Motion Video Studio Pro (Hỗ Trợ Tải Hàng Loạt Layer)
+                                Motion Video Studio Pro (Tùy Chọn Tỷ Lệ 9:16, 1:1, 4:5, 16:9)
                             </h1>
                             <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                Batch Upload + AI Guidance
+                                Chuẩn TikTok 9:16 & Reels
                             </span>
                         </div>
                         <p className="text-xs text-slate-400">
-                            Tự động nhận diện thư mục layer tách lớp, đọc hướng dẫn dựng và khớp timeline 15s - 30s
+                            Khớp vị trí layer 100% chính xác, hỗ trợ chuyển đổi kích thước video linh hoạt
                         </p>
                     </div>
                 </div>
@@ -582,7 +635,7 @@ export default function AdvancedMotionStudioAdmin() {
                     <button
                         onClick={() => {
                             setIsExporting(true);
-                            toast.info(`Bắt đầu ghi hình video ${totalVideoDuration}s...`);
+                            toast.info(`Bắt đầu ghi hình video ${aspectRatio} (${totalVideoDuration}s)...`);
                             setTimeout(() => {
                                 setIsExporting(false);
                                 toast.success("Xuất video thành công!");
@@ -592,23 +645,83 @@ export default function AdvancedMotionStudioAdmin() {
                         className="px-4 py-2 text-xs font-medium rounded-lg bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-white font-semibold transition-all flex items-center gap-1.5 shadow-lg shadow-rose-500/20"
                     >
                         <Download className="w-3.5 h-3.5" />
-                        Xuất Video Full ({totalVideoDuration}s)
+                        Xuất Video {aspectRatio} ({totalVideoDuration}s)
                     </button>
                 </div>
             </div>
 
-            {/* AI Guidance Box (Hướng Dẫn Dựng Tự Động) */}
+            {/* Thanh Chọn Tỷ Lệ Kích Thước (Aspect Ratio Bar) */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-900 rounded-xl border border-slate-800">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                    <Smartphone className="w-4 h-4 text-amber-400" />
+                    <span>Chọn Kích Thước Video / Poster:</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                    <button
+                        onClick={() => setAspectRatio("9:16")}
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                            aspectRatio === "9:16"
+                                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
+                                : "text-slate-400 hover:text-slate-200"
+                        }`}
+                    >
+                        <Smartphone className="w-3.5 h-3.5" />
+                        9:16 (TikTok, Reels, Shorts)
+                    </button>
+
+                    <button
+                        onClick={() => setAspectRatio("1:1")}
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                            aspectRatio === "1:1"
+                                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
+                                : "text-slate-400 hover:text-slate-200"
+                        }`}
+                    >
+                        <Square className="w-3.5 h-3.5" />
+                        1:1 (Vuông / Poster gốc)
+                    </button>
+
+                    <button
+                        onClick={() => setAspectRatio("4:5")}
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                            aspectRatio === "4:5"
+                                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
+                                : "text-slate-400 hover:text-slate-200"
+                        }`}
+                    >
+                        4:5 (Facebook Feed)
+                    </button>
+
+                    <button
+                        onClick={() => setAspectRatio("16:9")}
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                            aspectRatio === "16:9"
+                                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20"
+                                : "text-slate-400 hover:text-slate-200"
+                        }`}
+                    >
+                        <Tv className="w-3.5 h-3.5" />
+                        16:9 (Ngang / YouTube)
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowReferencePoster(!showReferencePoster)}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-medium transition-all"
+                    >
+                        {showReferencePoster ? "Ẩn Poster Gốc" : "So Sánh Poster Gốc"}
+                    </button>
+                </div>
+            </div>
+
+            {/* AI Guidance Box */}
             <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-3">
                 <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <div className="flex-1 text-xs text-amber-200/90 leading-relaxed">
                     <strong>AI Note / Hướng Dẫn Kỹ Thuật:</strong> {guideText}
                 </div>
-                <button
-                    onClick={() => setShowReferencePoster(!showReferencePoster)}
-                    className="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[11px] font-medium transition-all shrink-0"
-                >
-                    {showReferencePoster ? "Ẩn Poster Gốc" : "So Sánh Poster Gốc"}
-                </button>
             </div>
 
             {/* Scene Tabs */}
@@ -648,8 +761,22 @@ export default function AdvancedMotionStudioAdmin() {
             {/* Main Stage Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
                 {/* Preview Canvas (7 Cols) */}
-                <div className="lg:col-span-7 flex flex-col gap-4">
-                    <div className="relative w-full aspect-square max-w-[620px] mx-auto bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl flex items-center justify-center">
+                <div className="lg:col-span-7 flex flex-col gap-4 items-center">
+                    {/* Stage Container with Selected Aspect Ratio */}
+                    <div
+                        className={`relative mx-auto bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl flex items-center justify-center ${getAspectRatioClass()}`}
+                    >
+                        {/* Background Blurred Ambient for 9:16 portrait mode */}
+                        {aspectRatio === "9:16" && (
+                            <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-30 blur-2xl">
+                                <img
+                                    src="/uhi-layers/01a_nen_cham_bi.png"
+                                    alt="ambient"
+                                    className="w-full h-full object-cover scale-150"
+                                />
+                            </div>
+                        )}
+
                         <div
                             ref={previewContainerRef}
                             style={{
@@ -658,13 +785,13 @@ export default function AdvancedMotionStudioAdmin() {
                             }}
                             className="relative w-full h-full overflow-hidden select-none"
                         >
-                            {/* So sánh Poster Gốc mờ nếu bật */}
+                            {/* So sánh Poster Gốc */}
                             {showReferencePoster && (
                                 <div className="absolute inset-0 z-30 pointer-events-none opacity-40">
                                     <img
                                         src="/motion-demo/uhi_poster.jpg"
                                         alt="Reference"
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-contain"
                                     />
                                 </div>
                             )}
@@ -687,7 +814,7 @@ export default function AdvancedMotionStudioAdmin() {
                                             src={layer.imgUrl}
                                             alt={layer.name}
                                             draggable={false}
-                                            className="max-w-[620px] max-h-[620px] object-contain drop-shadow-xl"
+                                            className="w-full h-full object-contain drop-shadow-xl"
                                         />
                                     </div>
                                 );
@@ -696,12 +823,13 @@ export default function AdvancedMotionStudioAdmin() {
 
                         <div className="absolute top-3 left-3 z-30 px-3 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[11px] text-amber-300 font-medium flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                            {currentScene.name} • {currentSceneLocalTime.toFixed(1)}s / {currentScene.duration}s
+                            {aspectRatio} • {currentScene.name} • {currentSceneLocalTime.toFixed(1)}s /{" "}
+                            {currentScene.duration}s
                         </div>
                     </div>
 
                     {/* Timeline Controls */}
-                    <div className="p-4 bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-800 flex flex-col gap-3">
+                    <div className="w-full p-4 bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-800 flex flex-col gap-3">
                         <div className="flex items-center justify-between text-xs text-slate-400">
                             <div className="flex items-center gap-2">
                                 <button
@@ -765,7 +893,7 @@ export default function AdvancedMotionStudioAdmin() {
 
                 {/* Right / Batch Upload & Layer Manager (5 Cols) */}
                 <div className="lg:col-span-5 flex flex-col gap-4">
-                    {/* BATCH UPLOAD ZONE (Tải Hàng Loạt Layer) */}
+                    {/* BATCH UPLOAD ZONE */}
                     <div className="p-4 bg-slate-900 rounded-xl border border-amber-500/40 shadow-lg shadow-amber-500/5 flex flex-col gap-3">
                         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                             <div className="flex items-center gap-2 font-semibold text-sm text-amber-300">
@@ -780,7 +908,7 @@ export default function AdvancedMotionStudioAdmin() {
                                 Chọn cùng lúc nhiều file PNG (Ctrl + A hoặc quét chọn tất cả)
                             </span>
                             <span className="text-[11px] text-slate-400">
-                                Bạn có thể đính kèm cả tệp <code>HUONG_DAN.txt</code> để AI tự đọc quy tắc dựng
+                                Đính kèm cả tệp <code>HUONG_DAN.txt</code> để AI đọc quy tắc dựng
                             </span>
                             <input
                                 type="file"
@@ -797,10 +925,12 @@ export default function AdvancedMotionStudioAdmin() {
                                 onClick={() => {
                                     setScenes((prev) =>
                                         prev.map((sc, idx) =>
-                                            idx === activeSceneIndex ? { ...sc, layers: BUILT_IN_UHI_LAYERS } : sc
+                                            idx === activeSceneIndex
+                                                ? { ...sc, layers: BUILT_IN_UHI_LAYERS }
+                                                : sc
                                         )
                                     );
-                                    toast.success("Đã khôi phục bộ layer gốc UHi!");
+                                    toast.success("Đã khôi phục bộ layer gốc chuẩn UHi!");
                                 }}
                                 className="text-amber-400 hover:underline"
                             >
