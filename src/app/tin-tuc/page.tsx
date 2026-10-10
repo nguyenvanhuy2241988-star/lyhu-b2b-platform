@@ -12,6 +12,7 @@ const MENU_GROUPS = [
     { key: 'doi-song', name: 'Đời sống', icon: '🌿', slugs: ['am-thuc-nau-an', 'suc-khoe-doi-song'] },
 ];
 import { BlogPost, BlogCategory } from '@/lib/blogStore';
+import { STATIC_EMAGAZINE_POSTS } from '@/lib/emagazinePosts';
 import SearchBar from '@/components/blog/SearchBar';
 import Pagination from '@/components/blog/Pagination';
 import TrendingWidget from '@/components/blog/TrendingWidget';
@@ -127,12 +128,24 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
 
     const sideTopBanners = shuffleArray(sideBanners?.filter(b => b.position === 'side_top') || []);
     const sideBottomBanners = shuffleArray(sideBanners?.filter(b => b.position === 'side_bottom') || []);
+    const staticPosts = Object.values(STATIC_EMAGAZINE_POSTS) as BlogPost[];
+    const dbPosts = (posts || []) as BlogPost[];
+    
+    // Nếu trang 1 và không có filter danh mục / tìm kiếm, ghim bài eMagazine lên đầu nếu chưa có trong DB
+    let combinedPosts = [...dbPosts];
+    if (page === 1 && (!categorySlug || categorySlug === 'all') && (!groupKey || groupKey === 'all') && !searchQuery) {
+        staticPosts.forEach(sp => {
+            if (!combinedPosts.some(p => p.slug === sp.slug)) {
+                combinedPosts.unshift(sp);
+            }
+        });
+    }
 
     return {
-        posts: (posts || []) as BlogPost[],
+        posts: combinedPosts,
         categories: (categories || []) as BlogCategory[],
         trendingPosts: (trending || []) as Partial<BlogPost>[],
-        totalCount: count || 0,
+        totalCount: (count || 0) + (page === 1 ? staticPosts.length : 0),
         featuredBlocks,
         megaBanner,
         sideTopBanners,
@@ -592,7 +605,7 @@ export default async function BlogIndexPage({
                     <TrendingWidget />
 
                     {/* Side Bottom Banners */}
-                    {sideBottomBanners.map((banner, idx) => (
+                    {sideBottomBanners.map((banner: any, idx: number) => (
                         <div key={banner.id || idx} className="w-full relative overflow-hidden">
                             <Link href={banner.link_url || "/"} target={banner.link_url?.startsWith('http') ? "_blank" : "_self"}>
                                 <img src={banner.image_url} alt={`Side Bottom Banner ${idx + 1}`} loading="lazy" decoding="async" className="w-full h-auto object-cover border border-gray-100" />

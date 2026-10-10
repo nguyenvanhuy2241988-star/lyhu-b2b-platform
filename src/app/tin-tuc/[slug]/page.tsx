@@ -15,6 +15,7 @@ import BlogSidebarNewCustomerPromo from '@/components/blog/BlogSidebarNewCustome
 import DynamicBlogContent from '@/components/blog/DynamicBlogContent';
 import ViewCounter from '@/components/blog/ViewCounter';
 import EmagazineLayout from '@/components/blog/EmagazineLayout';
+import { STATIC_EMAGAZINE_POSTS } from '@/lib/emagazinePosts';
 export const revalidate = 60;
 type Props = {
     params: { slug: string }
@@ -24,6 +25,8 @@ async function getPost(slug: string) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    let postData: any = null;
 
     const { data, error } = await supabase
         .from('blog_posts')
@@ -36,16 +39,23 @@ async function getPost(slug: string) {
         .eq('status', 'published')
         .single();
         
-    if (error || !data) return null;
+    if (data) {
+        postData = data;
+    } else if (STATIC_EMAGAZINE_POSTS[slug]) {
+        postData = STATIC_EMAGAZINE_POSTS[slug];
+    }
+
+    if (!postData) return null;
 
     // Fetch related posts (increase limit to 8 to split between sidebar and bottom)
     let relatedPosts: any[] = [];
-    if (data.category_id) {
+    const catId = postData.category_id || postData.category?.id;
+    if (catId) {
         const { data: related } = await supabase
             .from('blog_posts')
             .select('id, title, slug, thumbnail_url, published_at, created_at')
             .eq('status', 'published')
-            .neq('id', data.id)
+            .neq('id', postData.id)
             .order('published_at', { ascending: false })
             .limit(8);
         relatedPosts = related || [];
@@ -126,7 +136,7 @@ async function getPost(slug: string) {
         .eq('is_active', true);
 
     return { 
-        post: data as BlogPost, 
+        post: postData as BlogPost, 
         relatedPosts, 
         promotions: promotions || [], 
         products: products || [],
