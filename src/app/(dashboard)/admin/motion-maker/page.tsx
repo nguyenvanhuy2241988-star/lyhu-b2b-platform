@@ -142,8 +142,8 @@ const PERFECT_UHI_LAYERS: PrecisionLayer[] = [
     {
         id: "l_06",
         name: "11. Gói Kẹo UHi King (Hero)",
-        imgUrl: "/uhi-layers/06_goi_keo_UHi.png",
-        pos: { left: 77, top: 52, width: 38, zIndex: 9, rot: 0 },
+        imgUrl: "/uhi-layers/06_goi_keo_clean.png",
+        pos: { left: 75.8, top: 52, width: 37.5, zIndex: 9, rot: 0 },
         animation: { entry: "wobble-in", delay: 1.9, duration: 0.8, loopEffect: "idle-float", loopSpeed: 2.5 },
         visible: true
     },
@@ -608,11 +608,7 @@ export default function MotionMakerStudioAdmin() {
                                         key={layer.id}
                                         style={getLayerStyle(layer)}
                                         onClick={() => setSelectedLayerId(layer.id)}
-                                        className={`absolute cursor-pointer pointer-events-auto transition-shadow ${
-                                            selectedLayerId === layer.id
-                                                ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-950 rounded-lg shadow-xl"
-                                                : ""
-                                        }`}
+                                        className="absolute cursor-pointer pointer-events-auto"
                                     >
                                         <img
                                             src={layer.imgUrl}
