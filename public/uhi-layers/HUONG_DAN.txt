@@ -1,0 +1,18 @@
+BỘ LAYER UHi – CHUA VUI, BẢN CẬP NHẬT
+
+01a: Nền xanh chấm bi.
+01b: Trang sổ màu kem, nền ngoài trong suốt; phục dựng giấy phía sau mảng xanh.
+01c: Mảng xanh tia nổ ở giữa sổ.
+02: Tiêu đề TỪ ĐIỂN UHi; đã sửa dấu hỏi trên Ể; không kèm gạch vàng.
+03a và 03b: CHUA và VUI riêng biệt.
+04: Nhãn DANH TỪ.
+05: Câu mô tả; không kèm gạch vàng.
+06: Gói kẹo.
+08: Bóng đen của gói kẹo.
+09 và 10: Hai gạch vàng riêng biệt.
+hieu_ung_rieng: 9 hình tia sét/nhấn vàng, 9 bong bóng và 6 cụm nét nhấn đen. Mỗi hình/cụm là một PNG riêng.
+
+Thứ tự dựng: nền chấm bi → sổ → mảng xanh → bóng gói → chữ/gạch vàng → gói kẹo → hiệu ứng.
+Nhập PNG vào các track riêng trong CapCut hoặc After Effects. Tự căn vị trí và tỷ lệ theo poster gốc; các file không giữ nguyên tọa độ chung.
+
+Đây là bộ lớp raster tách/phục dựng từ PNG phẳng bằng imagegen và cắt tách hiệu ứng. Một số hình dáng, đường viền và chi tiết bao bì có thể khác ảnh gốc; phần bị che được phục dựng. Chữ là ảnh, không phải text chỉnh sửa. Không phải PSD gốc.
