@@ -93,10 +93,10 @@ export async function generateMetadata(
 
     return {
         title: 'LYHU | Kết Nối Chân Thành - Hợp Tác Bền Vững',
-        description: 'LYHU - Sản xuất, nhập khẩu và phân phối thực phẩm hàng đầu: Thương hiệu riêng BOYO, nhập khẩu độc quyền CVT & UHI, độc quyền Miền Bắc ABI SNACK. Triết lý Kết Nối Chân Thành - Hợp Tác Bền Vững.',
+        description: 'LYHU - Sản xuất, nhập khẩu và phân phối thực phẩm hàng đầu. Sản phẩm chủ lực: Khoai môn tẩm vị CVT, kẹo dẻo siêu chua UHi, bánh tráng Abi Snack, bột phô mai BOYO. Triết lý Kết Nối Chân Thành - Hợp Tác Bền Vững.',
         openGraph: {
             title: 'LYHU | Kết Nối Chân Thành - Hợp Tác Bền Vững',
-            description: 'Sản xuất, nhập khẩu và phân phối thực phẩm: BOYO, CVT, ABI SNACK, UHI.',
+            description: 'Sản phẩm chủ lực: Khoai môn tẩm vị CVT, kẹo dẻo siêu chua UHi, bánh tráng Abi Snack, bột phô mai BOYO.',
             url: 'https://lyhu.com.vn',
             siteName: 'LYHU',
             type: 'website',

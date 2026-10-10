@@ -12,11 +12,26 @@ export const metadata: Metadata = {
         default: "LYHU | Kết Nối Chân Thành - Hợp Tác Bền Vững",
         template: "%s | LYHU"
     },
-    description: "LYHU - Doanh nghiệp sản xuất, nhập khẩu và phân phối thực phẩm hàng đầu: Thương hiệu riêng BOYO, nhập khẩu độc quyền CVT & UHI, độc quyền miền Bắc ABI SNACK. Kết nối chân thành - Hợp tác bền vững cùng đại lý toàn quốc.",
-    keywords: ["LYHU", "lyhu.vn", "BOYO", "CVT", "ABI SNACK", "UHI", "kẹo dẻo UHi", "snack CVT", "nhập khẩu thực phẩm", "phân phối thực phẩm"],
+    description: "LYHU - Doanh nghiệp sản xuất, nhập khẩu và phân phối thực phẩm hàng đầu. Sản phẩm chủ lực: Khoai môn tẩm vị CVT, kẹo dẻo siêu chua UHi, bánh tráng Abi Snack, bột phô mai BOYO. Kết nối chân thành - Hợp tác bền vững cùng đại lý và siêu thị toàn quốc.",
+    keywords: [
+        "LYHU",
+        "lyhu.vn",
+        "Khoai môn tẩm vị CVT",
+        "kẹo dẻo siêu chua UHi",
+        "bánh tráng Abi Snack",
+        "Bột phô mai BOYO",
+        "BOYO",
+        "CVT",
+        "ABI SNACK",
+        "UHI",
+        "kẹo dẻo UHi",
+        "snack CVT",
+        "nhập khẩu thực phẩm",
+        "phân phối thực phẩm"
+    ],
     openGraph: {
         title: "LYHU | Kết Nối Chân Thành - Hợp Tác Bền Vững",
-        description: "Doanh nghiệp sản xuất, nhập khẩu và phân phối thực phẩm hàng đầu: BOYO, CVT, ABI SNACK, UHI. Kết nối chân thành - Hợp tác bền vững.",
+        description: "Sản phẩm chủ lực: Khoai môn tẩm vị CVT, kẹo dẻo siêu chua UHi, bánh tráng Abi Snack, bột phô mai BOYO. Kết nối chân thành - Hợp tác bền vững.",
         url: "https://lyhu.com.vn",
         siteName: "LYHU",
         locale: "vi_VN",
@@ -25,7 +40,7 @@ export const metadata: Metadata = {
     twitter: {
         card: "summary_large_image",
         title: "LYHU | Kết Nối Chân Thành - Hợp Tác Bền Vững",
-        description: "Sản xuất, nhập khẩu và phân phối thực phẩm: BOYO, CVT, ABI SNACK, UHI.",
+        description: "Sản phẩm chủ lực: Khoai môn tẩm vị CVT, kẹo dẻo siêu chua UHi, bánh tráng Abi Snack, bột phô mai BOYO.",
     },
     alternates: {
         canonical: "https://lyhu.com.vn",
