@@ -16,12 +16,12 @@ export default function BlogProductGrid({ products }: { products: ProductItem[] 
     const zalo2 = '0368368834';
 
     return (
-        <section aria-label="Sản phẩm chủ lực LYHU" className="mt-14 pt-8 border-t-2 border-primary-100">
-            {/* Header & Định vị Thương hiệu */}
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
+        <section aria-label="Sản phẩm chủ lực LYHU" className="mt-14 pt-8 border-t border-gray-200">
+            {/* Header & Định vị Thương hiệu - Phẳng & Tối giản */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
                 <div>
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-semibold mb-2 border border-primary-200">
-                        <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse"></span>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary-50 text-primary-700 text-xs font-semibold mb-2 border border-primary-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary-500"></span>
                         Top 4 Thương Hiệu Bán Chạy Nhất Tại Các Tiệm Tạp Hóa & Siêu Thị Mini
                     </div>
                     <h3 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
@@ -36,47 +36,47 @@ export default function BlogProductGrid({ products }: { products: ProductItem[] 
                 </Link>
             </div>
 
-            {/* Banner Chính Sách Đại Lý & Ưu Đãi Mua 10 Tặng 1 */}
-            <div className="bg-gradient-to-r from-teal-800 via-teal-700 to-primary-700 text-white rounded-2xl p-4 sm:p-5 mb-6 shadow-sm">
+            {/* Banner Chính Sách Đại Lý & Ưu Đãi Mua 10 Tặng 1 - Phong cách Phẳng chuẩn LYHU */}
+            <div className="bg-white border-2 border-primary-500 rounded-xl p-5 mb-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
-                            <span className="bg-yellow-400 text-teal-950 text-xs font-black px-2 py-0.5 rounded uppercase tracking-wider">
+                            <span className="bg-secondary-500 text-white text-[11px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
                                 Khuyến Mãi Đại Lý Mới
                             </span>
-                            <span className="text-teal-200 text-xs font-medium">Áp dụng cho đơn hàng đầu tiên</span>
+                            <span className="text-gray-500 text-xs font-medium">Áp dụng cho đơn hàng đầu tiên</span>
                         </div>
-                        <h4 className="text-lg sm:text-xl font-bold text-white">
-                            🎁 Mua 10 Thùng Tặng 1 Thùng • Vốn Ít Chỉ Từ 500.000đ
+                        <h4 className="text-lg sm:text-xl font-bold text-gray-900">
+                            Mua 10 Thùng Tặng 1 Thùng • Vốn Khởi Điểm Chỉ Từ 500.000đ
                         </h4>
-                        <p className="text-teal-100 text-xs sm:text-sm">
+                        <p className="text-gray-600 text-xs sm:text-sm">
                             ✓ Xuất hóa đơn VAT điện tử hợp lệ &nbsp;|&nbsp; ✓ Hỗ trợ 100% đổi trả nếu cận date &nbsp;|&nbsp; ✓ Giao hàng nhanh toàn quốc
                         </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                         <a
                             href={`https://zalo.me/${zalo1}?text=${encodeURIComponent('Xin chào LYHU, tôi là chủ điểm bán cần tư vấn chính sách sỉ Mua 10 Tặng 1')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="bg-yellow-400 hover:bg-yellow-300 text-teal-950 font-bold px-3 py-2 rounded-xl text-xs sm:text-sm transition-transform active:scale-95 shadow-sm inline-flex items-center gap-1.5"
+                            className="bg-primary-500 hover:bg-primary-600 text-white font-bold px-3.5 py-2 rounded-lg text-xs sm:text-sm transition-colors inline-flex items-center gap-1.5"
                         >
                             <span>Zalo 1:</span>
-                            <span className="bg-teal-900 text-yellow-300 px-1.5 py-0.5 rounded text-xs">0969.069.798</span>
+                            <span>0969.069.798</span>
                         </a>
                         <a
                             href={`https://zalo.me/${zalo2}?text=${encodeURIComponent('Xin chào LYHU, tôi là chủ điểm bán cần tư vấn chính sách sỉ Mua 10 Tặng 1')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="bg-white/10 hover:bg-white/20 text-white border border-white/30 font-bold px-3 py-2 rounded-xl text-xs sm:text-sm transition-transform active:scale-95 shadow-sm inline-flex items-center gap-1.5"
+                            className="bg-white hover:bg-gray-50 text-primary-700 border border-primary-400 font-bold px-3.5 py-2 rounded-lg text-xs sm:text-sm transition-colors inline-flex items-center gap-1.5"
                         >
                             <span>Zalo 2:</span>
-                            <span className="bg-white text-teal-900 px-1.5 py-0.5 rounded text-xs">0368.368.834</span>
+                            <span>0368.368.834</span>
                         </a>
                     </div>
                 </div>
             </div>
 
-            {/* Danh Sách 4 Sản Phẩm Chủ Lực */}
+            {/* Danh Sách 4 Sản Phẩm Đại Diện 4 Thương Hiệu - Thiết kế thẻ Phẳng */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {products.map((product) => {
                     const imageUrl = product.image_url || '/placeholder-image.jpg';
@@ -87,18 +87,18 @@ export default function BlogProductGrid({ products }: { products: ProductItem[] 
                     return (
                         <div 
                             key={product.id} 
-                            className="group flex flex-col bg-white border border-gray-200 hover:border-primary-500 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
+                            className="group flex flex-col bg-white border border-gray-200 hover:border-primary-500 rounded-lg overflow-hidden transition-colors"
                         >
                             {/* Ảnh sản phẩm + Brand badge */}
-                            <div className="aspect-square bg-gray-50 overflow-hidden relative w-full">
-                                <span className="absolute top-2 left-2 z-10 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase">
+                            <div className="aspect-square bg-gray-50 overflow-hidden relative w-full border-b border-gray-100">
+                                <span className="absolute top-2 left-2 z-10 bg-white/90 text-gray-800 text-[10px] font-bold px-2 py-0.5 rounded border border-gray-200 uppercase tracking-wide">
                                     {brandTag}
                                 </span>
                                 <img 
                                     src={imageUrl} 
                                     alt={product.name} 
                                     loading="lazy"
-                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
                                 />
                             </div>
 
@@ -112,10 +112,10 @@ export default function BlogProductGrid({ products }: { products: ProductItem[] 
                                 </Link>
 
                                 <div className="flex items-center justify-between text-xs text-gray-500 mb-2 mt-auto">
-                                    <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-medium text-[11px]">
+                                    <span className="inline-flex items-center text-primary-700 bg-primary-50 px-1.5 py-0.5 rounded font-medium text-[11px]">
                                         ✓ Sẵn kho sỉ
                                     </span>
-                                    <span className="text-[11px]">Date mới 100%</span>
+                                    <span className="text-[11px] text-gray-500">Date mới 100%</span>
                                 </div>
 
                                 {/* Giá tham khảo & Nút CTA Zalo */}
@@ -132,7 +132,7 @@ export default function BlogProductGrid({ products }: { products: ProductItem[] 
                                             href={`https://zalo.me/${zalo1}?text=${zaloMessage}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-center w-full py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1"
+                                            className="text-center w-full py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-md text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                                         >
                                             <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
                                                 <path d="M12 2C6.48 2 2 6.03 2 11c0 2.87 1.5 5.43 3.84 7.02-.17.97-.66 2.5-1.95 3.73-.24.23-.07.64.26.62 2.12-.13 4.25-1.07 5.43-1.89.78.14 1.59.22 2.42.22 5.52 0 10-4.03 10-9s-4.48-9-10-9z"/>
@@ -141,7 +141,7 @@ export default function BlogProductGrid({ products }: { products: ProductItem[] 
                                         </a>
                                         <Link
                                             href="/wholesale"
-                                            className="text-center w-full py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-lg text-[11px] font-semibold transition-colors"
+                                            className="text-center w-full py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-md text-[11px] font-medium transition-colors"
                                         >
                                             Đặt hàng online
                                         </Link>
@@ -153,25 +153,69 @@ export default function BlogProductGrid({ products }: { products: ProductItem[] 
                 })}
             </div>
 
-            {/* Cam kết B2B & Hotline Zalo của LYHU */}
-            <div className="mt-5 p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-700">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                    <span className="font-semibold text-slate-900">Cam kết LYHU:</span>
-                    <span className="flex items-center gap-1">
-                        <span className="text-teal-600 font-bold">✔</span> Hàng chính hãng 100%
-                    </span>
-                    <span className="flex items-center gap-1">
-                        <span className="text-teal-600 font-bold">✔</span> Hóa đơn VAT điện tử
-                    </span>
-                    <span className="flex items-center gap-1">
-                        <span className="text-teal-600 font-bold">✔</span> Đổi trả cận date miễn phí
-                    </span>
+            {/* 4 CAM KẾT VÀNG CỦA LYHU (Đúng chuẩn nhận diện thương hiệu từ Poster) */}
+            <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <div>
+                        <h4 className="text-base font-bold text-gray-900 uppercase tracking-wide">
+                            4 Cam Kết Từ LYHU Dành Cho Khách Hàng Đại Lý
+                        </h4>
+                        <p className="text-xs text-primary-600 font-semibold mt-0.5">
+                            LYHU – Kết nối chân thành • Hợp tác bền vững
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                        <span className="text-gray-500 font-medium">Hotline Zalo:</span>
+                        <a href={`https://zalo.me/${zalo1}`} target="_blank" rel="noopener noreferrer" className="font-bold text-primary-600 hover:underline">0969.069.798</a>
+                        <span className="text-gray-300">|</span>
+                        <a href={`https://zalo.me/${zalo2}`} target="_blank" rel="noopener noreferrer" className="font-bold text-primary-600 hover:underline">0368.368.834</a>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200">
-                    <span className="text-slate-500 font-medium">Hotline Zalo:</span>
-                    <a href={`https://zalo.me/${zalo1}`} target="_blank" rel="noopener noreferrer" className="font-bold text-teal-700 hover:underline">0969.069.798</a>
-                    <span className="text-slate-300">|</span>
-                    <a href={`https://zalo.me/${zalo2}`} target="_blank" rel="noopener noreferrer" className="font-bold text-teal-700 hover:underline">0368.368.834</a>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {/* CAM KẾT 01 */}
+                    <div className="p-3.5 bg-gray-50/70 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-xs font-black text-primary-700 bg-primary-100 px-1.5 py-0.5 rounded">01</span>
+                            <h5 className="text-xs font-bold text-gray-900 uppercase tracking-wide">ĐÚNG CHẤT LƯỢNG</h5>
+                        </div>
+                        <p className="text-[11px] text-gray-600 leading-relaxed">
+                            Sản phẩm có nguồn gốc rõ ràng, đầy đủ hồ sơ, đúng tiêu chuẩn và đúng thông tin công bố.
+                        </p>
+                    </div>
+
+                    {/* CAM KẾT 02 */}
+                    <div className="p-3.5 bg-gray-50/70 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-xs font-black text-secondary-800 bg-secondary-100 px-1.5 py-0.5 rounded">02</span>
+                            <h5 className="text-xs font-bold text-gray-900 uppercase tracking-wide">ĐÚNG CHÍNH SÁCH</h5>
+                        </div>
+                        <p className="text-[11px] text-gray-600 leading-relaxed">
+                            Giá sỉ minh bạch, chiết khấu rõ ràng, chương trình khuyến mại được thông báo thống nhất và kịp thời.
+                        </p>
+                    </div>
+
+                    {/* CAM KẾT 03 */}
+                    <div className="p-3.5 bg-gray-50/70 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-xs font-black text-primary-700 bg-primary-100 px-1.5 py-0.5 rounded">03</span>
+                            <h5 className="text-xs font-bold text-gray-900 uppercase tracking-wide">ĐÚNG HÀNG – ĐÚNG HẸN</h5>
+                        </div>
+                        <p className="text-[11px] text-gray-600 leading-relaxed">
+                            Giao đúng sản phẩm, đủ số lượng, hạn sử dụng tốt; hỗ trợ nhanh khi phát sinh thiếu hàng, lỗi hàng hoặc sai đơn.
+                        </p>
+                    </div>
+
+                    {/* CAM KẾT 04 */}
+                    <div className="p-3.5 bg-gray-50/70 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-xs font-black text-secondary-800 bg-secondary-100 px-1.5 py-0.5 rounded">04</span>
+                            <h5 className="text-xs font-bold text-gray-900 uppercase tracking-wide">ĐỒNG HÀNH BỀN VỮNG</h5>
+                        </div>
+                        <p className="text-[11px] text-gray-600 leading-relaxed">
+                            Hỗ trợ hình ảnh, nội dung bán hàng, tư vấn sản phẩm và chương trình thúc đẩy doanh số để khách sỉ kinh doanh hiệu quả lâu dài.
+                        </p>
+                    </div>
                 </div>
             </div>
         </section>
