@@ -56,44 +56,56 @@ async function getPost(slug: string) {
         .select('*')
         .eq('is_active', true);
 
-    // ── ƯU TIÊN SỐ 1: 4 SẢN PHẨM CHỦ LỰC CHIẾN LƯỢC CỦA LYHU ──
-    // 1. Kẹo dẻo siêu chua UHi
-    // 2. Khoai môn tẩm vị CVT
-    // 3. Bánh tráng sa tế Abi Snack
-    // 4. Bột phô mai BOYO 65g
-    const flagshipIds = [
-        '3bb47e13-6709-403d-a484-00ad9d61db68', // Kẹo dẻo siêu chua vị Soda 40g (UHi)
-        'f1c24e4e-c5e3-4e4d-9eb5-1b03d8935cb2', // Thanh khoai môn vị cay 75g (CVT)
-        'ebfce57c-6016-4520-bc29-1322e2e346a7', // Bánh tráng sa tế cay Abi (Abi Snack)
-        'b2f6a52f-ea58-470c-8014-b49600298e11'  // Bột phô mai BOYO 65g (BOYO)
-    ];
+    // ── XOAY TOUR THÔNG MINH CÂN BẰNG ĐỦ 4 THƯƠNG HIỆU CHỦ LỰC ──
+    // Vị trí 1: Khoai môn tẩm vị CVT (ưu tiên vị Trứng cua 75g)
+    // Vị trí 2: Kẹo dẻo siêu chua UHi (ưu tiên vị Cola 40g)
+    // Vị trí 3: Bánh tráng & ăn vặt Abi Snack (ưu tiên Bánh tráng bơ)
+    // Vị trí 4: Bột gia vị phô mai BOYO (ưu tiên Bột phô mai 65g)
 
-    let { data: flagshipProducts } = await supabase
+    let slugHash = 0;
+    for (let i = 0; i < slug.length; i++) {
+        slugHash = ((slugHash << 5) - slugHash) + slug.charCodeAt(i);
+        slugHash |= 0;
+    }
+    slugHash = Math.abs(slugHash);
+
+    const { data: brandProducts } = await supabase
         .from('products')
         .select('id, name, price, image_url, brand')
-        .in('id', flagshipIds);
+        .in('brand', ['CVT', 'UHi', 'ABI', 'BOYO'])
+        .eq('is_active', true);
 
-    // Sắp xếp đúng thứ tự 4 sản phẩm chủ lực
-    let products: any[] = [];
-    if (flagshipProducts && flagshipProducts.length > 0) {
-        products = flagshipIds
-            .map(id => flagshipProducts!.find(p => p.id === id))
-            .filter(Boolean);
-    }
+    const cvtList = (brandProducts || []).filter(p => p.brand === 'CVT');
+    const uhiList = (brandProducts || []).filter(p => p.brand === 'UHi');
+    const abiList = (brandProducts || []).filter(p => p.brand === 'ABI');
+    const boyoList = (brandProducts || []).filter(p => p.brand === 'BOYO');
 
-    // Nếu thiếu, nạp thêm từ sản phẩm active khác
-    if (products.length < 4) {
-        const { data: extraProds } = await supabase
-            .from('products')
-            .select('id, name, price, image_url, brand')
-            .eq('is_active', true)
-            .limit(4);
-        (extraProds || []).forEach((p: any) => {
-            if (!products.some(fp => fp.id === p.id) && products.length < 4) {
-                products.push(p);
-            }
-        });
-    }
+    // 4 SKU ưu tiên cao nhất theo chỉ định của người dùng
+    const priorityIds: Record<string, string> = {
+        CVT: '7e3fd698-c91a-4bca-82e3-ac35e44ea016', // Thanh khoai môn sấy tẩm vị trứng cua 75g
+        UHi: '89165e2b-68cf-4474-8b1b-7d6720b4ce18', // Kẹo dẻo siêu chua vị Cola 40g
+        ABI: 'a7d8ecfc-a496-48d7-8719-2e5173ccab9a', // Bánh tráng bơ Abi
+        BOYO: 'b2f6a52f-ea58-470c-8014-b49600298e11'  // Bột phô mai BOYO 65g
+    };
+
+    const pickBrandProduct = (list: any[], brandKey: string, offset: number) => {
+        if (!list || list.length === 0) return null;
+        // Ưu tiên hiển thị SKU Hero trong ~40% các bài viết
+        if ((slugHash + offset) % 3 === 0) {
+            const hero = list.find(p => p.id === priorityIds[brandKey]);
+            if (hero) return hero;
+        }
+        // Xoay tua đều giữa các SKU của thương hiệu đó
+        const index = (slugHash + offset) % list.length;
+        return list[index];
+    };
+
+    const products: any[] = [
+        pickBrandProduct(cvtList, 'CVT', 0),
+        pickBrandProduct(uhiList, 'UHi', 1),
+        pickBrandProduct(abiList, 'ABI', 2),
+        pickBrandProduct(boyoList, 'BOYO', 3)
+    ].filter(Boolean);
 
     // Fetch active new customer offer
     const { data: newCustomerOffer } = await supabase

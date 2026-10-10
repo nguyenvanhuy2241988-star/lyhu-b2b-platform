@@ -22,10 +22,10 @@ export default function BlogProductGrid({ products }: { products: ProductItem[] 
                 <div>
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-semibold mb-2 border border-primary-200">
                         <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse"></span>
-                        Top Sản Phẩm Bán Chạy Nhất Tại Các Tiệm Tạp Hóa & Siêu Thị Mini
+                        Top 4 Thương Hiệu Bán Chạy Nhất Tại Các Tiệm Tạp Hóa & Siêu Thị Mini
                     </div>
                     <h3 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
-                        4 Dòng Sản Phẩm Chủ Lực Chiến Lược Của LYHU
+                        4 Dòng Sản Phẩm Chủ Lực Chiến Lược (CVT • UHi • Abi Snack • BOYO)
                     </h3>
                 </div>
                 <Link 
