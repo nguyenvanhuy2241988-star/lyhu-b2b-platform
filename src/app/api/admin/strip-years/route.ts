@@ -80,24 +80,26 @@ export async function GET(req: NextRequest) {
             });
         }
 
-        // 3. Execute updates in batches of 30
+        // 3. Execute updates in parallel chunks of 20 for high performance
+        const chunkSize = 20;
         let totalUpdated = 0;
-        for (const item of updates) {
-            const payload: any = { title: item.newTitle };
-            if (item.newMetaTitle) {
-                payload.meta_title = item.newMetaTitle;
-            }
 
-            const { error: updateErr } = await supabase
-                .from('blog_posts')
-                .update(payload)
-                .eq('id', item.id);
-
-            if (updateErr) {
-                console.error(`Lỗi cập nhật bài ${item.id}:`, updateErr);
-            } else {
-                totalUpdated++;
-            }
+        for (let i = 0; i < updates.length; i += chunkSize) {
+            const chunk = updates.slice(i, i + chunkSize);
+            const results = await Promise.all(
+                chunk.map(async (item) => {
+                    const payload: any = { title: item.newTitle };
+                    if (item.newMetaTitle) {
+                        payload.meta_title = item.newMetaTitle;
+                    }
+                    const { error } = await supabase
+                        .from('blog_posts')
+                        .update(payload)
+                        .eq('id', item.id);
+                    return !error;
+                })
+            );
+            totalUpdated += results.filter(Boolean).length;
         }
 
         return NextResponse.json({
