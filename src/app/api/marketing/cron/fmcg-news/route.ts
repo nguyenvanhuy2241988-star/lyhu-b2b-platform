@@ -197,6 +197,12 @@ HƯỚNG DẪN VIẾT BÀI THEO ĐÚNG LOẠI CHỦ ĐỀ:
   4. Các lưu ý quan trọng về pháp lý, xuất hóa đơn VAT điện tử, kiểm tra date và bảo quản hàng hóa.
   5. Lời khuyên tối ưu bán lẻ và cách liên hệ nhập sỉ hàng chính hãng giá tốt.
 
+THÔNG TIN LIÊN HỆ CHÍNH THỨC CỦA LYHU (Bắt buộc dùng đúng thông tin sau nếu có đoạn liên hệ, TUYỆT ĐỐI KHÔNG DÙNG placeholder hoặc dấu ngoặc vuông [...]):
+- Hotline / Zalo: 0969 069 798 / 0989 089 798
+- Địa chỉ: Tổng kho B2B LYHU Logistics, Tầng 6, V11-B09 KĐT An Hưng, Dương Nội, Hà Nội & Tổng kho TP.HCM
+- Website: lyhu.com.vn | lyhu.vn
+- Email: sales@lyhu.vn
+
 YÊU CẦU BẮT BUỘC VỀ FORMAT:
 1. CHỈ TRẢ VỀ mã HTML chuẩn. KHÔNG dùng Markdown (** hay #).
 2. Phân tách nội dung: Bắt buộc dùng thẻ <p>...</p> cho MỖI đoạn văn. Dùng <h2>, <h3> cho các tiêu đề phụ. Dùng <ul><li> cho danh sách. Dùng <strong> để bôi đậm từ khóa.
@@ -260,24 +266,52 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         let topic = metaData.topic || `Bản tin thị trường FMCG ${todayStr}`;
         let metaTitle = metaData.meta_title || topic;
 
-        // 2. Fetch High-Quality Contextual Images via Pexels API
+        // 2. Fetch High-Quality Contextual Images
         let thumbnailUrl = null;
         let images: string[] = [];
-        
-        // Use the first image search query provided by AI, or fallback to the topic
-        const pexelsQuery = (metaData.image_search_queries && metaData.image_search_queries.length > 0) 
-            ? metaData.image_search_queries[0] 
-            : topic;
-            
-        images = await fetchPexelsImages(pexelsQuery, 3);
+        const topicLower = topic.toLowerCase();
 
-        // If Pexels fails or returns no images, use fallback static Pexels images related to FMCG/Retail
-        if (images.length === 0) {
+        // BRAND ASSETS OVERRIDE: Nếu là chủ đề về sản phẩm thương hiệu riêng của LYHU, dùng ảnh chuẩn thương hiệu
+        if (topicLower.includes('boyo') || topicLower.includes('bột phô mai') || topicLower.includes('phô mai')) {
             images = [
-                'https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=1200', // Supermarket aisle
-                'https://images.pexels.com/photos/1000633/pexels-photo-1000633.jpeg?auto=compress&cs=tinysrgb&w=1200', // Groceries
-                'https://images.pexels.com/photos/3962283/pexels-photo-3962283.jpeg?auto=compress&cs=tinysrgb&w=1200'  // Payment/Retail
+                '/boyo_news_banner.jpg',
+                '/boyo_65g_poster.jpg',
+                '/boyo_dish_fries.jpg'
             ];
+        } else if (topicLower.includes('cvt') || topicLower.includes('khoai môn')) {
+            images = [
+                'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775408989723_ybzt28.png',
+                'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775409014434_iyl9zu.png',
+                'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775409056235_rm8te8.png'
+            ];
+        } else if (topicLower.includes('uhi') || topicLower.includes('kẹo dẻo') || topicLower.includes('kẹo chua')) {
+            images = [
+                'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775409242694_t72gaa.jpeg',
+                'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775409226372_4x53qa.jpeg',
+                'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775409267851_0ueb2a.jpeg'
+            ];
+        } else if (topicLower.includes('abi') || topicLower.includes('bánh tráng')) {
+            images = [
+                'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775415527421_k85b9b.jpg',
+                'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775415286851_04wq2m.jpg',
+                'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775415221604_jzhah2.jpg'
+            ];
+        } else {
+            // General Market Topic: Use Pexels Search
+            const pexelsQuery = (metaData.image_search_queries && metaData.image_search_queries.length > 0) 
+                ? metaData.image_search_queries[0] 
+                : topic;
+                
+            images = await fetchPexelsImages(pexelsQuery, 3);
+
+            // If Pexels fails or returns no images, use fallback static Pexels images related to FMCG/Retail
+            if (images.length === 0) {
+                images = [
+                    'https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=1200', // Supermarket aisle
+                    'https://images.pexels.com/photos/1000633/pexels-photo-1000633.jpeg?auto=compress&cs=tinysrgb&w=1200', // Groceries
+                    'https://images.pexels.com/photos/3962283/pexels-photo-3962283.jpeg?auto=compress&cs=tinysrgb&w=1200'  // Payment/Retail
+                ];
+            }
         }
 
         if (images.length > 0) {
@@ -307,6 +341,14 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
 
         // Remove AI citation brackets like [1], [2, 3] from the text
         content = content.replace(/\[\d+(,\s*\d+)*\]/g, '');
+
+        // Sanitize any placeholders AI might have hallucinated
+        content = content
+            .replace(/\[Số điện thoại[^\]]*\]/gi, '0969 069 798 (Zalo B2B) / 0989 089 798')
+            .replace(/\[Địa chỉ[^\]]*\]/gi, 'Tổng kho B2B LYHU Logistics: Tầng 6, V11-B09 KĐT An Hưng, Dương Nội, Hà Nội & Tổng kho TP.HCM')
+            .replace(/\[Hotline[^\]]*\]/gi, '0969 069 798')
+            .replace(/\[Email[^\]]*\]/gi, 'sales@lyhu.vn')
+            .replace(/\[Tên[^\]]*\]/gi, 'LYHU');
 
         // 4. Check duplicate title before saving
         const trimmedTopic = topic.trim();

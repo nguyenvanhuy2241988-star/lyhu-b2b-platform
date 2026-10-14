@@ -10,7 +10,7 @@ export const STATIC_EMAGAZINE_POSTS: Record<string, Partial<BlogPost>> = {
         meta_title: 'eMagazine: Triết lý Kết Nối Chân Thành – Hợp Tác Bền Vững của LYHU',
         meta_description: 'Phóng sự eMagazine đặc biệt: Khám phá hành trình xây dựng mạng lưới phân phối và 4 Cam Kết Vàng của LYHU đồng hành cùng hàng nghìn điểm bán lẻ Việt.',
         keywords: 'eMagazine, LYHU, triết lý kinh doanh, 4 cam kết vàng, nhà phân phối bánh kẹo, nguồn sỉ tạp hóa, CVT, UHi, Abi, BOYO',
-        status: 'published',
+        status: 'draft',
         published_at: '2026-10-10T08:00:00.000Z',
         created_at: '2026-10-10T08:00:00.000Z',
         category: {

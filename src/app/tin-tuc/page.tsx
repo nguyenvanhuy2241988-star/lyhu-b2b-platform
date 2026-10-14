@@ -128,7 +128,7 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
 
     const sideTopBanners = shuffleArray(sideBanners?.filter(b => b.position === 'side_top') || []);
     const sideBottomBanners = shuffleArray(sideBanners?.filter(b => b.position === 'side_bottom') || []);
-    const staticPosts = Object.values(STATIC_EMAGAZINE_POSTS) as BlogPost[];
+    const staticPosts = (Object.values(STATIC_EMAGAZINE_POSTS) as BlogPost[]).filter(p => p.status === 'published');
     const dbPosts = (posts || []) as BlogPost[];
     
     // Nếu trang 1 và không có filter danh mục / tìm kiếm, ghim bài eMagazine lên đầu nếu chưa có trong DB
@@ -141,8 +141,20 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
         });
     }
 
+    const sanitizeThumbnail = (p: BlogPost) => {
+        if (!p) return p;
+        if (p.slug?.includes('bot-pho-mai-boyo')) {
+            p.thumbnail_url = '/boyo_news_banner.jpg';
+        } else if (p.slug?.includes('khoai-mon-say-cvt')) {
+            if (!p.thumbnail_url || p.thumbnail_url.includes('pexels')) {
+                p.thumbnail_url = 'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775408989723_ybzt28.png';
+            }
+        }
+        return p;
+    };
+
     return {
-        posts: combinedPosts,
+        posts: combinedPosts.map(sanitizeThumbnail),
         categories: (categories || []) as BlogCategory[],
         trendingPosts: (trending || []) as Partial<BlogPost>[],
         totalCount: (count || 0) + (page === 1 ? staticPosts.length : 0),

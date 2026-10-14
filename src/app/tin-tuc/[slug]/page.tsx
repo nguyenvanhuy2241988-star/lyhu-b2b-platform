@@ -41,11 +41,39 @@ async function getPost(slug: string) {
         
     if (data) {
         postData = data;
-    } else if (STATIC_EMAGAZINE_POSTS[slug]) {
+    } else if (STATIC_EMAGAZINE_POSTS[slug] && STATIC_EMAGAZINE_POSTS[slug].status === 'published') {
         postData = STATIC_EMAGAZINE_POSTS[slug];
     }
 
     if (!postData) return null;
+
+    // ── XỬ LÝ LÀM SẠCH VÀ CHUẨN HÓA NỘI DUNG / HÌNH ẢNH ──
+    if (postData) {
+        // Tự động làm sạch placeholder sót từ AI
+        if (postData.content) {
+            postData.content = postData.content
+                .replace(/\[Số điện thoại[^\]]*\]/gi, '0969 069 798 (Zalo B2B) / 0989 089 798')
+                .replace(/\[Địa chỉ[^\]]*\]/gi, 'Tổng kho B2B LYHU Logistics: Tầng 6, V11-B09 KĐT An Hưng, Dương Nội, Hà Nội & Tổng kho TP.HCM')
+                .replace(/\[Hotline[^\]]*\]/gi, '0969 069 798')
+                .replace(/\[Email[^\]]*\]/gi, 'sales@lyhu.vn');
+        }
+
+        // Tinh chỉnh riêng cho bài viết Bột phô mai BOYO
+        if (slug.includes('bot-pho-mai-boyo')) {
+            postData.thumbnail_url = '/boyo_news_banner.jpg';
+            if (postData.content) {
+                postData.content = postData.content
+                    // Thay ảnh đĩa phô mai lát Châu Âu bằng hình ảnh sản phẩm & chế biến thật của BOYO
+                    .replace(/https:\/\/images\.pexels\.com\/photos\/8743831\/[^\"]+/g, '/boyo_65g_poster.jpg')
+                    .replace(/https:\/\/images\.pexels\.com\/photos\/32356159\/[^\"]+/g, '/boyo_dish_fries.jpg')
+                    .replace(/https:\/\/images\.pexels\.com\/photos\/14623909\/[^\"]+/g, '/boyo_news_banner.jpg');
+            }
+        } else if (slug.includes('khoai-mon-say-cvt')) {
+            if (!postData.thumbnail_url || postData.thumbnail_url.includes('pexels')) {
+                postData.thumbnail_url = 'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775408989723_ybzt28.png';
+            }
+        }
+    }
 
     // Fetch related posts (increase limit to 8 to split between sidebar and bottom)
     let relatedPosts: any[] = [];
@@ -68,11 +96,6 @@ async function getPost(slug: string) {
         .eq('is_active', true);
 
     // ── XOAY TOUR THÔNG MINH CÂN BẰNG ĐỦ 4 THƯƠNG HIỆU CHỦ LỰC ──
-    // Vị trí 1: Khoai môn tẩm vị CVT (ưu tiên vị Trứng cua 75g)
-    // Vị trí 2: Kẹo dẻo siêu chua UHi (ưu tiên vị Cola 40g)
-    // Vị trí 3: Bánh tráng & ăn vặt Abi Snack (ưu tiên Bánh tráng bơ)
-    // Vị trí 4: Bột gia vị phô mai BOYO (ưu tiên Bột phô mai 65g)
-
     let slugHash = 0;
     for (let i = 0; i < slug.length; i++) {
         slugHash = ((slugHash << 5) - slugHash) + slug.charCodeAt(i);
@@ -111,12 +134,39 @@ async function getPost(slug: string) {
         return list[index];
     };
 
-    const products: any[] = [
-        pickBrandProduct(cvtList, 'CVT', 0),
-        pickBrandProduct(uhiList, 'UHi', 1),
-        pickBrandProduct(abiList, 'ABI', 2),
-        pickBrandProduct(boyoList, 'BOYO', 3)
-    ].filter(Boolean);
+    // ── PHÂN LOẠI SẢN PHẨM PHÙ HỢP VỚI NGỮ CẢNH BÀI VIẾT (CONTEXTUAL MATCHING) ──
+    const searchContext = `${slug} ${postData?.title || ''}`.toLowerCase();
+    let products: any[] = [];
+
+    if (searchContext.includes('boyo') || searchContext.includes('phô mai') || searchContext.includes('pho mai') || searchContext.includes('cheese')) {
+        // Bài về Bột phô mai BOYO: Ưu tiên gói 65g và túi 1kg của BOYO lên hàng đầu!
+        const boyo65g = boyoList.find(p => p.id === priorityIds.BOYO) || boyoList[0];
+        const boyoOther = boyoList.find(p => p.id !== boyo65g?.id) || boyoList[1] || cvtList[0];
+        products = [boyo65g, boyoOther, cvtList[0], uhiList[0]].filter(Boolean);
+    } else if (searchContext.includes('cvt') || searchContext.includes('khoai môn') || searchContext.includes('khoai mon')) {
+        // Bài về Khoai môn sấy CVT: Ưu tiên CVT lên hàng đầu!
+        const cvtHero = cvtList.find(p => p.id === priorityIds.CVT) || cvtList[0];
+        const cvtOther = cvtList.find(p => p.id !== cvtHero?.id) || cvtList[1];
+        products = [cvtHero, cvtOther, uhiList[0], boyoList[0]].filter(Boolean);
+    } else if (searchContext.includes('uhi') || searchContext.includes('kẹo') || searchContext.includes('keo')) {
+        // Bài về Kẹo chua UHi
+        const uhiHero = uhiList.find(p => p.id === priorityIds.UHi) || uhiList[0];
+        const uhiOther = uhiList.find(p => p.id !== uhiHero?.id) || uhiList[1];
+        products = [uhiHero, uhiOther, cvtList[0], boyoList[0]].filter(Boolean);
+    } else if (searchContext.includes('abi') || searchContext.includes('bánh tráng') || searchContext.includes('banh trang')) {
+        // Bài về Bánh tráng Abi
+        const abiHero = abiList.find(p => p.id === priorityIds.ABI) || abiList[0];
+        const abiOther = abiList.find(p => p.id !== abiHero?.id) || abiList[1];
+        products = [abiHero, abiOther, cvtList[0], boyoList[0]].filter(Boolean);
+    } else {
+        // Bài tin tức FMCG / quản lý chung: Xoay tour cân bằng 4 thương hiệu
+        products = [
+            pickBrandProduct(cvtList, 'CVT', 0),
+            pickBrandProduct(uhiList, 'UHi', 1),
+            pickBrandProduct(abiList, 'ABI', 2),
+            pickBrandProduct(boyoList, 'BOYO', 3)
+        ].filter(Boolean);
+    }
 
     // Fetch active new customer offer
     const { data: newCustomerOffer } = await supabase
