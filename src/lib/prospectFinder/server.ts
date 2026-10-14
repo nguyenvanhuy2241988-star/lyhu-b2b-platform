@@ -69,6 +69,15 @@ export async function reserveGoogleCall(db: SupabaseClient): Promise<boolean> {
     return data === true;
 }
 
+/** Hoàn lại 1 lượt khi lời gọi Google thất bại (chưa tính phí). Chỉ gọi sau khi đã reserveGoogleCall thành công. */
+export async function refundGoogleCall(db: SupabaseClient): Promise<void> {
+    await db.rpc('prospect_try_use_quota', {
+        p_month: currentMonth(),
+        p_amount: -1,
+        p_limit: googleMonthlyLimit(),
+    });
+}
+
 /** Chạy hàm async trên danh sách với số luồng giới hạn. */
 export async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
     const results: R[] = new Array(items.length);

@@ -102,6 +102,7 @@ export default function ProspectFinderPage() {
         if (r.message) return void toast.info(r.message);
         toast.success(`Google: lấy được ${r.gotPhone} SĐT • khớp nhưng không có SĐT ${r.matchedNoPhone} • không khớp ${r.noMatch} • lỗi ${r.failed}`);
         if (r.quotaExhausted) toast.warning("Đã chạm hạn mức Google của tháng này, đã dừng.");
+        if (r.firstError) toast.error(`Lỗi đầu tiên: ${r.firstError}`, { duration: 15000 });
     });
 
     const enrichWeb = () => run("web", async () => {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin, reserveGoogleCall, getGoogleUsage, mapLimit, runDedupe } from '@/lib/prospectFinder/server';
+import { requireAdmin, reserveGoogleCall, refundGoogleCall, getGoogleUsage, mapLimit, runDedupe } from '@/lib/prospectFinder/server';
 import { findGooglePlace } from '@/lib/prospectFinder/google';
 import { pickBestPhone } from '@/lib/prospectFinder/phone';
 
@@ -42,6 +42,7 @@ export async function POST(request: Request) {
     const stats = { processed: 0, gotPhone: 0, matchedNoPhone: 0, noMatch: 0, failed: 0, quotaExhausted: false };
     const touched: string[] = [];
     let stop = false;
+    let firstError: string | null = null;
 
     await mapLimit(rows, 3, async (r) => {
         if (stop) return;
@@ -60,8 +61,20 @@ export async function POST(request: Request) {
             return;
         }
 
+        let m: Awaited<ReturnType<typeof findGooglePlace>>;
         try {
-            const m = await findGooglePlace({ apiKey, name: r.name, lat: r.lat, lng: r.lng });
+            m = await findGooglePlace({ apiKey, name: r.name, lat: r.lat, lng: r.lng });
+        } catch (e: any) {
+            // Google lỗi (sai key, chưa bật API, bị chặn...): hoàn lượt, ghi lại lý do, không đánh dấu đã hỏi
+            await refundGoogleCall(db).catch(() => {});
+            stats.failed++;
+            firstError = firstError || String(e?.message || e).slice(0, 300);
+            // Lỗi cấu hình (400/401/403) sẽ lặp lại với mọi cửa hàng: dừng sớm, không gọi tiếp
+            if (/Google API (400|401|403)/.test(String(e?.message))) stop = true;
+            return;
+        }
+
+        try {
             const now = new Date().toISOString();
             const patch: Record<string, any> = {
                 google_checked_at: now,
@@ -94,13 +107,14 @@ export async function POST(request: Request) {
             if (upErr) throw new Error(upErr.message);
             stats.processed++;
             touched.push(r.id);
-        } catch (e) {
+        } catch (e: any) {
             stats.failed++;
+            firstError = firstError || `Lưu dữ liệu lỗi: ${String(e?.message || e).slice(0, 200)}`;
         }
     });
 
     // Tra trùng cho các số vừa lấy được
     const dedupe = touched.length ? await runDedupe(db, touched) : null;
 
-    return NextResponse.json({ success: true, ...stats, dedupe, google: await getGoogleUsage(db) });
+    return NextResponse.json({ success: true, ...stats, firstError, dedupe, google: await getGoogleUsage(db) });
 }
