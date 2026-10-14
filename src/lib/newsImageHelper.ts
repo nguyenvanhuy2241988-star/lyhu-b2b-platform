@@ -33,6 +33,11 @@ export const CURATED_ASSET_LIBRARY = {
         'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775415286851_04wq2m.jpg',
         'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775415221604_jzhah2.jpg'
     ],
+    baTuyet: [
+        '/news/chan_ga_ba_tuyet_tieu_huy_nhat_ban.jpg',
+        '/news/chan_ga_ba_tuyet_phan_hoi.png',
+        '/news/chan_ga_kho_hang_b2b.jpg'
+    ],
     chanGa: [
         '/news/chan_ga_tmdt_banner.jpg',
         '/news/chan_ga_kiem_dinh_lab.jpg',
@@ -90,7 +95,12 @@ export function getMatchedCuratedImages(topic: string): string[] | null {
         return CURATED_ASSET_LIBRARY.abi;
     }
 
-    // 2. Các chủ đề ăn vặt, thực phẩm đóng gói
+    // 2. Các chủ đề thời sự / nhãn hàng cụ thể
+    if (t.includes('bà tuyết') || t.includes('ba tuyet') || t.includes('ăn cùng bà tuyết') || t.includes('an cung ba tuyet')) {
+        return CURATED_ASSET_LIBRARY.baTuyet;
+    }
+
+    // 3. Các chủ đề ăn vặt, thực phẩm đóng gói
     if (t.includes('chân gà') || t.includes('gà cay') || t.includes('hút chân không') || t.includes('ăn vặt cay')) {
         return CURATED_ASSET_LIBRARY.chanGa;
     }
