@@ -52,7 +52,8 @@ async function getPost(slug: string) {
         // Tự động làm sạch placeholder sót từ AI
         if (postData.content) {
             postData.content = postData.content
-                .replace(/\[Số điện thoại[^\]]*\]/gi, '0969 069 798 (Zalo B2B) / 0989 089 798')
+                .replace(/\[Số điện thoại[^\]]*\]/gi, '0969 069 798 (Hotline / Zalo B2B)')
+                .replace(/0989 089 798/g, '0969 069 798')
                 .replace(/\[Địa chỉ[^\]]*\]/gi, 'Tổng kho B2B LYHU Logistics: Tầng 6, V11-B09 KĐT An Hưng, Dương Nội, Hà Nội & Tổng kho TP.HCM')
                 .replace(/\[Hotline[^\]]*\]/gi, '0969 069 798')
                 .replace(/\[Email[^\]]*\]/gi, 'sales@lyhu.vn');
@@ -62,7 +63,19 @@ async function getPost(slug: string) {
         if (slug.includes('bot-pho-mai-boyo')) {
             postData.thumbnail_url = '/boyo_news_banner.jpg';
             if (postData.content) {
+                // Thay thế đoạn AI tự bịa 4 vị (Cay Nồng, Ngọt Dịu, Rong Biển) bằng 3 quy cách đóng gói thật của BOYO
+                const realSpecsHtml = `<h2>Phân tích chi tiết quy cách đóng gói Bột phô mai BOYO</h2>
+<p><strong>Bột phô mai BOYO</strong> sở hữu hương vị béo ngậy đặc trưng, ngọt mặn hài hòa từ nguồn nguyên liệu nhập khẩu chính ngạch, hạt bột tơi mịn có khả năng bám dính 360 độ quanh món ăn nóng. Hiện nay, LYHU cung cấp bột phô mai BOYO với các quy cách đóng gói chuẩn đáp ứng trọn vẹn từ bán lẻ tiêu dùng đến bếp quán kinh doanh:</p>
+<ul>
+<li><strong>Gói 65g nhỏ gọn:</strong> Điểm giá bán lẻ êm ví cho gia đình tự làm món, đóng hộp 10 gói mở nắp thành khay trưng bày quầy kệ thông minh (Shelf-ready Box) cho siêu thị mini và tiệm tạp hóa.</li>
+<li><strong>Gói 125g linh hoạt:</strong> Tiện lợi cho gia đình sử dụng nhiều lần hoặc các xe đẩy ăn vặt quy mô nhỏ.</li>
+<li><strong>Túi zip 1kg chuyên dụng:</strong> Tối ưu chi phí cost gia vị cho quán ăn vặt, tiệm gà rán, xe khoai lắc, rạp chiếu phim mini và bếp ăn công nghiệp.</li>
+</ul>
+<p>Hạt bột mịn óng, lên màu vàng cam bắt mắt giúp món ăn luôn bóng bẩy, kích thích vị giác khách hàng tối đa.</p>`;
+
                 postData.content = postData.content
+                    // Xóa bỏ đoạn AI bịa vị
+                    .replace(/<h2>Phân tích chi tiết danh mục sản phẩm Bột phô mai BOYO<\/h2>[\s\S]*?Mỗi hương vị đều mang đến một trải nghiệm riêng[\s\S]*?<\/p>/i, realSpecsHtml)
                     // Thay ảnh đĩa phô mai lát Châu Âu bằng hình ảnh sản phẩm & chế biến thật của BOYO
                     .replace(/https:\/\/images\.pexels\.com\/photos\/8743831\/[^\"]+/g, '/boyo_65g_poster.jpg')
                     .replace(/https:\/\/images\.pexels\.com\/photos\/32356159\/[^\"]+/g, '/boyo_dish_fries.jpg')

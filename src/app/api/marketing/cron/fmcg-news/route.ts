@@ -198,7 +198,7 @@ HƯỚNG DẪN VIẾT BÀI THEO ĐÚNG LOẠI CHỦ ĐỀ:
   5. Lời khuyên tối ưu bán lẻ và cách liên hệ nhập sỉ hàng chính hãng giá tốt.
 
 THÔNG TIN LIÊN HỆ CHÍNH THỨC CỦA LYHU (Bắt buộc dùng đúng thông tin sau nếu có đoạn liên hệ, TUYỆT ĐỐI KHÔNG DÙNG placeholder hoặc dấu ngoặc vuông [...]):
-- Hotline / Zalo: 0969 069 798 / 0989 089 798
+- Hotline / Zalo: 0969 069 798
 - Địa chỉ: Tổng kho B2B LYHU Logistics, Tầng 6, V11-B09 KĐT An Hưng, Dương Nội, Hà Nội & Tổng kho TP.HCM
 - Website: lyhu.com.vn | lyhu.vn
 - Email: sales@lyhu.vn
@@ -344,7 +344,8 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
 
         // Sanitize any placeholders AI might have hallucinated
         content = content
-            .replace(/\[Số điện thoại[^\]]*\]/gi, '0969 069 798 (Zalo B2B) / 0989 089 798')
+            .replace(/\[Số điện thoại[^\]]*\]/gi, '0969 069 798 (Hotline / Zalo B2B)')
+            .replace(/0989 089 798/g, '0969 069 798')
             .replace(/\[Địa chỉ[^\]]*\]/gi, 'Tổng kho B2B LYHU Logistics: Tầng 6, V11-B09 KĐT An Hưng, Dương Nội, Hà Nội & Tổng kho TP.HCM')
             .replace(/\[Hotline[^\]]*\]/gi, '0969 069 798')
             .replace(/\[Email[^\]]*\]/gi, 'sales@lyhu.vn')
