@@ -37,6 +37,7 @@ export interface OsmProspect {
 }
 
 const ENDPOINTS = [
+    'https://overpass.openstreetmap.fr/api/interpreter',
     'https://overpass-api.de/api/interpreter',
     'https://overpass.kumi.systems/api/interpreter',
 ];
@@ -64,6 +65,71 @@ export function stripAdminPrefix(input: string): string {
 function nameRegex(input: string): string {
     const core = escapeRegex(stripAdminPrefix(input));
     return `^(Thành phố |Thị xã |Thị trấn |Quận |Huyện |Tỉnh |Phường |Xã )?${core}$`;
+}
+
+/**
+ * Lấy Bounding Box tọa độ [minLat, maxLat, minLon, maxLon] qua Nominatim OSM.
+ * Phản hồi nhanh (200-500ms), giúp Overpass quét trực tiếp theo tọa độ không gian (quad-tile index)
+ * thay vì phải quét đệ quy relation hành chính kéo dài 40-50s.
+ */
+export async function resolveAreaBBox(
+    province: string,
+    district?: string
+): Promise<[number, number, number, number] | null> {
+    const candidates = [
+        [district, province, 'Việt Nam'].filter(Boolean).join(', '),
+        [district, province].filter(Boolean).join(', '),
+        [province, 'Việt Nam'].filter(Boolean).join(', '),
+    ];
+
+    for (const searchStr of candidates) {
+        if (!searchStr) continue;
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 3_000);
+        try {
+            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+                searchStr
+            )}&format=json&limit=1`;
+            const res = await fetch(url, {
+                headers: {
+                    'User-Agent': 'LYHU-B2B-ProspectFinder/1.0 (contact@lyhu.vn)',
+                    'Accept-Language': 'vi,en;q=0.8',
+                },
+                signal: ctrl.signal,
+            });
+            if (!res.ok) continue;
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0 && Array.isArray(data[0].boundingbox)) {
+                const [minLat, maxLat, minLon, maxLon] = data[0].boundingbox.map(Number);
+                if (!isNaN(minLat) && !isNaN(maxLat) && !isNaN(minLon) && !isNaN(maxLon)) {
+                    return [minLat, maxLat, minLon, maxLon];
+                }
+            }
+        } catch {
+            // thử ứng viên tiếp theo
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+    return null;
+}
+
+export function buildOverpassBBoxQuery(opts: {
+    bbox: [number, number, number, number];
+    categories: string[];
+    limit: number;
+}): string {
+    const [minLat, maxLat, minLon, maxLon] = opts.bbox;
+    const filters = opts.categories.flatMap((c) => CATEGORY_PRESETS[c]?.filters ?? []);
+    if (filters.length === 0) throw new Error('Chưa chọn nhóm cửa hàng hợp lệ');
+
+    const lines: string[] = ['[out:json][timeout:10];', '('];
+    for (const f of filters) {
+        lines.push(`  nwr${f}(${minLat},${minLon},${maxLat},${maxLon})["name"];`);
+    }
+    lines.push(');');
+    lines.push(`out center tags ${Math.max(1, Math.floor(opts.limit))};`);
+    return lines.join('\n');
 }
 
 export function buildOverpassQuery(opts: {
@@ -166,12 +232,20 @@ export async function fetchOsmProspects(opts: {
     categories: string[];
     limit: number;
 }): Promise<OsmProspect[]> {
-    const query = buildOverpassQuery(opts);
+    // 1. Thử lấy Bounding Box trước để truy vấn không gian siêu tốc (thường < 3 giây)
+    let query: string;
+    const bbox = await resolveAreaBBox(opts.province, opts.district);
+    if (bbox) {
+        query = buildOverpassBBoxQuery({ bbox, categories: opts.categories, limit: opts.limit });
+    } else {
+        query = buildOverpassQuery(opts);
+    }
+
     let lastErr = 'Không gọi được Overpass API';
 
     for (const endpoint of ENDPOINTS) {
         const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 55_000);
+        const timer = setTimeout(() => ctrl.abort(), 8_000);
         try {
             const res = await fetch(endpoint, {
                 method: 'POST',
@@ -190,7 +264,7 @@ export async function fetchOsmProspects(opts: {
             const json = await res.json();
             return parseOverpassElements(json.elements || []);
         } catch (e: any) {
-            lastErr = e?.name === 'AbortError' ? 'Overpass quá thời gian chờ' : e?.message || lastErr;
+            lastErr = e?.name === 'AbortError' ? 'Overpass quá thời gian chờ (8s)' : e?.message || lastErr;
         } finally {
             clearTimeout(timer);
         }
