@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { findMaxTitleSimilarity, stripYearFromTitle } from '@/lib/titleSimilarity';
+import { resolveNewsImages } from '@/lib/newsImageHelper';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -17,39 +18,6 @@ function generateSlug(title: string): string {
         .replace(/-+/g, "-") 
         .replace(/^-+/, "") 
         .replace(/-+$/, ""); 
-}
-
-async function fetchPexelsImages(query: string, count: number = 3): Promise<string[]> {
-    const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
-    if (!PEXELS_API_KEY) return [];
-
-    try {
-        // Use random page offset to get different images each time
-        const randomPage = Math.floor(Math.random() * 5) + 1;
-        const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=15&page=${randomPage}&orientation=landscape`, {
-            headers: {
-                Authorization: PEXELS_API_KEY
-            }
-        });
-        const data = await res.json();
-        if (data.photos && data.photos.length > 0) {
-            // Get existing thumbnail URLs to avoid duplicates
-            const { data: existingPosts } = await supabase
-                .from('blog_posts')
-                .select('thumbnail_url')
-                .not('thumbnail_url', 'is', null);
-            const usedUrls = new Set((existingPosts || []).map(p => p.thumbnail_url));
-
-            // Shuffle and filter out already-used images
-            const shuffled = data.photos.sort(() => 0.5 - Math.random());
-            const fresh = shuffled.filter((p: any) => !usedUrls.has(p.src.large2x) && !usedUrls.has(p.src.original));
-            const pool = fresh.length >= count ? fresh : shuffled; // Fallback to all if not enough fresh
-            return pool.slice(0, count).map((p: any) => p.src.large2x || p.src.original);
-        }
-    } catch (e) {
-        console.error('Pexels API error:', e);
-    }
-    return [];
 }
 
 export async function GET(req: Request) {
@@ -247,29 +215,16 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         let topic = metaData.topic || `Bản tin thị trường FMCG ${todayStr}`;
         let metaTitle = metaData.meta_title || topic;
 
-        // 2. Fetch High-Quality Contextual Images via Pexels API
-        let thumbnailUrl = null;
-        let images: string[] = [];
-        
-        // Use the first image search query provided by AI, or fallback to the topic
-        const pexelsQuery = (metaData.image_search_queries && metaData.image_search_queries.length > 0) 
-            ? metaData.image_search_queries[0] 
-            : topic;
-            
-        images = await fetchPexelsImages(pexelsQuery, 3);
+        // 2. Fetch High-Quality Contextual Images via Brand-Safe Resolver
+        const { data: existingPosts } = await supabase
+            .from('blog_posts')
+            .select('thumbnail_url')
+            .not('thumbnail_url', 'is', null);
+        const usedUrls = new Set((existingPosts || []).map(p => p.thumbnail_url));
 
-        // If Pexels fails or returns no images, use fallback static Pexels images related to FMCG/Retail
-        if (images.length === 0) {
-            images = [
-                'https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=1200', // Supermarket aisle
-                'https://images.pexels.com/photos/1000633/pexels-photo-1000633.jpeg?auto=compress&cs=tinysrgb&w=1200', // Groceries
-                'https://images.pexels.com/photos/3962283/pexels-photo-3962283.jpeg?auto=compress&cs=tinysrgb&w=1200'  // Payment/Retail
-            ];
-        }
-
-        if (images.length > 0) {
-            thumbnailUrl = images[0]; 
-        }
+        const imageQueries = Array.isArray(metaData.image_search_queries) ? metaData.image_search_queries : [];
+        const images = await resolveNewsImages(topic, imageQueries, usedUrls);
+        const thumbnailUrl = images.length > 0 ? images[0] : null;
 
         // 3. Inject Inline Images into content
         if (images.length > 1) {
