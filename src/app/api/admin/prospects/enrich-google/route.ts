@@ -79,6 +79,7 @@ export async function POST(request: Request) {
                     stats.matchedNoPhone++;
                 }
                 if (m.website) patch.website = m.website;
+                if (m.address) patch.address = m.address;
                 patch.google_place_id = m.placeId;
             } else {
                 stats.noMatch++;
