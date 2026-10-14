@@ -176,6 +176,7 @@ export const NAV_ITEMS = {
         { label: "Sản phẩm", href: "/admin/products", icon: Package },
         { label: "Chiến dịch Sỉ (B2B)", href: "/admin/b2b-campaigns", icon: Megaphone },
         { label: "Bản đồ Nhà Phân Phối", href: "/admin/npp-map", icon: MapPin },
+        { label: "Tìm khách tiềm năng", href: "/admin/prospects", icon: MapPin },
         { label: "Chuỗi Siêu thị", href: "/telesales/retail-chains", icon: Store },
         { label: "Sales Kit & Catalog", href: "/admin/sales-kits", icon: FileText },
         { label: "Báo cáo Telesales", href: "/admin/telesales/earnings", icon: Phone },
