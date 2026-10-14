@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { findMaxTitleSimilarity } from '@/lib/titleSimilarity';
+import { findMaxTitleSimilarity, stripYearFromTitle } from '@/lib/titleSimilarity';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -295,12 +295,15 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         // Remove AI citation brackets like [1], [2, 3] from the text
         content = content.replace(/\[\d+(,\s*\d+)*\]/g, '');
 
-        // 4. Kiểm tra độ tương đồng tiêu đề với toàn bộ bài viết trong DB (Title Similarity >= 60%)
-        const trimmedTopic = topic.trim();
-        const { maxSim, matchedTitle } = findMaxTitleSimilarity(trimmedTopic, allPublishedTitles);
+        // 4. Gọt sạch các số năm (2026, năm 2026...) bị nhồi nhét máy móc trước khi lưu
+        const cleanTopic = stripYearFromTitle(topic).trim();
+        const cleanMetaTitle = stripYearFromTitle(metaTitle || cleanTopic).trim();
+
+        // Kiểm tra độ tương đồng tiêu đề với toàn bộ bài viết trong DB (Title Similarity >= 60%)
+        const { maxSim, matchedTitle } = findMaxTitleSimilarity(cleanTopic, allPublishedTitles);
 
         if (maxSim >= 0.60) {
-            console.warn(`[Lifestyle News Cron] Bỏ qua vì tiêu đề "${trimmedTopic}" có độ tương đồng ${Math.round(maxSim * 100)}% (>= 60%) với bài cũ: "${matchedTitle}"`);
+            console.warn(`[Lifestyle News Cron] Bỏ qua vì tiêu đề "${cleanTopic}" có độ tương đồng ${Math.round(maxSim * 100)}% (>= 60%) với bài cũ: "${matchedTitle}"`);
             return NextResponse.json({
                 success: true,
                 skipped: true,
@@ -311,7 +314,7 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         }
 
         // 5. Save to Database
-        const slug = generateSlug(topic) + '-' + Date.now().toString().slice(-4); // Ensure uniqueness
+        const slug = generateSlug(cleanTopic) + '-' + Date.now().toString().slice(-4); // Ensure uniqueness
         
         let categoryId = null;
         if (metaData.category_slug) {
@@ -328,12 +331,12 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         }
 
         const { data: insertedPost, error } = await supabase.from('blog_posts').insert({
-            title: trimmedTopic,
+            title: cleanTopic,
             slug: slug,
             category_id: categoryId,
             content: content,
-            meta_title: metaTitle,
-            meta_description: metaData.meta_description || topic,
+            meta_title: cleanMetaTitle,
+            meta_description: metaData.meta_description || cleanTopic,
             keywords: metaData.keywords || '',
             thumbnail_url: thumbnailUrl,
             status: 'published',

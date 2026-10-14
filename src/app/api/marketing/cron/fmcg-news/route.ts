@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { findMaxTitleSimilarity } from '@/lib/titleSimilarity';
+import { findMaxTitleSimilarity, stripYearFromTitle } from '@/lib/titleSimilarity';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -169,6 +169,7 @@ export async function GET(req: Request) {
 Bạn là "Chuyên gia phân tích thị trường B2B FMCG & Cố vấn kinh doanh bán lẻ", làm việc cho LYHU (lyhu.com.vn) - Nhà phân phối và nhập khẩu sỉ bánh kẹo, đồ ăn vặt và nguyên liệu hàng đầu Việt Nam. Khán giả của bạn là các chủ tiệm tạp hóa, chủ siêu thị mini, đại lý bán sỉ và các điểm bán lẻ truyền thống (GT).
 
 ⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu và bối cảnh PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}).
+⚠️ QUY TẮC BẮT BUỘC VỀ TIÊU ĐỀ: TUYỆT ĐỐI KHÔNG chèn số năm (như "2026", "năm 2026") vào tiêu đề hay meta_title một cách máy móc rập khuôn. Tiêu đề cần tự nhiên, mang tính giải pháp thực chiến và quy luật kinh doanh bền vững.
 
 🔥 NGHỆ THUẬT GIẬT TÍT KINH TẾ BẬC THẦY (BẮT BUỘC ÁP DỤNG 1 TRONG 5 CÔNG THỨC CAFEF):
 Tiêu đề bài viết ("topic") và tiêu đề SEO ("meta_title") PHẢI áp dụng linh hoạt 1 trong 5 công thức giật tít kinh điển của báo kinh tế CafeF để đạt tỷ lệ click (CTR) cao nhất, trong khi vẫn giữ vững 100% tính chính thống, số liệu nghiêm túc và chuyên môn:
@@ -188,7 +189,7 @@ Tiêu đề bài viết ("topic") và tiêu đề SEO ("meta_title") PHẢI áp 
 3. CÔNG THỨC 3 - "KHÔNG PHẢI A, ĐÂY MỚI LÀ B" (PHÁ VỠ ĐỊNH KIẾN):
    Phá vỡ suy nghĩ thông thường để kích thích trí tò mò bắt buộc phải bấm vào xem.
    Ví dụ: "Không phải nước ngọt hay mì tôm: Đây mới là mặt hàng ăn vặt giúp chủ tiệm tạp hóa thu hồi vốn nhanh nhất mùa này"
-   Ví dụ: "Không cần vốn chục triệu: Đây mới là 4 mặt hàng bỏ sỉ dễ bán và vòng quay nhanh nhất cổng trường học năm 2026"
+   Ví dụ: "Không cần vốn chục triệu: Đây mới là 4 mặt hàng bỏ sỉ dễ bán và vòng quay nhanh nhất cổng trường học"
    Ví dụ: "Không phải đại siêu thị: Đây mới là kênh bán lẻ đang âm thầm chiếm 70% doanh số snack và bánh kẹo"
 
 4. CÔNG THỨC 4 - "TỪ NAY..." / "ĐỘNG THÁI MỚI..." (TÁC ĐỘNG TRỰC TIẾP VÀO TÚI TIỀN):
@@ -371,12 +372,15 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
             .replace(/\[Email[^\]]*\]/gi, 'sales@lyhu.vn')
             .replace(/\[Tên[^\]]*\]/gi, 'LYHU');
 
-        // 4. Kiểm tra độ tương đồng tiêu đề với toàn bộ bài viết trong DB (Title Similarity >= 60%)
-        const trimmedTopic = topic.trim();
-        const { maxSim, matchedTitle } = findMaxTitleSimilarity(trimmedTopic, allPublishedTitles);
+        // 4. Gọt sạch các số năm (2026, năm 2026...) bị nhồi nhét máy móc trước khi lưu
+        const cleanTopic = stripYearFromTitle(topic).trim();
+        const cleanMetaTitle = stripYearFromTitle(metaTitle || cleanTopic).trim();
+
+        // Kiểm tra độ tương đồng tiêu đề với toàn bộ bài viết trong DB (Title Similarity >= 60%)
+        const { maxSim, matchedTitle } = findMaxTitleSimilarity(cleanTopic, allPublishedTitles);
 
         if (maxSim >= 0.60) {
-            console.warn(`[FMCG News Cron] Bỏ qua vì tiêu đề "${trimmedTopic}" có độ tương đồng ${Math.round(maxSim * 100)}% (>= 60%) với bài cũ: "${matchedTitle}"`);
+            console.warn(`[FMCG News Cron] Bỏ qua vì tiêu đề "${cleanTopic}" có độ tương đồng ${Math.round(maxSim * 100)}% (>= 60%) với bài cũ: "${matchedTitle}"`);
             return NextResponse.json({
                 success: true,
                 skipped: true,
@@ -387,7 +391,7 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         }
 
         // 5. Save to Database
-        const slug = generateSlug(topic) + '-' + Date.now().toString().slice(-4); // Ensure uniqueness
+        const slug = generateSlug(cleanTopic) + '-' + Date.now().toString().slice(-4); // Ensure uniqueness
         
         let categoryId = null;
         if (metaData.category_slug) {
@@ -404,12 +408,12 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         }
 
         const { data: insertedPost, error } = await supabase.from('blog_posts').insert({
-            title: trimmedTopic,
+            title: cleanTopic,
             slug: slug,
             category_id: categoryId,
             content: content,
-            meta_title: metaTitle,
-            meta_description: metaData.meta_description || topic,
+            meta_title: cleanMetaTitle,
+            meta_description: metaData.meta_description || cleanTopic,
             keywords: metaData.keywords || '',
             thumbnail_url: thumbnailUrl,
             status: 'published',

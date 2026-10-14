@@ -85,3 +85,33 @@ export function findMaxTitleSimilarity(candidate: string, existingTitles: string
 
     return { maxSim, matchedTitle };
 }
+
+/**
+ * Tự động loại bỏ số năm (2026, năm 2026, trong năm 2026...) bị nhồi nhét máy móc ở tiêu đề
+ * Giúp tiêu đề tự nhiên, chuẩn mực văn phong báo chí kinh tế, tránh cảm giác rập khuôn bot AI.
+ */
+export function stripYearFromTitle(title: string): string {
+    if (!title) return title;
+
+    let res = title;
+
+    // 1. Bỏ năm đứng trước dấu hai chấm / gạch ngang / phẩy: "Nhân sự bán lẻ 2026: ..." -> "Nhân sự bán lẻ: ..."
+    res = res.replace(/(?:trong\s+)?năm\s+20\d{2}\s*([:,\-–])/gi, '$1');
+    res = res.replace(/\b20\d{2}\s*([:,\-–])/gi, '$1');
+
+    // 2. Bỏ năm ở cuối câu: "...năm 2026?" -> "...?" / "...cho tiệm tạp hóa 2026" -> "...cho tiệm tạp hóa"
+    res = res.replace(/(?:\s+(?:trong|vào|cho)?\s*năm)?\s+20\d{2}(\s*[?!.]*)$/gi, '$1');
+
+    // 3. Bỏ cụm "trong năm 2026" / "năm 2026" / "2026" đứng riêng lẻ
+    res = res.replace(/\s+(?:trong|vào)\s+năm\s+20\d{2}\b/gi, '');
+    res = res.replace(/\s+năm\s+20\d{2}\b/gi, '');
+    res = res.replace(/\s+20\d{2}\b/gi, '');
+
+    // 4. Chuẩn hóa khoảng trắng và dấu câu
+    res = res.replace(/\s{2,}/g, ' ')
+             .replace(/\s+([:,\?!.])/g, '$1')
+             .trim();
+
+    return res;
+}
+
