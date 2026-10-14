@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { findMaxTitleSimilarity } from '@/lib/titleSimilarity';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -114,30 +115,49 @@ export async function GET(req: Request) {
             "Cách nấu cháo bồi bổ thơm ngon, nhuyễn mịn không bị vữa"
         ];
 
-        // Lấy 50 bài viết gần nhất để đảm bảo không trùng lặp chủ đề
-        const { data: recentPosts } = await supabase
-            .from('blog_posts')
-            .select('title, meta_title')
-            .eq('status', 'published')
-            .order('created_at', { ascending: false })
-            .limit(50);
-        const recentTitles = (recentPosts || []).map(p => (p.title || p.meta_title || '').toLowerCase());
-        
-        // Lọc các chủ đề chưa từng xuất hiện gần đây
-        const freshTopics = focusAreas.filter(topic => {
-            const topicLower = topic.toLowerCase();
-            return !recentTitles.some(title => 
-                title.includes(topicLower.slice(0, 15)) || topicLower.includes(title.slice(0, 15))
-            );
-        });
-        const pool = freshTopics.length > 0 ? freshTopics : focusAreas;
-        const randomFocus = pool[Math.floor(Math.random() * pool.length)];
-
         // Build a date string the AI can reference for accurate year context
         const now = new Date();
         const vnFormatter = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric' });
         const currentDateVN = vnFormatter.format(now);
         const currentYear = now.toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric' });
+
+        // Lấy TOÀN BỘ tiêu đề bài viết đã xuất bản trong DB để tính toán tương đồng (Title Similarity)
+        let allPublishedTitles: string[] = [];
+        let pFrom = 0;
+        const pSize = 1000;
+        while (true) {
+            const { data: pBatch } = await supabase
+                .from('blog_posts')
+                .select('title')
+                .eq('status', 'published')
+                .range(pFrom, pFrom + pSize - 1);
+            if (!pBatch || pBatch.length === 0) break;
+            allPublishedTitles.push(...pBatch.map(p => p.title).filter(Boolean));
+            if (pBatch.length < pSize) break;
+            pFrom += pSize;
+        }
+
+        // Lọc các chủ đề: Chỉ chọn chủ đề có độ tương đồng từ ngữ < 60% với TOÀN BỘ bài đã đăng
+        const freshTopics = focusAreas.filter(topic => {
+            const { maxSim } = findMaxTitleSimilarity(topic, allPublishedTitles);
+            return maxSim < 0.60;
+        });
+
+        let randomFocus = '';
+        if (freshTopics.length > 0) {
+            randomFocus = freshTopics[Math.floor(Math.random() * freshTopics.length)];
+        } else {
+            // Đổi góc nhìn độc bản nếu các chủ đề cơ bản đã bị trùng
+            const uniqueAngles = [
+                `Thực đơn ăn sạch Eat Clean tiết kiệm chi phí cho gia đình 4 người năm ${currentYear}`,
+                `Mẹo chọn mua và phân biệt gia vị chính hãng an toàn cho sức khỏe tại tiệm tạp hóa`,
+                `Cách bảo quản ngũ cốc, hạt dinh dưỡng và đồ khô không bị mọt trong thời tiết ẩm`,
+                `Công thức đồ uống thanh nhiệt giải độc gan từ nguyên liệu tự nhiên dễ tìm`,
+                `Xu hướng tiêu dùng xanh: Lối sống hạn chế rác thải nhựa trong căn bếp hiện đại ${currentYear}`
+            ];
+            const freshAngles = uniqueAngles.filter(a => findMaxTitleSimilarity(a, allPublishedTitles).maxSim < 0.60);
+            randomFocus = freshAngles.length > 0 ? freshAngles[Math.floor(Math.random() * freshAngles.length)] : `Cẩm nang dinh dưỡng và đời sống gia đình năm ${currentYear}`;
+        }
 
         const prompt = `
 Bạn là "Chuyên gia Đời sống, Dinh dưỡng và Ẩm thực", làm việc cho LYHU - Nền tảng phân phối sỉ hàng tiêu dùng nhanh (FMCG) hàng đầu Việt Nam. Khán giả của bạn là các bà nội trợ, những người quan tâm đến sức khỏe gia đình, nấu ăn ngon và các chủ tiệm tạp hóa muốn có kiến thức để tư vấn cho khách mua hàng.
@@ -275,21 +295,18 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         // Remove AI citation brackets like [1], [2, 3] from the text
         content = content.replace(/\[\d+(,\s*\d+)*\]/g, '');
 
-        // 4. Check duplicate title before saving
+        // 4. Kiểm tra độ tương đồng tiêu đề với toàn bộ bài viết trong DB (Title Similarity >= 60%)
         const trimmedTopic = topic.trim();
-        const { data: existingPost } = await supabase
-            .from('blog_posts')
-            .select('id, title')
-            .ilike('title', trimmedTopic)
-            .maybeSingle();
+        const { maxSim, matchedTitle } = findMaxTitleSimilarity(trimmedTopic, allPublishedTitles);
 
-        if (existingPost) {
-            console.warn(`[Lifestyle News Cron] Bỏ qua vì bài viết "${trimmedTopic}" đã tồn tại.`);
+        if (maxSim >= 0.60) {
+            console.warn(`[Lifestyle News Cron] Bỏ qua vì tiêu đề "${trimmedTopic}" có độ tương đồng ${Math.round(maxSim * 100)}% (>= 60%) với bài cũ: "${matchedTitle}"`);
             return NextResponse.json({
                 success: true,
                 skipped: true,
-                message: `Bài viết đã tồn tại trên website, tự động bỏ qua để tránh trùng lặp: ${trimmedTopic}`,
-                existingId: existingPost.id
+                similarity: maxSim,
+                matchedWith: matchedTitle,
+                message: `Tiêu đề bài viết có độ tương đồng ${Math.round(maxSim * 100)}% (>= 60%) với bài cũ "${matchedTitle}", tự động bỏ qua để bảo vệ SEO và tránh trùng lặp nội dung.`
             });
         }
 

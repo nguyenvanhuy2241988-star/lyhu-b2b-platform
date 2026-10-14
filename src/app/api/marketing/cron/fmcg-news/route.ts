@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { findMaxTitleSimilarity } from '@/lib/titleSimilarity';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -120,30 +121,49 @@ export async function GET(req: Request) {
             ];
         }
 
-        // Avoid picking same topic as recent posts: check last 50 posts
-        const { data: recentPosts } = await supabase
-            .from('blog_posts')
-            .select('title, meta_title')
-            .eq('status', 'published')
-            .order('created_at', { ascending: false })
-            .limit(50);
-        const recentTitles = (recentPosts || []).map(p => (p.title || p.meta_title || '').toLowerCase());
-        
-        // Filter out topics that match recent post titles (fuzzy match)
-        const freshTopics = focusAreas.filter(topic => {
-            const topicLower = topic.toLowerCase();
-            return !recentTitles.some(title => 
-                title.includes(topicLower.slice(0, 15)) || topicLower.includes(title.slice(0, 15))
-            );
-        });
-        const pool = freshTopics.length > 0 ? freshTopics : focusAreas;
-        const randomFocus = pool[Math.floor(Math.random() * pool.length)];
-
         // Build a date string the AI can reference for accurate year context
         const now = new Date();
         const vnFormatter = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric' });
         const currentDateVN = vnFormatter.format(now);
         const currentYear = now.toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric' });
+
+        // Lấy TOÀN BỘ tiêu đề bài viết đã xuất bản trong DB để tính toán tương đồng (Title Similarity)
+        let allPublishedTitles: string[] = [];
+        let pFrom = 0;
+        const pSize = 1000;
+        while (true) {
+            const { data: pBatch } = await supabase
+                .from('blog_posts')
+                .select('title')
+                .eq('status', 'published')
+                .range(pFrom, pFrom + pSize - 1);
+            if (!pBatch || pBatch.length === 0) break;
+            allPublishedTitles.push(...pBatch.map(p => p.title).filter(Boolean));
+            if (pBatch.length < pSize) break;
+            pFrom += pSize;
+        }
+
+        // Lọc các chủ đề: Chỉ chọn chủ đề có độ tương đồng từ ngữ < 60% với TOÀN BỘ bài đã đăng
+        const freshTopics = focusAreas.filter(topic => {
+            const { maxSim } = findMaxTitleSimilarity(topic, allPublishedTitles);
+            return maxSim < 0.60;
+        });
+
+        let randomFocus = '';
+        if (freshTopics.length > 0) {
+            randomFocus = freshTopics[Math.floor(Math.random() * freshTopics.length)];
+        } else {
+            // Đổi góc nhìn bài viết hoàn toàn nếu các chủ đề cơ bản đã bị trùng
+            const uniqueAngles = [
+                `Bài toán dòng tiền và xoay vòng vốn hàng tạp hóa mùa cao điểm năm ${currentYear}`,
+                `So sánh hiệu quả chi phí giữa nhập sỉ qua nhà phân phối chính ngạch vs chợ đầu mối năm ${currentYear}`,
+                `Chiến lược tối ưu hóa mặt bằng trưng bày cho tiệm tạp hóa dưới 30m2 để tăng 30% doanh thu`,
+                `Cách xử lý hàng tồn kho và đổi trả date cận hạn mà không bị đọng vốn cho đại lý GT`,
+                `Tác động của xu hướng thanh toán QR Code và chuyển đổi số đến thói quen mua sắm tại tiệm tạp hóa ${currentYear}`
+            ];
+            const freshAngles = uniqueAngles.filter(a => findMaxTitleSimilarity(a, allPublishedTitles).maxSim < 0.60);
+            randomFocus = freshAngles.length > 0 ? freshAngles[Math.floor(Math.random() * freshAngles.length)] : `Cập nhật thị trường bán lẻ FMCG Việt Nam năm ${currentYear} với phân tích số liệu thực chiến`;
+        }
 
         const prompt = `
 Bạn là "Chuyên gia phân tích thị trường B2B FMCG & Cố vấn kinh doanh bán lẻ", làm việc cho LYHU (lyhu.com.vn) - Nhà phân phối và nhập khẩu sỉ bánh kẹo, đồ ăn vặt và nguyên liệu hàng đầu Việt Nam. Khán giả của bạn là các chủ tiệm tạp hóa, chủ siêu thị mini, đại lý bán sỉ và các điểm bán lẻ truyền thống (GT).
@@ -351,21 +371,18 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
             .replace(/\[Email[^\]]*\]/gi, 'sales@lyhu.vn')
             .replace(/\[Tên[^\]]*\]/gi, 'LYHU');
 
-        // 4. Check duplicate title before saving
+        // 4. Kiểm tra độ tương đồng tiêu đề với toàn bộ bài viết trong DB (Title Similarity >= 60%)
         const trimmedTopic = topic.trim();
-        const { data: existingPost } = await supabase
-            .from('blog_posts')
-            .select('id, title')
-            .ilike('title', trimmedTopic)
-            .maybeSingle();
+        const { maxSim, matchedTitle } = findMaxTitleSimilarity(trimmedTopic, allPublishedTitles);
 
-        if (existingPost) {
-            console.warn(`[FMCG News Cron] Bỏ qua vì bài viết "${trimmedTopic}" đã tồn tại.`);
+        if (maxSim >= 0.60) {
+            console.warn(`[FMCG News Cron] Bỏ qua vì tiêu đề "${trimmedTopic}" có độ tương đồng ${Math.round(maxSim * 100)}% (>= 60%) với bài cũ: "${matchedTitle}"`);
             return NextResponse.json({
                 success: true,
                 skipped: true,
-                message: `Bài viết đã tồn tại trên website, tự động bỏ qua để tránh trùng lặp: ${trimmedTopic}`,
-                existingId: existingPost.id
+                similarity: maxSim,
+                matchedWith: matchedTitle,
+                message: `Tiêu đề bài viết có độ tương đồng ${Math.round(maxSim * 100)}% (>= 60%) với bài cũ "${matchedTitle}", tự động bỏ qua để bảo vệ SEO và tránh trùng lặp nội dung.`
             });
         }
 
