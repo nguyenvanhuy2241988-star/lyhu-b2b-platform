@@ -91,16 +91,15 @@ export default function WebTracker() {
         };
 
         // Don't track if we're inside the dashboard, admin, employee portal, or auth pages to avoid skewing public traffic
-        const isInternalRoute = 
-            pathname.startsWith('/admin') || 
-            pathname.startsWith('/sale-admin') ||
-            pathname.startsWith('/telesales') || 
-            pathname.startsWith('/settings') ||
-            pathname.startsWith('/chat') ||
-            pathname.startsWith('/tasks') ||
-            pathname.startsWith('/portal') ||
-            pathname.startsWith('/login') ||
-            pathname.startsWith('/debug-role');
+        const internalPrefixes = [
+            '/admin', '/crm', '/telesales', '/sales', '/sales-gt', '/sale-admin',
+            '/warehouse', '/accountant', '/shipper', '/ctv', '/recruitment',
+            '/marketing', '/media', '/hr', '/tasks', '/settings', '/profile',
+            '/chat', '/portal', '/login', '/debug-role', '/docs', '/documents',
+            '/events', '/entertainment', '/culture', '/ecommerce', '/rnd',
+            '/livestream', '/shared'
+        ];
+        const isInternalRoute = internalPrefixes.some(prefix => pathname.startsWith(prefix));
 
         if (pathname && !isInternalRoute) {
              trackPageView();

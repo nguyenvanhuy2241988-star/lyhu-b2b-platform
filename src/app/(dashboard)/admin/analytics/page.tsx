@@ -179,17 +179,17 @@ export default function AnalyticsDashboard() {
                 .limit(100);
 
             if (excludeInternal) {
-                visitorsQuery = visitorsQuery
-                    .not('pathname', 'like', '/admin%')
-                    .not('pathname', 'like', '/sale-admin%')
-                    .not('pathname', 'like', '/tasks%')
-                    .not('pathname', 'like', '/chat%')
-                    .not('pathname', 'like', '/portal%')
-                    .not('pathname', 'like', '/settings%')
-                    .not('pathname', 'like', '/marketing%')
-                    .not('pathname', 'like', '/recruitment%')
-                    .not('pathname', 'like', '/telesales%')
-                    .not('pathname', 'like', '/login%');
+                const internalPatterns = [
+                    '/admin%', '/crm%', '/sale-admin%', '/tasks%', '/chat%', '/portal%',
+                    '/settings%', '/marketing%', '/recruitment%', '/telesales%', '/login%',
+                    '/sales%', '/sales-gt%', '/warehouse%', '/accountant%', '/shipper%',
+                    '/ctv%', '/hr%', '/media%', '/profile%', '/debug-role%', '/docs%',
+                    '/documents%', '/events%', '/entertainment%', '/culture%', '/ecommerce%',
+                    '/rnd%', '/livestream%', '/shared%'
+                ];
+                for (const pat of internalPatterns) {
+                    visitorsQuery = visitorsQuery.not('pathname', 'like', pat);
+                }
             }
 
             const { data: recentVisitors } = await visitorsQuery;
@@ -210,16 +210,31 @@ export default function AnalyticsDashboard() {
     // Lọc danh sách khách gần đây theo bộ lọc tab
     const filteredVisitors = useMemo(() => {
         if (!data?.recentVisitors) return [];
-        if (visitorFilter === "all") return data.recentVisitors;
-        if (visitorFilter === "human") return data.recentVisitors.filter((v: any) => !v.is_bot);
-        if (visitorFilter === "ai") return data.recentVisitors.filter((v: any) => {
+        let list = data.recentVisitors;
+
+        // Đảm bảo lọc sạch mọi truy cập nội bộ (CRM, Admin, Nhân sự, v.v.)
+        if (excludeInternal) {
+            const internalPrefixes = [
+                '/admin', '/crm', '/sale-admin', '/tasks', '/chat', '/portal',
+                '/settings', '/marketing', '/recruitment', '/telesales', '/login',
+                '/sales', '/sales-gt', '/warehouse', '/accountant', '/shipper',
+                '/ctv', '/hr', '/media', '/profile', '/debug-role', '/docs',
+                '/documents', '/events', '/entertainment', '/culture', '/ecommerce',
+                '/rnd', '/livestream', '/shared'
+            ];
+            list = list.filter((v: any) => !internalPrefixes.some(p => (v.pathname || '').startsWith(p)));
+        }
+
+        if (visitorFilter === "all") return list;
+        if (visitorFilter === "human") return list.filter((v: any) => !v.is_bot);
+        if (visitorFilter === "ai") return list.filter((v: any) => {
             const b = (v.bot_name || "").toLowerCase();
             const r = (v.referrer || "").toLowerCase();
             return b.includes("ai") || b.includes("gpt") || b.includes("claude") || b.includes("deepseek") || b.includes("kimi") || b.includes("qwen") || r.includes("ai") || r.includes("gpt") || r.includes("deepseek");
         });
-        if (visitorFilter === "bot") return data.recentVisitors.filter((v: any) => v.is_bot);
-        return data.recentVisitors;
-    }, [data?.recentVisitors, visitorFilter]);
+        if (visitorFilter === "bot") return list.filter((v: any) => v.is_bot);
+        return list;
+    }, [data?.recentVisitors, visitorFilter, excludeInternal]);
 
     if (loading && !data) return (
         <div className="flex items-center justify-center min-h-[60vh] bg-slate-50">

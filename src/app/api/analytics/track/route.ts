@@ -86,6 +86,19 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
+        // Bỏ qua tuyệt đối các trang quản trị/nội bộ để không làm sai lệch thống kê công khai
+        const internalPrefixes = [
+            '/admin', '/crm', '/telesales', '/sales', '/sales-gt', '/sale-admin',
+            '/warehouse', '/accountant', '/shipper', '/ctv', '/recruitment',
+            '/marketing', '/media', '/hr', '/tasks', '/settings', '/profile',
+            '/chat', '/portal', '/login', '/debug-role', '/docs', '/documents',
+            '/events', '/entertainment', '/culture', '/ecommerce', '/rnd',
+            '/livestream', '/shared'
+        ];
+        if (internalPrefixes.some(prefix => (pathname || '').startsWith(prefix))) {
+            return NextResponse.json({ success: true, skipped: true, reason: 'Internal route' });
+        }
+
         // Get User-Agent and parse device info
         const userAgent = req.headers.get("user-agent") || "";
         
