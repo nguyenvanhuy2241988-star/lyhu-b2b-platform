@@ -5,7 +5,7 @@ import { ChevronRight, ClipboardCheck } from 'lucide-react';
 import BaoHinhPlayer from './BaoHinhPlayer';
 import ShareButtons from './ShareButtons';
 import ViewCounter from './ViewCounter';
-import BaoHinhRail from './BaoHinhRail';
+import VideoCard from './VideoCard';
 
 /** Điều kiện dùng bố cục bản tin video: file mp4 dọc do pipeline Báo hình đăng. */
 export function isBaoHinhPost(post: any): boolean {
@@ -38,7 +38,7 @@ export default async function VideoPostLayout({ post, postUrl, jsonLd }: { post:
                     <li><ChevronRight className="w-3.5 h-3.5" /></li>
                     <li><Link href="/tin-tuc" className="hover:text-[#00ABA9]">Tin tức</Link></li>
                     <li><ChevronRight className="w-3.5 h-3.5" /></li>
-                    <li><Link href="/tin-tuc?type=video" className="hover:text-[#00ABA9] font-medium">Báo hình</Link></li>
+                    <li><Link href="/bao-hinh" className="hover:text-[#00ABA9] font-medium">Báo hình</Link></li>
                 </ol>
             </nav>
 
@@ -88,7 +88,13 @@ export default async function VideoPostLayout({ post, postUrl, jsonLd }: { post:
 
                 {more && more.length > 0 && (
                     <div className="mt-12 pt-8 border-t border-gray-100">
-                        <BaoHinhRail items={more as any} />
+                        <div className="flex items-center justify-between mb-5">
+                            <h2 className="text-xl font-extrabold text-[#2B4A52] border-l-4 border-[#8DC63F] pl-3">Bản tin khác</h2>
+                            <Link href="/bao-hinh" className="text-sm font-bold text-[#00ABA9] hover:underline">Vào Báo hình</Link>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-5">
+                            {more.slice(0, 4).map((v: any) => <VideoCard key={v.id} v={v} />)}
+                        </div>
                     </div>
                 )}
             </main>

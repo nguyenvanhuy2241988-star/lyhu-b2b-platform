@@ -16,7 +16,6 @@ import { STATIC_EMAGAZINE_POSTS } from '@/lib/emagazinePosts';
 import SearchBar from '@/components/blog/SearchBar';
 import Pagination from '@/components/blog/Pagination';
 import TrendingWidget from '@/components/blog/TrendingWidget';
-import BaoHinhRail from '@/components/blog/BaoHinhRail';
 import { Play } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -113,20 +112,8 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
         }
     }
 
-    // Dải Báo hình: các bản tin video mới nhất (chỉ ở trang chủ tin tức)
-    let railPromise: any = Promise.resolve({ data: null });
-    if (categorySlug === 'all' && (!groupKey || groupKey === 'all') && page === 1 && !searchQuery && !onlyVideo) {
-        railPromise = supabase
-            .from('blog_posts')
-            .select('id, title, slug, thumbnail_url, video_url, video_meta, published_at, created_at')
-            .eq('status', 'published')
-            .not('video_url', 'is', null)
-            .order('created_at', { ascending: false })
-            .limit(8);
-    }
-
     // Parallel Fetch 2: Posts & Featured Blocks
-    const [postsRes, b1Res, b2Res, railRes] = await Promise.all([query, b1Promise, b2Promise, railPromise]);
+    const [postsRes, b1Res, b2Res] = await Promise.all([query, b1Promise, b2Promise]);
 
     const posts = postsRes.data;
     const count = postsRes.count;
@@ -177,7 +164,6 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
         categories: (categories || []) as BlogCategory[],
         trendingPosts: (trending || []) as Partial<BlogPost>[],
         totalCount: (count || 0) + (page === 1 && !onlyVideo ? staticPosts.length : 0),
-        videoRail: (railRes.data || []) as any[],
         featuredBlocks,
         megaBanner,
         sideTopBanners,
@@ -197,7 +183,7 @@ export default async function BlogIndexPage({
     const onlyVideo = searchParams.type === 'video';
     const isHome = currentPage === 1 && activeCategory === 'all' && !activeGroup && !searchQuery && !onlyVideo;
 
-    const { posts, categories, trendingPosts, totalCount, featuredBlocks, megaBanner, sideTopBanners, sideBottomBanners, videoRail } = await getBlogData(
+    const { posts, categories, trendingPosts, totalCount, featuredBlocks, megaBanner, sideTopBanners, sideBottomBanners } = await getBlogData(
         currentPage,
         activeCategory,
         activeGroup,
@@ -226,7 +212,7 @@ export default async function BlogIndexPage({
                         Tất cả
                     </Link>
                     <Link
-                        href="/tin-tuc?type=video"
+                        href="/bao-hinh"
                         className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors whitespace-nowrap inline-flex items-center gap-1 ${
                             onlyVideo ? 'bg-[#00AFA9] text-white shadow-sm' : 'bg-gray-100 text-gray-700 border border-gray-200'
                         }`}
@@ -292,7 +278,7 @@ export default async function BlogIndexPage({
 
                         {/* Tab VIDEO */}
                         <Link
-                            href="/tin-tuc?type=video"
+                            href="/bao-hinh"
                             className={`shrink-0 py-3.5 pb-4 text-[14px] font-bold uppercase transition-colors duration-300 whitespace-nowrap inline-flex items-center gap-1.5 ${
                                 onlyVideo
                                 ? 'text-[#00AFA9] border-b-[3px] border-[#00AFA9]'
@@ -431,8 +417,6 @@ export default async function BlogIndexPage({
                         )}
                         <p>{totalCount} bài viết</p>
                     </div>
-
-                    {isHome && videoRail.length > 0 && <BaoHinhRail items={videoRail} />}
 
                     {posts.length === 0 ? (
                         <div className="bg-white p-16 text-center rounded-lg shadow-sm border border-gray-100 flex flex-col items-center">
