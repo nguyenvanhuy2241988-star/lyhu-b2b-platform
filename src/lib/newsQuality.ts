@@ -23,7 +23,7 @@ export function getGroundedSources(chunks: { web?: { uri?: string; title?: strin
             sources.set(url.href, { title: chunk.web?.title || url.hostname, url: url.href });
         } catch { /* Ignore missing or malformed search citations. */ }
     }
-    return [...sources.values()].slice(0, 10);
+    return Array.from(sources.values()).slice(0, 10);
 }
 
 export function newsQualityIssues(content: string, images: string[], sources: NewsSource[]): string[] {
@@ -40,3 +40,4 @@ export function newsQualityIssues(content: string, images: string[], sources: Ne
 export function escapeNewsHtml(value: string): string {
     return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+
