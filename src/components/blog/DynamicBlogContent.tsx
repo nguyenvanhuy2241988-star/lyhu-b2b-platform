@@ -150,6 +150,10 @@ export default function DynamicBlogContent({ content, videoUrl, isVideoVertical 
                         }
                     }
 
+                    const videoClasses = isVideoVertical 
+                        ? "my-8 w-full max-w-sm mx-auto aspect-[9/16] rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-black"
+                        : "my-8 w-full aspect-video rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-black";
+
                     const isDirectVideo = finalUrl.toLowerCase().includes('.mp4') || finalUrl.includes('/storage/v1/object/');
 
                     elements.push(
