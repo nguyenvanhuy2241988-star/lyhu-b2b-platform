@@ -15,7 +15,7 @@ import BlogSidebarNewCustomerPromo from '@/components/blog/BlogSidebarNewCustome
 import DynamicBlogContent from '@/components/blog/DynamicBlogContent';
 import ViewCounter from '@/components/blog/ViewCounter';
 import EmagazineLayout from '@/components/blog/EmagazineLayout';
-import VideoPostLayout, { isBaoHinhPost } from '@/components/blog/VideoPostLayout';
+import VideoDetailLayout from '@/components/blog/VideoDetailLayout';
 import { STATIC_EMAGAZINE_POSTS } from '@/lib/emagazinePosts';
 export const revalidate = 60;
 type Props = {
@@ -199,9 +199,20 @@ async function getPost(slug: string) {
         .select('id, name')
         .eq('is_active', true);
 
+    // Fetch related vertical videos for Báo hình layout
+    const { data: relatedVideosData } = await supabase
+        .from('blog_posts')
+        .select('id, title, slug, thumbnail_url, video_url, published_at')
+        .eq('status', 'published')
+        .eq('is_video_vertical', true)
+        .neq('id', postData.id)
+        .order('published_at', { ascending: false })
+        .limit(6);
+
     return { 
         post: postData as BlogPost, 
         relatedPosts, 
+        relatedVideos: relatedVideosData || [],
         promotions: promotions || [], 
         products: products || [],
         allProducts: allProducts || [],
@@ -240,7 +251,7 @@ export async function generateMetadata(
 export default async function BlogPostPage({ params }: Props) {
     const data = await getPost(params.slug);
     if (!data) notFound();
-    const { post, relatedPosts, promotions, products, allProducts, newCustomerOffer } = data;
+    const { post, relatedPosts, relatedVideos, promotions, products, allProducts, newCustomerOffer } = data;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.includes('lyhu.com.vn') ? process.env.NEXT_PUBLIC_SITE_URL : 'https://lyhu.com.vn';
     const postUrl = `${siteUrl}/tin-tuc/${post.slug}`;
 
@@ -359,6 +370,21 @@ export default async function BlogPostPage({ params }: Props) {
                 }
             ]
         };
+    const isVideoPost = (post.is_video_vertical && post.video_url) || (post.video_url && post.video_url.includes('.mp4'));
+
+    if (isVideoPost) {
+        return (
+            <div className="bg-white min-h-screen">
+                <ViewCounter postId={post.id} />
+                <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+                <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+                <VideoDetailLayout 
+                    post={post} 
+                    products={products} 
+                    relatedVideos={relatedVideos || []} 
+                />
+            </div>
+        );
     }
 
     const isEmagazine = post.category?.slug === 'emagazine' || 

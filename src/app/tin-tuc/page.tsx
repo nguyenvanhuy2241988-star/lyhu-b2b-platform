@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
-import { Clock, TrendingUp, Sparkles } from 'lucide-react';
+import { Clock, TrendingUp, Sparkles, Play } from 'lucide-react';
 
 const MENU_GROUPS = [
     { key: 'tin-tuc', name: 'Tin tức', icon: '📰', slugs: ['tin-nganh-fmcg', 'tin-tuc-fmcg', 'doanh-nghiep-lon'] },
@@ -16,25 +16,26 @@ import { STATIC_EMAGAZINE_POSTS } from '@/lib/emagazinePosts';
 import SearchBar from '@/components/blog/SearchBar';
 import Pagination from '@/components/blog/Pagination';
 import TrendingWidget from '@/components/blog/TrendingWidget';
-import { Play } from 'lucide-react';
 import PostThumb from '@/components/blog/PostThumb';
+import VideoStoryCarousel from '@/components/blog/VideoStoryCarousel';
 
 export const dynamic = 'force-dynamic';
 const POSTS_PER_PAGE = 12;
 
-async function getBlogData(page: number, categorySlug: string, groupKey: string, searchQuery: string, onlyVideo: boolean) {
+async function getBlogData(page: number, categorySlug: string, groupKey: string, searchQuery: string, typeFilter: string = 'all') {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
     const supabase = createClient(supabaseUrl, supabaseKey, {
         global: { fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' }) }
     });
 
-    // 1. Parallel Fetch: Categories, Trending, Banners
-    const [categoriesRes, trendingRes, megaBannerRes, sideBannersRes] = await Promise.all([
+    // 1. Parallel Fetch: Categories, Trending, Banners, Video Stories
+    const [categoriesRes, trendingRes, megaBannerRes, sideBannersRes, videoStoriesRes] = await Promise.all([
         supabase.from('blog_categories').select('*').order('sort_order', { ascending: true }),
         supabase.from('blog_posts').select('id, title, slug, published_at, created_at').eq('status', 'published').order('created_at', { ascending: false }).limit(5),
         supabase.from('wholesale_banners').select('*').eq('position', 'news_mega').eq('is_active', true).order('sort_order', { ascending: true }).limit(1).maybeSingle(),
-        supabase.from('wholesale_banners').select('*').in('position', ['side_top', 'side_bottom']).eq('is_active', true).order('sort_order', { ascending: true })
+        supabase.from('wholesale_banners').select('*').in('position', ['side_top', 'side_bottom']).eq('is_active', true).order('sort_order', { ascending: true }),
+        supabase.from('blog_posts').select('id, title, slug, thumbnail_url, video_url, is_video_vertical, published_at, created_at, ai_summary').eq('status', 'published').or('is_video_vertical.eq.true,video_url.not.is.null').order('created_at', { ascending: false }).limit(8)
     ]);
 
     const categories = categoriesRes.data;
@@ -51,6 +52,13 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
         `, { count: 'exact' })
         .eq('status', 'published')
         .order('created_at', { ascending: false });
+
+    // Apply Type Filter (article vs video)
+    if (typeFilter === 'video') {
+        query = query.or('is_video_vertical.eq.true,video_url.not.is.null');
+    } else if (typeFilter === 'article') {
+        query = query.or('is_video_vertical.is.null,is_video_vertical.eq.false');
+    }
 
     // Apply Category Filter (single category or group)
     if (groupKey && groupKey !== 'all') {
@@ -83,11 +91,11 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
     const to = from + POSTS_PER_PAGE - 1;
     query = query.range(from, to);
 
-    // 4. Fetch Featured Blocks for Magazine Layout (Only on homepage)
+    // 4. Fetch Featured Blocks for Magazine Layout (Only on homepage and when typeFilter === 'all')
     let b1Promise: any = Promise.resolve({ data: null });
     let b2Promise: any = Promise.resolve({ data: null });
 
-    if (categorySlug === 'all' && page === 1 && !searchQuery) {
+    if (categorySlug === 'all' && page === 1 && !searchQuery && typeFilter === 'all') {
         // Block 1: Tạp hóa & Phân phối (tap-hoa-gt, nha-phan-phoi-diem-ban)
         const block1CatIds = (categories || []).filter(c => ['tap-hoa-gt', 'nha-phan-phoi-diem-ban'].includes(c.slug)).map(c => c.id);
         if (block1CatIds.length > 0) {
@@ -123,6 +131,67 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
     if (b1Res.data) featuredBlocks.block1 = b1Res.data as BlogPost[];
     if (b2Res.data) featuredBlocks.block2 = b2Res.data as BlogPost[];
 
+    // Process Video Stories for Carousel
+    const rawVideoStories = (videoStoriesRes?.data || []) as any[];
+    let videoStories = rawVideoStories.map((item) => ({
+        id: item.id,
+        title: item.title,
+        slug: item.slug,
+        thumbnail_url: item.thumbnail_url || (item.slug?.includes('boyo') ? '/boyo_news_banner.jpg' : null),
+        video_url: item.video_url,
+        published_at: item.published_at || item.created_at,
+        brand_tag: item.title.includes('CVT') ? 'CVT' : item.title.includes('BOYO') ? 'LYHU' : item.title.includes('UHi') ? 'UHi' : item.title.includes('ABI') ? 'ABI' : 'LYHU',
+        duration: '0:45',
+        headline: item.ai_summary ? item.ai_summary.slice(0, 48) + '...' : item.title
+    }));
+
+    // Fallback demo stories if DB has fewer than 4 vertical videos so the carousel looks rich & professional
+    if (videoStories.length < 4) {
+        const demoFallbacks = [
+            {
+                id: 'demo-cvt-1',
+                title: 'Gia vị sấy thăng hoa CVT - Công nghệ đột phá',
+                slug: 'khoai-mon-say-cvt-giai-phap-an-vat-lanh-manh-xu-huong-moi',
+                thumbnail_url: 'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775408989723_ybzt28.png',
+                brand_tag: 'CVT',
+                duration: '0:38',
+                headline: 'Bảo toàn 98% dinh dưỡng tự nhiên'
+            },
+            {
+                id: 'demo-boyo-2',
+                title: 'Bột phô mai lắc bắp rang bơ BOYO bùng nổ doanh số',
+                slug: 'bot-pho-mai-boyo-vi-ngot-diu-beo-ngay-chinh-phuc-gioi-tre',
+                thumbnail_url: '/boyo_news_banner.jpg',
+                brand_tag: 'LYHU',
+                duration: '0:45',
+                headline: 'Hương vị béo ngậy ngọt dịu chuẩn gu trẻ'
+            },
+            {
+                id: 'demo-uhi-3',
+                title: 'Khăn ướt không mùi UHi đạt chuẩn tinh khiết',
+                slug: 'tieu-chuan-khan-uot-cao-cap-u-hi-an-toan-cho-moi-lan-da',
+                thumbnail_url: 'https://images.pexels.com/photos/3987142/pexels-photo-3987142.jpeg?auto=compress&cs=tinysrgb&w=600',
+                brand_tag: 'UHi',
+                duration: '0:30',
+                headline: 'An toàn cho mẹ và bé, tinh khiết 99.9%'
+            },
+            {
+                id: 'demo-cvt-4',
+                title: 'Khoai môn sấy giòn CVT mở rộng mạng lưới NPP',
+                slug: 'khoai-mon-say-cvt-giai-phap-an-vat-lanh-manh-xu-huong-moi',
+                thumbnail_url: 'https://images.pexels.com/photos/5632371/pexels-photo-5632371.jpeg?auto=compress&cs=tinysrgb&w=600',
+                brand_tag: 'CVT',
+                duration: '0:50',
+                headline: 'Chính sách chiết khấu tới 42% cho đại lý'
+            }
+        ];
+        demoFallbacks.forEach(fb => {
+            if (!videoStories.some(v => v.slug === fb.slug)) {
+                videoStories.push(fb);
+            }
+        });
+    }
+
     // Hàm trộn mảng ngẫu nhiên (Giả lập AI phân phối ngẫu nhiên)
     const shuffleArray = (array: any[]) => {
         const newArr = [...array];
@@ -138,9 +207,8 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
     const staticPosts = (Object.values(STATIC_EMAGAZINE_POSTS) as BlogPost[]).filter(p => p.status === 'published');
     const dbPosts = (posts || []) as BlogPost[];
     
-    // Nếu trang 1 và không có filter danh mục / tìm kiếm, ghim bài eMagazine lên đầu nếu chưa có trong DB
-    let combinedPosts = [...dbPosts];
-    if (page === 1 && (!categorySlug || categorySlug === 'all') && (!groupKey || groupKey === 'all') && !searchQuery && !onlyVideo) {
+    // Nếu trang 1 và không có filter danh mục / tìm kiếm, ghim bài eMagazine lên đầu nếu chưa có trong DB (chỉ áp dụng cho All hoặc Article)
+    if (page === 1 && (!categorySlug || categorySlug === 'all') && (!groupKey || groupKey === 'all') && !searchQuery && typeFilter !== 'video') {
         staticPosts.forEach(sp => {
             if (!combinedPosts.some(p => p.slug === sp.slug)) {
                 combinedPosts.unshift(sp);
@@ -164,7 +232,8 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
         posts: combinedPosts.map(sanitizeThumbnail),
         categories: (categories || []) as BlogCategory[],
         trendingPosts: (trending || []) as Partial<BlogPost>[],
-        totalCount: (count || 0) + (page === 1 && !onlyVideo ? staticPosts.length : 0),
+        videoStories,
+        totalCount: (count || 0) + (page === 1 && typeFilter !== 'video' ? staticPosts.length : 0),
         featuredBlocks,
         megaBanner,
         sideTopBanners,
@@ -181,18 +250,28 @@ export default async function BlogIndexPage({
     const activeGroup = searchParams.group || '';
     const currentPage = parseInt(searchParams.page || '1', 10);
     const searchQuery = searchParams.q || '';
-    const onlyVideo = searchParams.type === 'video';
-    const isHome = currentPage === 1 && activeCategory === 'all' && !activeGroup && !searchQuery && !onlyVideo;
+    const activeType = searchParams.type || 'all';
+    const isHome = currentPage === 1 && activeCategory === 'all' && !activeGroup && !searchQuery && activeType === 'all';
 
-    const { posts, categories, trendingPosts, totalCount, featuredBlocks, megaBanner, sideTopBanners, sideBottomBanners } = await getBlogData(
+    const { posts, categories, trendingPosts, videoStories, totalCount, featuredBlocks, megaBanner, sideTopBanners, sideBottomBanners } = await getBlogData(
         currentPage,
         activeCategory,
         activeGroup,
         searchQuery,
-        onlyVideo
+        activeType
     );
 
     const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE);
+
+    const buildTypeUrl = (newType: string) => {
+        const params = new URLSearchParams();
+        if (activeCategory && activeCategory !== 'all') params.set('category', activeCategory);
+        if (activeGroup) params.set('group', activeGroup);
+        if (searchQuery) params.set('q', searchQuery);
+        if (newType !== 'all') params.set('type', newType);
+        const qs = params.toString();
+        return `/tin-tuc${qs ? `?${qs}` : ''}`;
+    };
 
     return (
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 space-y-8 overflow-hidden">
@@ -398,25 +477,68 @@ export default async function BlogIndexPage({
                 </div>
             )}
 
+            {/* Báo hình LYHU Carousel (Horizontal Reel Stories) */}
+            <VideoStoryCarousel items={videoStories} />
+
             {/* Content Area */}
             <div className="flex flex-col lg:flex-row gap-10 overflow-hidden">
                 
                 {/* Left: Article Grid */}
                 <div className="flex-1 min-w-0">
                     
-                    {/* Header info (Total results) */}
-                    <div className="mb-6 flex items-center justify-between text-sm text-gray-500 border-b border-gray-200 pb-2">
-                        {searchQuery ? (
-                            <p>Kết quả tìm kiếm cho: <strong className="text-gray-900">"{searchQuery}"</strong></p>
-                        ) : (
-                            <p className="font-semibold text-gray-800 flex items-center gap-2">
-                                {activeGroup 
-                                    ? (MENU_GROUPS.find(g => g.key === activeGroup)?.icon || '') + ' ' + (MENU_GROUPS.find(g => g.key === activeGroup)?.name || '')
-                                    : onlyVideo ? '▶ Báo hình FMCG 24/7' : activeCategory === 'all' ? 'Tin mới cập nhật' : categories.find(c => c.slug === activeCategory)?.name
-                                }
-                            </p>
-                        )}
-                        <p>{totalCount} bài viết</p>
+                    {/* Sub-filter tabs & Section title */}
+                    <div className="mb-6 pb-3 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <Link
+                                href={buildTypeUrl('all')}
+                                className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all ${
+                                    activeType === 'all'
+                                        ? 'bg-[#00ABA9] text-white shadow-sm'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                Tất cả
+                            </Link>
+                            <Link
+                                href={buildTypeUrl('article')}
+                                className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 ${
+                                    activeType === 'article'
+                                        ? 'bg-[#00ABA9] text-white shadow-sm'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                <span>Bài viết</span>
+                                <span className="text-xs">📰</span>
+                            </Link>
+                            <Link
+                                href={buildTypeUrl('video')}
+                                className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 ${
+                                    activeType === 'video'
+                                        ? 'bg-rose-600 text-white shadow-sm'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                            >
+                                <span>Báo hình</span>
+                                <span className="text-xs">🎬</span>
+                            </Link>
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-3 text-xs sm:text-sm text-gray-500">
+                            {searchQuery ? (
+                                <p>Tìm kiếm: <strong className="text-gray-900">"{searchQuery}"</strong></p>
+                            ) : (
+                                <p className="font-semibold text-gray-700">
+                                    {activeGroup 
+                                        ? (MENU_GROUPS.find(g => g.key === activeGroup)?.icon || '') + ' ' + (MENU_GROUPS.find(g => g.key === activeGroup)?.name || '')
+                                        : activeCategory === 'all' 
+                                            ? (activeType === 'video' ? '🎬 Báo hình dưới 1 phút' : 'Tin mới cập nhật') 
+                                            : categories.find(c => c.slug === activeCategory)?.name
+                                    }
+                                </p>
+                            )}
+                            <span className="text-gray-300">•</span>
+                            <p className="font-medium text-gray-600">{totalCount} {activeType === 'video' ? 'video' : 'bài'}</p>
+                        </div>
                     </div>
 
                     {posts.length === 0 ? (
@@ -436,7 +558,7 @@ export default async function BlogIndexPage({
                         <>
                             {/* Top News (Hero) & Timeline */}
                             <div className="space-y-8">
-                                {/* Only show Hero on the first page of "All Categories" without search */}
+                                {/* Only show Hero on the first page of "All Categories" without search and when viewing all types */}
                                 {isHome && posts.length >= 3 && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 pb-10 border-b border-gray-200">
                                         {/* Main Featured Article (Col 1 & 2) */}
@@ -566,18 +688,22 @@ export default async function BlogIndexPage({
                                 {/* Timeline List View */}
                                 <div className="space-y-8">
                                     {isHome && (
-                                        <h3 className="text-2xl font-bold text-gray-900 mb-2 border-l-4 border-[#00AFA9] pl-3">Dòng sự kiện mới nhất</h3>
+                                        <h3 className="text-2xl font-bold text-gray-900 mb-2 border-l-4 border-[#00AFA9] pl-3">
+                                            {activeType === 'video' ? 'Bản tin video FMCG' : activeType === 'article' ? 'Dòng bài viết mới nhất' : 'Dòng sự kiện mới nhất'}
+                                        </h3>
                                     )}
                                     {(isHome && posts.length >= 3 
                                         ? posts.slice(3) 
-                                        : posts).map((post, index) => (
+                                        : posts).map((post) => {
+                                        const isVideo = Boolean(post.is_video_vertical || (post.video_url && post.video_url.includes('.mp4')));
+                                        return (
                                         <Link 
                                             key={post.id} 
                                             href={`/tin-tuc/${post.slug}`} 
                                             className="group flex flex-col sm:flex-row gap-6 pb-8 border-b border-gray-100 last:border-0"
                                         >
                                             {/* Thumbnail Left */}
-                                            <div className="w-full sm:w-[280px] shrink-0 aspect-video self-start bg-gray-100 overflow-hidden relative">
+                                            <div className="w-full sm:w-[280px] shrink-0 aspect-video self-start bg-gray-100 overflow-hidden relative rounded-lg">
                                                 {post.thumbnail_url ? (
                                                     <PostThumb post={post} />
                                                 ) : (
@@ -585,16 +711,29 @@ export default async function BlogIndexPage({
                                                         <span className="font-bold text-xl">LYHU</span>
                                                     </div>
                                                 )}
-                                                
+                                                {isVideo && (
+                                                    <div className="absolute inset-0 bg-black/25 flex items-center justify-center pointer-events-none">
+                                                        <div className="w-10 h-10 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                                            <Play className="w-5 h-5 fill-white ml-0.5" />
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                             
                                             {/* Content Right */}
                                             <div className="flex-1 flex flex-col justify-center">
-                                                {post.category && (
-                                                    <span className="text-xs font-bold text-[#00AFA9] uppercase tracking-wider mb-2 block">
-                                                        {post.category.name}
-                                                    </span>
-                                                )}
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    {post.category && (
+                                                        <span className="text-xs font-bold text-[#00AFA9] uppercase tracking-wider block">
+                                                            {post.category.name}
+                                                        </span>
+                                                    )}
+                                                    {isVideo && (
+                                                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-50 text-rose-600 border border-rose-200">
+                                                            Báo hình 🎬
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <h3 className="text-xl sm:text-2xl font-bold text-gray-900 group-hover:text-[#00AFA9] transition-colors line-clamp-2 mb-2 sm:mb-3 leading-snug">
                                                     {post.title}
                                                 </h3>
@@ -607,7 +746,7 @@ export default async function BlogIndexPage({
                                                 </div>
                                             </div>
                                         </Link>
-                                    ))}
+                                    );})}
                                 </div>
                             </div>
 
