@@ -17,6 +17,7 @@ import SearchBar from '@/components/blog/SearchBar';
 import Pagination from '@/components/blog/Pagination';
 import TrendingWidget from '@/components/blog/TrendingWidget';
 import { Play } from 'lucide-react';
+import PostThumb from '@/components/blog/PostThumb';
 
 export const dynamic = 'force-dynamic';
 const POSTS_PER_PAGE = 12;
@@ -443,12 +444,7 @@ export default async function BlogIndexPage({
                                             <Link href={`/tin-tuc/${posts[0].slug}`} className="group block">
                                                 <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative mb-4">
                                                     {posts[0].thumbnail_url ? (
-                                                        <img 
-                                                            src={posts[0].thumbnail_url} 
-                                                            alt={posts[0].title}
-                                                            loading="lazy" decoding="async"
-                                                            className="w-full h-full object-cover"
-                                                        />
+                                                        <PostThumb post={posts[0]} size="lg" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center bg-teal-50 text-[#00AFA9]/40">
                                                             <span className="font-bold text-3xl">LYHU</span>
@@ -479,12 +475,7 @@ export default async function BlogIndexPage({
                                                 <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex flex-col flex-1">
                                                     <div className="aspect-[16/10] w-full bg-gray-100 overflow-hidden relative mb-3">
                                                         {post.thumbnail_url ? (
-                                                            <img 
-                                                                src={post.thumbnail_url} 
-                                                                alt={post.title}
-                                                                loading="lazy" decoding="async"
-                                                                className="w-full h-full object-cover"
-                                                            />
+                                                            <PostThumb post={post} />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center bg-teal-50 text-[#00AFA9]/40">
                                                                 <span className="font-bold text-xl">LYHU</span>
@@ -518,7 +509,7 @@ export default async function BlogIndexPage({
                                                 <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex gap-4 bg-gray-50 p-4 hover:bg-teal-50 transition-colors border border-gray-100">
                                                     <div className="w-28 h-28 shrink-0 bg-white overflow-hidden relative">
                                                         {post.thumbnail_url ? (
-                                                            <img src={post.thumbnail_url} alt={post.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                                                            <PostThumb post={post} />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-[#00AFA9]/40 font-bold text-xs">LYHU</div>
                                                         )}
@@ -555,7 +546,7 @@ export default async function BlogIndexPage({
                                                 <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex flex-col">
                                                     <div className="w-full aspect-[4/3] bg-gray-100 overflow-hidden relative mb-3">
                                                         {post.thumbnail_url ? (
-                                                            <img src={post.thumbnail_url} alt={post.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                                                            <PostThumb post={post} />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-[#00AFA9]/40 font-bold">LYHU</div>
                                                         )}
@@ -588,22 +579,13 @@ export default async function BlogIndexPage({
                                             {/* Thumbnail Left */}
                                             <div className="w-full sm:w-[280px] shrink-0 aspect-[16/10] bg-gray-100 overflow-hidden relative">
                                                 {post.thumbnail_url ? (
-                                                    <img 
-                                                        src={post.thumbnail_url} 
-                                                        alt={post.title}
-                                                        loading="lazy" decoding="async"
-                                                        className="w-full h-full object-cover"
-                                                    />
+                                                    <PostThumb post={post} />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center bg-teal-50 text-[#00AFA9]/40">
                                                         <span className="font-bold text-xl">LYHU</span>
                                                     </div>
                                                 )}
-                                                {post.video_url && (
-                                                    <span className="absolute left-2 bottom-2 inline-flex items-center gap-1 bg-[#00AFA9] text-white text-[11px] font-bold px-2 py-1 rounded">
-                                                        <Play className="w-3 h-3 fill-current" /> Video
-                                                    </span>
-                                                )}
+                                                
                                             </div>
                                             
                                             {/* Content Right */}
