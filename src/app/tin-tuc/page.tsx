@@ -473,7 +473,7 @@ export default async function BlogIndexPage({
                                         <div className="flex flex-col gap-6 md:pl-6 md:border-l md:border-gray-200">
                                             {[posts[1], posts[2]].map(post => (
                                                 <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex flex-col flex-1">
-                                                    <div className="aspect-[16/10] w-full bg-gray-100 overflow-hidden relative mb-3">
+                                                    <div className="aspect-video w-full bg-gray-100 overflow-hidden relative mb-3">
                                                         {post.thumbnail_url ? (
                                                             <PostThumb post={post} />
                                                         ) : (
@@ -507,7 +507,7 @@ export default async function BlogIndexPage({
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                             {featuredBlocks.block1.map(post => (
                                                 <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex gap-4 bg-gray-50 p-4 hover:bg-teal-50 transition-colors border border-gray-100">
-                                                    <div className="w-28 h-28 shrink-0 bg-white overflow-hidden relative">
+                                                    <div className="w-32 sm:w-40 aspect-video self-center shrink-0 bg-white overflow-hidden relative">
                                                         {post.thumbnail_url ? (
                                                             <PostThumb post={post} />
                                                         ) : (
@@ -544,7 +544,7 @@ export default async function BlogIndexPage({
                                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                                             {featuredBlocks.block2.map(post => (
                                                 <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex flex-col">
-                                                    <div className="w-full aspect-[4/3] bg-gray-100 overflow-hidden relative mb-3">
+                                                    <div className="w-full aspect-video bg-gray-100 overflow-hidden relative mb-3">
                                                         {post.thumbnail_url ? (
                                                             <PostThumb post={post} />
                                                         ) : (
@@ -577,7 +577,7 @@ export default async function BlogIndexPage({
                                             className="group flex flex-col sm:flex-row gap-6 pb-8 border-b border-gray-100 last:border-0"
                                         >
                                             {/* Thumbnail Left */}
-                                            <div className="w-full sm:w-[280px] shrink-0 aspect-[16/10] bg-gray-100 overflow-hidden relative">
+                                            <div className="w-full sm:w-[280px] shrink-0 aspect-video self-start bg-gray-100 overflow-hidden relative">
                                                 {post.thumbnail_url ? (
                                                     <PostThumb post={post} />
                                                 ) : (
