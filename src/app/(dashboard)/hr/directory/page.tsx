@@ -7,6 +7,7 @@ import { Search, MapPin, Calendar, Briefcase, Mail, Phone, Filter, GraduationCap
 import { format } from 'date-fns';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { ROLES } from '@/lib/constants';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function HRDirectoryPage() {
     const router = useRouter();
@@ -21,6 +22,16 @@ export default function HRDirectoryPage() {
 
     // Modals
     const [editingProfile, setEditingProfile] = useState<HRProfile | null>(null);
+
+    // CCCD không còn nằm trong danh sách hồ sơ: chỉ nạp khi mở form sửa (hàm chỉ Admin/HR gọi được)
+    const openEditProfile = async (profile: HRProfile) => {
+        setEditingProfile(profile);
+        try {
+            const { data } = await supabase.rpc('admin_get_profile_secrets', { p_id: profile.id });
+            const row: any = Array.isArray(data) ? data[0] : data;
+            if (row) setEditingProfile(prev => (prev && prev.id === profile.id ? { ...prev, identity_card: row.identity_card || '' } : prev));
+        } catch (e) { console.warn('load secrets failed', e); }
+    };
     const [viewingProfile, setViewingProfile] = useState<HRProfile | null>(null);
 
     useEffect(() => {
@@ -147,7 +158,7 @@ export default function HRDirectoryPage() {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    setEditingProfile(profile);
+                                                    openEditProfile(profile);
                                                 }}
                                                 className="text-xs text-[#00AFA9] hover:bg-teal-50 px-2 py-1 rounded"
                                             >
@@ -340,7 +351,7 @@ export default function HRDirectoryPage() {
                         <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-slate-100">
                             <button
                                 onClick={() => {
-                                    setEditingProfile(viewingProfile);
+                                    openEditProfile(viewingProfile);
                                     setViewingProfile(null);
                                 }}
                                 className="px-4 py-2 bg-[#00AFA9] text-white rounded-lg hover:bg-[#009690] shadow-sm font-medium text-sm flex items-center gap-2 transition-colors"

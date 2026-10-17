@@ -58,7 +58,7 @@ export const CaroOnlineGame = ({ currentUser, roomId, onExit }: CaroOnlineGamePr
         if (!silent) setLoading(true);
         const { data, error } = await supabase
             .from('caro_rooms')
-            .select(`*, player1:profiles!player1_id(*), player2:profiles!player2_id(*)`)
+            .select(`*, player1:profiles!player1_id(id, full_name, avatar_url), player2:profiles!player2_id(id, full_name, avatar_url)`)
             .eq('id', roomId)
             .single();
 

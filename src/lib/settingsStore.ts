@@ -43,6 +43,40 @@ export interface EmailLog {
     trigger_source: string;
 }
 
+export const getAppSecret = async (key: string, token?: string): Promise<any | null> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/app_secrets?key=eq.${encodeURIComponent(key)}&select=value&limit=1`, { headers });
+        if (res.ok) {
+            const data = await res.json();
+            if (data?.[0]?.value) return data[0].value;
+        }
+    } catch (err) {
+        console.warn(`[getAppSecret] Error fetching secret ${key}:`, err);
+    }
+    return null;
+};
+
+export const saveAppSecret = async (key: string, value: any, token?: string, description?: string): Promise<boolean> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/app_secrets`, {
+            method: 'POST',
+            headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' },
+            body: JSON.stringify({
+                key,
+                value,
+                description: description || `Secret for ${key}`,
+                updated_at: new Date().toISOString()
+            })
+        });
+        return res.ok;
+    } catch (err) {
+        console.error(`[saveAppSecret] Error saving secret ${key}:`, err);
+        return false;
+    }
+};
+
 export const fetchAppSettings = async (token?: string): Promise<AppSettings | null> => {
     try {
         const headers = getHeaders(token);
@@ -54,7 +88,17 @@ export const fetchAppSettings = async (token?: string): Promise<AppSettings | nu
         }
 
         const data = await res.json();
-        return data?.[0] || null;
+        const settings = data?.[0] || null;
+
+        // Fallback: If misa_config is not found in app_settings (or column cleared), fetch from app_secrets
+        if (settings && (!settings.misa_config || Object.keys(settings.misa_config).length === 0)) {
+            const secretMisa = await getAppSecret('misa_config', token);
+            if (secretMisa) {
+                settings.misa_config = secretMisa;
+            }
+        }
+
+        return settings;
     } catch (err) {
         console.error("fetchAppSettings Exception:", err);
         return null;
@@ -75,6 +119,12 @@ export const fetchEmailLogs = async (token?: string): Promise<EmailLog[]> => {
 export const updateAppSettings = async (id: string, updates: Partial<AppSettings>, token?: string): Promise<boolean> => {
     try {
         const headers = getHeaders(token);
+
+        // If updates include misa_config, save it securely into app_secrets
+        if (updates.misa_config) {
+            await saveAppSecret('misa_config', updates.misa_config, token, 'MISA AMIS ACT Integration Configuration');
+        }
+
         const res = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?id=eq.${id}`, {
             method: 'PATCH',
             headers,

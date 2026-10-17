@@ -66,6 +66,19 @@ export const getFbAdsConfig = async (token: string | undefined) => {
     if (!token) return null;
     try {
         const headers = getHeaders(token);
+        // 1. Try reading from app_secrets (secure store)
+        const secretRes = await fetch(`${SUPABASE_URL}/rest/v1/app_secrets?key=eq.facebook_ads_config&select=id,value&limit=1`, { headers });
+        if (secretRes.ok) {
+            const secretData = await secretRes.json();
+            if (secretData?.[0]?.value) {
+                return {
+                    id: secretData[0].id,
+                    facebook_ads_config: secretData[0].value
+                };
+            }
+        }
+
+        // 2. Fallback to app_settings
         const res = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?select=id,facebook_ads_config&limit=1`, { headers });
         if (!res.ok) return null;
         const data = await res.json();
@@ -79,13 +92,29 @@ export const updateFbAdsConfig = async (id: string, fbConfig: any, token: string
     if (!token) return false;
     try {
         const headers = getHeaders(token);
-        headers['Prefer'] = 'return=minimal';
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?id=eq.${id}`, {
-            method: 'PATCH',
-            headers,
-            body: JSON.stringify({ facebook_ads_config: fbConfig })
+
+        // 1. Save into app_secrets
+        const secretRes = await fetch(`${SUPABASE_URL}/rest/v1/app_secrets`, {
+            method: 'POST',
+            headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' },
+            body: JSON.stringify({
+                key: 'facebook_ads_config',
+                value: fbConfig,
+                description: 'Facebook Marketing & Ads API Tokens',
+                updated_at: new Date().toISOString()
+            })
         });
-        return res.ok;
+
+        // 2. Also keep app_settings updated during transition if id is provided
+        if (id) {
+            fetch(`${SUPABASE_URL}/rest/v1/app_settings?id=eq.${id}`, {
+                method: 'PATCH',
+                headers: { ...headers, 'Prefer': 'return=minimal' },
+                body: JSON.stringify({ facebook_ads_config: fbConfig })
+            }).catch(() => {});
+        }
+
+        return secretRes.ok;
     } catch (e) {
         return false;
     }

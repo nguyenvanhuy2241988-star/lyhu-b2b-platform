@@ -123,7 +123,7 @@ const getHeaders = (token?: string) => ({
 export const fetchUsers = async (token?: string): Promise<User[]> => {
     try {
         const headers = getHeaders(token);
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*&order=full_name.asc`, { headers });
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id,email,full_name,role,phone,activated_at&order=full_name.asc`, { headers });
         if (!res.ok) throw new Error(`Fetch users error: ${res.statusText}`);
         const data = await res.json();
 
@@ -149,7 +149,7 @@ export const fetchUsers = async (token?: string): Promise<User[]> => {
 export const fetchUserById = async (userId: string, token?: string): Promise<User | null> => {
     try {
         const headers = getHeaders(token);
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=*`, { headers });
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=id,email,full_name,role,phone,activated_at`, { headers });
         if (!res.ok) throw new Error(`Fetch user by id error: ${res.statusText}`);
         const data = await res.json();
 

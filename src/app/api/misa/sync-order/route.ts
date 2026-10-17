@@ -44,9 +44,15 @@ export async function POST(req: NextRequest) {
         const order = orders;
 
         // 2. NEW: Validate Mappings BEFORE Sync
-        // Helper to fetch settings
-        const { data: settings } = await supabaseAdmin.from('app_settings').select('misa_config').single();
-        const config = settings?.misa_config || {};
+        // Helper to fetch settings (check app_secrets first)
+        let config: any = {};
+        const { data: secret } = await supabaseAdmin.from('app_secrets').select('value').eq('key', 'misa_config').maybeSingle();
+        if (secret?.value) {
+            config = secret.value;
+        } else {
+            const { data: settings } = await supabaseAdmin.from('app_settings').select('misa_config').single();
+            config = settings?.misa_config || {};
+        }
 
         const validation = MisaValidation.validateOrder(order, config);
 

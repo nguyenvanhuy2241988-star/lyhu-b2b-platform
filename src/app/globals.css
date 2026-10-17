@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --brand-primary: #00afa9;
-  --brand-secondary: #98c93c;
+  --brand-primary: #00ABA9;
+  --brand-secondary: #8DC63F;
 }
 
 @layer base {

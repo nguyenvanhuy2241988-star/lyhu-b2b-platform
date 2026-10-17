@@ -13,6 +13,20 @@ let tokenCache: { token: string; expiresAt: number } | null = null;
 
 // Helper function to fetch app settings using the passed supabase client
 async function fetchAppSettings(supabase: any) {
+    try {
+        const { data: secretData } = await supabase
+            .from('app_secrets')
+            .select('value')
+            .eq('key', 'misa_config')
+            .maybeSingle();
+
+        if (secretData?.value) {
+            return { misa_config: secretData.value };
+        }
+    } catch {
+        // Fallback to app_settings if app_secrets is not yet available
+    }
+
     const { data, error } = await supabase
         .from('app_settings')
         .select('*')

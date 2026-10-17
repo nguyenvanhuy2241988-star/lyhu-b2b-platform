@@ -169,6 +169,15 @@ export const addFinancialTransaction = async (transaction: Partial<FinancialTran
 export const updateTransactionStatus = async (referenceId: string, status: TransactionStatus, token?: string) => {
     try {
         const headers = getHeaders(token);
+        // 1. Try secure RPC first
+        const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/update_financial_transaction_status`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ p_reference_id: referenceId, p_status: status })
+        });
+        if (rpcRes.ok) return true;
+
+        // 2. Fallback to direct PATCH
         const res = await fetch(`${SUPABASE_URL}/rest/v1/financial_transactions?reference_id=eq.${referenceId}`, {
             method: 'PATCH',
             headers,
@@ -179,12 +188,19 @@ export const updateTransactionStatus = async (referenceId: string, status: Trans
         return false;
     }
 };
-// ... (previous exports)
 
 export const deleteFinancialTransactions = async (referenceId: string, token?: string) => {
     try {
         const headers = getHeaders(token);
-        // Try delete by reference_id first
+        // 1. Try secure RPC first
+        const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/delete_financial_transactions`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ p_reference_id: referenceId })
+        });
+        if (rpcRes.ok) return true;
+
+        // 2. Fallback: try delete by reference_id first
         const res = await fetch(`${SUPABASE_URL}/rest/v1/financial_transactions?reference_id=eq.${referenceId}`, {
             method: 'DELETE',
             headers: { ...headers, 'Prefer': 'return=representation' }

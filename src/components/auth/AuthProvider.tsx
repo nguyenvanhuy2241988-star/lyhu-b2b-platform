@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useChatStore } from "@/lib/chatStore";
 import { toast } from "sonner"; // Optional: Notify user on timeout
 import { ActivityTracker } from "./ActivityTracker";
+import { ProfileNameModal } from "./ProfileNameModal";
 
 interface AuthContextType {
     user: any | null;
@@ -312,6 +313,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         <AuthContext.Provider value={{ user, session, role, isLoading, signOut }}>
             {/* Start tracking activity when authenticated */}
             <ActivityTracker />
+            {user?.id && (
+                <ProfileNameModal
+                    userId={user.id}
+                    currentName={user.full_name || user.name}
+                    userEmail={user.email}
+                    onNameUpdated={(newName: string) => {
+                        setUser((prev: any) => ({ ...prev, full_name: newName, name: newName }));
+                        if (typeof window !== "undefined") {
+                            try {
+                                const cached = JSON.parse(localStorage.getItem("lyhu_user") || "{}");
+                                localStorage.setItem("lyhu_user", JSON.stringify({ ...cached, full_name: newName, name: newName }));
+                            } catch { }
+                        }
+                    }}
+                />
+            )}
             {children}
         </AuthContext.Provider>
     );

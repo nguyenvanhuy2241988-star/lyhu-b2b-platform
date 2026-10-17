@@ -61,7 +61,7 @@ export async function fetchPaginatedUsers(
         headers['Prefer'] = 'count=exact';
 
         const params = new URLSearchParams();
-        params.set('select', '*'); // profile columns
+        params.set('select', 'id,email,role,full_name,activated_at,created_at,updated_at,status,avatar_url,department_id,employee_code,dob,start_date,position,work_type,place_of_origin,phone,education_school,education_major,interests,social_facebook,misa_employee_code,misa_branch_code,hidden_from_schedule,zalo_phone,can_use_bot_center'); // profile columns (không gồm mật khẩu / CCCD)
 
         if (searchTerm) {
             params.set('or', `full_name.ilike.*${searchTerm}*,email.ilike.*${searchTerm}*`);

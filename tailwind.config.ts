@@ -17,12 +17,12 @@ const config: Config = {
                     200: '#99dee0',
                     300: '#66ced1',
                     400: '#33bec3',
-                    500: '#00afa9', // New Brand Teal
-                    600: '#009a95',
+                    500: '#00ABA9', // Brand Teal / Xanh ngọc
+                    600: '#009795',
                     700: '#007b77',
                     800: '#005b58',
                     900: '#003a39',
-                    DEFAULT: "#00afa9",
+                    DEFAULT: "#00ABA9",
                     foreground: "#FFFFFF",
                 },
                 secondary: {
@@ -31,12 +31,12 @@ const config: Config = {
                     200: '#deef99',
                     300: '#cdde66',
                     400: '#bcce33',
-                    500: '#98c93c', // New Brand Lime Green
+                    500: '#8DC63F', // Brand Lime Green / Xanh lá
                     600: '#7ba331',
                     700: '#5e7d26',
                     800: '#41571a',
                     900: '#24310f',
-                    DEFAULT: "#98c93c",
+                    DEFAULT: "#8DC63F",
                     foreground: "#FFFFFF",
                 },
             },

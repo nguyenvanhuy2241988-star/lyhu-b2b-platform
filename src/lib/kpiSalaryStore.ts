@@ -326,6 +326,21 @@ export const getMonthlyKpiActuals = async (
 
     actuals['new_outlets'] = (newOutlets as any)?.count || 0;
 
+    // 6. Đi thăm điểm bán tại Hà Nội (gt_checkins)
+    try {
+        const { data: visitData } = await supabase
+            .from('gt_checkins')
+            .select('id, user_id, check_in_at')
+            .eq('user_id', userId)
+            .gte('check_in_at', startStr)
+            .lte('check_in_at', endStr);
+        actuals['i_thm_im_bn_ti_h_ni'] = (visitData || []).length;
+        actuals['visit_outlets_hn'] = (visitData || []).length;
+    } catch {
+        actuals['i_thm_im_bn_ti_h_ni'] = 0;
+        actuals['visit_outlets_hn'] = 0;
+    }
+
     return actuals;
 };
 
@@ -341,7 +356,8 @@ const STANDARD_KEYS = [
     'threads_posts', 'threads_comments',
     'tiktok_posts', 'tiktok_comments',
     'linkedin_posts',
-    'calls', 'self_sourced', 'self_contact', 'zalo_outreach', 'revenue', 'new_outlets'
+    'calls', 'self_sourced', 'self_contact', 'zalo_outreach', 'revenue', 'new_outlets',
+    'i_thm_im_bn_ti_h_ni', 'visit_outlets_hn'
 ];
 
 function resolveActualKey(metricKey: string, metricLabel: string): string {
@@ -350,6 +366,11 @@ function resolveActualKey(metricKey: string, metricLabel: string): string {
 
     // 2. Label-based fuzzy matching (Vietnamese labels → standard keys)
     const label = metricLabel.toLowerCase();
+
+    // Store visits (Đi thăm điểm bán tại Hà Nội)
+    if (label.includes('thăm điểm bán') || label.includes('tham diem ban') || label.includes('thăm điểm') || label.includes('điểm bán') || metricKey === 'i_thm_im_bn_ti_h_ni') {
+        return 'i_thm_im_bn_ti_h_ni';
+    }
 
     // Facebook metrics
     if ((label.includes('kết bạn') || label.includes('ket ban')) && label.includes('facebook')) return 'fb_friends';
@@ -581,6 +602,21 @@ export const getKpiActualsForRange = async (
     }).maybeSingle();
 
     actuals['new_outlets'] = (newOutlets as any)?.count || 0;
+
+    // 6. Đi thăm điểm bán tại Hà Nội (gt_checkins)
+    try {
+        const { data: visitData } = await supabase
+            .from('gt_checkins')
+            .select('id, user_id, check_in_at')
+            .eq('user_id', userId)
+            .gte('check_in_at', startStr)
+            .lte('check_in_at', endStr);
+        actuals['i_thm_im_bn_ti_h_ni'] = (visitData || []).length;
+        actuals['visit_outlets_hn'] = (visitData || []).length;
+    } catch {
+        actuals['i_thm_im_bn_ti_h_ni'] = 0;
+        actuals['visit_outlets_hn'] = 0;
+    }
 
     return actuals;
 };

@@ -84,7 +84,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
     useEffect(() => {
         setMounted(true);
         const loadUsers = async () => {
-            const { data } = await supabase.from('profiles').select('*').order('full_name');
+            const { data } = await supabase.from('profiles').select('id, full_name, email, role, avatar_url, phone, department_id, employee_code, position').order('full_name');
             if (data) setProfileList(data.filter((u: any) => u.full_name));
         };
         loadUsers();

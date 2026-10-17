@@ -73,7 +73,7 @@ export const TaskAssignNotification = () => {
                 // 1. Fetch profiles cache & placements in parallel
                 const [{ data: pData }, { data: tData }, { data: placements }] = await Promise.all([
                     supabase.from('profiles').select('id, full_name, email'),
-                    supabase.from('telesales_tasks').select('id, user_id, owner_id, assigned_to, assignee_ids, note, metadata, created_at'),
+                    supabase.from('telesales_tasks').select('id, user_id, owner_id, assigned_to, assignee_ids, note, created_at'),
                     supabase.from('task_column_placements').select('task_id').eq('user_id', user.id)
                 ]);
 

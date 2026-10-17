@@ -69,7 +69,7 @@ export default function NotificationBell() {
         try {
             const { data } = await supabase
                 .from('telesales_tasks')
-                .select('id, title, status, priority, department, due_date, created_at, updated_at, user_id, owner_id, assigned_to, assignee_ids, metadata, note')
+                .select('id, title, status, priority, due_date, created_at, updated_at, user_id, owner_id, assigned_to, assignee_ids, note')
                 .order('created_at', { ascending: false })
                 .limit(40);
 
@@ -88,7 +88,7 @@ export default function NotificationBell() {
                             due_date: t.due_date,
                             status: t.status,
                             priority: t.priority,
-                            department: t.department || meta.department,
+                            department: meta.department || 'Chung',
                             created_at: t.created_at,
                             subtask_title: myStep ? myStep.title : null
                         });

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Plus, Pencil, Trash2, X, Eye, EyeOff, Search, Loader2, Globe } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Eye, EyeOff, Search, Loader2, Globe, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -81,8 +81,12 @@ export default function SocialAccountsPage() {
     };
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (role === 'admin') {
+            fetchData();
+        } else if (role && role !== 'admin') {
+            setIsLoading(false);
+        }
+    }, [role]);
 
     const togglePassword = (id: string) => {
         setShowPassword(prev => ({ ...prev, [id]: !prev[id] }));
@@ -165,6 +169,20 @@ export default function SocialAccountsPage() {
         const matchesPlatform = filterPlatform ? acc.platform === filterPlatform : true;
         return matchesSearch && matchesPlatform;
     });
+
+    if (!isLoading && role && role !== 'admin') {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
+                <div className="p-4 bg-rose-50 text-rose-600 rounded-2xl mb-4 shadow-sm border border-rose-100">
+                    <ShieldAlert className="w-10 h-10" />
+                </div>
+                <h2 className="text-xl font-bold text-slate-800 mb-2">Quyền truy cập bị từ chối</h2>
+                <p className="text-sm text-slate-500 max-w-md">
+                    Trang quản lý tài khoản công ty chứa thông tin đăng nhập bảo mật và chỉ dành riêng cho Quản trị viên (Admin).
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">

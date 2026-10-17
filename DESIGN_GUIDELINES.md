@@ -106,17 +106,12 @@ Cập nhật trong `tailwind.config.ts`:
 ```ts
 colors: {
   primary: {
-    50: '#e6f9f5',
-    100: '#ccf3eb',
-    200: '#99e7d7',
-    300: '#66dbc3',
-    400: '#33cfaf',
-    500: '#00BFA5', // Main brand color
-    600: '#00a087',
-    700: '#007d67',
-    800: '#005a47',
-    900: '#003727',
+    500: '#00ABA9', // Brand Teal / Xanh ngọc
+    DEFAULT: '#00ABA9',
   },
-  // Add more brand colors if needed
+  secondary: {
+    500: '#8DC63F', // Brand Lime Green / Xanh lá
+    DEFAULT: '#8DC63F',
+  },
 }
 ```

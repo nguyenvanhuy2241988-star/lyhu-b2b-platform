@@ -84,8 +84,9 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { email, password, fullName, role, misa_employee_code, misa_branch_code, zalo_phone, zalo_password, zalo_backup_password, can_use_bot_center } = body;
 
-        if (!email || !password || !fullName || !role) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        const cleanName = fullName?.trim();
+        if (!email || !password || !cleanName || cleanName === '-' || cleanName.length < 2 || !role) {
+            return NextResponse.json({ error: "Họ và tên không được để trống hoặc là '-'" }, { status: 400 });
         }
 
         // 3. Create User in Supabase Auth
@@ -185,6 +186,11 @@ export async function PUT(request: Request) {
 
         if (!id) return NextResponse.json({ error: "Missing user ID (ID không được để trống)" }, { status: 400 });
         if (!role) return NextResponse.json({ error: "Missing role (Vai trò không được để trống)" }, { status: 400 });
+
+        const cleanName = fullName?.trim();
+        if (!cleanName || cleanName === '-' || cleanName.length < 2) {
+            return NextResponse.json({ error: "Họ và tên không hợp lệ (không được để trống hoặc là '-')" }, { status: 400 });
+        }
 
         // 3. Update Auth User
         const authUpdates: any = {

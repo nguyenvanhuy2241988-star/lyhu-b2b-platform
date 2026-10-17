@@ -59,7 +59,7 @@ export const getHRProfiles = async (departmentId?: string, includeInactive: bool
     let query = supabase
         .from('profiles')
         .select(`
-            *,
+            id,email,role,full_name,activated_at,created_at,updated_at,status,avatar_url,department_id,employee_code,dob,start_date,position,work_type,place_of_origin,phone,education_school,education_major,interests,social_facebook,misa_employee_code,misa_branch_code,hidden_from_schedule,zalo_phone,can_use_bot_center,
             department:departments!profiles_department_id_fkey(name)
         `)
         .neq('role', 'customer')

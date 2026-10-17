@@ -15,7 +15,7 @@ export default function DebugRolePage() {
         try {
             setLoading(true);
             const supabase = createClient();
-            const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+            const { data } = await supabase.from('profiles').select('id, email, role, full_name, status').eq('id', user.id).single();
             setProfile(data);
         } catch (err) {
             console.error("loadProfile error:", err);

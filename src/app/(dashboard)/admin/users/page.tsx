@@ -279,6 +279,7 @@ export default function UsersPage() {
             can_use_bot_center: user.can_use_bot_center || false
         });
         setIsModalOpen(true);
+        loadSecrets(user.id).then(sec => { if (sec) setFormData(prev => ({ ...prev, zalo_password: sec.zalo_password || "", zalo_backup_password: sec.zalo_backup_password || "" })); });
     };
 
     const handleViewDetail = (user: User) => {
@@ -290,6 +291,13 @@ export default function UsersPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const cleanName = formData.fullName?.trim();
+        if (!cleanName || cleanName === '-' || cleanName.length < 2) {
+            toast.error("Họ và Tên là bắt buộc (không được để trống hoặc là '-')");
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
@@ -331,8 +339,17 @@ export default function UsersPage() {
         }
     };
 
+    // Mật khẩu / CCCD không còn nằm trong danh sách: chỉ Admin nạp từng người khi cần
+    const loadSecrets = async (userId: string) => {
+        try {
+            const { data } = await supabase.rpc('admin_get_profile_secrets', { p_id: userId });
+            return (Array.isArray(data) ? data[0] : data) as any;
+        } catch { return null; }
+    };
+
     const handleOpenResetPassword = (user: User) => {
         setResetPasswordUser(user);
+        loadSecrets(user.id).then(sec => { if (sec) setResetPasswordUser(prev => (prev && prev.id === user.id ? { ...prev, login_password: sec.login_password } : prev)); });
         setResetPassword("");
         setShowResetPassword(false);
         setIsResetPasswordOpen(true);
