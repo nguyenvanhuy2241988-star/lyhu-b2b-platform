@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 const PER_PAGE = 20;
 
 export const metadata: Metadata = {
-    title: 'Báo hình FMCG 24/7 - Bản tin video ngành hàng tiêu dùng | LYHU',
+    title: 'Báo hình FMCG 24/7 - Bản tin video ngành hàng tiêu dùng',
     description: 'Bản tin video ngắn về ngành FMCG, bán lẻ, tạp hóa, siêu thị mini. Mỗi ngày hai bản tin lúc 06:30 và 19:30, số liệu có kiểm chứng và việc nên làm.',
     alternates: { canonical: 'https://lyhu.com.vn/bao-hinh' },
 };
