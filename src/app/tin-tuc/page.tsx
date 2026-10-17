@@ -16,11 +16,13 @@ import { STATIC_EMAGAZINE_POSTS } from '@/lib/emagazinePosts';
 import SearchBar from '@/components/blog/SearchBar';
 import Pagination from '@/components/blog/Pagination';
 import TrendingWidget from '@/components/blog/TrendingWidget';
+import BaoHinhRail from '@/components/blog/BaoHinhRail';
+import { Play } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 const POSTS_PER_PAGE = 12;
 
-async function getBlogData(page: number, categorySlug: string, groupKey: string, searchQuery: string) {
+async function getBlogData(page: number, categorySlug: string, groupKey: string, searchQuery: string, onlyVideo: boolean) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
     const supabase = createClient(supabaseUrl, supabaseKey, {
@@ -66,6 +68,11 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
         }
     }
 
+    // Tab VIDEO: chỉ bài có video
+    if (onlyVideo) {
+        query = query.not('video_url', 'is', null);
+    }
+
     // Apply Search Filter (Search in title or content or ai_summary)
     if (searchQuery) {
         query = query.or(`title.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%,ai_summary.ilike.%${searchQuery}%`);
@@ -106,8 +113,20 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
         }
     }
 
+    // Dải Báo hình: các bản tin video mới nhất (chỉ ở trang chủ tin tức)
+    let railPromise: any = Promise.resolve({ data: null });
+    if (categorySlug === 'all' && (!groupKey || groupKey === 'all') && page === 1 && !searchQuery && !onlyVideo) {
+        railPromise = supabase
+            .from('blog_posts')
+            .select('id, title, slug, thumbnail_url, video_url, video_meta, published_at, created_at')
+            .eq('status', 'published')
+            .not('video_url', 'is', null)
+            .order('created_at', { ascending: false })
+            .limit(8);
+    }
+
     // Parallel Fetch 2: Posts & Featured Blocks
-    const [postsRes, b1Res, b2Res] = await Promise.all([query, b1Promise, b2Promise]);
+    const [postsRes, b1Res, b2Res, railRes] = await Promise.all([query, b1Promise, b2Promise, railPromise]);
 
     const posts = postsRes.data;
     const count = postsRes.count;
@@ -133,7 +152,7 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
     
     // Nếu trang 1 và không có filter danh mục / tìm kiếm, ghim bài eMagazine lên đầu nếu chưa có trong DB
     let combinedPosts = [...dbPosts];
-    if (page === 1 && (!categorySlug || categorySlug === 'all') && (!groupKey || groupKey === 'all') && !searchQuery) {
+    if (page === 1 && (!categorySlug || categorySlug === 'all') && (!groupKey || groupKey === 'all') && !searchQuery && !onlyVideo) {
         staticPosts.forEach(sp => {
             if (!combinedPosts.some(p => p.slug === sp.slug)) {
                 combinedPosts.unshift(sp);
@@ -157,7 +176,8 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
         posts: combinedPosts.map(sanitizeThumbnail),
         categories: (categories || []) as BlogCategory[],
         trendingPosts: (trending || []) as Partial<BlogPost>[],
-        totalCount: (count || 0) + (page === 1 ? staticPosts.length : 0),
+        totalCount: (count || 0) + (page === 1 && !onlyVideo ? staticPosts.length : 0),
+        videoRail: (railRes.data || []) as any[],
         featuredBlocks,
         megaBanner,
         sideTopBanners,
@@ -168,18 +188,21 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
 export default async function BlogIndexPage({
     searchParams
 }: {
-    searchParams: { category?: string; group?: string; page?: string; q?: string }
+    searchParams: { category?: string; group?: string; page?: string; q?: string; type?: string }
 }) {
     const activeCategory = searchParams.category || 'all';
     const activeGroup = searchParams.group || '';
     const currentPage = parseInt(searchParams.page || '1', 10);
     const searchQuery = searchParams.q || '';
+    const onlyVideo = searchParams.type === 'video';
+    const isHome = currentPage === 1 && activeCategory === 'all' && !activeGroup && !searchQuery && !onlyVideo;
 
-    const { posts, categories, trendingPosts, totalCount, featuredBlocks, megaBanner, sideTopBanners, sideBottomBanners } = await getBlogData(
+    const { posts, categories, trendingPosts, totalCount, featuredBlocks, megaBanner, sideTopBanners, sideBottomBanners, videoRail } = await getBlogData(
         currentPage,
         activeCategory,
         activeGroup,
-        searchQuery
+        searchQuery,
+        onlyVideo
     );
 
     const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE);
@@ -195,12 +218,20 @@ export default async function BlogIndexPage({
                     <Link 
                         href={`/tin-tuc${searchQuery ? `?q=${searchQuery}` : ''}`}
                         className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors whitespace-nowrap ${
-                            !activeGroup && activeCategory === 'all' 
+                            !activeGroup && activeCategory === 'all' && !onlyVideo 
                             ? 'bg-[#00AFA9] text-white shadow-sm' 
                             : 'bg-gray-100 text-gray-700 border border-gray-200'
                         }`}
                     >
                         Tất cả
+                    </Link>
+                    <Link
+                        href="/tin-tuc?type=video"
+                        className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors whitespace-nowrap inline-flex items-center gap-1 ${
+                            onlyVideo ? 'bg-[#00AFA9] text-white shadow-sm' : 'bg-gray-100 text-gray-700 border border-gray-200'
+                        }`}
+                    >
+                        <Play className="w-3 h-3 fill-current" /> Video
                     </Link>
                     {categories.map(cat => (
                         <Link 
@@ -226,7 +257,7 @@ export default async function BlogIndexPage({
                             <Link 
                                 href={`/tin-tuc${searchQuery ? `?q=${searchQuery}` : ''}`}
                                 className={`block py-3.5 pb-4 text-[14px] font-bold uppercase transition-colors duration-300 whitespace-nowrap ${
-                                    !activeGroup && activeCategory === 'all' 
+                                    !activeGroup && activeCategory === 'all' && !onlyVideo 
                                     ? 'text-[#00AFA9] border-b-[3px] border-[#00AFA9]' 
                                     : 'text-gray-800 hover:text-[#00AFA9] border-b-[3px] border-transparent'
                                 }`}
@@ -258,6 +289,18 @@ export default async function BlogIndexPage({
                                 </div>
                             </div>
                         </div>
+
+                        {/* Tab VIDEO */}
+                        <Link
+                            href="/tin-tuc?type=video"
+                            className={`shrink-0 py-3.5 pb-4 text-[14px] font-bold uppercase transition-colors duration-300 whitespace-nowrap inline-flex items-center gap-1.5 ${
+                                onlyVideo
+                                ? 'text-[#00AFA9] border-b-[3px] border-[#00AFA9]'
+                                : 'text-gray-800 hover:text-[#00AFA9] border-b-[3px] border-transparent'
+                            }`}
+                        >
+                            <Play className="w-3.5 h-3.5 fill-current" /> Video
+                        </Link>
 
                         {/* Individual Categories - Opens Small Dropdown */}
                         {MENU_GROUPS.map(group => {
@@ -382,12 +425,14 @@ export default async function BlogIndexPage({
                             <p className="font-semibold text-gray-800 flex items-center gap-2">
                                 {activeGroup 
                                     ? (MENU_GROUPS.find(g => g.key === activeGroup)?.icon || '') + ' ' + (MENU_GROUPS.find(g => g.key === activeGroup)?.name || '')
-                                    : activeCategory === 'all' ? 'Tin mới cập nhật' : categories.find(c => c.slug === activeCategory)?.name
+                                    : onlyVideo ? '▶ Báo hình FMCG 24/7' : activeCategory === 'all' ? 'Tin mới cập nhật' : categories.find(c => c.slug === activeCategory)?.name
                                 }
                             </p>
                         )}
                         <p>{totalCount} bài viết</p>
                     </div>
+
+                    {isHome && videoRail.length > 0 && <BaoHinhRail items={videoRail} />}
 
                     {posts.length === 0 ? (
                         <div className="bg-white p-16 text-center rounded-lg shadow-sm border border-gray-100 flex flex-col items-center">
@@ -407,7 +452,7 @@ export default async function BlogIndexPage({
                             {/* Top News (Hero) & Timeline */}
                             <div className="space-y-8">
                                 {/* Only show Hero on the first page of "All Categories" without search */}
-                                {currentPage === 1 && activeCategory === 'all' && !searchQuery && posts.length >= 3 && (
+                                {isHome && posts.length >= 3 && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 pb-10 border-b border-gray-200">
                                         {/* Main Featured Article (Col 1 & 2) */}
                                         <div className="md:col-span-2">
@@ -476,7 +521,7 @@ export default async function BlogIndexPage({
                                 )}
 
                                 {/* Featured Block 1: Tạp hóa & Phân phối */}
-                                {currentPage === 1 && activeCategory === 'all' && !searchQuery && featuredBlocks?.block1?.length > 0 && (
+                                {isHome && featuredBlocks?.block1?.length > 0 && (
                                     <div className="mb-10 pb-10 border-b border-gray-200">
                                         <div className="flex items-center justify-between mb-6">
                                             <h3 className="text-2xl font-bold text-gray-900 border-l-4 border-[#00AFA9] pl-3">Góc Nhà Phân Phối & Tạp Hóa</h3>
@@ -513,7 +558,7 @@ export default async function BlogIndexPage({
                                 )}
 
                                 {/* Featured Block 2: Xu hướng & TMĐT */}
-                                {currentPage === 1 && activeCategory === 'all' && !searchQuery && featuredBlocks?.block2?.length > 0 && (
+                                {isHome && featuredBlocks?.block2?.length > 0 && (
                                     <div className="mb-10 pb-10 border-b border-gray-200">
                                         <div className="flex items-center justify-between mb-6">
                                             <h3 className="text-2xl font-bold text-gray-900 border-l-4 border-[#00AFA9] pl-3">Thương mại điện tử & Xu hướng</h3>
@@ -545,10 +590,10 @@ export default async function BlogIndexPage({
 
                                 {/* Timeline List View */}
                                 <div className="space-y-8">
-                                    {currentPage === 1 && activeCategory === 'all' && !searchQuery && (
+                                    {isHome && (
                                         <h3 className="text-2xl font-bold text-gray-900 mb-2 border-l-4 border-[#00AFA9] pl-3">Dòng sự kiện mới nhất</h3>
                                     )}
-                                    {(currentPage === 1 && activeCategory === 'all' && !searchQuery && posts.length >= 3 
+                                    {(isHome && posts.length >= 3 
                                         ? posts.slice(3) 
                                         : posts).map((post, index) => (
                                         <Link 
@@ -569,6 +614,11 @@ export default async function BlogIndexPage({
                                                     <div className="w-full h-full flex items-center justify-center bg-teal-50 text-[#00AFA9]/40">
                                                         <span className="font-bold text-xl">LYHU</span>
                                                     </div>
+                                                )}
+                                                {post.video_url && (
+                                                    <span className="absolute left-2 bottom-2 inline-flex items-center gap-1 bg-[#00AFA9] text-white text-[11px] font-bold px-2 py-1 rounded">
+                                                        <Play className="w-3 h-3 fill-current" /> Video
+                                                    </span>
                                                 )}
                                             </div>
                                             
