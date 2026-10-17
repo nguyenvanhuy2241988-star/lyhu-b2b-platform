@@ -370,6 +370,8 @@ export default async function BlogPostPage({ params }: Props) {
                 }
             ]
         };
+    }
+
     const isVideoPost = (post.is_video_vertical && post.video_url) || (post.video_url && post.video_url.includes('.mp4'));
 
     if (isVideoPost) {
@@ -391,22 +393,6 @@ export default async function BlogPostPage({ params }: Props) {
                           post.slug?.startsWith('emagazine-') || 
                           post.content?.includes('[EMAGAZINE]') ||
                           post.keywords?.includes('eMagazine');
-
-    if (!isEmagazine && isBaoHinhPost(post)) {
-        const vm = (post.video_meta || {}) as any;
-        const videoSchema = {
-            '@context': 'https://schema.org',
-            '@type': 'VideoObject',
-            name: post.title,
-            description: post.meta_description || post.ai_summary || post.title,
-            thumbnailUrl: [vm.poster_url || post.thumbnail_url].filter(Boolean),
-            uploadDate: post.published_at || post.created_at,
-            contentUrl: post.video_url,
-            ...(vm.duration ? { duration: `PT${Math.floor(vm.duration / 60)}M${Math.round(vm.duration % 60)}S` } : {}),
-            publisher: { '@type': 'Organization', name: 'LYHU', url: siteUrl }
-        };
-        return <VideoPostLayout post={post} postUrl={postUrl} jsonLd={[articleSchema, videoSchema, breadcrumbSchema, faqSchema]} />;
-    }
 
     if (isEmagazine) {
         return (
