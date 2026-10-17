@@ -15,6 +15,7 @@ import BlogSidebarNewCustomerPromo from '@/components/blog/BlogSidebarNewCustome
 import DynamicBlogContent from '@/components/blog/DynamicBlogContent';
 import ViewCounter from '@/components/blog/ViewCounter';
 import EmagazineLayout from '@/components/blog/EmagazineLayout';
+import VideoPostLayout, { isBaoHinhPost } from '@/components/blog/VideoPostLayout';
 import { STATIC_EMAGAZINE_POSTS } from '@/lib/emagazinePosts';
 export const revalidate = 60;
 type Props = {
@@ -364,6 +365,22 @@ export default async function BlogPostPage({ params }: Props) {
                           post.slug?.startsWith('emagazine-') || 
                           post.content?.includes('[EMAGAZINE]') ||
                           post.keywords?.includes('eMagazine');
+
+    if (!isEmagazine && isBaoHinhPost(post)) {
+        const vm = (post.video_meta || {}) as any;
+        const videoSchema = {
+            '@context': 'https://schema.org',
+            '@type': 'VideoObject',
+            name: post.title,
+            description: post.meta_description || post.ai_summary || post.title,
+            thumbnailUrl: [vm.poster_url || post.thumbnail_url].filter(Boolean),
+            uploadDate: post.published_at || post.created_at,
+            contentUrl: post.video_url,
+            ...(vm.duration ? { duration: `PT${Math.floor(vm.duration / 60)}M${Math.round(vm.duration % 60)}S` } : {}),
+            publisher: { '@type': 'Organization', name: 'LYHU', url: siteUrl }
+        };
+        return <VideoPostLayout post={post} postUrl={postUrl} jsonLd={[articleSchema, videoSchema, breadcrumbSchema, faqSchema]} />;
+    }
 
     if (isEmagazine) {
         return (

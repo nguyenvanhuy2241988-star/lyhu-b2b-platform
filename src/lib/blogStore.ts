@@ -19,6 +19,7 @@ export interface BlogPost {
     thumbnail_url: string | null;
     video_url: string | null;
     is_video_vertical: boolean;
+    video_meta?: { duration?: number; chapters?: { t: string; label: string }[]; transcript?: string[]; poster_url?: string; do_this?: string } | null;
     
     // SEO & AEO Metadata
     ai_summary: string | null;
