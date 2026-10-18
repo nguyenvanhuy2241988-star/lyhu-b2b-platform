@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Upload, Trash2, Edit, Plus, Video, CheckCircle, XCircle, Share2 } from 'lucide-react';
+import { Upload, Trash2, Edit, Plus, Video, CheckCircle, XCircle, Share2, Copy, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { getSupabase } from '@/lib/supabaseClient';
 import TikTokPublishModal from '@/components/tiktok/TikTokPublishModal';
@@ -14,10 +14,29 @@ interface ShortVideo {
     video_url: string;
     thumbnail_url: string | null;
     caption?: string | null;
+    category?: string | null;
     sort_order: number;
     is_active: boolean;
     created_at: string;
 }
+
+const CATEGORIES: { key: string; label: string }[] = [
+    { key: 'lyhu', label: 'LYHU' },
+    { key: 'cvt', label: 'CVT' },
+    { key: 'uhi', label: 'UHI' },
+    { key: 'abi', label: 'ABI SNACK' },
+    { key: 'boyo', label: 'BOYO' },
+    { key: 'tin-tuc', label: 'Tin tức LYHU' },
+];
+
+const copyText = async (text: string, okMsg: string) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        toast.success(okMsg);
+    } catch {
+        toast.error('Không sao chép được, hãy bôi đen và copy thủ công.');
+    }
+};
 
 export default function ShortVideosAdmin() {
     const [videos, setVideos] = useState<ShortVideo[]>([]);
@@ -25,6 +44,8 @@ export default function ShortVideosAdmin() {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [tikTokTarget, setTikTokTarget] = useState<{ url: string; title: string } | null>(null);
+    const [filter, setFilter] = useState<string>('all');
+    const [preview, setPreview] = useState<ShortVideo | null>(null);
 
     const fetchVideos = async () => {
         setLoading(true);
@@ -176,6 +197,22 @@ export default function ShortVideosAdmin() {
         }
     };
 
+    const updateCategory = async (id: string, category: string) => {
+        const { error } = await supabase
+            .from('wholesale_short_videos')
+            .update({ category })
+            .eq('id', id);
+        if (!error) {
+            setVideos(vs => vs.map(v => (v.id === id ? { ...v, category } : v)));
+            toast.success('Đã cập nhật phân loại');
+        } else {
+            toast.error('Không cập nhật được phân loại');
+        }
+    };
+
+    const countOf = (k: string) => (k === 'all' ? videos.length : videos.filter(v => (v.category || 'lyhu') === k).length);
+    const shown = filter === 'all' ? videos : videos.filter(v => (v.category || 'lyhu') === filter);
+
     return (
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
@@ -204,6 +241,20 @@ export default function ShortVideosAdmin() {
                 </div>
             </div>
 
+            <div className="flex flex-wrap gap-2 mb-4">
+                {[{ key: 'all', label: 'Tất cả' }, ...CATEGORIES].map(c => (
+                    <button
+                        key={c.key}
+                        onClick={() => setFilter(c.key)}
+                        className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                            filter === c.key ? 'bg-[#00ABA9] border-[#00ABA9] text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-[#00ABA9]'
+                        }`}
+                    >
+                        {c.label} <span className={filter === c.key ? 'text-white/80' : 'text-gray-400'}>({countOf(c.key)})</span>
+                    </button>
+                ))}
+            </div>
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <table className="w-full text-left">
                     <thead className="bg-gray-50 border-b border-gray-100">
@@ -218,13 +269,13 @@ export default function ShortVideosAdmin() {
                     <tbody className="divide-y divide-gray-100">
                         {loading ? (
                             <tr><td colSpan={5} className="p-8 text-center text-gray-500">Đang tải...</td></tr>
-                        ) : videos.length === 0 ? (
+                        ) : shown.length === 0 ? (
                             <tr><td colSpan={5} className="p-8 text-center text-gray-500">Chưa có video nào. Hãy tải lên video đầu tiên!</td></tr>
                         ) : (
-                            videos.map(video => (
+                            shown.map(video => (
                                 <tr key={video.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4">
-                                        <div className="w-16 h-24 bg-gray-100 rounded border flex items-center justify-center overflow-hidden relative">
+                                        <div onClick={() => setPreview(video)} title="Bấm để xem video" className="w-16 h-24 bg-gray-100 rounded border flex items-center justify-center overflow-hidden relative cursor-pointer">
                                             <video src={video.video_url} poster={video.thumbnail_url || undefined} className="w-full h-full object-cover" muted />
                                             <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                                                 <Video className="w-6 h-6 text-white" />
@@ -232,10 +283,27 @@ export default function ShortVideosAdmin() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="font-medium text-gray-900 line-clamp-2">{video.title}</div>
+                                        <div onClick={() => setPreview(video)} className="font-medium text-gray-900 line-clamp-2 cursor-pointer hover:text-[#00ABA9]">{video.title}</div>
                                         {video.caption && (
                                             <div className="text-xs text-gray-500 mt-1 line-clamp-2 max-w-[420px]" title={video.caption}>{video.caption}</div>
                                         )}
+                                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                                            <select
+                                                value={video.category || 'lyhu'}
+                                                onChange={(e) => updateCategory(video.id, e.target.value)}
+                                                className="text-xs border border-gray-200 rounded-md px-2 py-1 bg-white text-gray-700"
+                                            >
+                                                {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                                            </select>
+                                            {video.caption && (
+                                                <button
+                                                    onClick={() => copyText(video.caption || '', 'Đã sao chép caption')}
+                                                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-gray-200 text-gray-600 hover:border-[#00ABA9] hover:text-[#00ABA9]"
+                                                >
+                                                    <Copy className="w-3 h-3" /> Sao chép caption
+                                                </button>
+                                            )}
+                                        </div>
                                         <div className="text-xs text-gray-400 mt-1 truncate max-w-[200px]" title={video.video_url}>
                                             {video.video_url.split('/').pop()}
                                         </div>
@@ -286,6 +354,67 @@ export default function ShortVideosAdmin() {
                     </tbody>
                 </table>
             </div>
+
+            {/* Xem video + caption */}
+            {preview && (
+                <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4" onClick={() => setPreview(null)}>
+                    <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col sm:flex-row" onClick={(e) => e.stopPropagation()}>
+                        <div className="bg-black sm:w-[300px] shrink-0 flex items-center justify-center">
+                            <video
+                                key={preview.id}
+                                src={preview.video_url}
+                                poster={preview.thumbnail_url || undefined}
+                                controls
+                                autoPlay
+                                playsInline
+                                className="w-full max-h-[70vh] sm:max-h-[92vh] aspect-[9/16] object-contain bg-black"
+                            />
+                        </div>
+                        <div className="p-5 flex-1 overflow-y-auto">
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <div className="text-xs font-semibold text-[#00ABA9] uppercase tracking-wide">
+                                        {CATEGORIES.find(c => c.key === (preview.category || 'lyhu'))?.label}
+                                    </div>
+                                    <h2 className="text-lg font-bold text-gray-900 mt-1">{preview.title}</h2>
+                                </div>
+                                <button onClick={() => setPreview(null)} className="p-1 text-gray-400 hover:text-gray-700" aria-label="Đóng">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="mt-4 text-sm font-semibold text-gray-700">Caption</div>
+                            <textarea
+                                readOnly
+                                value={preview.caption || ''}
+                                placeholder="Chưa có caption"
+                                rows={6}
+                                className="mt-1 w-full text-sm border border-gray-200 rounded-lg p-3 text-gray-800 bg-gray-50"
+                            />
+                            <div className="flex flex-wrap gap-2 mt-3">
+                                <button
+                                    onClick={() => copyText(preview.caption || '', 'Đã sao chép caption')}
+                                    disabled={!preview.caption}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold bg-[#00ABA9] text-white disabled:opacity-40"
+                                >
+                                    <Copy className="w-4 h-4" /> Sao chép caption
+                                </button>
+                                <button
+                                    onClick={() => copyText(preview.video_url, 'Đã sao chép liên kết video')}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-700 hover:border-[#00ABA9]"
+                                >
+                                    <Copy className="w-4 h-4" /> Sao chép link video
+                                </button>
+                                <button
+                                    onClick={() => { setTikTokTarget({ url: preview.video_url, title: preview.caption || preview.title }); setPreview(null); }}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold bg-black text-white"
+                                >
+                                    Đăng TikTok
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Modal đăng video lên TikTok */}
             <TikTokPublishModal
