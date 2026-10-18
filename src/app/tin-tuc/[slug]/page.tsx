@@ -381,8 +381,8 @@ export default async function BlogPostPage({ params }: Props) {
                 <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
                 <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
                 <VideoDetailLayout 
-                    post={post} 
-                    products={products} 
+                    post={post as any} 
+                    products={products as any} 
                     relatedVideos={relatedVideos || []} 
                 />
             </div>

@@ -20,6 +20,7 @@ import {
     ExternalLink
 } from "lucide-react";
 import VideoStoryCarousel, { VideoStoryItem } from "./VideoStoryCarousel";
+import { BlogPost } from "@/lib/blogStore";
 
 interface Chapter {
     time: string;
@@ -37,21 +38,9 @@ interface ProductItem {
 }
 
 interface VideoDetailLayoutProps {
-    post: {
-        id: string;
-        title: string;
-        slug: string;
-        content: string;
-        ai_summary?: string | null;
-        video_url?: string | null;
-        thumbnail_url?: string | null;
-        published_at?: string | null;
-        category?: { id: string; name: string; slug: string } | null;
-        author?: { full_name?: string; avatar_url?: string } | null;
-        faq_data?: any;
-    };
-    products?: ProductItem[];
-    relatedVideos?: VideoStoryItem[];
+    post: BlogPost | any;
+    products?: any[];
+    relatedVideos?: any[];
 }
 
 export default function VideoDetailLayout({
