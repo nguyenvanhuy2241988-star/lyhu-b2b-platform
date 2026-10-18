@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { getAppSecret, saveAppSecret } from '@/lib/settingsStore';
-import { publishVideoFromUrl, refreshTikTokToken, getTikTokAppConfig } from '@/lib/tiktok';
+import { publishVideoFromFileUpload, publishVideoFromUrl, refreshTikTokToken, getTikTokAppConfig } from '@/lib/tiktok';
 
 export async function POST(request: Request) {
     try {
@@ -45,8 +45,8 @@ export async function POST(request: Request) {
             }
         }
 
-        // 3. Đăng video qua Direct Post API v2
-        const result = await publishVideoFromUrl(accessToken, {
+        // 3. Đăng video qua Direct Post API v2 (dùng binary FILE_UPLOAD để không phụ thuộc domain verification)
+        const result = await publishVideoFromFileUpload(accessToken, {
             title,
             videoUrl,
             privacyLevel: privacyLevel || 'PUBLIC_TO_EVERYONE',

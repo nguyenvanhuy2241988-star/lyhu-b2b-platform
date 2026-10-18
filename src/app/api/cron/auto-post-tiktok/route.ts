@@ -3,7 +3,7 @@ export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
 import { getAppSecret, saveAppSecret } from '@/lib/settingsStore';
-import { publishVideoFromUrl, refreshTikTokToken, getTikTokAppConfig } from '@/lib/tiktok';
+import { publishVideoFromFileUpload, publishVideoFromUrl, refreshTikTokToken, getTikTokAppConfig } from '@/lib/tiktok';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -54,8 +54,8 @@ export async function GET(req: Request) {
         const video = videos[0];
         const caption = `${video.title}\n\n#LYHU #NhaPhanPhoi #KinhDoanh #Shorts`;
 
-        // 3. Đăng video lên TikTok
-        const result = await publishVideoFromUrl(accessToken, {
+        // 3. Đăng video lên TikTok (dùng binary FILE_UPLOAD)
+        const result = await publishVideoFromFileUpload(accessToken, {
             title: caption,
             videoUrl: video.video_url,
             privacyLevel: 'PUBLIC_TO_EVERYONE'

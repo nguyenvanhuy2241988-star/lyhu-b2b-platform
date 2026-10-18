@@ -143,7 +143,103 @@ export async function getTikTokUserInfo(accessToken: string) {
 }
 
 /**
- * 5. Publish video using PULL_FROM_URL (Recommended: TikTok directly downloads the public video URL)
+ * 5. Publish video using FILE_UPLOAD (Bypasses TikTok domain verification requirement)
+ */
+export async function publishVideoFromFileUpload(accessToken: string, options: TikTokPublishOptions) {
+    if (!options.videoUrl) {
+        throw new Error('Video URL is required for upload.');
+    }
+
+    // 1. Tải dữ liệu video từ URL (Supabase)
+    const videoRes = await fetch(options.videoUrl);
+    if (!videoRes.ok) {
+        throw new Error(`Không thể tải video từ URL: ${videoRes.statusText}`);
+    }
+    const arrayBuffer = await videoRes.arrayBuffer();
+    const videoBuffer = Buffer.from(arrayBuffer);
+    const videoSize = videoBuffer.byteLength;
+
+    let targetPrivacy = options.privacyLevel || 'PUBLIC_TO_EVERYONE';
+
+    // 2. Khởi tạo upload với source: FILE_UPLOAD
+    const makeInitRequest = async (privacy: string) => {
+        const payload = {
+            post_info: {
+                title: options.title,
+                privacy_level: privacy,
+                disable_duet: options.disableDuet ?? false,
+                disable_stitch: options.disableStitch ?? false,
+                disable_comment: options.disableComment ?? false,
+                video_cover_timestamp_ms: options.videoCoverTimestampMs || 1000
+            },
+            source_info: {
+                source: 'FILE_UPLOAD',
+                video_size: videoSize,
+                chunk_size: videoSize,
+                total_chunk_count: 1
+            }
+        };
+
+        const res = await fetch(`${TIKTOK_API_BASE}/post/publish/video/init/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json; charset=UTF-8'
+            },
+            body: JSON.stringify(payload)
+        });
+        return await res.json();
+    };
+
+    let initData = await makeInitRequest(targetPrivacy);
+
+    // Nếu môi trường Sandbox/chưa duyệt app bắt buộc privacy SELF_ONLY
+    if (initData.error && (initData.error.code === 'unaudited_client_can_only_post_to_private_accounts' || initData.error.message?.includes('private'))) {
+        console.log('App chưa duyệt audit, tự động chuyển privacy sang SELF_ONLY');
+        initData = await makeInitRequest('SELF_ONLY');
+    }
+
+    if (initData.error && initData.error.code !== 'ok') {
+        return initData;
+    }
+
+    const uploadUrl = initData?.data?.upload_url;
+    if (!uploadUrl) {
+        return initData;
+    }
+
+    // 3. Đẩy binary video lên máy chủ upload của TikTok
+    const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'video/mp4',
+            'Content-Length': String(videoSize),
+            'Content-Range': `bytes 0-${videoSize - 1}/${videoSize}`
+        },
+        body: videoBuffer
+    });
+
+    if (!uploadRes.ok) {
+        const errText = await uploadRes.text();
+        console.error('Lỗi đẩy binary video lên TikTok:', uploadRes.status, errText);
+        return {
+            error: {
+                code: 'upload_failed',
+                message: `Lỗi upload video lên TikTok: ${uploadRes.status}`
+            }
+        };
+    }
+
+    return {
+        data: {
+            publish_id: initData.data?.publish_id
+        },
+        error: { code: 'ok' }
+    };
+}
+
+/**
+ * 5b. Publish video using PULL_FROM_URL (Requires verified domain on TikTok portal)
  */
 export async function publishVideoFromUrl(accessToken: string, options: TikTokPublishOptions) {
     if (!options.videoUrl) {
