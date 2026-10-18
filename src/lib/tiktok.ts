@@ -9,8 +9,8 @@ const TIKTOK_API_BASE = 'https://open.tiktokapis.com/v2';
 
 import { getAppSecret } from './settingsStore';
 
-export const DEFAULT_TIKTOK_CLIENT_KEY = process.env.TIKTOK_CLIENT_KEY || 'aws4zpdwz4v2mfai';
-export const DEFAULT_TIKTOK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET || 'ysb961Uap16fxBTo9T3hpjUpfgVOQ0qk';
+export const DEFAULT_TIKTOK_CLIENT_KEY = process.env.TIKTOK_CLIENT_KEY || 'sbawg088v4f5jy9mh9';
+export const DEFAULT_TIKTOK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET || 'E8YQ0B80E0d6977gA9WvafLvlKSSTgnL';
 export const DEFAULT_TIKTOK_REDIRECT_URI = process.env.TIKTOK_REDIRECT_URI || 'https://www.lyhu.com.vn/api/tiktok/callback';
 
 export async function getTikTokAppConfig() {
