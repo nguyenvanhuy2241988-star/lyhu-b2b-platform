@@ -60,7 +60,7 @@ export interface TikTokPublishOptions {
  * 1. Generate TikTok Authorization URL
  */
 export function getTikTokAuthUrl(clientKey: string, redirectUri: string, state: string = 'lyhu_tiktok_auth') {
-    const scopes = ['user.info.basic', 'video.publish', 'video.upload'].join(',');
+    const scopes = ['user.info.basic', 'video.publish'].join(',');
     const params = new URLSearchParams({
         client_key: clientKey,
         scope: scopes,

@@ -1,7 +1,11 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { exchangeCodeForTikTokToken, getTikTokUserInfo, getTikTokAppConfig } from '@/lib/tiktok';
-import { saveAppSecret } from '@/lib/settingsStore';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -63,7 +67,16 @@ export async function GET(request: Request) {
             connected_at: new Date().toISOString()
         };
 
-        await saveAppSecret('tiktok_credentials', credentials, undefined, 'TikTok Creator OAuth Credentials');
+        const { error: saveError } = await supabase.from('app_secrets').upsert({
+            key: 'tiktok_credentials',
+            value: credentials,
+            description: 'TikTok Creator OAuth Credentials',
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+
+        if (saveError) {
+            console.error('Lỗi lưu tiktok_credentials vào Supabase:', saveError);
+        }
 
         return NextResponse.redirect(`${targetRedirect}?tiktok_connected=true`);
     } catch (err: any) {

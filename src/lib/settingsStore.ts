@@ -4,15 +4,12 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const getHeaders = (token?: string) => {
+    const key = token || process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_KEY || '';
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY || ''
+        'apikey': key
     };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    } else {
-        headers['Authorization'] = `Bearer ${SUPABASE_KEY}`;
-    }
+    headers['Authorization'] = `Bearer ${key}`;
     return headers;
 };
 
