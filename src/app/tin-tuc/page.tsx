@@ -140,61 +140,6 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
         headline: item.ai_summary ? item.ai_summary.slice(0, 48) + '...' : item.title
     }));
 
-    // Fallback demo stories if DB has fewer than 4 vertical videos so the carousel looks rich & professional
-    if (videoStories.length < 4) {
-        const demoFallbacks = [
-            {
-                id: 'demo-cvt-1',
-                title: 'Gia vị sấy thăng hoa CVT - Công nghệ đột phá',
-                slug: 'khoai-mon-say-cvt-giai-phap-an-vat-lanh-manh-xu-huong-moi',
-                thumbnail_url: 'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775408989723_ybzt28.png',
-                video_url: null,
-                published_at: null,
-                brand_tag: 'CVT',
-                duration: '0:38',
-                headline: 'Bảo toàn 98% dinh dưỡng tự nhiên'
-            },
-            {
-                id: 'demo-boyo-2',
-                title: 'Bột phô mai lắc bắp rang bơ BOYO bùng nổ doanh số',
-                slug: 'bot-pho-mai-boyo-vi-ngot-diu-beo-ngay-chinh-phuc-gioi-tre',
-                thumbnail_url: '/boyo_news_banner.jpg',
-                video_url: null,
-                published_at: null,
-                brand_tag: 'LYHU',
-                duration: '0:45',
-                headline: 'Hương vị béo ngậy ngọt dịu chuẩn gu trẻ'
-            },
-            {
-                id: 'demo-uhi-3',
-                title: 'Khăn ướt không mùi UHi đạt chuẩn tinh khiết',
-                slug: 'tieu-chuan-khan-uot-cao-cap-u-hi-an-toan-cho-moi-lan-da',
-                thumbnail_url: 'https://images.pexels.com/photos/3987142/pexels-photo-3987142.jpeg?auto=compress&cs=tinysrgb&w=600',
-                video_url: null,
-                published_at: null,
-                brand_tag: 'UHi',
-                duration: '0:30',
-                headline: 'An toàn cho mẹ và bé, tinh khiết 99.9%'
-            },
-            {
-                id: 'demo-cvt-4',
-                title: 'Khoai môn sấy giòn CVT mở rộng mạng lưới NPP',
-                slug: 'khoai-mon-say-cvt-giai-phap-an-vat-lanh-manh-xu-huong-moi',
-                thumbnail_url: 'https://images.pexels.com/photos/5632371/pexels-photo-5632371.jpeg?auto=compress&cs=tinysrgb&w=600',
-                video_url: null,
-                published_at: null,
-                brand_tag: 'CVT',
-                duration: '0:50',
-                headline: 'Chính sách chiết khấu tới 42% cho đại lý'
-            }
-        ];
-        demoFallbacks.forEach(fb => {
-            if (!videoStories.some(v => v.slug === fb.slug)) {
-                videoStories.push(fb);
-            }
-        });
-    }
-
     // Hàm trộn mảng ngẫu nhiên (Giả lập AI phân phối ngẫu nhiên)
     const shuffleArray = (array: any[]) => {
         const newArr = [...array];
