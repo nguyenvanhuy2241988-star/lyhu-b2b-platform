@@ -48,6 +48,8 @@ export default function VideoDetailLayout({
     products = [],
     relatedVideos = []
 }: VideoDetailLayoutProps) {
+    // Bản tin tin tức (không phải video bán hàng): không hiện thẻ sản phẩm và banner NPP
+    const isNews = /^(lyhu-video-|legacy-)/.test(String(post?.request_id || '')) || /^Bản tin/i.test(String(post?.title || ''));
     const videoRef = useRef<HTMLVideoElement>(null);
     const [copied, setCopied] = useState(false);
     const [activeSec, setActiveSec] = useState<number | null>(null);
@@ -239,7 +241,7 @@ export default function VideoDetailLayout({
                     )}
 
                     {/* Tagged Products in Video */}
-                    {products.length > 0 && (
+                    {!isNews && products.length > 0 && (
                         <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
                             <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
                                 <ShoppingCart className="w-4 h-4 text-[#8DC63F]" />
@@ -278,6 +280,7 @@ export default function VideoDetailLayout({
                     )}
 
                     {/* Banner CTA Nhận báo giá NPP */}
+                    {!isNews && (
                     <div className="p-4 rounded-2xl bg-[#00ABA9] text-white flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <div className="text-xs uppercase tracking-wider font-semibold text-teal-100">
@@ -300,6 +303,7 @@ export default function VideoDetailLayout({
                             Nhận báo giá ngay →
                         </a>
                     </div>
+                    )}
                 </div>
             </div>
 
