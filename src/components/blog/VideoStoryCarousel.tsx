@@ -110,8 +110,7 @@ export default function VideoStoryCarousel({ items }: VideoStoryCarouselProps) {
                                 <div className={`w-full h-full ${style.bg} p-4 flex flex-col justify-between`} />
                             )}
 
-                            {/* Gradient Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/40 group-hover:from-black/95 transition-colors" />
+                            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
 
                             {/* Top Badge: Brand & Duration */}
                             <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
@@ -132,7 +131,7 @@ export default function VideoStoryCarousel({ items }: VideoStoryCarouselProps) {
                             </div>
 
                             {/* Bottom Title & Date */}
-                            <div className="absolute bottom-3 left-3 right-3 pointer-events-none">
+                            <div className="absolute bottom-0 inset-x-0 p-3 bg-[#0B3B3C]/90 pointer-events-none">
                                 <h3 className="text-xs sm:text-sm font-bold text-white line-clamp-2 leading-snug drop-shadow-sm group-hover:text-teal-200 transition-colors">
                                     {item.title}
                                 </h3>

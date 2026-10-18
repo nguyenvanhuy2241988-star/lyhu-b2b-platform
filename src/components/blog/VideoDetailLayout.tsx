@@ -211,7 +211,7 @@ export default function VideoDetailLayout({
 
                     {/* Chapters / Timeline Box */}
                     {chapters.length > 0 && (
-                        <div className="p-4 rounded-2xl bg-gradient-to-br from-teal-50/70 to-emerald-50/40 border border-teal-100 shadow-sm">
+                        <div className="p-4 rounded-2xl bg-[#E6F6F5] border border-teal-100">
                             <h3 className="text-xs font-bold text-[#00ABA9] uppercase tracking-wider mb-3 flex items-center gap-1.5">
                                 <Sparkles className="w-4 h-4" />
                                 Nội dung chính (Bấm mốc thời gian để xem ngay):
@@ -278,7 +278,7 @@ export default function VideoDetailLayout({
                     )}
 
                     {/* Banner CTA Nhận báo giá NPP */}
-                    <div className="p-4 rounded-2xl bg-gradient-to-r from-[#00ABA9] to-[#8DC63F] text-white shadow-md flex flex-wrap items-center justify-between gap-3">
+                    <div className="p-4 rounded-2xl bg-[#00ABA9] text-white flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <div className="text-xs uppercase tracking-wider font-semibold text-teal-100">
                                 Chính sách Đại lý & Nhà Phân Phối

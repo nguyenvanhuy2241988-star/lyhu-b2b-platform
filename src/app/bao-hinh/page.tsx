@@ -45,7 +45,7 @@ export default async function BaoHinhPage({ searchParams }: { searchParams: { pa
     return (
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
             {/* HERO */}
-            <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#00ABA9] via-[#009896] to-[#006B6A] text-white">
+            <section className="relative overflow-hidden rounded-3xl bg-[#00ABA9] text-white">
                 <svg className="absolute -right-24 -top-24 w-[520px] opacity-[0.08]" viewBox="0 0 200 200" aria-hidden>
                     <g fill="#fff"><rect x="10" y="10" width="80" height="80" transform="rotate(45 50 50)"/><rect x="110" y="60" width="80" height="80" transform="rotate(45 150 100)"/></g>
                 </svg>

@@ -22,8 +22,7 @@ export default function PostThumb({ post, size = 'sm' }: Props) {
     return (
         <div className="absolute inset-0 bg-[#0B3B3C]">
             <img src={src} alt="" aria-hidden loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#00ABA9]/40 via-transparent to-[#8DC63F]/30" />
-            <img src={src} alt={post.title} loading="lazy" decoding="async" className="relative mx-auto h-full w-auto max-w-full object-contain shadow-2xl" />
+            <img src={src} alt={post.title} loading="lazy" decoding="async" className="relative mx-auto h-full w-auto max-w-full object-contain" />
             <span className={`absolute left-3 top-3 inline-flex items-center gap-1.5 bg-[#00ABA9] text-white font-extrabold uppercase tracking-wider rounded-full shadow ${lg ? 'text-xs px-3 py-1.5' : 'text-[10px] px-2.5 py-1'}`}>
                 <Play className={lg ? 'w-3.5 h-3.5 fill-current' : 'w-3 h-3 fill-current'} /> Báo hình
             </span>
