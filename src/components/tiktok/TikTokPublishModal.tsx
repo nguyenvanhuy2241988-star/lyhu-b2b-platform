@@ -18,7 +18,7 @@ export default function TikTokPublishModal({
     defaultTitle = ''
 }: TikTokPublishModalProps) {
     const [title, setTitle] = useState(defaultTitle);
-    const [privacyLevel, setPrivacyLevel] = useState<'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY'>('PUBLIC_TO_EVERYONE');
+    const [privacyLevel, setPrivacyLevel] = useState<'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY'>('SELF_ONLY');
     const [disableComment, setDisableComment] = useState(false);
     const [disableDuet, setDisableDuet] = useState(false);
     const [disableStitch, setDisableStitch] = useState(false);

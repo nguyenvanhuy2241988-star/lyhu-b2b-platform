@@ -159,7 +159,7 @@ export async function publishVideoFromFileUpload(accessToken: string, options: T
     const videoBuffer = Buffer.from(arrayBuffer);
     const videoSize = videoBuffer.byteLength;
 
-    let targetPrivacy = options.privacyLevel || 'PUBLIC_TO_EVERYONE';
+    let targetPrivacy = options.privacyLevel || 'SELF_ONLY';
 
     // 2. Khởi tạo upload với source: FILE_UPLOAD
     const makeInitRequest = async (privacy: string) => {
