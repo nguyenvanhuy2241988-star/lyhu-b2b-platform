@@ -42,6 +42,20 @@ export default function ShortVideosAdmin() {
 
     useEffect(() => {
         fetchVideos();
+
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const connected = params.get('tiktok_connected');
+            const error = params.get('error');
+
+            if (connected === 'true') {
+                toast.success('Kết nối kênh TikTok thành công! Giờ bạn có thể đăng video.');
+                window.history.replaceState({}, '', '/admin/short-videos');
+            } else if (error) {
+                toast.error('Lỗi kết nối TikTok: ' + decodeURIComponent(error));
+                window.history.replaceState({}, '', '/admin/short-videos');
+            }
+        }
     }, []);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { X, Send, CheckCircle, AlertCircle, RefreshCw, Lock, Globe, Users } from 'lucide-react';
+import { X, Send, CheckCircle, AlertCircle, RefreshCw, Lock, Globe, Users, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface TikTokPublishModalProps {
@@ -27,6 +27,7 @@ export default function TikTokPublishModal({
     const [isConnected, setIsConnected] = useState(false);
     const [loadingAccount, setLoadingAccount] = useState(true);
     const [publishing, setPublishing] = useState(false);
+    const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -57,6 +58,28 @@ export default function TikTokPublishModal({
 
     const handleConnectTikTok = () => {
         window.location.href = '/api/tiktok/auth';
+    };
+
+    const handleGenerateAICaption = async () => {
+        setIsGeneratingCaption(true);
+        try {
+            const res = await fetch('/api/ai/generate-tiktok-caption', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ videoTitle: title || defaultTitle })
+            });
+            const data = await res.json();
+            if (data.caption) {
+                setTitle(data.caption);
+                toast.success('✨ AI đã tạo caption & hashtag thành công!');
+            } else {
+                throw new Error(data.error || 'Không tạo được caption');
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Lỗi khi gọi AI');
+        } finally {
+            setIsGeneratingCaption(false);
+        }
     };
 
     const handlePublish = async () => {
@@ -169,14 +192,25 @@ export default function TikTokPublishModal({
                     {/* Form */}
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                Tiêu đề & Hashtags (Caption) <span className="text-red-500">*</span>
-                            </label>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="block text-xs font-medium text-gray-700">
+                                    Tiêu đề & Hashtags (Caption) <span className="text-red-500">*</span>
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateAICaption}
+                                    disabled={isGeneratingCaption}
+                                    className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg transition-colors border border-amber-200 shadow-xs"
+                                >
+                                    <Sparkles className={`w-3.5 h-3.5 text-amber-500 ${isGeneratingCaption ? 'animate-spin' : ''}`} />
+                                    {isGeneratingCaption ? 'AI đang viết...' : '✨ AI viết Caption & Hashtag'}
+                                </button>
+                            </div>
                             <textarea
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                rows={3}
-                                placeholder="Nhập mô tả video và hashtag (ví dụ: Chia sẻ kinh nghiệm kinh doanh #lyhu #kinhdoanh...)"
+                                rows={4}
+                                placeholder="Nhập mô tả video và hashtag (hoặc bấm nút AI viết Caption ở trên)..."
                                 className="w-full text-sm p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/10 focus:border-black outline-none transition-all resize-none"
                             />
                         </div>

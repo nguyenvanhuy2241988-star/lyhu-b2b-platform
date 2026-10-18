@@ -7,9 +7,31 @@ const TIKTOK_AUTH_URL = 'https://www.tiktok.com/v2/auth/authorize/';
 const TIKTOK_TOKEN_URL = 'https://open.tiktokapis.com/v2/oauth/token/';
 const TIKTOK_API_BASE = 'https://open.tiktokapis.com/v2';
 
-export const DEFAULT_TIKTOK_CLIENT_KEY = process.env.TIKTOK_CLIENT_KEY || 'sbawg088v4f5jy9mh9';
-export const DEFAULT_TIKTOK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET || 'E8YQ0B80E0d6977gA9WvafLvIKSSIgnL';
+import { getAppSecret } from './settingsStore';
+
+export const DEFAULT_TIKTOK_CLIENT_KEY = process.env.TIKTOK_CLIENT_KEY || 'aws4zpdwz4v2mfai';
+export const DEFAULT_TIKTOK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET || 'ysb961Uap16fxBTo9T3hpjUpfgVOQ0qk';
 export const DEFAULT_TIKTOK_REDIRECT_URI = process.env.TIKTOK_REDIRECT_URI || 'https://www.lyhu.com.vn/api/tiktok/callback';
+
+export async function getTikTokAppConfig() {
+    try {
+        const config = await getAppSecret('tiktok_config');
+        if (config?.client_key && config?.client_secret) {
+            return {
+                clientKey: config.client_key,
+                clientSecret: config.client_secret,
+                redirectUri: config.redirect_uri || DEFAULT_TIKTOK_REDIRECT_URI
+            };
+        }
+    } catch (e) {
+        console.warn('Could not read tiktok_config from app_secrets:', e);
+    }
+    return {
+        clientKey: DEFAULT_TIKTOK_CLIENT_KEY,
+        clientSecret: DEFAULT_TIKTOK_CLIENT_SECRET,
+        redirectUri: DEFAULT_TIKTOK_REDIRECT_URI
+    };
+}
 
 export interface TikTokTokenResponse {
     access_token: string;

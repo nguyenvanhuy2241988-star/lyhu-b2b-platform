@@ -3,7 +3,7 @@ export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
 import { getAppSecret, saveAppSecret } from '@/lib/settingsStore';
-import { publishVideoFromUrl, refreshTikTokToken } from '@/lib/tiktok';
+import { publishVideoFromUrl, refreshTikTokToken, getTikTokAppConfig } from '@/lib/tiktok';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -19,8 +19,7 @@ export async function GET(req: Request) {
         }
 
         let accessToken = creds.access_token;
-        const clientKey = process.env.TIKTOK_CLIENT_KEY || '';
-        const clientSecret = process.env.TIKTOK_CLIENT_SECRET || '';
+        const { clientKey, clientSecret } = await getTikTokAppConfig();
 
         // Tự động refresh token nếu cần
         if (creds.expires_at && Date.now() > creds.expires_at - 300000) {

@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { exchangeCodeForTikTokToken, getTikTokUserInfo, DEFAULT_TIKTOK_CLIENT_KEY, DEFAULT_TIKTOK_CLIENT_SECRET, DEFAULT_TIKTOK_REDIRECT_URI } from '@/lib/tiktok';
+import { exchangeCodeForTikTokToken, getTikTokUserInfo, getTikTokAppConfig } from '@/lib/tiktok';
 import { saveAppSecret } from '@/lib/settingsStore';
 
 export async function GET(request: Request) {
@@ -10,7 +10,6 @@ export async function GET(request: Request) {
     const errorDescription = searchParams.get('error_description');
 
     const baseUrl = 'https://www.lyhu.com.vn';
-    const redirectUri = DEFAULT_TIKTOK_REDIRECT_URI;
     const targetRedirect = `${baseUrl}/admin/short-videos`;
 
     if (error) {
@@ -22,8 +21,7 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${targetRedirect}?error=Missing_Auth_Code`);
     }
 
-    const clientKey = DEFAULT_TIKTOK_CLIENT_KEY;
-    const clientSecret = DEFAULT_TIKTOK_CLIENT_SECRET;
+    const { clientKey, clientSecret, redirectUri } = await getTikTokAppConfig();
 
     try {
         // 1. Đổi authorization code lấy Token
