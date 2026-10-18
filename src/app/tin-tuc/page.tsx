@@ -76,11 +76,6 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
         }
     }
 
-    // Tab VIDEO: chỉ bài có video
-    if (onlyVideo) {
-        query = query.not('video_url', 'is', null);
-    }
-
     // Apply Search Filter (Search in title or content or ai_summary)
     if (searchQuery) {
         query = query.or(`title.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%,ai_summary.ilike.%${searchQuery}%`);
@@ -133,7 +128,7 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
 
     // Process Video Stories for Carousel
     const rawVideoStories = (videoStoriesRes?.data || []) as any[];
-    let videoStories = rawVideoStories.map((item) => ({
+    let videoStories: any[] = rawVideoStories.map((item) => ({
         id: item.id,
         title: item.title,
         slug: item.slug,
@@ -153,6 +148,8 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
                 title: 'Gia vị sấy thăng hoa CVT - Công nghệ đột phá',
                 slug: 'khoai-mon-say-cvt-giai-phap-an-vat-lanh-manh-xu-huong-moi',
                 thumbnail_url: 'https://wepxcpifgxghfvdgnkeh.supabase.co/storage/v1/object/public/report-images/product_img_1775408989723_ybzt28.png',
+                video_url: null,
+                published_at: null,
                 brand_tag: 'CVT',
                 duration: '0:38',
                 headline: 'Bảo toàn 98% dinh dưỡng tự nhiên'
@@ -162,6 +159,8 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
                 title: 'Bột phô mai lắc bắp rang bơ BOYO bùng nổ doanh số',
                 slug: 'bot-pho-mai-boyo-vi-ngot-diu-beo-ngay-chinh-phuc-gioi-tre',
                 thumbnail_url: '/boyo_news_banner.jpg',
+                video_url: null,
+                published_at: null,
                 brand_tag: 'LYHU',
                 duration: '0:45',
                 headline: 'Hương vị béo ngậy ngọt dịu chuẩn gu trẻ'
@@ -171,6 +170,8 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
                 title: 'Khăn ướt không mùi UHi đạt chuẩn tinh khiết',
                 slug: 'tieu-chuan-khan-uot-cao-cap-u-hi-an-toan-cho-moi-lan-da',
                 thumbnail_url: 'https://images.pexels.com/photos/3987142/pexels-photo-3987142.jpeg?auto=compress&cs=tinysrgb&w=600',
+                video_url: null,
+                published_at: null,
                 brand_tag: 'UHi',
                 duration: '0:30',
                 headline: 'An toàn cho mẹ và bé, tinh khiết 99.9%'
@@ -180,6 +181,8 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
                 title: 'Khoai môn sấy giòn CVT mở rộng mạng lưới NPP',
                 slug: 'khoai-mon-say-cvt-giai-phap-an-vat-lanh-manh-xu-huong-moi',
                 thumbnail_url: 'https://images.pexels.com/photos/5632371/pexels-photo-5632371.jpeg?auto=compress&cs=tinysrgb&w=600',
+                video_url: null,
+                published_at: null,
                 brand_tag: 'CVT',
                 duration: '0:50',
                 headline: 'Chính sách chiết khấu tới 42% cho đại lý'
@@ -206,6 +209,7 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
     const sideBottomBanners = shuffleArray(sideBanners?.filter(b => b.position === 'side_bottom') || []);
     const staticPosts = (Object.values(STATIC_EMAGAZINE_POSTS) as BlogPost[]).filter(p => p.status === 'published');
     const dbPosts = (posts || []) as BlogPost[];
+    let combinedPosts: BlogPost[] = [...dbPosts];
     
     // Nếu trang 1 và không có filter danh mục / tìm kiếm, ghim bài eMagazine lên đầu nếu chưa có trong DB (chỉ áp dụng cho All hoặc Article)
     if (page === 1 && (!categorySlug || categorySlug === 'all') && (!groupKey || groupKey === 'all') && !searchQuery && typeFilter !== 'video') {
@@ -251,6 +255,7 @@ export default async function BlogIndexPage({
     const currentPage = parseInt(searchParams.page || '1', 10);
     const searchQuery = searchParams.q || '';
     const activeType = searchParams.type || 'all';
+    const onlyVideo = activeType === 'video';
     const isHome = currentPage === 1 && activeCategory === 'all' && !activeGroup && !searchQuery && activeType === 'all';
 
     const { posts, categories, trendingPosts, videoStories, totalCount, featuredBlocks, megaBanner, sideTopBanners, sideBottomBanners } = await getBlogData(
@@ -687,14 +692,14 @@ export default async function BlogIndexPage({
 
                                 {/* Timeline List View */}
                                 <div className="space-y-8">
-                                    {isHome && (
+                                    {!searchQuery && (
                                         <h3 className="text-2xl font-bold text-gray-900 mb-2 border-l-4 border-[#00AFA9] pl-3">
                                             {activeType === 'video' ? 'Bản tin video FMCG' : activeType === 'article' ? 'Dòng bài viết mới nhất' : 'Dòng sự kiện mới nhất'}
                                         </h3>
                                     )}
                                     {(isHome && posts.length >= 3 
                                         ? posts.slice(3) 
-                                        : posts).map((post) => {
+                                        : posts).map((post: any) => {
                                         const isVideo = Boolean(post.is_video_vertical || (post.video_url && post.video_url.includes('.mp4')));
                                         return (
                                         <Link 
