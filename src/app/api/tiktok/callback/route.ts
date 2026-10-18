@@ -27,19 +27,25 @@ export async function GET(request: Request) {
 
     try {
         // 1. Đổi authorization code lấy Token
-        const tokenData = await exchangeCodeForTikTokToken(code, clientKey, clientSecret, redirectUri);
+        const tokenRes: any = await exchangeCodeForTikTokToken(code, clientKey, clientSecret, redirectUri);
 
-        if (tokenData.error || !tokenData.access_token) {
-            console.error('Lỗi khi đổi token TikTok:', tokenData);
-            return NextResponse.redirect(
-                `${targetRedirect}?error=${encodeURIComponent(tokenData.error_description || tokenData.error || 'Token_Exchange_Failed')}`
-            );
+        const accessToken = tokenRes?.data?.access_token || tokenRes?.access_token;
+        const refreshToken = tokenRes?.data?.refresh_token || tokenRes?.refresh_token;
+        const openId = tokenRes?.data?.open_id || tokenRes?.open_id;
+        const expiresIn = tokenRes?.data?.expires_in || tokenRes?.expires_in || 86400;
+        const refreshExpiresIn = tokenRes?.data?.refresh_expires_in || tokenRes?.refresh_expires_in || 31536000;
+        const scope = tokenRes?.data?.scope || tokenRes?.scope || '';
+
+        if (!accessToken || tokenRes.error) {
+            console.error('Lỗi khi đổi token TikTok:', tokenRes);
+            const errMsg = tokenRes.error_description || tokenRes.error || tokenRes.message || 'Token_Exchange_Failed';
+            return NextResponse.redirect(`${targetRedirect}?error=${encodeURIComponent(errMsg)}&from_callback=1`);
         }
 
         // 2. Lấy thông tin kênh TikTok
         let userInfo: any = null;
         try {
-            const userRes = await getTikTokUserInfo(tokenData.access_token);
+            const userRes = await getTikTokUserInfo(accessToken);
             if (userRes?.data?.user) {
                 userInfo = userRes.data.user;
             }
@@ -49,12 +55,12 @@ export async function GET(request: Request) {
 
         // 3. Lưu thông tin xác thực vào app_secrets
         const credentials = {
-            access_token: tokenData.access_token,
-            refresh_token: tokenData.refresh_token,
-            open_id: tokenData.open_id,
-            expires_at: Date.now() + (tokenData.expires_in || 86400) * 1000,
-            refresh_expires_at: Date.now() + (tokenData.refresh_expires_in || 31536000) * 1000,
-            scope: tokenData.scope,
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            open_id: openId,
+            expires_at: Date.now() + expiresIn * 1000,
+            refresh_expires_at: Date.now() + refreshExpiresIn * 1000,
+            scope: scope,
             user_info: userInfo,
             connected_at: new Date().toISOString()
         };
