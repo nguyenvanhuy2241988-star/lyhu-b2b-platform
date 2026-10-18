@@ -12,7 +12,8 @@ interface ShortVideo {
     id: string;
     title: string;
     video_url: string;
-    thumbnail_url: string;
+    thumbnail_url: string | null;
+    caption?: string | null;
     sort_order: number;
     is_active: boolean;
     created_at: string;
@@ -224,7 +225,7 @@ export default function ShortVideosAdmin() {
                                 <tr key={video.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4">
                                         <div className="w-16 h-24 bg-gray-100 rounded border flex items-center justify-center overflow-hidden relative">
-                                            <video src={video.video_url} className="w-full h-full object-cover" muted />
+                                            <video src={video.video_url} poster={video.thumbnail_url || undefined} className="w-full h-full object-cover" muted />
                                             <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                                                 <Video className="w-6 h-6 text-white" />
                                             </div>
@@ -232,6 +233,9 @@ export default function ShortVideosAdmin() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="font-medium text-gray-900 line-clamp-2">{video.title}</div>
+                                        {video.caption && (
+                                            <div className="text-xs text-gray-500 mt-1 line-clamp-2 max-w-[420px]" title={video.caption}>{video.caption}</div>
+                                        )}
                                         <div className="text-xs text-gray-400 mt-1 truncate max-w-[200px]" title={video.video_url}>
                                             {video.video_url.split('/').pop()}
                                         </div>
@@ -258,7 +262,7 @@ export default function ShortVideosAdmin() {
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <button 
-                                                onClick={() => setTikTokTarget({ url: video.video_url, title: video.title })}
+                                                onClick={() => setTikTokTarget({ url: video.video_url, title: video.caption || video.title })}
                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-black text-white hover:bg-gray-800 transition-all shadow-sm"
                                                 title="Đăng video này lên TikTok"
                                             >

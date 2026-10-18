@@ -10,7 +10,7 @@ interface ShortVideo {
     id: string;
     title: string;
     video_url: string;
-    thumbnail_url: string;
+    thumbnail_url: string | null;
     sort_order: number;
 }
 
@@ -101,6 +101,7 @@ export default function ShortVideosList() {
                         >
                             <video 
                                 src={video.video_url} 
+                                poster={video.thumbnail_url || undefined}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                 muted
                                 loop
