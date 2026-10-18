@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { exchangeCodeForTikTokToken, getTikTokUserInfo } from '@/lib/tiktok';
-import { saveAppSecret } from '@/lib/settingsStore';
+import { getAppSecret, saveAppSecret } from '@/lib/settingsStore';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -9,24 +9,34 @@ export async function GET(request: Request) {
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://lyhu.com.vn';
-    const redirectUri = process.env.TIKTOK_REDIRECT_URI || `${baseUrl}/api/tiktok/callback`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://www.lyhu.com.vn';
+    let redirectUri = process.env.TIKTOK_REDIRECT_URI || `${baseUrl}/api/tiktok/callback`;
+    const targetRedirect = `${baseUrl}/admin/short-videos`;
 
     if (error) {
         console.error('TikTok Auth Error:', error, errorDescription);
-        return NextResponse.redirect(`${baseUrl}/media/video-studio?error=${encodeURIComponent(errorDescription || error)}`);
+        return NextResponse.redirect(`${targetRedirect}?error=${encodeURIComponent(errorDescription || error)}`);
     }
 
     if (!code) {
-        return NextResponse.redirect(`${baseUrl}/media/video-studio?error=Missing_Auth_Code`);
+        return NextResponse.redirect(`${targetRedirect}?error=Missing_Auth_Code`);
     }
 
-    const clientKey = process.env.TIKTOK_CLIENT_KEY || '';
-    const clientSecret = process.env.TIKTOK_CLIENT_SECRET || '';
+    let clientKey = process.env.TIKTOK_CLIENT_KEY || '';
+    let clientSecret = process.env.TIKTOK_CLIENT_SECRET || '';
+
+    if (!clientKey || !clientSecret) {
+        const config = await getAppSecret('tiktok_config');
+        if (config?.client_key && config?.client_secret) {
+            clientKey = config.client_key;
+            clientSecret = config.client_secret;
+            if (config.redirect_uri) redirectUri = config.redirect_uri;
+        }
+    }
 
     if (!clientKey || !clientSecret) {
         return NextResponse.json(
-            { error: 'Thiếu cấu hình TIKTOK_CLIENT_KEY hoặc TIKTOK_CLIENT_SECRET trong .env.local' },
+            { error: 'Thiếu cấu hình TIKTOK_CLIENT_KEY hoặc TIKTOK_CLIENT_SECRET' },
             { status: 500 }
         );
     }
@@ -38,7 +48,7 @@ export async function GET(request: Request) {
         if (tokenData.error || !tokenData.access_token) {
             console.error('Lỗi khi đổi token TikTok:', tokenData);
             return NextResponse.redirect(
-                `${baseUrl}/media/video-studio?error=${encodeURIComponent(tokenData.error_description || tokenData.error || 'Token_Exchange_Failed')}`
+                `${targetRedirect}?error=${encodeURIComponent(tokenData.error_description || tokenData.error || 'Token_Exchange_Failed')}`
             );
         }
 
@@ -67,9 +77,9 @@ export async function GET(request: Request) {
 
         await saveAppSecret('tiktok_credentials', credentials, undefined, 'TikTok Creator OAuth Credentials');
 
-        return NextResponse.redirect(`${baseUrl}/media/video-studio?tiktok_connected=true`);
+        return NextResponse.redirect(`${targetRedirect}?tiktok_connected=true`);
     } catch (err: any) {
         console.error('TikTok Callback Exception:', err);
-        return NextResponse.redirect(`${baseUrl}/media/video-studio?error=${encodeURIComponent(err.message || 'Unknown_Error')}`);
+        return NextResponse.redirect(`${targetRedirect}?error=${encodeURIComponent(err.message || 'Unknown_Error')}`);
     }
 }

@@ -25,8 +25,16 @@ export async function POST(request: Request) {
         }
 
         let accessToken = creds.access_token;
-        const clientKey = process.env.TIKTOK_CLIENT_KEY || '';
-        const clientSecret = process.env.TIKTOK_CLIENT_SECRET || '';
+        let clientKey = process.env.TIKTOK_CLIENT_KEY || '';
+        let clientSecret = process.env.TIKTOK_CLIENT_SECRET || '';
+
+        if (!clientKey || !clientSecret) {
+            const config = await getAppSecret('tiktok_config');
+            if (config?.client_key && config?.client_secret) {
+                clientKey = config.client_key;
+                clientSecret = config.client_secret;
+            }
+        }
 
         // 2. Tự động gia hạn Access Token nếu sắp hết hạn (còn dưới 5 phút)
         if (creds.expires_at && Date.now() > creds.expires_at - 300000) {
