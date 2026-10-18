@@ -45,6 +45,9 @@ export const metadata: Metadata = {
     alternates: {
         canonical: "https://lyhu.com.vn",
     },
+    other: {
+        'tiktok-developers-site-verification': 'O9TfbB9JATCsIRwo5GRvDhsA6L825K0I',
+    },
 };
 
 const merriweather = Merriweather({
