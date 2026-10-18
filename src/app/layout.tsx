@@ -46,7 +46,7 @@ export const metadata: Metadata = {
         canonical: "https://lyhu.com.vn",
     },
     other: {
-        'tiktok-developers-site-verification': 'O9TfbB9JATCsIRwo5GRvDhsA6L825K0I',
+        'tiktok-developers-site-verification': 'qaTOXKjw1eQjWD2oHbxPVPFlrSLW3nR9',
     },
 };
 
