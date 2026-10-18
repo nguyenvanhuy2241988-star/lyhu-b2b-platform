@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { getAppSecret, saveAppSecret } from '@/lib/settingsStore';
-import { publishVideoFromUrl, refreshTikTokToken } from '@/lib/tiktok';
+import { publishVideoFromUrl, refreshTikTokToken, DEFAULT_TIKTOK_CLIENT_KEY, DEFAULT_TIKTOK_CLIENT_SECRET } from '@/lib/tiktok';
 
 export async function POST(request: Request) {
     try {
@@ -25,16 +25,8 @@ export async function POST(request: Request) {
         }
 
         let accessToken = creds.access_token;
-        let clientKey = process.env.TIKTOK_CLIENT_KEY || '';
-        let clientSecret = process.env.TIKTOK_CLIENT_SECRET || '';
-
-        if (!clientKey || !clientSecret) {
-            const config = await getAppSecret('tiktok_config');
-            if (config?.client_key && config?.client_secret) {
-                clientKey = config.client_key;
-                clientSecret = config.client_secret;
-            }
-        }
+        const clientKey = DEFAULT_TIKTOK_CLIENT_KEY;
+        const clientSecret = DEFAULT_TIKTOK_CLIENT_SECRET;
 
         // 2. Tự động gia hạn Access Token nếu sắp hết hạn (còn dưới 5 phút)
         if (creds.expires_at && Date.now() > creds.expires_at - 300000) {

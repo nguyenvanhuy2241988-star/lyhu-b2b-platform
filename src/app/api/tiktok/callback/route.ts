@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { exchangeCodeForTikTokToken, getTikTokUserInfo } from '@/lib/tiktok';
-import { getAppSecret, saveAppSecret } from '@/lib/settingsStore';
+import { exchangeCodeForTikTokToken, getTikTokUserInfo, DEFAULT_TIKTOK_CLIENT_KEY, DEFAULT_TIKTOK_CLIENT_SECRET, DEFAULT_TIKTOK_REDIRECT_URI } from '@/lib/tiktok';
+import { saveAppSecret } from '@/lib/settingsStore';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -9,8 +9,8 @@ export async function GET(request: Request) {
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://www.lyhu.com.vn';
-    let redirectUri = process.env.TIKTOK_REDIRECT_URI || `${baseUrl}/api/tiktok/callback`;
+    const baseUrl = 'https://www.lyhu.com.vn';
+    const redirectUri = DEFAULT_TIKTOK_REDIRECT_URI;
     const targetRedirect = `${baseUrl}/admin/short-videos`;
 
     if (error) {
@@ -22,24 +22,8 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${targetRedirect}?error=Missing_Auth_Code`);
     }
 
-    let clientKey = process.env.TIKTOK_CLIENT_KEY || '';
-    let clientSecret = process.env.TIKTOK_CLIENT_SECRET || '';
-
-    if (!clientKey || !clientSecret) {
-        const config = await getAppSecret('tiktok_config');
-        if (config?.client_key && config?.client_secret) {
-            clientKey = config.client_key;
-            clientSecret = config.client_secret;
-            if (config.redirect_uri) redirectUri = config.redirect_uri;
-        }
-    }
-
-    if (!clientKey || !clientSecret) {
-        return NextResponse.json(
-            { error: 'Thiếu cấu hình TIKTOK_CLIENT_KEY hoặc TIKTOK_CLIENT_SECRET' },
-            { status: 500 }
-        );
-    }
+    const clientKey = DEFAULT_TIKTOK_CLIENT_KEY;
+    const clientSecret = DEFAULT_TIKTOK_CLIENT_SECRET;
 
     try {
         // 1. Đổi authorization code lấy Token
