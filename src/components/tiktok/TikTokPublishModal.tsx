@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
     X, Send, CheckCircle, AlertCircle, RefreshCw, Lock, Globe, Users, 
     Sparkles, Plus, Trash2, CheckSquare, Square, Tag, ExternalLink,
-    Video, Settings, HelpCircle
+    Video, Settings, HelpCircle, Share2, Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -62,6 +62,7 @@ export default function TikTokPublishModal({
     const [ytClientSecret, setYtClientSecret] = useState('');
     const [savingYtConfig, setSavingYtConfig] = useState(false);
     const [isYtConfigured, setIsYtConfigured] = useState(false);
+    const [sharingToPersonalFb, setSharingToPersonalFb] = useState(false);
 
     const [publishing, setPublishing] = useState(false);
     const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
@@ -248,6 +249,48 @@ export default function TikTokPublishModal({
             toast.error(err.message || 'Lỗi lưu cấu hình YouTube');
         } finally {
             setSavingYtConfig(false);
+        }
+    };
+
+    const handleShareToPersonalFacebook = async () => {
+        if (!title.trim()) {
+            toast.error('Vui lòng nhập tiêu đề hoặc caption cho video trước!');
+            return;
+        }
+
+        setSharingToPersonalFb(true);
+        try {
+            // 1. Tự động sao chép caption & hashtags
+            await navigator.clipboard.writeText(title.trim());
+            toast.success('📋 Đã sao chép Caption & Hashtags vào bộ nhớ tạm!');
+
+            // 2. Kích hoạt tải file video MP4 về máy để kéo thả vào Reel
+            if (videoUrl) {
+                try {
+                    const res = await fetch(videoUrl);
+                    const blob = await res.blob();
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = blobUrl;
+                    a.download = `video_lyhu_reel_${Date.now()}.mp4`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(blobUrl);
+                    document.body.removeChild(a);
+                    toast.info('⬇️ Đang tải video xuống máy để bạn đăng lên Facebook...');
+                } catch {
+                    window.open(videoUrl, '_blank');
+                }
+            }
+
+            // 3. Mở trang tạo Reel của Facebook cá nhân
+            window.open('https://www.facebook.com/reel/create', '_blank');
+            toast.success('🎉 Đang mở Facebook Reel! Hãy chọn file video vừa tải và dán (Ctrl+V) caption để đăng!');
+        } catch (err: any) {
+            toast.error(err.message || 'Lỗi khi chuẩn bị bài viết');
+        } finally {
+            setSharingToPersonalFb(false);
         }
     };
 
@@ -532,6 +575,37 @@ export default function TikTokPublishModal({
                             </div>
                         ) : (
                             <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                                {(activeTab === 'all' || activeTab === 'facebook') && (
+                                    <div className="flex items-center justify-between p-2.5 rounded-xl border border-blue-200 bg-blue-50/70 shadow-xs">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                                                f
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-xs font-bold text-blue-950">
+                                                        Facebook Cá Nhân (Reels & Tin)
+                                                    </span>
+                                                    <span className="text-[10px] font-semibold bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded-full">
+                                                        1 Chạm
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-blue-700">Tự động sao chép caption + tải video + mở Facebook Reel</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleShareToPersonalFacebook}
+                                            disabled={sharingToPersonalFb}
+                                            className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shadow-xs transition-colors shrink-0 flex items-center gap-1"
+                                            title="1 chạm sao chép caption và mở trình tạo Reel trên Facebook cá nhân"
+                                        >
+                                            <Share2 className="w-3 h-3" />
+                                            {sharingToPersonalFb ? 'Đang mở...' : 'Đăng ngay'}
+                                        </button>
+                                    </div>
+                                )}
+
                                 {filteredChannels.map(channel => {
                                     const isSelected = selectedIds.includes(channel.id);
                                     const isEditingBrand = changingBrandId === channel.id;
@@ -739,9 +813,21 @@ export default function TikTokPublishModal({
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-2 text-xs text-gray-600 font-medium">
-                        <span>Đã chọn: <strong className="text-gray-900">{selectedIds.length}</strong> kênh</span>
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={handleShareToPersonalFacebook}
+                            disabled={sharingToPersonalFb}
+                            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-all flex items-center gap-1.5 shadow-xs"
+                            title="Sao chép caption, tải video và mở trình tạo Reel trên Facebook cá nhân"
+                        >
+                            <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-black">f</span>
+                            {sharingToPersonalFb ? 'Đang chuẩn bị...' : '1 Chạm Đăng FB Cá Nhân'}
+                        </button>
+                        <span className="text-xs text-gray-500 hidden sm:inline">
+                            (Đã chọn <strong className="text-gray-900">{selectedIds.length}</strong> kênh phát sóng)
+                        </span>
                     </div>
                     <div className="flex items-center gap-3">
                         <button
