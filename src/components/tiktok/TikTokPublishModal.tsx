@@ -810,7 +810,15 @@ export default function TikTokPublishModal({
 
                 {/* Footer */}
                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 shrink-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <a
+                            href={`/api/media/download?url=${encodeURIComponent(videoUrl)}&filename=${encodeURIComponent((title || 'video_lyhu') + '.mp4')}`}
+                            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-all flex items-center gap-1.5 shadow-xs"
+                            title="Tải video MP4 chất lượng gốc về máy để tự đăng thủ công"
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            Tải video MP4
+                        </a>
                         <button
                             type="button"
                             onClick={handleShareToPersonalFacebook}

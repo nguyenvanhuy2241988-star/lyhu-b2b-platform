@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, X, Volume2, VolumeX, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, X, Volume2, VolumeX, Pause, ChevronLeft, ChevronRight, Download, Copy, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { getSupabase } from '@/lib/supabaseClient';
 
 const supabase = getSupabase();
@@ -11,6 +12,7 @@ interface ShortVideo {
     title: string;
     video_url: string;
     thumbnail_url: string | null;
+    caption?: string | null;
     sort_order: number;
 }
 
@@ -58,6 +60,15 @@ export default function ShortVideosList() {
                 videoRef.current.play();
             }
             setIsPlaying(!isPlaying);
+        }
+    };
+
+    const handleCopy = async (text: string, msg: string) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            toast.success(msg);
+        } catch {
+            toast.error('Không thể sao chép');
         }
     };
 
@@ -128,46 +139,100 @@ export default function ShortVideosList() {
 
             {/* Video Modal */}
             {selectedVideo && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm">
-                    {/* Close Button */}
-                    <button 
-                        onClick={() => setSelectedVideo(null)}
-                        className="absolute top-4 right-4 z-[110] p-2 bg-black/50 hover:bg-white/20 rounded-full text-white transition-colors"
+                <div 
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4" 
+                    onClick={() => setSelectedVideo(null)}
+                >
+                    <div 
+                        className="bg-neutral-900 border border-neutral-700/80 rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col sm:flex-row shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        <X className="w-6 h-6" />
-                    </button>
-
-                    {/* Video Container */}
-                    <div className="relative w-full max-w-[400px] aspect-[9/16] bg-black rounded-xl overflow-hidden mx-4 border border-slate-700">
-                        <video
-                            ref={videoRef}
-                            src={selectedVideo.video_url}
-                            className="w-full h-full object-cover cursor-pointer"
-                            loop
-                            playsInline
-                            preload="metadata"
-                            muted={isMuted}
-                            onClick={togglePlay}
-                        />
-
-                        {/* Controls Overlay */}
-                        <div className="absolute right-4 bottom-20 flex flex-col gap-4">
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}
-                                className="w-10 h-10 bg-black/40 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-colors"
-                            >
-                                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                            </button>
+                        {/* Video Player */}
+                        <div className="relative bg-black flex items-center justify-center sm:w-[320px] shrink-0 max-h-[50vh] sm:max-h-[92vh]">
+                            <video
+                                ref={videoRef}
+                                src={selectedVideo.video_url}
+                                className="w-full h-full max-h-[50vh] sm:max-h-[92vh] aspect-[9/16] object-contain bg-black cursor-pointer"
+                                loop
+                                playsInline
+                                controls
+                                autoPlay
+                                muted={isMuted}
+                                onClick={togglePlay}
+                            />
                         </div>
 
-                        {/* Center Play/Pause indicator (temporary flash) */}
-                        {!isPlaying && (
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div className="w-16 h-16 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center">
-                                    <Play className="w-8 h-8 text-white fill-white ml-1" />
+                        {/* Info & Download Sidebar */}
+                        <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between overflow-y-auto bg-neutral-900 text-white min-w-0">
+                            <div className="space-y-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <span className="text-[11px] font-bold text-[#00ABA9] uppercase tracking-wider bg-[#00ABA9]/10 px-2 py-0.5 rounded border border-[#00ABA9]/30">
+                                            Video Nổi Bật
+                                        </span>
+                                        <h3 className="font-bold text-base sm:text-lg text-white mt-1.5 leading-snug line-clamp-2">
+                                            {selectedVideo.title}
+                                        </h3>
+                                    </div>
+                                    <button 
+                                        onClick={() => setSelectedVideo(null)}
+                                        className="p-1.5 bg-neutral-800 hover:bg-neutral-700 rounded-full text-neutral-400 hover:text-white transition-colors shrink-0"
+                                        title="Đóng"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
                                 </div>
+
+                                {/* Caption */}
+                                {selectedVideo.caption ? (
+                                    <div className="space-y-1.5 pt-1">
+                                        <span className="text-xs font-semibold text-neutral-400">Caption bài đăng:</span>
+                                        <div className="text-xs text-neutral-200 bg-neutral-800/80 p-3 rounded-xl max-h-36 overflow-y-auto leading-relaxed border border-neutral-700/60 whitespace-pre-wrap font-sans select-all">
+                                            {selectedVideo.caption}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-xs text-neutral-500 italic py-2">
+                                        Chưa có caption cho video này.
+                                    </div>
+                                )}
                             </div>
-                        )}
+
+                            {/* Actions for Internal User & Agents */}
+                            <div className="space-y-2 pt-4 border-t border-neutral-800 mt-4">
+                                <a
+                                    href={`/api/media/download?url=${encodeURIComponent(selectedVideo.video_url)}&filename=${encodeURIComponent((selectedVideo.title || 'video_lyhu') + '.mp4')}`}
+                                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg transition-all active:scale-[0.98]"
+                                    title="Tải video MP4 chất lượng gốc về máy"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Tải video về máy (MP4)
+                                </a>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    {selectedVideo.caption && (
+                                        <button
+                                            onClick={() => handleCopy(selectedVideo.caption!, 'Đã sao chép caption!')}
+                                            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-all active:scale-[0.98]"
+                                        >
+                                            <Copy className="w-3.5 h-3.5 text-[#00ABA9]" />
+                                            Copy Caption
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => handleCopy(selectedVideo.video_url, 'Đã sao chép link video!')}
+                                        className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-all active:scale-[0.98] ${!selectedVideo.caption ? 'col-span-2' : ''}`}
+                                    >
+                                        <Share2 className="w-3.5 h-3.5 text-blue-400" />
+                                        Copy Link
+                                    </button>
+                                </div>
+
+                                <p className="text-[11px] text-neutral-400 text-center pt-1">
+                                    💡 Tải file MP4 về máy để đăng lên Zalo, Facebook cá nhân, TikTok...
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Upload, Trash2, Edit, Plus, Video, CheckCircle, XCircle, Share2, Copy, X } from 'lucide-react';
+import { Upload, Trash2, Edit, Plus, Video, CheckCircle, XCircle, Share2, Copy, X, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { getSupabase } from '@/lib/supabaseClient';
 import TikTokPublishModal from '@/components/tiktok/TikTokPublishModal';
@@ -329,6 +329,14 @@ export default function ShortVideosAdmin() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            <a 
+                                                href={`/api/media/download?url=${encodeURIComponent(video.video_url)}&filename=${encodeURIComponent((video.title || 'video_lyhu') + '.mp4')}`}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-all shadow-xs"
+                                                title="Tải video MP4 về máy (để đăng Zalo, Facebook cá nhân...)"
+                                            >
+                                                <Download className="w-3.5 h-3.5" />
+                                                Tải video
+                                            </a>
                                             <button 
                                                 onClick={() => setTikTokTarget({ url: video.video_url, title: video.caption || video.title, category: video.category || undefined })}
                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-black text-white hover:bg-gray-800 transition-all shadow-sm"
@@ -389,6 +397,13 @@ export default function ShortVideosAdmin() {
                                 className="mt-1 w-full text-sm border border-gray-200 rounded-lg p-3 text-gray-800 bg-gray-50"
                             />
                             <div className="flex flex-wrap gap-2 mt-3">
+                                <a
+                                    href={`/api/media/download?url=${encodeURIComponent(preview.video_url)}&filename=${encodeURIComponent((preview.title || 'video_lyhu') + '.mp4')}`}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                                    title="Tải video MP4 về máy để đăng Zalo, Facebook cá nhân..."
+                                >
+                                    <Download className="w-4 h-4" /> Tải video về máy
+                                </a>
                                 <button
                                     onClick={() => copyText(preview.caption || '', 'Đã sao chép caption')}
                                     disabled={!preview.caption}

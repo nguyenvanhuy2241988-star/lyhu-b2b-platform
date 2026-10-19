@@ -17,7 +17,8 @@ import {
     Sparkles,
     Tag,
     ChevronRight,
-    ExternalLink
+    ExternalLink,
+    Download
 } from "lucide-react";
 import VideoStoryCarousel, { VideoStoryItem } from "./VideoStoryCarousel";
 import { BlogPost } from "@/lib/blogStore";
@@ -146,7 +147,17 @@ export default function VideoDetailLayout({
                             <Share2 className="w-3.5 h-3.5 text-[#00ABA9]" />
                             Chia sẻ:
                         </span>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            {post.video_url && (
+                                <a
+                                    href={`/api/media/download?url=${encodeURIComponent(post.video_url)}&filename=${encodeURIComponent((post.title || 'video_lyhu') + '.mp4')}`}
+                                    className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-semibold flex items-center gap-1 transition-colors"
+                                    title="Tải video MP4 chất lượng gốc về máy"
+                                >
+                                    <Download className="w-3 h-3" />
+                                    <span>Tải video</span>
+                                </a>
+                            )}
                             <a
                                 href={`https://zalo.me/share?url=${encodeURIComponent(postUrl)}`}
                                 target="_blank"
