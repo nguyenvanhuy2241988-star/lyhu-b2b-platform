@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "target_date_ict": "2026-10-20",
+  "articles": [
+    {
+      "slot": 7,
+      "request_id": "lyhu-news:2026-10-20:7",
+      "title": "Khách quên túi hàng: giữ riêng để trả đúng người",
+      "slug": "khach-quen-tui-hang-giu-rieng-tra-dung-nguoi",
+      "category_slug": "tap-hoa-gt",
+      "content": "<p>Khách trả tiền, cầm điện thoại rồi đi luôn. Trên quầy còn túi hàng vừa gói. Lúc ấy có khách khác tới, người bán dễ đẩy túi sang một bên rồi quên mất của ai.</p>\n<p>Với túi hàng vừa bán còn ở quầy, tiệm có thể làm một việc nhỏ: để riêng và ghi lại dấu nhận biết. Khi khách quay lại, người ở ca sau cũng biết đường kiểm tra.</p>\n<h2>Giữ nguyên túi, ghi lại lúc phát hiện</h2>\n<p>Nếu khách còn ngay cửa và gọi được an toàn, nhắc khách lấy túi. Nếu họ đã đi xa, đừng bỏ quầy chạy theo hoặc nhờ người lạ chuyển hộ.</p>\n<p>Đặt túi ở chỗ riêng sau quầy, tránh lẫn với đơn đang soạn. Giữ hàng nguyên trạng; không lấy ra bán lại vì nghĩ khách sẽ không quay lại. Với hàng cần điều kiện bảo quản riêng, xử lý theo hướng dẫn trên nhãn, không để mặc trên quầy.</p>\n<p>Ghi thời điểm phát hiện, vị trí túi và người đang giữ. Nếu xác định được đúng phiếu bán, ghi mã phiếu vào sổ nội bộ. Chưa chắc của đơn nào thì để “chưa đối chiếu”, đừng ghép đại vào giao dịch gần nhất.</p>\n<aside><strong>Làm ngay:</strong> Chọn một chỗ cố định cho túi khách quên. Một mẩu giấy ghi giờ phát hiện và người giữ còn hữu ích hơn lời nhắn miệng “có túi ở đâu đó”.</aside>\n<h2>Khách quay lại, hỏi trước khi đưa túi</h2>\n<p>Để khách tự kể khoảng giờ mua, những món đã lấy và cách thanh toán. Sau đó đối chiếu với túi, phiếu bán hoặc người đã phục vụ. Đừng đọc hết danh sách hàng rồi chỉ hỏi “đúng túi này không?”.</p>\n<blockquote><p><strong>Ví dụ minh họa:</strong> “Anh/chị mua khoảng mấy giờ, trong túi có những món gì ạ? Em kiểm lại với quầy để gửi đúng túi cho mình.”</p></blockquote>\n<p>Nếu thông tin chưa khớp, nhờ người phụ trách kiểm thêm. Không cần kết luận khách nhận nhầm hay gian dối ngay tại quầy. Khi giao lại, ghi giờ giao và người đã xử lý để ca sau không tiếp tục tìm.</p>\n<figure><img src=\"__INLINE_IMAGE__\" alt=\"Túi hàng để riêng sau quầy và sổ ghi nhận\" style=\"width:100%;height:auto\"/><figcaption>Ảnh minh họa</figcaption></figure>\n<h2>Báo tìm chủ túi sao cho vừa đủ?</h2>\n<p>Nếu có kênh liên hệ sẵn với đúng khách, có thể nhắc riêng rằng tiệm đang giữ túi. Nếu đăng thông báo, chỉ nói có túi hàng để quên và nhờ chủ túi liên hệ mô tả. Không đăng nguyên phiếu có tên, số điện thoại hay toàn bộ món hàng.</p>\n<p>Cuối ca, người giao và người nhận cùng nhìn đúng túi, đúng dòng ghi chú. Túi chưa có người nhận thì báo chủ tiệm xử lý tiếp; bài này không đặt thời hạn giữ hay quyết định quyền sở hữu.</p>\n<p>Ngày mai, trước khi khách rời quầy, thử nhắc một câu: “Anh/chị lấy đủ túi giúp em nhé.” Khi có nhiều túi, xếp chúng cùng một chỗ để khách dễ nhìn và người bán dễ kiểm.</p>\n",
+      "content_hash": "cdbfc47b3f7fa8aba28eea3b41786c71fc3b6c9093a03edd92e681030fdabc96",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "dcedd6fdfe3e156914453a47cd68073da138d8a616d606a87fbafa8ed02d63e8",
+        "inline.webp": "d2fbcaa72e498bdbf247ac7815f89d149d70497d71f2cf36b81666f7ae2057eb"
+      }
+    },
+    {
+      "slot": 13,
+      "request_id": "lyhu-news:2026-10-20:13",
+      "title": "Quét mã ra sai tên hàng: kiểm lại trước khi tính tiền",
+      "slug": "quet-ma-ra-sai-ten-hang-kiem-lien-ket-truoc-khi-tinh",
+      "category_slug": "ban-le-hien-dai",
+      "content": "<p>Cầm gói vị này, quét lên màn hình lại hiện vị khác. Giá có thể giống nhau nên thu ngân vẫn tính tiếp. Đến lúc xem tồn, mã này bị trừ còn mã kia vẫn nguyên dù hàng đã bán.</p>\n<p>Đây là lúc cần kiểm mối nối giữa mã quét và hồ sơ hàng. Bài này dành cho trường hợp máy nhận được mã nhưng gọi ra sai món, không phải chuyện chưa tìm thấy giá.</p>\n<h2>Dừng ở dòng hàng đang sai</h2>\n<p>Đọc lại tên, vị, trọng lượng và đơn vị trên gói khách mua. So với dòng đang hiện trên quầy. Nếu khác, chưa chốt dòng đó chỉ vì số tiền trông có vẻ hợp lý.</p>\n<p>Có thể nói: “Máy đang hiện khác loại anh/chị lấy, em kiểm đúng hàng một chút nhé.” Nếu phần mềm cho phép, bỏ dòng nhập nhầm theo quy trình của tiệm rồi tìm đúng hồ sơ đã có. Chưa xác nhận được thì nhờ người phụ trách, không mượn mã của món gần giống để tính thay.</p>\n<h2>Giữ một mẫu để kiểm lại mã</h2>\n<p>Lấy đúng gói vừa gặp lỗi, ghi hoặc chụp rõ dãy số dưới mã vạch và tên hàng trên bao bì. Che thông tin khách nếu ảnh có màn hình đơn bán. Đừng chỉ nhắn “máy quét sai” mà không có mẫu để thử.</p>\n<p>Mã vạch giúp nhận diện mặt hàng; tên và giá hiện ở quầy còn phụ thuộc dữ liệu được liên kết trong hệ thống. Vì vậy, máy phát tiếng “bíp” không thay cho việc kiểm tên món trên màn hình.</p>\n<h2>Đặt ba thứ cạnh nhau để đối chiếu</h2>\n<table><thead><tr><th>Cần xem</th><th>Kiểm điều gì?</th></tr></thead><tbody><tr><td>Gói thật</td><td>Tên, vị, trọng lượng và đơn vị bán.</td></tr><tr><td>Dãy số quét được</td><td>Có khớp dãy số dưới mã trên gói không?</td></tr><tr><td>Hồ sơ được gọi ra</td><td>Có đúng mặt hàng vừa cầm lên không?</td></tr></tbody></table>\n<figure><img src=\"__INLINE_IMAGE__\" alt=\"Đối chiếu gói hàng, dãy mã và hồ sơ hàng trên màn hình\" style=\"width:100%;height:auto\"/><figcaption>Ảnh minh họa</figcaption></figure>\n<h2>Sửa đúng chỗ, đừng tạo thêm một mã cho nhanh</h2>\n<p>Người được phân quyền kiểm xem mã vạch có đang gắn nhầm vào hồ sơ khác, có nhiều hồ sơ cùng nhận một mã, hoặc đơn vị bán đang chọn sai hay không. Không tự kết luận máy quét hỏng trước khi kiểm dữ liệu.</p>\n<p>Nếu phải sửa, lưu lại mã hàng và nội dung trước khi đổi theo cách phần mềm hỗ trợ. Không xóa hồ sơ cũ hoặc gộp hàng khi chưa xem ảnh hưởng tới tồn và giao dịch trước đó. Cần hỗ trợ thì gửi nhà cung cấp phần mềm bộ ảnh và mô tả lỗi, không gửi mật khẩu.</p>\n<h2>Quét thử xong mới báo đã sửa</h2>\n<p>Thử lại gói bị lỗi và một gói cùng dòng nhưng khác vị hoặc cỡ. Kiểm cả tên, đơn vị và giá. Nếu tiệm có nhiều máy, kiểm tại máy từng gặp lỗi; đừng chỉ xem trên máy quản lý rồi coi như mọi quầy đã nhận bản mới.</p>\n<p>Ghi ngắn: lỗi ở mã nào, ai sửa, đã thử ở đâu. Cuối cùng báo ca bán biết món đã kiểm xong. Mục tiêu là lần quét sau ra đúng hàng, chứ không chỉ làm cho hóa đơn hiện tại có đủ tiền.</p>\n",
+      "content_hash": "3911c05d759c26aea26f8d733eb73d024d89aa3b8cac330e5bcb02dddf78f9b7",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "f56a79e7ba480e4f27521a001df954cabc2e06167d1531ef093dc969556beb96",
+        "inline.webp": "e095d506340093d5fe4d915ffbb0c2234dd2eedab1df57ec7f94678692c50c53"
+      }
+    },
+    {
+      "slot": 19,
+      "request_id": "lyhu-news:2026-10-20:19",
+      "title": "NPP đổi người phụ trách: bàn giao cả việc đang hẹn",
+      "slug": "npp-doi-nguoi-phu-trach-ban-giao-viec-dang-hen",
+      "category_slug": "nha-phan-phoi-diem-ban",
+      "content": "<p>Nhân viên mới gọi chào điểm bán. Chủ tiệm hỏi ngay: “Bạn trước hẹn gửi lại thông tin cho chị, tới đâu rồi?” Người mới chỉ có tên và số điện thoại, không biết đang nói việc gì.</p>\n<p>Khi NPP đổi người phụ trách, danh sách khách chưa đủ để tiếp việc. Cần bàn giao cả những việc đang hẹn, điều đã được xác nhận và câu hỏi còn chờ trả lời.</p>\n<h2>Bắt đầu từ việc chưa xong</h2>\n<p>Trước ngày chuyển, người cũ và người nhận cùng rà các điểm bán có việc mở. Không cần kể toàn bộ lịch sử từng cuộc gọi. Ưu tiên đơn đang theo dõi, thông tin đã hẹn gửi, phản hồi đang chờ xử lý và cuộc hẹn sắp tới.</p>\n<p>Mỗi việc ghi rõ khách đang chờ gì, lần trao đổi gần nhất, ai đang xử lý và bước tiếp theo. Kèm đường dẫn tới đơn hoặc tin nhắn liên quan trong nơi lưu của công ty. Chỉ chuyển thông tin công việc cần thiết, không chuyển cả tài khoản cá nhân hay mật khẩu.</p>\n<aside><strong>Một dòng đủ dùng:</strong> Điểm bán — việc đang chờ — căn cứ đã có — người nhận việc — mốc phản hồi tiếp theo.</aside>\n<h2>Tách điều đã chốt khỏi điều mới xin</h2>\n<p>“Khách hỏi có hỗ trợ không” khác với “quản lý đã duyệt hỗ trợ”. Nếu ghi chung thành “hỗ trợ khách”, người mới rất dễ hiểu rằng phải thực hiện ngay.</p>\n<p>Đánh dấu từng việc: đã xác nhận, chờ duyệt hoặc cần hỏi lại. Cam kết đã có phải được chuyển đúng nội dung và kiểm lại với người có thẩm quyền khi chưa rõ. Người mới không tự nâng ưu đãi để lấy lòng, cũng không phủi việc cũ bằng câu “bạn ấy nghỉ rồi”.</p>\n<figure><img src=\"__INLINE_IMAGE__\" alt=\"Bàn giao hồ sơ với các việc đã xác nhận, đang chờ và cần kiểm tra\" style=\"width:100%;height:auto\"/><figcaption>Ảnh minh họa</figcaption></figure>\n<h2>Giới thiệu người mới cùng một việc cụ thể</h2>\n<p>Dùng đầu mối công ty mà điểm bán đã biết để giới thiệu người tiếp nhận. Nêu rõ từ lúc nào khách có thể liên hệ người mới. Không cần kể lý do nghỉ việc hay chuyện nội bộ.</p>\n<blockquote><p><strong>Ví dụ minh họa:</strong> “Từ tuần này, bạn An tiếp nhận trao đổi với cửa hàng mình. Việc chị đang chờ bảng thông tin quy cách đã được bàn giao. An sẽ kiểm lại bản đúng và phản hồi chị trong mốc đã hẹn.”</p></blockquote>\n<p>Chỉ đưa mốc vào tin nhắn khi người nhận việc đã đồng ý và có khả năng làm. Nếu chưa xác định được thời gian, nói rõ đang kiểm tra và hẹn mốc cập nhật tình hình, thay vì hứa kết quả chưa chắc có.</p>\n<h2>Người nhận phải nói lại được bước kế tiếp</h2>\n<p>Trước khi kết thúc, cùng kiểm nhanh:</p>\n<ul><li>Người mới tìm được hồ sơ của vài việc đang mở.</li><li>Mỗi việc có người nhận và mốc phản hồi tiếp theo.</li><li>Điều đã xác nhận được tách khỏi điều còn chờ duyệt.</li><li>Người nhận nói lại được bước sẽ làm; thiếu căn cứ thì bổ sung ngay.</li></ul>\n<p>Quản lý giữ danh sách việc chưa khép để kiểm tiếp sau chuyển giao. Hoàn tất bàn giao không có nghĩa mọi phản hồi của khách đã giải quyết xong. Làm gọn từ đầu để điểm bán không phải kể lại cùng một chuyện cho từng người mới.</p>\n",
+      "content_hash": "f7bb505212e50cd6dc8291fd86592d92eaf0f9f1a0b5be1b7f818f7fcee4df79",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "2d312dc1c819ffcb4096bc03289f6e3eae1eb8c606b5e272d035f21f77bf352c",
+        "inline.webp": "ed1170fb73463e6bb61a6982f17b23c074fe6b1ff12d23ad70f7f69fde5736cd"
+      }
+    }
+  ]
+}
