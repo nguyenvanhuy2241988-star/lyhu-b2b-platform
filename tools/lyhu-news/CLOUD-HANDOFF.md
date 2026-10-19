@@ -32,6 +32,12 @@ assets: {"cover.webp": SHA256, "inline.webp": SHA256}
 
 The hashes are 64 lowercase hex characters. Public captions say only “Ảnh minh họa”. Cover is 1600×900 or another exact 16:9 size with safe logo/text margins. Inline images can have a different shape; inspect actual rendered images and retain their natural ratio. Do not mark failed or incomplete reviews true to fill slots. Publish fewer articles and report failure if needed.
 
+## Durable recovery checkpoints
+
+Save each draft, generated image and corrected image to the private Drive folder immediately, before starting the next artifact. Read back its file ID and hash, and update a small per-day journal with slot, version, QA status and remaining work. Do not wait for all three articles and six images to finish. Cloud scratch paths and execution cells are temporary and must not be the only copy.
+
+On resume, read the Drive journal and verify saved assets first. Restore only verified files; never mark a missing or unfinished artifact ready. If no execution environment is available or the subscription limit is reached, report the actual failure, preserve the publication gate and do not silently fall back to an unreviewed article or a paid AI API.
+
 ## Daily operating sequence
 
 1. Cloud prepares tomorrow's three distinct articles at 20:00 Asia/Ho_Chi_Minh. Confirm this schedule actually exists on ChatGPT web; local Codex automations do not work when the computer is off.
