@@ -1,0 +1,44 @@
+name: LYHU validate or stage Cloud daily handoff
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Vietnam date YYYY-MM-DD; package must already be on main'
+        required: true
+        type: string
+      stage:
+        description: 'Upload assets and create exact drafts (never publish)'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: lyhu-news-publisher
+  cancel-in-progress: false
+jobs:
+  handoff:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: tools/lyhu-news
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Tests without credentials
+        run: python3 -m unittest discover -s tests -v
+      - name: Validate entire public package without credentials
+        env:
+          TARGET_DATE: ${{ inputs.date }}
+        run: python3 accept_daily.py --date "$TARGET_DATE"
+      - name: Stage drafts and verify all three without publishing
+        if: inputs.stage == true
+        env:
+          TARGET_DATE: ${{ inputs.date }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          python3 accept_daily.py --date "$TARGET_DATE" --stage
+          python3 publish.py --queue-dir runtime-queue --check-all --date "$TARGET_DATE"
