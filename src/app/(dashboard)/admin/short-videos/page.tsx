@@ -43,7 +43,7 @@ export default function ShortVideosAdmin() {
     const [loading, setLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [tikTokTarget, setTikTokTarget] = useState<{ url: string; title: string } | null>(null);
+    const [tikTokTarget, setTikTokTarget] = useState<{ url: string; title: string; category?: string } | null>(null);
     const [filter, setFilter] = useState<string>('all');
     const [preview, setPreview] = useState<ShortVideo | null>(null);
 
@@ -330,7 +330,7 @@ export default function ShortVideosAdmin() {
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <button 
-                                                onClick={() => setTikTokTarget({ url: video.video_url, title: video.caption || video.title })}
+                                                onClick={() => setTikTokTarget({ url: video.video_url, title: video.caption || video.title, category: video.category || undefined })}
                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-black text-white hover:bg-gray-800 transition-all shadow-sm"
                                                 title="Đăng video này lên TikTok"
                                             >
@@ -405,7 +405,7 @@ export default function ShortVideosAdmin() {
                                     <Copy className="w-4 h-4" /> Sao chép link video
                                 </button>
                                 <button
-                                    onClick={() => { setTikTokTarget({ url: preview.video_url, title: preview.caption || preview.title }); setPreview(null); }}
+                                    onClick={() => { setTikTokTarget({ url: preview.video_url, title: preview.caption || preview.title, category: preview.category || undefined }); setPreview(null); }}
                                     className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold bg-black text-white"
                                 >
                                     Đăng TikTok
@@ -422,6 +422,7 @@ export default function ShortVideosAdmin() {
                 onClose={() => setTikTokTarget(null)}
                 videoUrl={tikTokTarget?.url || ''}
                 defaultTitle={tikTokTarget?.title || ''}
+                brandCategory={tikTokTarget?.category}
             />
         </div>
     );

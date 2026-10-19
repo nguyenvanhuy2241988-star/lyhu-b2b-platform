@@ -1,30 +1,60 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { getAppSecret, saveAppSecret } from '@/lib/settingsStore';
+import { getConnectedTikTokAccounts, removeTikTokAccount, updateTikTokAccountBrand } from '@/lib/tiktok';
 
 export async function GET() {
     try {
-        const creds = await getAppSecret('tiktok_credentials');
-        if (!creds || !creds.access_token) {
-            return NextResponse.json({ connected: false });
+        const accounts = await getConnectedTikTokAccounts();
+        if (!accounts || accounts.length === 0) {
+            return NextResponse.json({ connected: false, total: 0, accounts: [] });
         }
+
+        const safeAccounts = accounts.map(a => ({
+            open_id: a.open_id,
+            union_id: a.union_id,
+            display_name: a.display_name,
+            avatar_url: a.avatar_url,
+            brand_tag: a.brand_tag || 'Tất cả',
+            connected_at: a.connected_at,
+            expires_at: a.expires_at
+        }));
 
         return NextResponse.json({
             connected: true,
-            user: creds.user_info || null,
-            open_id: creds.open_id,
-            expires_at: creds.expires_at,
-            connected_at: creds.connected_at
+            total: safeAccounts.length,
+            accounts: safeAccounts,
+            user: safeAccounts[0],
+            open_id: safeAccounts[0].open_id
         });
     } catch (err: any) {
         return NextResponse.json({ connected: false, error: err.message }, { status: 500 });
     }
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
     try {
-        await saveAppSecret('tiktok_credentials', null, undefined, 'TikTok Disconnected');
-        return NextResponse.json({ success: true, message: 'Đã ngắt kết nối kênh TikTok' });
+        const url = new URL(request.url);
+        const openId = url.searchParams.get('open_id') || undefined;
+        const remaining = await removeTikTokAccount(openId);
+        return NextResponse.json({ 
+            success: true, 
+            message: openId ? 'Đã hủy kết nối kênh TikTok đã chọn' : 'Đã ngắt kết nối toàn bộ kênh TikTok',
+            remainingCount: remaining.length
+        });
+    } catch (err: any) {
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
+
+export async function PATCH(request: Request) {
+    try {
+        const body = await request.json();
+        const { open_id, brand_tag } = body;
+        if (!open_id || !brand_tag) {
+            return NextResponse.json({ error: 'Thiếu open_id hoặc brand_tag' }, { status: 400 });
+        }
+        const updated = await updateTikTokAccountBrand(open_id, brand_tag);
+        return NextResponse.json({ success: true, message: 'Đã cập nhật thương hiệu kênh', total: updated.length });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }

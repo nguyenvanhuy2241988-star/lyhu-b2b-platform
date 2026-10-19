@@ -55,7 +55,48 @@ export async function GET(request: Request) {
             console.warn('Không lấy được profile TikTok:', e);
         }
 
-        // 3. Lưu thông tin xác thực vào app_secrets
+        // 3. Cập nhật danh sách đa kênh tiktok_accounts
+        const { data: currentSec } = await supabase
+            .from('app_secrets')
+            .select('value')
+            .eq('key', 'tiktok_accounts')
+            .maybeSingle();
+
+        let accounts: any[] = Array.isArray(currentSec?.value) ? currentSec.value : [];
+
+        const newAccount = {
+            open_id: openId,
+            union_id: userInfo?.union_id,
+            display_name: userInfo?.display_name || 'Kênh TikTok',
+            avatar_url: userInfo?.avatar_url,
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            expires_at: Date.now() + expiresIn * 1000,
+            refresh_expires_at: Date.now() + refreshExpiresIn * 1000,
+            scope: scope,
+            connected_at: new Date().toISOString(),
+            brand_tag: 'Tất cả'
+        };
+
+        const existingIdx = accounts.findIndex((a: any) => a.open_id === openId);
+        if (existingIdx >= 0) {
+            accounts[existingIdx] = { 
+                ...accounts[existingIdx], 
+                ...newAccount,
+                brand_tag: accounts[existingIdx].brand_tag || 'Tất cả'
+            };
+        } else {
+            accounts.push(newAccount);
+        }
+
+        await supabase.from('app_secrets').upsert({
+            key: 'tiktok_accounts',
+            value: accounts,
+            description: 'Connected TikTok Multi-Channels List',
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+
+        // Vẫn lưu vào tiktok_credentials để đảm bảo tương thích các dịch vụ cũ
         const credentials = {
             access_token: accessToken,
             refresh_token: refreshToken,

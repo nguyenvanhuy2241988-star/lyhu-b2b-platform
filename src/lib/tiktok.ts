@@ -7,7 +7,7 @@ const TIKTOK_AUTH_URL = 'https://www.tiktok.com/v2/auth/authorize/';
 const TIKTOK_TOKEN_URL = 'https://open.tiktokapis.com/v2/oauth/token/';
 const TIKTOK_API_BASE = 'https://open.tiktokapis.com/v2';
 
-import { getAppSecret } from './settingsStore';
+import { getAppSecret, saveAppSecret } from './settingsStore';
 
 export const DEFAULT_TIKTOK_CLIENT_KEY = process.env.TIKTOK_CLIENT_KEY || 'sbawg088v4f5jy9mh9';
 export const DEFAULT_TIKTOK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET || 'E8YQ0B80E0d6977gA9WvafLvlKSSTgnL';
@@ -33,6 +33,121 @@ export async function getTikTokAppConfig() {
     };
 }
 
+export interface TikTokAccount {
+    open_id: string;
+    union_id?: string;
+    display_name: string;
+    avatar_url?: string;
+    access_token: string;
+    refresh_token: string;
+    expires_at: number;
+    refresh_expires_at: number;
+    scope: string;
+    connected_at: string;
+    brand_tag?: string;
+}
+
+export async function getConnectedTikTokAccounts(): Promise<TikTokAccount[]> {
+    try {
+        const accounts = await getAppSecret('tiktok_accounts');
+        if (Array.isArray(accounts) && accounts.length > 0) {
+            return accounts;
+        }
+        // Fallback to legacy single account
+        const creds = await getAppSecret('tiktok_credentials');
+        if (creds?.access_token && creds?.open_id) {
+            return [{
+                open_id: creds.open_id,
+                union_id: creds.user_info?.union_id,
+                display_name: creds.user_info?.display_name || 'Kênh TikTok',
+                avatar_url: creds.user_info?.avatar_url,
+                access_token: creds.access_token,
+                refresh_token: creds.refresh_token,
+                expires_at: creds.expires_at,
+                refresh_expires_at: creds.refresh_expires_at,
+                scope: creds.scope || '',
+                connected_at: creds.connected_at || new Date().toISOString(),
+                brand_tag: 'LYHU'
+            }];
+        }
+    } catch (e) {
+        console.warn('Error fetching tiktok_accounts:', e);
+    }
+    return [];
+}
+
+export async function saveTikTokAccount(account: TikTokAccount): Promise<TikTokAccount[]> {
+    const accounts = await getConnectedTikTokAccounts();
+    const idx = accounts.findIndex(a => a.open_id === account.open_id);
+    if (idx >= 0) {
+        accounts[idx] = { ...accounts[idx], ...account };
+    } else {
+        accounts.push(account);
+    }
+    await saveAppSecret('tiktok_accounts', accounts, undefined, 'Connected TikTok Multi-Channels List');
+    if (accounts.length > 0) {
+        const primary = accounts[0];
+        await saveAppSecret('tiktok_credentials', {
+            access_token: primary.access_token,
+            refresh_token: primary.refresh_token,
+            expires_at: primary.expires_at,
+            refresh_expires_at: primary.refresh_expires_at,
+            open_id: primary.open_id,
+            scope: primary.scope,
+            connected_at: primary.connected_at,
+            user_info: {
+                open_id: primary.open_id,
+                union_id: primary.union_id,
+                display_name: primary.display_name,
+                avatar_url: primary.avatar_url
+            }
+        }, undefined, 'TikTok Creator OAuth Credentials');
+    }
+    return accounts;
+}
+
+export async function removeTikTokAccount(openId?: string): Promise<TikTokAccount[]> {
+    if (!openId) {
+        await saveAppSecret('tiktok_accounts', [], undefined, 'Connected TikTok Multi-Channels List');
+        await saveAppSecret('tiktok_credentials', null, undefined, 'TikTok Disconnected');
+        return [];
+    }
+    const accounts = await getConnectedTikTokAccounts();
+    const filtered = accounts.filter(a => a.open_id !== openId);
+    await saveAppSecret('tiktok_accounts', filtered, undefined, 'Connected TikTok Multi-Channels List');
+    if (filtered.length > 0) {
+        const primary = filtered[0];
+        await saveAppSecret('tiktok_credentials', {
+            access_token: primary.access_token,
+            refresh_token: primary.refresh_token,
+            expires_at: primary.expires_at,
+            refresh_expires_at: primary.refresh_expires_at,
+            open_id: primary.open_id,
+            scope: primary.scope,
+            connected_at: primary.connected_at,
+            user_info: {
+                open_id: primary.open_id,
+                union_id: primary.union_id,
+                display_name: primary.display_name,
+                avatar_url: primary.avatar_url
+            }
+        }, undefined, 'TikTok Creator OAuth Credentials');
+    } else {
+        await saveAppSecret('tiktok_credentials', null, undefined, 'TikTok Disconnected');
+    }
+    return filtered;
+}
+
+export async function updateTikTokAccountBrand(openId: string, brandTag: string): Promise<TikTokAccount[]> {
+    const accounts = await getConnectedTikTokAccounts();
+    const idx = accounts.findIndex(a => a.open_id === openId);
+    if (idx >= 0) {
+        accounts[idx].brand_tag = brandTag;
+        await saveAppSecret('tiktok_accounts', accounts, undefined, 'Connected TikTok Multi-Channels List');
+    }
+    return accounts;
+}
+
 export interface TikTokTokenResponse {
     access_token: string;
     expires_in: number;
@@ -48,6 +163,7 @@ export interface TikTokTokenResponse {
 export interface TikTokPublishOptions {
     title: string;
     videoUrl?: string;
+    videoBuffer?: Buffer;
     privacyLevel?: 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'FOLLOWER_OF_CREATOR' | 'SELF_ONLY';
     disableDuet?: boolean;
     disableStitch?: boolean;
@@ -146,17 +262,20 @@ export async function getTikTokUserInfo(accessToken: string) {
  * 5. Publish video using FILE_UPLOAD (Bypasses TikTok domain verification requirement)
  */
 export async function publishVideoFromFileUpload(accessToken: string, options: TikTokPublishOptions) {
-    if (!options.videoUrl) {
-        throw new Error('Video URL is required for upload.');
+    let videoBuffer: Buffer;
+    if (options.videoBuffer) {
+        videoBuffer = options.videoBuffer;
+    } else {
+        if (!options.videoUrl) {
+            throw new Error('Video URL hoặc videoBuffer là bắt buộc để upload.');
+        }
+        const videoRes = await fetch(options.videoUrl);
+        if (!videoRes.ok) {
+            throw new Error(`Không thể tải video từ URL: ${videoRes.statusText}`);
+        }
+        const arrayBuffer = await videoRes.arrayBuffer();
+        videoBuffer = Buffer.from(arrayBuffer);
     }
-
-    // 1. Tải dữ liệu video từ URL (Supabase)
-    const videoRes = await fetch(options.videoUrl);
-    if (!videoRes.ok) {
-        throw new Error(`Không thể tải video từ URL: ${videoRes.statusText}`);
-    }
-    const arrayBuffer = await videoRes.arrayBuffer();
-    const videoBuffer = Buffer.from(arrayBuffer);
     const videoSize = videoBuffer.byteLength;
 
     let targetPrivacy = options.privacyLevel || 'SELF_ONLY';
@@ -216,7 +335,7 @@ export async function publishVideoFromFileUpload(accessToken: string, options: T
             'Content-Length': String(videoSize),
             'Content-Range': `bytes 0-${videoSize - 1}/${videoSize}`
         },
-        body: videoBuffer
+        body: new Uint8Array(videoBuffer)
     });
 
     if (!uploadRes.ok) {
