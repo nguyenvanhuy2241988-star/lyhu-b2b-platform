@@ -1,0 +1,26 @@
+{
+  "utc": "2026-10-19T07:38:25.170746+00:00",
+  "environment": "ChatGPT Work Cloud",
+  "assets": [
+    {
+      "drive_id": "1hngM9KW1EqleQ5hQ_MUe2ZQed6JKhehk",
+      "path": "tools/lyhu-news/cloud-recovery-test/cover.webp",
+      "width": 1536,
+      "height": 1024,
+      "source_bytes": 1206275,
+      "source_sha256": "ad4d3e6951996086fe139bb23c907df653889535dcfd4e9d6cbd34ad9f3079d4",
+      "bytes": 130786,
+      "sha256": "5eb2d65a8a885c71292c0b0e1efc30259b9b6fc41395e5f7f63bcec0a3aa03a8"
+    },
+    {
+      "drive_id": "12O1bjYZvA5labafWSKfLqywLBO1_vYc-",
+      "path": "tools/lyhu-news/cloud-recovery-test/inline.webp",
+      "width": 1000,
+      "height": 1000,
+      "source_bytes": 941970,
+      "source_sha256": "f0f5497da4e464b5007aa440dd1e5de84611ee797a295b4b59c92d60a4755c97",
+      "bytes": 51852,
+      "sha256": "ca6da350a27053242f3eca0ff6d20347d719129f81ae8925ae68f88ed72f0e69"
+    }
+  ]
+}
