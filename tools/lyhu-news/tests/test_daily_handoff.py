@@ -14,7 +14,7 @@ from run_daily import select_target
 class DailyHandoffTests(unittest.TestCase):
     def setUp(self):
         self.now = datetime(2026, 10, 19, 7, tzinfo=timezone.utc)
-        self.raw = b'RIFF' + b'\0' * 4 + b'WEBP' + b'x' * 1100
+        self.raw = b'RIFF' + b'\0' * 4 + b'WEBPVP8X' + (10).to_bytes(4, 'little') + b'\0' * 4 + (1599).to_bytes(3, 'little') + (899).to_bytes(3, 'little') + b'x' * 1100
         self.content = '<p>' + 'hàng về kiểm rõ số lượng ' * 60 + '</p><img src="__INLINE_IMAGE__"><figcaption>Ảnh minh họa</figcaption>'
         self.data = dict(schema_version=1, target_date_ict='2026-10-20', articles=[dict(
             slot=s, title='Kiểm hàng rõ ràng khi nhận', slug=f'kiem-hang-{s}', category_slug='goc-kinh-doanh',
@@ -39,6 +39,14 @@ class DailyHandoffTests(unittest.TestCase):
     def test_changed_asset_fails_before_network(self):
         with self.assertRaises(ValueError):
             self.load(raw=self.raw + b'changed')
+
+    def test_wrong_cover_ratio_rejected_even_with_matching_hash(self):
+        raw = self.raw[:27] + (1599).to_bytes(3, 'little') + self.raw[30:]
+        data = copy.deepcopy(self.data)
+        for p in data['articles']:
+            p['assets'] = {name: hashlib.sha256(raw).hexdigest() for name in p['assets']}
+        with self.assertRaises(ValueError):
+            self.load(data, raw)
 
     def test_unreviewed_or_modified_content_rejected(self):
         for field, value in [('ready_for_publish', False), ('content', self.content + '<p>changed</p>')]:
