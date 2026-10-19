@@ -23,9 +23,9 @@ def sha256(text):
 
 
 def eq(value):
-    # PostgREST quoted scalar: titles/HTML may contain commas, parentheses,
-    # quotes and backslashes. URL encoding alone is insufficient.
-    return 'eq."' + str(value).replace('\\', '\\\\').replace('"', '\\"') + '"'
+    # A single eq operand is raw; urlencode escapes the complete query value.
+    # Quoting here changes UUID/text values (list operators differ).
+    return 'eq.' + str(value)
 
 
 def parse_time(value):
