@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 
 from accept_daily import load_day, stage_day
 from publish import sha256
+from run_daily import select_target
 
 
 class DailyHandoffTests(unittest.TestCase):
@@ -29,6 +30,11 @@ class DailyHandoffTests(unittest.TestCase):
     def test_valid_day_has_exact_ict_slots(self):
         loaded = self.load()
         self.assertEqual([v[2].hour for v in loaded], [0, 6, 12])
+
+    def test_runner_rolls_ict_date_only_at_evening_staging(self):
+        self.assertEqual(select_target(datetime(2026, 10, 19, 14, 47, tzinfo=timezone.utc)), ('2026-10-20', True, 21))
+        self.assertEqual(select_target(datetime(2026, 10, 19, 0, 7, tzinfo=timezone.utc)), ('2026-10-19', False, 7))
+        self.assertIsNone(select_target(datetime(2026, 10, 19, 13, 0, tzinfo=timezone.utc)))
 
     def test_changed_asset_fails_before_network(self):
         with self.assertRaises(ValueError):
