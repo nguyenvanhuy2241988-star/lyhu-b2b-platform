@@ -1,0 +1,14 @@
+{
+  "title": "Mở thùng thấy thiếu gói: kiểm lại rồi báo nhà cung cấp cho rõ",
+  "slug": "mo-thung-thay-thieu-goi-kiem-lai-roi-bao-nha-cung-cap-cho-ro",
+  "request_id": "lyhu-cloud-handoff:2026-10-19:20261019T061541Z-a72c",
+  "category_slug": "goc-kinh-doanh",
+  "post_json_sha256": "e03ec0609355917460f99c62b3b49ead4e6bba76af7b29669c21c13971a206e7",
+  "source_content_sha256": "1029a39226ba3af935b7b448f200f2366dc1c22e1ddda85c4eedfca7cea840be",
+  "assets": {
+    "cover.webp": "8da3dce2c1f4f548cc72b8e672cfa1f4c5b429d8a3e0be6d6fb2ed99e889523e",
+    "inline.webp": "dfdfcc8e6277d495ddfa2f9f087c2a56e1be4b0eff69e8e24b5bc4036643b022"
+  },
+  "asset_prefix": "20261019T061541Z-a72c",
+  "expires_at_utc": "2026-10-19T10:00:00Z"
+}
