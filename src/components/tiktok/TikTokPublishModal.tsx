@@ -284,14 +284,24 @@ export default function TikTokPublishModal({
                 }
             }
 
-            // 3. Mở trang tạo Reel của Facebook cá nhân
-            window.open('https://www.facebook.com/reel/create', '_blank');
-            toast.success('🎉 Đang mở Facebook Reel! Hãy chọn file video vừa tải và dán (Ctrl+V) caption để đăng!');
+            // 3. Mở Facebook Web (Trang chủ Facebook với ô tạo bài viết kèm video)
+            window.open('https://www.facebook.com/', '_blank');
+            toast.success('🎉 Đã copy Caption & tải video! Bạn chỉ cần bấm vào ô "Ảnh/video" trên Facebook và Ctrl+V dán Caption!');
         } catch (err: any) {
             toast.error(err.message || 'Lỗi khi chuẩn bị bài viết');
         } finally {
             setSharingToPersonalFb(false);
         }
+    };
+
+    const handleQuickShareLink = () => {
+        if (!videoUrl) return;
+        try {
+            navigator.clipboard.writeText(title.trim());
+        } catch {}
+        const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(videoUrl)}`;
+        window.open(url, 'fb_share', 'width=620,height=580,menubar=no,toolbar=no');
+        toast.success('📋 Đã copy Caption! Đang mở hộp thoại chia sẻ Facebook...');
     };
 
     const handleDisconnectChannel = async (channel: UnifiedChannelItem) => {
@@ -584,25 +594,36 @@ export default function TikTokPublishModal({
                                             <div>
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="text-xs font-bold text-blue-950">
-                                                        Facebook Cá Nhân (Reels & Tin)
+                                                        Facebook Cá Nhân (Trang của bạn)
                                                     </span>
                                                     <span className="text-[10px] font-semibold bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded-full">
                                                         1 Chạm
                                                     </span>
                                                 </div>
-                                                <p className="text-[10px] text-blue-700">Tự động sao chép caption + tải video + mở Facebook Reel</p>
+                                                <p className="text-[10px] text-blue-700">Tự sao chép caption + tải video + mở Facebook để bạn dán & đăng</p>
                                             </div>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={handleShareToPersonalFacebook}
-                                            disabled={sharingToPersonalFb}
-                                            className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shadow-xs transition-colors shrink-0 flex items-center gap-1"
-                                            title="1 chạm sao chép caption và mở trình tạo Reel trên Facebook cá nhân"
-                                        >
-                                            <Share2 className="w-3 h-3" />
-                                            {sharingToPersonalFb ? 'Đang mở...' : 'Đăng ngay'}
-                                        </button>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={handleQuickShareLink}
+                                                className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-blue-100 text-blue-700 border border-blue-200 text-[11px] font-semibold shadow-xs transition-colors flex items-center gap-1"
+                                                title="Mở hộp thoại chia sẻ liên kết video lên Facebook cá nhân"
+                                            >
+                                                <ExternalLink className="w-3 h-3" />
+                                                Chia sẻ Link
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleShareToPersonalFacebook()}
+                                                disabled={sharingToPersonalFb}
+                                                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shadow-xs transition-colors flex items-center gap-1"
+                                                title="Tải video về máy, sao chép caption và mở Facebook để đăng"
+                                            >
+                                                <Share2 className="w-3 h-3" />
+                                                {sharingToPersonalFb ? 'Đang mở...' : 'Đăng video'}
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
 
