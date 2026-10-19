@@ -1,0 +1,30 @@
+name: LYHU publish approved Cloud article
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lyhu-news-publisher
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: tools/lyhu-news
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Test guards without credentials
+        run: python3 -m unittest discover -s tests -v
+      - name: Import and publish the approved Cloud article
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: >-
+          python3 import_approved.py
+          --plan approved/20261019-short-shipment/publication-plan.json
+          --package approved/20261019-short-shipment
