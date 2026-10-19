@@ -18,6 +18,26 @@ from publish import Http, ICT, SLUG, eq, parse_time, sha256, validate_manifest, 
 CHECKS = ('editorial', 'sources', 'dedup', 'images')
 
 
+def webp_size(raw):
+    """Read dimensions from a WebP container, without a network dependency."""
+    offset = 12
+    while offset + 8 <= len(raw):
+        kind = raw[offset:offset + 4]
+        size = int.from_bytes(raw[offset + 4:offset + 8], 'little')
+        payload = raw[offset + 8:offset + 8 + size]
+        if len(payload) != size:
+            break
+        if kind == b'VP8X' and size >= 10:
+            return 1 + int.from_bytes(payload[4:7], 'little'), 1 + int.from_bytes(payload[7:10], 'little')
+        if kind == b'VP8 ' and size >= 10 and payload[3:6] == b'\x9d\x01\x2a':
+            return int.from_bytes(payload[6:8], 'little') & 16383, int.from_bytes(payload[8:10], 'little') & 16383
+        if kind == b'VP8L' and size >= 5 and payload[0] == 47:
+            bits = int.from_bytes(payload[1:5], 'little')
+            return (bits & 16383) + 1, ((bits >> 14) & 16383) + 1
+        offset += 8 + size + (size % 2)
+    raise ValueError('Unreadable WebP dimensions')
+
+
 def load_day(folder, target, now):
     """Read and validate the whole day before any upload or database mutation."""
     day = datetime.strptime(target, '%Y-%m-%d').date()
@@ -60,6 +80,11 @@ def load_day(folder, target, now):
                 raise ValueError('Asset hash mismatch')
             if not 1000 <= len(raw) <= 2_000_000 or raw[:4] != b'RIFF' or raw[8:12] != b'WEBP':
                 raise ValueError('Invalid WebP')
+            width, height = webp_size(raw)
+            if name == 'cover.webp' and (width * 9 != height * 16 or width < 1200):
+                raise ValueError('Cover must be 16:9 and at least 1200 pixels wide')
+            if min(width, height) < 400:
+                raise ValueError('Image too small')
             assets[name] = raw
         due = datetime(day.year, day.month, day.day, slot, tzinfo=ICT).astimezone(timezone.utc)
         loaded.append((p, assets, due))
