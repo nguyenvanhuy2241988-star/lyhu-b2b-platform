@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "target_date_ict": "2026-10-20",
+  "articles": [
+    {
+      "id": "00000007-1111-4111-8111-111111111111",
+      "slot": 7,
+      "request_id": "lyhu-news:2026-10-20:7",
+      "slug": "vi-du-chua-san-sang-7",
+      "title": "VÍ DỤ — KHÔNG ĐĂNG",
+      "due_at_utc": "2026-10-20T00:00:00Z",
+      "thumbnail_url": "",
+      "asset_urls": [],
+      "content_hash": "",
+      "ready_for_publish": false,
+      "checks": {
+        "editorial": false,
+        "sources": false,
+        "dedup": false,
+        "images": false
+      }
+    },
+    {
+      "id": "00000013-1111-4111-8111-111111111111",
+      "slot": 13,
+      "request_id": "lyhu-news:2026-10-20:13",
+      "slug": "vi-du-chua-san-sang-13",
+      "title": "VÍ DỤ — KHÔNG ĐĂNG",
+      "due_at_utc": "2026-10-20T06:00:00Z",
+      "thumbnail_url": "",
+      "asset_urls": [],
+      "content_hash": "",
+      "ready_for_publish": false,
+      "checks": {
+        "editorial": false,
+        "sources": false,
+        "dedup": false,
+        "images": false
+      }
+    },
+    {
+      "id": "00000019-1111-4111-8111-111111111111",
+      "slot": 19,
+      "request_id": "lyhu-news:2026-10-20:19",
+      "slug": "vi-du-chua-san-sang-19",
+      "title": "VÍ DỤ — KHÔNG ĐĂNG",
+      "due_at_utc": "2026-10-20T12:00:00Z",
+      "thumbnail_url": "",
+      "asset_urls": [],
+      "content_hash": "",
+      "ready_for_publish": false,
+      "checks": {
+        "editorial": false,
+        "sources": false,
+        "dedup": false,
+        "images": false
+      }
+    }
+  ]
+}
