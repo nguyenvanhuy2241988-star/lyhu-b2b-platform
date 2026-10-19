@@ -1,0 +1,26 @@
+name: LYHU one-off publication test
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lyhu-news-publisher
+  cancel-in-progress: false
+jobs:
+  publish-test:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Run publisher tests
+        working-directory: tools/lyhu-news
+        run: python3 -m unittest discover -s tests -v
+      - name: Publish exactly one authorized reviewed draft
+        working-directory: tools/lyhu-news
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: python3 publish_once_20261019.py
