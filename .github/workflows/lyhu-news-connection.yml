@@ -1,0 +1,42 @@
+name: LYHU connection check
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify backend access without writes
+        working-directory: tools/lyhu-news
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          python3 - <<'PY'
+          import os, json, sys
+          from publish import Http
+          from urllib.error import HTTPError
+          base = os.environ.get('SUPABASE_URL', '').rstrip('/')
+          key = os.environ.get('SUPABASE_SECRET_KEY', '')
+          if base != 'https://wepxcpifgxghfvdgnkeh.supabase.co':
+              sys.exit('FAIL: SUPABASE_URL does not match LYHU project')
+          if not key.startswith('sb_secret_'):
+              sys.exit('FAIL: SUPABASE_SECRET_KEY must be a backend sb_secret key')
+          client = Http(base, key, 'https://www.lyhu.com.vn', [])
+          try:
+              code, _, raw = client.request(base + '/rest/v1/blog_posts?select=id&limit=1', authenticated=True)
+              rows = json.loads(raw)
+              if code != 200 or not isinstance(rows, list) or len(rows) != 1:
+                  sys.exit('FAIL: expected an accessible existing article')
+          except HTTPError as error:
+              sys.exit('FAIL: backend HTTP ' + str(error.code))
+          except Exception as error:
+              sys.exit('FAIL: ' + type(error).__name__)
+          print('PASS: correct LYHU project; backend key accepted; blog_posts readable; zero writes')
+          PY
