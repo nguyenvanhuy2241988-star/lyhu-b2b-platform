@@ -3,18 +3,21 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
     X, Send, CheckCircle, AlertCircle, RefreshCw, Lock, Globe, Users, 
-    Sparkles, Plus, Trash2, CheckSquare, Square, Tag, ExternalLink 
+    Sparkles, Plus, Trash2, CheckSquare, Square, Tag, ExternalLink,
+    Video, Settings, HelpCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface TikTokAccountItem {
-    open_id: string;
-    union_id?: string;
-    display_name: string;
+export type SocialPlatform = 'tiktok' | 'facebook' | 'youtube';
+
+export interface UnifiedChannelItem {
+    id: string; // open_id, page_id, or channel_id
+    platform: SocialPlatform;
+    name: string;
     avatar_url?: string;
-    brand_tag?: string;
+    brand_tag: string;
+    category?: string;
     connected_at?: string;
-    expires_at?: number;
 }
 
 interface TikTokPublishModalProps {
@@ -42,19 +45,29 @@ export default function TikTokPublishModal({
     brandCategory
 }: TikTokPublishModalProps) {
     const [title, setTitle] = useState(defaultTitle);
-    const [privacyLevel, setPrivacyLevel] = useState<'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY'>('SELF_ONLY');
+    const [privacyLevel, setPrivacyLevel] = useState<'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'SELF_ONLY'>('PUBLIC_TO_EVERYONE');
     const [disableComment, setDisableComment] = useState(false);
     const [disableDuet, setDisableDuet] = useState(false);
     const [disableStitch, setDisableStitch] = useState(false);
 
-    const [accounts, setAccounts] = useState<TikTokAccountItem[]>([]);
-    const [selectedOpenIds, setSelectedOpenIds] = useState<string[]>([]);
-    const [loadingAccounts, setLoadingAccounts] = useState(true);
+    // Channels state
+    const [channels, setChannels] = useState<UnifiedChannelItem[]>([]);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [activeTab, setActiveTab] = useState<'all' | 'tiktok' | 'facebook' | 'youtube'>('all');
+    const [loadingChannels, setLoadingChannels] = useState(true);
+
+    // YouTube config modal state
+    const [showYtConfigModal, setShowYtConfigModal] = useState(false);
+    const [ytClientId, setYtClientId] = useState('');
+    const [ytClientSecret, setYtClientSecret] = useState('');
+    const [savingYtConfig, setSavingYtConfig] = useState(false);
+    const [isYtConfigured, setIsYtConfigured] = useState(false);
+
     const [publishing, setPublishing] = useState(false);
     const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
-    const [changingBrandOpenId, setChangingBrandOpenId] = useState<string | null>(null);
+    const [changingBrandId, setChangingBrandId] = useState<string | null>(null);
 
-    // Map brandCategory prop to readable brand tag
+    // Normalize brandCategory prop (e.g., 'boyo' -> 'BOYO')
     const normalizedCategory = useMemo(() => {
         if (!brandCategory) return null;
         const b = brandCategory.toLowerCase();
@@ -66,102 +79,225 @@ export default function TikTokPublishModal({
         return null;
     }, [brandCategory]);
 
-    const fetchAccounts = useCallback(async () => {
-        setLoadingAccounts(true);
+    // Load all channels across TikTok, Facebook, and YouTube
+    const fetchAllChannels = useCallback(async () => {
+        setLoadingChannels(true);
+        const collected: UnifiedChannelItem[] = [];
+
         try {
-            const res = await fetch('/api/tiktok/status');
-            const data = await res.json();
-            if (data.connected && Array.isArray(data.accounts) && data.accounts.length > 0) {
-                setAccounts(data.accounts);
-                
-                // Tự động tích chọn kênh phù hợp với thương hiệu video
-                if (normalizedCategory) {
-                    const matched = data.accounts.filter(
-                        (a: TikTokAccountItem) => 
-                            (a.brand_tag || 'Tất cả') === normalizedCategory || 
-                            (a.brand_tag || 'Tất cả') === 'Tất cả'
-                    );
-                    if (matched.length > 0) {
-                        setSelectedOpenIds(matched.map((m: TikTokAccountItem) => m.open_id));
-                    } else {
-                        setSelectedOpenIds(data.accounts.map((a: TikTokAccountItem) => a.open_id));
-                    }
+            // 1. TikTok accounts
+            try {
+                const res = await fetch('/api/tiktok/status');
+                const data = await res.json();
+                if (data.connected && Array.isArray(data.accounts)) {
+                    data.accounts.forEach((a: any) => {
+                        collected.push({
+                            id: a.open_id,
+                            platform: 'tiktok',
+                            name: a.display_name,
+                            avatar_url: a.avatar_url,
+                            brand_tag: a.brand_tag || 'Tất cả',
+                            connected_at: a.connected_at
+                        });
+                    });
+                }
+            } catch (e) {
+                console.warn('Lỗi tải kênh TikTok:', e);
+            }
+
+            // 2. Facebook pages
+            try {
+                const res = await fetch('/api/facebook/pages');
+                const data = await res.json();
+                if (data.connected && Array.isArray(data.pages)) {
+                    data.pages.forEach((p: any) => {
+                        collected.push({
+                            id: p.page_id,
+                            platform: 'facebook',
+                            name: p.name,
+                            avatar_url: p.avatar_url,
+                            brand_tag: p.brand_tag || 'Tất cả',
+                            category: p.category
+                        });
+                    });
+                }
+            } catch (e) {
+                console.warn('Lỗi tải trang Facebook:', e);
+            }
+
+            // 3. YouTube channels
+            try {
+                const res = await fetch('/api/youtube/status');
+                const data = await res.json();
+                setIsYtConfigured(!!data.isConfigured);
+                if (data.connected && Array.isArray(data.accounts)) {
+                    data.accounts.forEach((a: any) => {
+                        collected.push({
+                            id: a.channel_id,
+                            platform: 'youtube',
+                            name: a.title,
+                            avatar_url: a.avatar_url,
+                            brand_tag: a.brand_tag || 'Tất cả',
+                            connected_at: a.connected_at
+                        });
+                    });
+                }
+            } catch (e) {
+                console.warn('Lỗi tải kênh YouTube:', e);
+            }
+
+            setChannels(collected);
+
+            // Auto-select channels matching brand or tagged 'Tất cả'
+            if (normalizedCategory) {
+                const matched = collected.filter(
+                    c => c.brand_tag === normalizedCategory || c.brand_tag === 'Tất cả'
+                );
+                if (matched.length > 0) {
+                    setSelectedIds(matched.map(m => m.id));
                 } else {
-                    setSelectedOpenIds(data.accounts.map((a: TikTokAccountItem) => a.open_id));
+                    setSelectedIds(collected.map(c => c.id));
                 }
             } else {
-                setAccounts([]);
-                setSelectedOpenIds([]);
+                setSelectedIds(collected.map(c => c.id));
             }
+
         } catch (err) {
-            console.error('Failed to load TikTok accounts', err);
-            setAccounts([]);
+            console.error('Failed to load channels', err);
         } finally {
-            setLoadingAccounts(false);
+            setLoadingChannels(false);
         }
     }, [normalizedCategory]);
 
     useEffect(() => {
         if (isOpen) {
             setTitle(defaultTitle);
-            fetchAccounts();
+            fetchAllChannels();
         }
-    }, [isOpen, defaultTitle, fetchAccounts]);
+    }, [isOpen, defaultTitle, fetchAllChannels]);
 
-    const handleConnectMore = () => {
-        window.location.href = '/api/tiktok/auth';
-    };
+    // Filter channels based on active tab
+    const filteredChannels = useMemo(() => {
+        if (activeTab === 'all') return channels;
+        return channels.filter(c => c.platform === activeTab);
+    }, [channels, activeTab]);
 
-    const handleToggleAccount = (openId: string) => {
-        setSelectedOpenIds(prev => 
-            prev.includes(openId) 
-                ? prev.filter(id => id !== openId) 
-                : [...prev, openId]
+    const counts = useMemo(() => ({
+        all: channels.length,
+        tiktok: channels.filter(c => c.platform === 'tiktok').length,
+        facebook: channels.filter(c => c.platform === 'facebook').length,
+        youtube: channels.filter(c => c.platform === 'youtube').length,
+    }), [channels]);
+
+    const handleToggleChannel = (id: string) => {
+        setSelectedIds(prev => 
+            prev.includes(id) 
+                ? prev.filter(item => item !== id) 
+                : [...prev, id]
         );
     };
 
-    const handleSelectAll = () => {
-        if (selectedOpenIds.length === accounts.length) {
-            setSelectedOpenIds([]);
+    const handleSelectAllVisible = () => {
+        const visibleIds = filteredChannels.map(c => c.id);
+        const allVisibleSelected = visibleIds.every(id => selectedIds.includes(id));
+        if (allVisibleSelected) {
+            setSelectedIds(prev => prev.filter(id => !visibleIds.includes(id)));
         } else {
-            setSelectedOpenIds(accounts.map(a => a.open_id));
+            setSelectedIds(prev => Array.from(new Set([...prev, ...visibleIds])));
         }
     };
 
-    const handleDisconnectAccount = async (openId: string, name: string) => {
-        if (!confirm(`Bạn có chắc chắn muốn ngắt kết nối kênh "${name}"?`)) return;
+    const handleConnectTikTok = () => {
+        window.location.href = '/api/tiktok/auth';
+    };
 
-        try {
-            const res = await fetch(`/api/tiktok/status?open_id=${encodeURIComponent(openId)}`, {
-                method: 'DELETE'
-            });
-            const data = await res.json();
-            if (data.success) {
-                toast.success(`Đã ngắt kết nối kênh ${name}`);
-                setAccounts(prev => prev.filter(a => a.open_id !== openId));
-                setSelectedOpenIds(prev => prev.filter(id => id !== openId));
-            } else {
-                throw new Error(data.error || 'Lỗi khi ngắt kết nối');
-            }
-        } catch (err: any) {
-            toast.error(err.message || 'Không thể ngắt kết nối');
+    const handleConnectYouTube = () => {
+        if (!isYtConfigured) {
+            setShowYtConfigModal(true);
+        } else {
+            window.location.href = '/api/youtube/auth';
         }
     };
 
-    const handleUpdateBrand = async (openId: string, newBrand: string) => {
+    const handleSaveYtConfig = async () => {
+        if (!ytClientId || !ytClientSecret) {
+            toast.error('Vui lòng nhập cả Client ID và Client Secret từ Google Cloud!');
+            return;
+        }
+        setSavingYtConfig(true);
         try {
-            const res = await fetch('/api/tiktok/status', {
-                method: 'PATCH',
+            const res = await fetch('/api/youtube/config', {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ open_id: openId, brand_tag: newBrand })
+                body: JSON.stringify({
+                    client_id: ytClientId,
+                    client_secret: ytClientSecret
+                })
             });
             const data = await res.json();
             if (data.success) {
-                toast.success('Đã gán thương hiệu cho kênh');
-                setAccounts(prev => prev.map(a => a.open_id === openId ? { ...a, brand_tag: newBrand } : a));
-                setChangingBrandOpenId(null);
+                toast.success('Đã lưu cấu hình Google YouTube App!');
+                setIsYtConfigured(true);
+                setShowYtConfigModal(false);
+                // Proceed to auth
+                window.location.href = '/api/youtube/auth';
+            } else {
+                throw new Error(data.error || 'Lỗi lưu cấu hình');
             }
         } catch (err: any) {
+            toast.error(err.message || 'Lỗi lưu cấu hình YouTube');
+        } finally {
+            setSavingYtConfig(false);
+        }
+    };
+
+    const handleDisconnectChannel = async (channel: UnifiedChannelItem) => {
+        if (!confirm(`Bạn có chắc muốn ngắt kết nối kênh "${channel.name}"?`)) return;
+
+        try {
+            if (channel.platform === 'tiktok') {
+                await fetch(`/api/tiktok/status?open_id=${encodeURIComponent(channel.id)}`, { method: 'DELETE' });
+            } else if (channel.platform === 'youtube') {
+                await fetch(`/api/youtube/status?channel_id=${encodeURIComponent(channel.id)}`, { method: 'DELETE' });
+            } else {
+                toast.info('Trang Facebook được quản lý trong mục Cài đặt Fanpage.');
+                return;
+            }
+
+            toast.success(`Đã ngắt kết nối kênh ${channel.name}`);
+            setChannels(prev => prev.filter(c => c.id !== channel.id));
+            setSelectedIds(prev => prev.filter(id => id !== channel.id));
+        } catch (err: any) {
+            toast.error(err.message || 'Lỗi khi ngắt kết nối');
+        }
+    };
+
+    const handleUpdateBrand = async (channel: UnifiedChannelItem, newBrand: string) => {
+        try {
+            if (channel.platform === 'tiktok') {
+                await fetch('/api/tiktok/status', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ open_id: channel.id, brand_tag: newBrand })
+                });
+            } else if (channel.platform === 'facebook') {
+                await fetch('/api/facebook/pages', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ page_id: channel.id, brand_tag: newBrand })
+                });
+            } else if (channel.platform === 'youtube') {
+                await fetch('/api/youtube/status', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channel_id: channel.id, brand_tag: newBrand })
+                });
+            }
+
+            setChannels(prev => prev.map(c => c.id === channel.id ? { ...c, brand_tag: newBrand } : c));
+            setChangingBrandId(null);
+            toast.success('Đã cập nhật nhãn thương hiệu cho kênh');
+        } catch {
             toast.error('Lỗi khi đổi nhãn thương hiệu');
         }
     };
@@ -179,8 +315,12 @@ export default function TikTokPublishModal({
             });
             const data = await res.json();
             if (data.caption) {
-                setTitle(data.caption);
-                toast.success('✨ AI đã sáng tạo caption & hashtag chuẩn viral!');
+                // Thêm tag #Shorts & #Reels nếu chưa có
+                let cap = data.caption;
+                if (!cap.includes('#Shorts')) cap += ' #Shorts';
+                if (!cap.includes('#Reels')) cap += ' #Reels';
+                setTitle(cap);
+                toast.success('✨ AI đã sáng tạo caption & hashtag đa nền tảng (TikTok • Reels • Shorts)!');
             } else {
                 throw new Error(data.error || 'Không tạo được caption');
             }
@@ -192,8 +332,8 @@ export default function TikTokPublishModal({
     };
 
     const handlePublish = async () => {
-        if (selectedOpenIds.length === 0) {
-            toast.error('Vui lòng chọn ít nhất 1 kênh TikTok để đăng!');
+        if (selectedIds.length === 0) {
+            toast.error('Vui lòng chọn ít nhất 1 kênh để phát sóng!');
             return;
         }
 
@@ -207,32 +347,39 @@ export default function TikTokPublishModal({
             return;
         }
 
+        const selectedChannels = channels.filter(c => selectedIds.includes(c.id));
+        const tiktokOpenIds = selectedChannels.filter(c => c.platform === 'tiktok').map(c => c.id);
+        const facebookPageIds = selectedChannels.filter(c => c.platform === 'facebook').map(c => c.id);
+        const youtubeChannelIds = selectedChannels.filter(c => c.platform === 'youtube').map(c => c.id);
+
         setPublishing(true);
         try {
-            const res = await fetch('/api/tiktok/publish', {
+            const res = await fetch('/api/social/publish-omni', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     title: title.trim(),
-                    videoUrl: videoUrl,
-                    privacyLevel: privacyLevel,
+                    videoUrl,
+                    privacyLevel,
                     disableComment,
                     disableDuet,
                     disableStitch,
-                    targetOpenIds: selectedOpenIds
+                    tiktokOpenIds,
+                    facebookPageIds,
+                    youtubeChannelIds
                 })
             });
 
             const data = await res.json();
             if (!res.ok || data.error) {
-                throw new Error(data.error || 'Đăng video thất bại');
+                throw new Error(data.error || 'Phát sóng video thất bại');
             }
 
-            toast.success(data.message || `Đã gửi đăng thành công lên ${data.successCount || selectedOpenIds.length} kênh!`);
+            toast.success(data.message || `Đã phát sóng thành công lên ${data.successCount}/${data.total} kênh!`);
             onClose();
         } catch (err: any) {
             console.error(err);
-            toast.error(err.message || 'Lỗi khi gửi video lên TikTok');
+            toast.error(err.message || 'Lỗi khi phát sóng video');
         } finally {
             setPublishing(false);
         }
@@ -242,19 +389,24 @@ export default function TikTokPublishModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col">
+            <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[92vh] flex flex-col">
                 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-black via-gray-900 to-gray-800 text-white shrink-0">
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z"/>
-                            </svg>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-slate-900 via-gray-900 to-black text-white shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center p-2">
+                            <Video className="w-5 h-5 text-amber-400" />
                         </div>
                         <div>
-                            <h3 className="font-semibold text-base leading-tight">Đăng video đa kênh TikTok</h3>
-                            <p className="text-xs text-gray-400">Đăng 1 chạm lên nhiều kênh TikTok cùng lúc</p>
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-base leading-tight">Phát sóng Đa Nền tảng (Omni-Channel)</h3>
+                                <div className="flex items-center gap-1">
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-black text-white border border-white/20 font-bold">TikTok</span>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-600 text-white font-bold">Facebook</span>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-600 text-white font-bold">YouTube</span>
+                                </div>
+                            </div>
+                            <p className="text-xs text-gray-400">Đăng 1 chạm lên TikTok • Facebook Reels • YouTube Shorts</p>
                         </div>
                     </div>
                     <button 
@@ -268,77 +420,134 @@ export default function TikTokPublishModal({
                 {/* Content body */}
                 <div className="p-6 space-y-5 overflow-y-auto flex-1">
                     
-                    {/* Multi-channel selector section */}
+                    {/* Platform tabs & Channel section */}
                     <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold uppercase tracking-wider text-gray-700">
-                                    Kênh đăng ({selectedOpenIds.length}/{accounts.length})
-                                </span>
-                                {normalizedCategory && (
-                                    <span className="text-[10px] font-medium bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
-                                        Video: {normalizedCategory}
-                                    </span>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {accounts.length > 1 && (
-                                    <button
-                                        type="button"
-                                        onClick={handleSelectAll}
-                                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
-                                    >
-                                        {selectedOpenIds.length === accounts.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
-                                    </button>
-                                )}
+                        
+                        {/* Tab header */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200/80 pb-3">
+                            <div className="flex items-center gap-1.5">
                                 <button
                                     type="button"
-                                    onClick={handleConnectMore}
-                                    className="inline-flex items-center gap-1 text-xs font-medium bg-black text-white px-2.5 py-1 rounded-lg hover:bg-gray-800 transition-colors"
+                                    onClick={() => setActiveTab('all')}
+                                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                        activeTab === 'all'
+                                            ? 'bg-black text-white shadow-xs'
+                                            : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                    }`}
                                 >
-                                    <Plus className="w-3.5 h-3.5" />
-                                    Thêm kênh
+                                    Tất cả ({counts.all})
                                 </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('tiktok')}
+                                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
+                                        activeTab === 'tiktok'
+                                            ? 'bg-black text-white shadow-xs'
+                                            : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                    }`}
+                                >
+                                    <span>🎵 TikTok</span> ({counts.tiktok})
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('facebook')}
+                                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
+                                        activeTab === 'facebook'
+                                            ? 'bg-blue-600 text-white shadow-xs'
+                                            : 'bg-white text-blue-700 hover:bg-blue-50 border border-blue-200'
+                                    }`}
+                                >
+                                    <span>🔵 Facebook</span> ({counts.facebook})
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('youtube')}
+                                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
+                                        activeTab === 'youtube'
+                                            ? 'bg-red-600 text-white shadow-xs'
+                                            : 'bg-white text-red-700 hover:bg-red-50 border border-red-200'
+                                    }`}
+                                >
+                                    <span>🔴 YouTube</span> ({counts.youtube})
+                                </button>
+                            </div>
+
+                            {/* Action buttons */}
+                            <div className="flex items-center gap-2">
+                                {filteredChannels.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={handleSelectAllVisible}
+                                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
+                                    >
+                                        Chọn/Bỏ tab này
+                                    </button>
+                                )}
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={handleConnectTikTok}
+                                        className="inline-flex items-center gap-1 text-[11px] font-semibold bg-black text-white px-2 py-1 rounded-lg hover:bg-gray-800 transition-colors"
+                                        title="Liên kết thêm kênh TikTok"
+                                    >
+                                        <Plus className="w-3 h-3" /> TikTok
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleConnectYouTube}
+                                        className="inline-flex items-center gap-1 text-[11px] font-semibold bg-red-600 text-white px-2 py-1 rounded-lg hover:bg-red-700 transition-colors"
+                                        title="Liên kết thêm kênh YouTube Shorts"
+                                    >
+                                        <Plus className="w-3 h-3" /> YouTube
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        {loadingAccounts ? (
-                            <div className="flex items-center justify-center py-6 gap-2 text-sm text-gray-500">
-                                <RefreshCw className="w-4 h-4 animate-spin" />
-                                Đang tải danh sách kênh TikTok...
+                        {/* Status bar */}
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                            <div>
+                                Đang chọn: <span className="font-bold text-gray-900">{selectedIds.length}</span> / {channels.length} kênh
+                                {normalizedCategory && (
+                                    <span className="ml-2 text-[10px] font-medium bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+                                        Khuyên dùng cho: {normalizedCategory}
+                                    </span>
+                                )}
                             </div>
-                        ) : accounts.length === 0 ? (
-                            <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-center space-y-2">
-                                <AlertCircle className="w-6 h-6 text-amber-500 mx-auto" />
-                                <p className="text-xs font-medium text-amber-900">Chưa có kênh TikTok nào được liên kết!</p>
-                                <p className="text-[11px] text-amber-700">Hãy bấm nút kết nối để ủy quyền đăng video tự động.</p>
-                                <button
-                                    type="button"
-                                    onClick={handleConnectMore}
-                                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black text-white text-xs font-medium hover:bg-gray-800"
-                                >
-                                    <Plus className="w-3.5 h-3.5" />
-                                    Kết nối kênh TikTok ngay
-                                </button>
+                            <span className="text-[11px] text-gray-400">
+                                Phát đồng thời tới các nền tảng
+                            </span>
+                        </div>
+
+                        {/* Channel items list */}
+                        {loadingChannels ? (
+                            <div className="flex items-center justify-center py-6 gap-2 text-sm text-gray-500">
+                                <RefreshCw className="w-4 h-4 animate-spin text-amber-500" />
+                                Đang tải danh sách mạng xã hội...
+                            </div>
+                        ) : filteredChannels.length === 0 ? (
+                            <div className="p-4 rounded-lg bg-gray-100 text-center space-y-1">
+                                <p className="text-xs font-semibold text-gray-700">Chưa có kênh nào trong mục này</p>
+                                <p className="text-[11px] text-gray-500">Bấm nút thêm kênh ở góc trên để liên kết tài khoản.</p>
                             </div>
                         ) : (
-                            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                                {accounts.map(account => {
-                                    const isSelected = selectedOpenIds.includes(account.open_id);
-                                    const isEditingBrand = changingBrandOpenId === account.open_id;
+                            <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                                {filteredChannels.map(channel => {
+                                    const isSelected = selectedIds.includes(channel.id);
+                                    const isEditingBrand = changingBrandId === channel.id;
 
                                     return (
                                         <div 
-                                            key={account.open_id}
-                                            className={`flex items-center justify-between p-2.5 rounded-lg border transition-all ${
+                                            key={`${channel.platform}_${channel.id}`}
+                                            className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
                                                 isSelected 
                                                     ? 'bg-white border-black/30 shadow-xs' 
-                                                    : 'bg-white/50 border-gray-200 opacity-60'
+                                                    : 'bg-white/60 border-gray-200 opacity-60'
                                             }`}
                                         >
                                             <div 
                                                 className="flex items-center gap-3 flex-1 cursor-pointer select-none"
-                                                onClick={() => handleToggleAccount(account.open_id)}
+                                                onClick={() => handleToggleChannel(channel.id)}
                                             >
                                                 {isSelected ? (
                                                     <CheckSquare className="w-4 h-4 text-black shrink-0" />
@@ -346,37 +555,49 @@ export default function TikTokPublishModal({
                                                     <Square className="w-4 h-4 text-gray-400 shrink-0" />
                                                 )}
 
-                                                {account.avatar_url ? (
-                                                    <img 
-                                                        src={account.avatar_url} 
-                                                        alt={account.display_name} 
-                                                        className="w-8 h-8 rounded-full border border-gray-200 shrink-0"
-                                                    />
-                                                ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-black text-white text-xs font-bold flex items-center justify-center shrink-0">
-                                                        TT
-                                                    </div>
-                                                )}
+                                                {/* Platform icon badge on avatar */}
+                                                <div className="relative shrink-0">
+                                                    {channel.avatar_url ? (
+                                                        <img 
+                                                            src={channel.avatar_url} 
+                                                            alt={channel.name} 
+                                                            className="w-8 h-8 rounded-full border border-gray-200 object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-slate-800 text-white text-xs font-bold flex items-center justify-center">
+                                                            {channel.name.slice(0, 2).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] text-white font-black shadow-xs ${
+                                                        channel.platform === 'tiktok' ? 'bg-black' :
+                                                        channel.platform === 'facebook' ? 'bg-blue-600' : 'bg-red-600'
+                                                    }`}>
+                                                        {channel.platform === 'tiktok' ? 'TT' : channel.platform === 'facebook' ? 'f' : 'YT'}
+                                                    </span>
+                                                </div>
 
                                                 <div className="truncate">
                                                     <div className="flex items-center gap-1.5">
                                                         <span className="text-xs font-semibold text-gray-900 truncate">
-                                                            {account.display_name}
+                                                            {channel.name}
                                                         </span>
                                                         <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                                                     </div>
-                                                    <p className="text-[10px] text-gray-500">Đã liên kết</p>
+                                                    <p className="text-[10px] text-gray-500 capitalize">
+                                                        {channel.platform === 'facebook' ? 'Fanpage Facebook' :
+                                                         channel.platform === 'tiktok' ? 'Kênh TikTok' : 'Kênh YouTube Shorts'}
+                                                    </p>
                                                 </div>
                                             </div>
 
-                                            {/* Brand tag badge & Disconnect */}
+                                            {/* Brand tag badge & Controls */}
                                             <div className="flex items-center gap-1.5 ml-2">
                                                 {isEditingBrand ? (
                                                     <select
                                                         autoFocus
-                                                        value={account.brand_tag || 'Tất cả'}
-                                                        onChange={(e) => handleUpdateBrand(account.open_id, e.target.value)}
-                                                        onBlur={() => setChangingBrandOpenId(null)}
+                                                        value={channel.brand_tag || 'Tất cả'}
+                                                        onChange={(e) => handleUpdateBrand(channel, e.target.value)}
+                                                        onBlur={() => setChangingBrandId(null)}
                                                         className="text-[11px] py-0.5 px-2 rounded border border-black bg-white"
                                                     >
                                                         {BRAND_OPTIONS.map(b => (
@@ -386,23 +607,25 @@ export default function TikTokPublishModal({
                                                 ) : (
                                                     <button
                                                         type="button"
-                                                        onClick={() => setChangingBrandOpenId(account.open_id)}
-                                                        title="Bấm để đổi thương hiệu gán cho kênh"
+                                                        onClick={() => setChangingBrandId(channel.id)}
+                                                        title="Gán nhãn thương hiệu cho kênh này"
                                                         className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center gap-1 transition-colors"
                                                     >
                                                         <Tag className="w-2.5 h-2.5 text-gray-500" />
-                                                        {account.brand_tag || 'Tất cả'}
+                                                        {channel.brand_tag || 'Tất cả'}
                                                     </button>
                                                 )}
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleDisconnectAccount(account.open_id, account.display_name)}
-                                                    title="Hủy liên kết kênh này"
-                                                    className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
+                                                {channel.platform !== 'facebook' && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDisconnectChannel(channel)}
+                                                        title="Hủy liên kết kênh này"
+                                                        className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -415,32 +638,32 @@ export default function TikTokPublishModal({
                     <div className="space-y-4">
                         <div>
                             <div className="flex items-center justify-between mb-1.5">
-                                <label className="block text-xs font-medium text-gray-700">
-                                    Tiêu đề & Hashtags (Caption) <span className="text-red-500">*</span>
+                                <label className="block text-xs font-semibold text-gray-800">
+                                    Tiêu đề & Nội dung đăng (Caption & Hashtags) <span className="text-red-500">*</span>
                                 </label>
                                 <button
                                     type="button"
                                     onClick={handleGenerateAICaption}
                                     disabled={isGeneratingCaption}
-                                    className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-800 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg transition-colors border border-amber-200 shadow-xs"
+                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-900 bg-amber-100/80 hover:bg-amber-200/80 px-2.5 py-1 rounded-lg transition-colors border border-amber-300 shadow-xs"
                                 >
                                     <Sparkles className={`w-3.5 h-3.5 text-amber-600 ${isGeneratingCaption ? 'animate-spin' : ''}`} />
-                                    {isGeneratingCaption ? 'AI đang viết...' : '✨ AI viết Caption & Hashtag'}
+                                    {isGeneratingCaption ? 'AI đang viết...' : '✨ AI viết Caption & Hashtag Đa Kênh'}
                                 </button>
                             </div>
                             <textarea
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 rows={4}
-                                placeholder="Nhập caption cho video hoặc bấm 'AI viết Caption & Hashtag'..."
-                                className="w-full text-sm p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/10 focus:border-black outline-none transition-all resize-none"
+                                placeholder="Nhập tiêu đề hoặc caption kèm hashtag..."
+                                className="w-full text-sm p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/10 focus:border-black outline-none transition-all resize-none font-sans"
                             />
                         </div>
 
                         {/* Privacy Level */}
                         <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                Quyền riêng tư của video
+                                Chế độ hiển thị video
                             </label>
                             <div className="grid grid-cols-3 gap-2">
                                 <button
@@ -453,7 +676,7 @@ export default function TikTokPublishModal({
                                     }`}
                                 >
                                     <Globe className="w-4 h-4" />
-                                    Công khai
+                                    Công khai (Tất cả)
                                 </button>
                                 <button
                                     type="button"
@@ -465,7 +688,7 @@ export default function TikTokPublishModal({
                                     }`}
                                 >
                                     <Users className="w-4 h-4" />
-                                    Bạn bè
+                                    Bạn bè / Người theo dõi
                                 </button>
                                 <button
                                     type="button"
@@ -477,12 +700,9 @@ export default function TikTokPublishModal({
                                     }`}
                                 >
                                     <Lock className="w-4 h-4" />
-                                    Chỉ mình tôi (Test)
+                                    Chỉ mình tôi (Kiểm thử)
                                 </button>
                             </div>
-                            <p className="mt-1 text-[11px] text-gray-500 italic">
-                                * Lưu ý: Trong lúc app TikTok đang duyệt kiểm duyệt chính thức, TikTok yêu cầu đăng ở chế độ riêng tư (Chỉ mình tôi). Khi app được duyệt xong, bạn có thể chọn Công khai hoàn toàn.
-                            </p>
                         </div>
 
                         {/* Interactive toggles */}
@@ -503,7 +723,7 @@ export default function TikTokPublishModal({
                                     onChange={(e) => setDisableDuet(!e.target.checked)}
                                     className="rounded border-gray-300 text-black focus:ring-black"
                                 />
-                                Cho phép Duet
+                                Cho phép Duet / Remix
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
@@ -520,11 +740,9 @@ export default function TikTokPublishModal({
 
                 {/* Footer */}
                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between shrink-0">
-                    <span className="text-xs text-gray-500">
-                        {selectedOpenIds.length > 0 
-                            ? `Đang chọn ${selectedOpenIds.length} kênh` 
-                            : 'Chưa chọn kênh'}
-                    </span>
+                    <div className="flex items-center gap-2 text-xs text-gray-600 font-medium">
+                        <span>Đã chọn: <strong className="text-gray-900">{selectedIds.length}</strong> kênh</span>
+                    </div>
                     <div className="flex items-center gap-3">
                         <button
                             onClick={onClose}
@@ -535,26 +753,101 @@ export default function TikTokPublishModal({
                         </button>
                         <button
                             onClick={handlePublish}
-                            disabled={publishing || selectedOpenIds.length === 0}
-                            className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-black text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-sm"
+                            disabled={publishing || selectedIds.length === 0}
+                            className="px-5 py-2.5 rounded-xl text-xs font-bold bg-black text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-sm"
                         >
                             {publishing ? (
                                 <>
-                                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                                    Đang phát sóng lên TikTok...
+                                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                                    Đang phát sóng lên các mạng xã hội...
                                 </>
                             ) : (
                                 <>
                                     <Send className="w-3.5 h-3.5" />
-                                    {selectedOpenIds.length > 1 
-                                        ? `Đăng lên ${selectedOpenIds.length} kênh TikTok` 
-                                        : 'Đăng lên TikTok'}
+                                    {selectedIds.length > 1 
+                                        ? `Phát sóng lên ${selectedIds.length} kênh (TikTok • FB • YouTube)` 
+                                        : 'Phát sóng video'}
                                 </>
                             )}
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* Modal cấu hình Google YouTube App */}
+            {showYtConfigModal && (
+                <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in">
+                        <div className="flex items-center justify-between border-b pb-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-lg bg-red-600 text-white flex items-center justify-center font-bold text-xs">
+                                    YT
+                                </div>
+                                <h4 className="font-bold text-sm">Cấu hình YouTube Data API</h4>
+                            </div>
+                            <button onClick={() => setShowYtConfigModal(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <p className="text-xs text-gray-600">
+                            Nhập <strong>Client ID</strong> và <strong>Client Secret</strong> từ Google Cloud Console (OAuth 2.0 Web Application) để liên kết kênh YouTube Shorts:
+                        </p>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Google Client ID
+                                </label>
+                                <input
+                                    type="text"
+                                    value={ytClientId}
+                                    onChange={(e) => setYtClientId(e.target.value)}
+                                    placeholder="xxx.apps.googleusercontent.com"
+                                    className="w-full text-xs p-2.5 border rounded-lg outline-none focus:border-red-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Google Client Secret
+                                </label>
+                                <input
+                                    type="password"
+                                    value={ytClientSecret}
+                                    onChange={(e) => setYtClientSecret(e.target.value)}
+                                    placeholder="GOCSPX-..."
+                                    className="w-full text-xs p-2.5 border rounded-lg outline-none focus:border-red-500"
+                                />
+                            </div>
+
+                            <div className="p-2.5 rounded-lg bg-gray-50 border text-[11px] text-gray-500 space-y-1">
+                                <p className="font-semibold text-gray-700">Redirect URI cần thêm trên Google Cloud:</p>
+                                <code className="block bg-white p-1 rounded border text-[10px] break-all">
+                                    https://www.lyhu.com.vn/api/youtube/callback
+                                </code>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                            <button
+                                onClick={() => setShowYtConfigModal(false)}
+                                className="px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100 rounded-lg"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleSaveYtConfig}
+                                disabled={savingYtConfig}
+                                className="px-4 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-1.5"
+                            >
+                                {savingYtConfig && <RefreshCw className="w-3 h-3 animate-spin" />}
+                                Lưu & Xác thực YouTube
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
