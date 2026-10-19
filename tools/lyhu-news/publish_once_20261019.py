@@ -1,7 +1,22 @@
 """One authorized publication test, fixed article and expiring deadline."""
-import os, sys
+import os, sys, json
+from urllib.error import HTTPError
 from datetime import datetime, timezone
 from publish import Http, process_job
+
+class DiagnosticHttp(Http):
+    def request(self, url, method='GET', body=None, authenticated=False):
+        stage = 'database' if authenticated else ('asset' if '/storage/' in url else 'public-page')
+        print('HTTP stage=' + stage + ' method=' + method, flush=True)
+        try:
+            return super().request(url, method, body, authenticated)
+        except HTTPError as error:
+            try:
+                code = json.loads(error.read(4096)).get('code', 'unknown')
+            except Exception:
+                code = 'non-json'
+            print('HTTP failed status=' + str(error.code) + ' code=' + str(code), flush=True)
+            raise
 
 def main():
     now = datetime.now(timezone.utc)
@@ -25,7 +40,7 @@ def main():
         # Explicit user request to publish this completed draft NOW, not backfill a daily slot.
         'due_at_utc': now.isoformat(),
     }
-    api = Http(base, secret, 'https://www.lyhu.com.vn', ['wepxcpifgxghfvdgnkeh.supabase.co'])
+    api = DiagnosticHttp(base, secret, 'https://www.lyhu.com.vn', ['wepxcpifgxghfvdgnkeh.supabase.co'])
     print(process_job(job, api, dry_run=False))
     print('https://www.lyhu.com.vn/tin-tuc/' + job['slug'])
 
