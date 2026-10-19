@@ -1,0 +1,48 @@
+name: LYHU news publisher
+on:
+  schedule:
+    - cron: '7,17,27,37,47,57 0,6,12 * * *'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Actual publication (requires LYHU_PUBLISHER_ENABLED=true)'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: lyhu-news-publisher
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: >-
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      (github.event_name == 'workflow_dispatch' || vars.LYHU_PUBLISHER_ENABLED == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: tools/lyhu-news
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Test without credentials
+        run: python3 -m unittest discover -s tests -v
+      - name: Verify explicit live gate
+        if: github.event_name == 'workflow_dispatch' && inputs.publish == true && vars.LYHU_PUBLISHER_ENABLED != 'true'
+        run: |
+          echo 'Set LYHU_PUBLISHER_ENABLED=true only after dry-run and publisher cutover.'
+          exit 1
+      - name: Check or publish queue
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LIVE: ${{ github.event_name == 'schedule' || inputs.publish == true }}
+        run: |
+          if [ "$LIVE" = "true" ]; then
+            python3 publish.py --publish
+          else
+            python3 publish.py --check-all
+          fi
