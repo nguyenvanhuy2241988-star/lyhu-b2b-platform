@@ -98,6 +98,14 @@ class PublisherTests(unittest.TestCase):
         self.assertEqual(filters['published_at'], ['is.null'])
         self.assertEqual(set(captured['body']), {'status', 'published_at', 'updated_at'})
 
+    def test_scalar_filters_preserve_uuid_and_html_exactly(self):
+        values = ['ebed39d1-3a06-468c-a638-9a659c201d1d',
+                  '2026-10-17T19:59:13.861492+00:00',
+                  '<p title="a,b">x & y (z) \\ text</p>']
+        for value in values:
+            query = __import__('urllib.parse', fromlist=['urlencode']).urlencode({'id': eq(value)})
+            self.assertEqual(parse_qs(query)['id'], ['eq.' + value])
+
     def test_expired_window_cannot_write(self):
         job, row = fixture()
         job['due_at_utc'] = '2000-01-01T00:00:00Z'
