@@ -63,6 +63,7 @@ export default function TikTokPublishModal({
     const [savingYtConfig, setSavingYtConfig] = useState(false);
     const [isYtConfigured, setIsYtConfigured] = useState(false);
     const [sharingToPersonalFb, setSharingToPersonalFb] = useState(false);
+    const [showFbPersonalGuide, setShowFbPersonalGuide] = useState(false);
 
     const [publishing, setPublishing] = useState(false);
     const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
@@ -260,48 +261,33 @@ export default function TikTokPublishModal({
 
         setSharingToPersonalFb(true);
         try {
-            // 1. Tự động sao chép caption & hashtags
+            // 1. Tự động sao chép caption & hashtags vào bộ nhớ tạm
             await navigator.clipboard.writeText(title.trim());
-            toast.success('📋 Đã sao chép Caption & Hashtags vào bộ nhớ tạm!');
+            toast.success('📋 Đã copy Caption & Hashtags vào bộ nhớ tạm!');
 
-            // 2. Kích hoạt tải file video MP4 về máy để kéo thả vào Reel
+            // 2. Kích hoạt tải video MP4 trực tiếp về máy tính bằng proxy download attachment
             if (videoUrl) {
-                try {
-                    const res = await fetch(videoUrl);
-                    const blob = await res.blob();
-                    const blobUrl = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = blobUrl;
-                    a.download = `video_lyhu_reel_${Date.now()}.mp4`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(blobUrl);
-                    document.body.removeChild(a);
-                    toast.info('⬇️ Đang tải video xuống máy để bạn đăng lên Facebook...');
-                } catch {
-                    window.open(videoUrl, '_blank');
-                }
+                const safeName = 'video_lyhu_fb.mp4';
+                const downloadUrl = `/api/media/download?url=${encodeURIComponent(videoUrl)}&filename=${encodeURIComponent(safeName)}`;
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = downloadUrl;
+                a.setAttribute('download', safeName);
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => document.body.removeChild(a), 3000);
             }
 
-            // 3. Mở Facebook Web (Trang chủ Facebook với ô tạo bài viết kèm video)
+            // 3. Mở Facebook trong tab mới
             window.open('https://www.facebook.com/', '_blank');
-            toast.success('🎉 Đã copy Caption & tải video! Bạn chỉ cần bấm vào ô "Ảnh/video" trên Facebook và Ctrl+V dán Caption!');
+
+            // 4. Bật modal hướng dẫn các bước chi tiết
+            setShowFbPersonalGuide(true);
         } catch (err: any) {
-            toast.error(err.message || 'Lỗi khi chuẩn bị bài viết');
+            toast.error(err.message || 'Lỗi khi chuẩn bị đăng video');
         } finally {
             setSharingToPersonalFb(false);
         }
-    };
-
-    const handleQuickShareLink = () => {
-        if (!videoUrl) return;
-        try {
-            navigator.clipboard.writeText(title.trim());
-        } catch {}
-        const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(videoUrl)}`;
-        window.open(url, 'fb_share', 'width=620,height=580,menubar=no,toolbar=no');
-        toast.success('📋 Đã copy Caption! Đang mở hộp thoại chia sẻ Facebook...');
     };
 
     const handleDisconnectChannel = async (channel: UnifiedChannelItem) => {
@@ -600,30 +586,19 @@ export default function TikTokPublishModal({
                                                         1 Chạm
                                                     </span>
                                                 </div>
-                                                <p className="text-[10px] text-blue-700">Tự sao chép caption + tải video + mở Facebook để bạn dán & đăng</p>
+                                                <p className="text-[10px] text-blue-700">Tải file video MP4 gốc + Copy caption + Mở Facebook để dán và đăng</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-1.5 shrink-0">
-                                            <button
-                                                type="button"
-                                                onClick={handleQuickShareLink}
-                                                className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-blue-100 text-blue-700 border border-blue-200 text-[11px] font-semibold shadow-xs transition-colors flex items-center gap-1"
-                                                title="Mở hộp thoại chia sẻ liên kết video lên Facebook cá nhân"
-                                            >
-                                                <ExternalLink className="w-3 h-3" />
-                                                Chia sẻ Link
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleShareToPersonalFacebook()}
-                                                disabled={sharingToPersonalFb}
-                                                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shadow-xs transition-colors flex items-center gap-1"
-                                                title="Tải video về máy, sao chép caption và mở Facebook để đăng"
-                                            >
-                                                <Share2 className="w-3 h-3" />
-                                                {sharingToPersonalFb ? 'Đang mở...' : 'Đăng video'}
-                                            </button>
-                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleShareToPersonalFacebook}
+                                            disabled={sharingToPersonalFb}
+                                            className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors shrink-0 flex items-center gap-1.5"
+                                            title="Tải video MP4 về máy, sao chép caption và mở Facebook"
+                                        >
+                                            <Download className="w-3.5 h-3.5" />
+                                            {sharingToPersonalFb ? 'Đang chuẩn bị...' : 'Tải & Đăng lên FB'}
+                                        </button>
                                     </div>
                                 )}
 
@@ -950,6 +925,64 @@ export default function TikTokPublishModal({
                             >
                                 {savingYtConfig && <RefreshCw className="w-3 h-3 animate-spin" />}
                                 Lưu & Xác thực YouTube
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal hướng dẫn đăng video gốc lên Facebook Cá Nhân */}
+            {showFbPersonalGuide && (
+                <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/75 p-4 animate-in fade-in">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+                        <div className="flex items-center justify-between border-b pb-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                                    f
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-sm text-gray-900">Đăng Video Lên Facebook Cá Nhân</h4>
+                                    <p className="text-[11px] text-emerald-600 font-semibold">✓ Đã copy Caption & đang tải video MP4</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowFbPersonalGuide(false)} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 text-xs text-gray-700">
+                            <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-200">
+                                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center shrink-0 text-xs">1</span>
+                                <div>
+                                    <strong className="text-gray-900">File video MP4</strong> đang được tự động tải về máy của bạn (kiểm tra thư mục <em>Downloads</em>).
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-200">
+                                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center shrink-0 text-xs">2</span>
+                                <div>
+                                    Trên tab Facebook vừa mở, bấm vào nút <strong>"Ảnh/video"</strong> (nút màu xanh lá trong ô tạo bài viết) và chọn file video vừa tải.
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-200">
+                                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center shrink-0 text-xs">3</span>
+                                <div>
+                                    Nhấn <strong>Ctrl + V</strong> để dán Caption & Hashtags đã được copy sẵn, sau đó bấm <strong>Đăng</strong>!
+                                </div>
+                            </div>
+                        </div>
+
+                        <p className="text-[11px] text-gray-500 italic bg-blue-50 p-2.5 rounded-lg border border-blue-100">
+                            💡 <strong>Mẹo:</strong> Video đăng theo cách này sẽ hiển thị dưới dạng <strong>Video Native / Reel</strong> chuẩn 100%, có nút xem video, tự động phát và tiếp cận tối đa bạn bè!
+                        </p>
+
+                        <div className="pt-2 flex justify-end">
+                            <button
+                                onClick={() => setShowFbPersonalGuide(false)}
+                                className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                            >
+                                Đã hiểu & Sang Facebook đăng bài
                             </button>
                         </div>
                     </div>
