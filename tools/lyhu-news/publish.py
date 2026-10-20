@@ -204,15 +204,7 @@ def main():
         date = args.date
     # Outside a due window do nothing. Within a window missing queue is an error.
     active_hour = now.astimezone(ICT).hour
-    if 7 <= active_hour < 13:
-        target_slot = 7
-    elif 13 <= active_hour < 19:
-        target_slot = 13
-    elif 19 <= active_hour < 21:
-        target_slot = 19
-    else:
-        target_slot = None
-    if not args.check_all and target_slot is None:
+    if not args.check_all and active_hour not in (7, 13, 19):
         print(json.dumps({'status': 'outside_publication_window', 'date': date}))
         return 0
     manifest = json.loads((Path(args.queue_dir) / (date + '.json')).read_text(encoding='utf-8-sig'))
@@ -227,7 +219,7 @@ def main():
     api = Http(base, secret, 'https://www.lyhu.com.vn', [parsed.hostname])
     failed = False
     for job in jobs:
-        if not args.check_all and job['slot'] != target_slot:
+        if not args.check_all and job['slot'] != active_hour:
             continue
         try:
             result = process_job(job, api, not args.publish)
