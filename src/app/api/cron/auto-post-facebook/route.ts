@@ -39,7 +39,7 @@ export async function GET(req: Request) {
             `)
             .eq('status', 'published')
             .eq('is_fb_shared', false)
-            .order('published_at', { ascending: true }) // Ưu tiên đăng bài cũ trước nếu có tồn đọng
+            .order('published_at', { ascending: false }) // Ưu tiên đăng bài mới nhất
             .limit(1) as { data: any[] | null; error: any };
 
         if (postError) {

@@ -25,20 +25,22 @@ export async function GET(req: Request) {
 
         const page = pages[0];
 
-        // 2. Lấy các danh mục B2B
-        const b2bCategories = ['goc-nha-phan-phoi', 'tap-hoa-gt', 'cong-nghe-ban-le', 'nghe-fmcg'];
+        // 2. Lấy các danh mục B2B & Bán lẻ
+        const b2bCategories = ['goc-nha-phan-phoi', 'tap-hoa-gt', 'cong-nghe-ban-le', 'nghe-fmcg', 'ban-le-hien-dai', 'cua-hang-tien-loi', 'nha-phan-phoi-diem-ban'];
 
-        // 3. Tìm 1 bài viết mới nhất chưa được chia sẻ lên LYHU Fanpage và thuộc danh mục B2B
+        // 3. Chỉ chọn bài viết ChatGPT (request_id bắt đầu bằng 'lyhu-news:'), có ảnh bìa thiết kế, ưu tiên bài mới nhất
         const { data: posts, error: postError } = await supabase
             .from('blog_posts')
             .select(`
-                id, title, slug, ai_summary, meta_title, keywords, thumbnail_url,
+                id, title, slug, content, ai_summary, meta_title, keywords, thumbnail_url,
                 blog_categories!inner(slug)
             `)
             .eq('status', 'published')
             .eq('is_lyhu_fb_shared', false)
+            .ilike('request_id', 'lyhu-news:%')
+            .not('thumbnail_url', 'is', null)
             .in('blog_categories.slug', b2bCategories)
-            .order('published_at', { ascending: true }) // Ưu tiên đăng bài cũ trước
+            .order('published_at', { ascending: false }) // Ưu tiên bài mới nhất của ChatGPT
             .limit(1) as { data: any[] | null; error: any };
 
         if (postError) {
@@ -66,8 +68,15 @@ export async function GET(req: Request) {
             }
         }
 
-        const summary = post.ai_summary || post.meta_title || '';
-        const caption = `${post.title}\n\n${summary}\n\n👉 Nhập sỉ giá tốt, chiết khấu cao tại: https://lyhu.com.vn\n👉 Xem chi tiết bài viết: ${postUrl}\n\n${hashtagsStr}`;
+        // Chuẩn bị đoạn tóm tắt hấp dẫn (tránh trùng lặp tiêu đề)
+        const cleanContentText = post.content ? post.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+        const summary = (post.ai_summary && post.ai_summary !== post.title)
+            ? post.ai_summary
+            : (cleanContentText ? (cleanContentText.length > 220 ? cleanContentText.slice(0, 220) + '...' : cleanContentText) : '');
+
+        const caption = summary 
+            ? `${post.title}\n\n${summary}\n\n👉 Nhập sỉ giá tốt, chiết khấu cao tại: https://lyhu.com.vn\n👉 Xem chi tiết bài viết: ${postUrl}\n\n${hashtagsStr}`
+            : `${post.title}\n\n👉 Nhập sỉ giá tốt, chiết khấu cao tại: https://lyhu.com.vn\n👉 Xem chi tiết bài viết: ${postUrl}\n\n${hashtagsStr}`;
 
         // 5. Force Facebook Scrape (Ép Facebook lấy OpenGraph mới nhất để không bị mất ảnh)
         try {
