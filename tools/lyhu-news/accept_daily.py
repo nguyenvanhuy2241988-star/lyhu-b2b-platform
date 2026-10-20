@@ -109,7 +109,7 @@ def stage_day(loaded, target, backend, api):
         collisions = backend.rows('blog_posts', {'slug': eq(p['slug']), 'select': 'id'})
         if any(r['id'] != expected_id for r in collisions):
             raise ValueError('Slug collision')
-        if datetime.now(timezone.utc) >= due + timedelta(minutes=60) and not existing:
+        if datetime.now(timezone.utc) >= due + timedelta(hours=6) and not existing:
             raise ValueError('Cannot stage a missed publication')
     jobs = []
     for p, assets, due in loaded:
