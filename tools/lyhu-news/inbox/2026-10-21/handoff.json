@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "target_date_ict": "2026-10-21",
+  "articles": [
+    {
+      "slot": 7,
+      "request_id": "lyhu-news:2026-10-21:7",
+      "title": "Khách hỏi món tiệm chưa có: ghi lại sao cho khỏi nhập theo cảm giác?",
+      "slug": "khach-hoi-mon-tiem-chua-co-ghi-nhu-cau-truoc-khi-nhap",
+      "category_slug": "tap-hoa-gt",
+      "content": "<p>Buổi sáng có người hỏi một loại snack tiệm chưa bán. Buổi chiều lại nghe hỏi “loại đó có chưa?”. Chủ tiệm thấy có vẻ nhiều người cần, định gọi ngay vài thùng. Nhưng hai lượt hỏi ấy có phải hai khách khác nhau, và họ có định mua thật không?</p>\n<p>Những câu hỏi chưa thành đơn thường không nằm trong báo cáo bán hàng. Một tờ ghi nhu cầu giúp giữ lại tín hiệu này để xem xét, thay vì chỉ nhớ món được hỏi gần nhất.</p>\n<h2>Trước hết, phân biệt chưa bán với đang hết</h2>\n<p>Khách hỏi món tiệm vốn có thì kiểm cả kệ và chỗ cất hàng. Có hàng phía trong nhưng chưa mang ra là việc bổ sung kệ. Đã hết thật là việc xem lại đặt hàng. Món tiệm chưa từng bán mới đưa vào danh sách cân nhắc thêm.</p>\n<p>Đừng gộp ba trường hợp thành “khách hỏi mà không có”. Mỗi trường hợp cần một việc khác nhau; gọi thêm hàng chưa chắc giải quyết được kệ trống.</p>\n<h2>Ghi đúng món và điều khách đang cần</h2>\n<p>Hỏi ngắn tên hoặc loại hàng, vị, cỡ gói và khách định mua mấy gói. Nếu khách chỉ nhớ bao bì, có thể nhờ họ cho xem ảnh; chưa xác định được thì ghi “cần làm rõ”, đừng tự chọn một mã gần giống.</p>\n<p>Ghi ngày hỏi và kết quả: khách mua món thay thế, muốn được báo khi có hàng, hay chỉ hỏi tham khảo. Không cần lấy số điện thoại để đếm lượt hỏi. Chỉ lưu đầu mối liên hệ khi khách đồng ý nhận phản hồi.</p>\n<aside><strong>Phân biệt ngay trên giấy:</strong> Lượt hỏi — lượng khách nói muốn mua — đơn đã xác nhận. Ba con số này không thay cho nhau.</aside>\n<figure><img src=\"__INLINE_IMAGE__\" alt=\"Ba loại nhu cầu cần tách khi khách hỏi món tiệm không có\" style=\"width:100%;height:auto\"/><figcaption>Ảnh minh họa</figcaption></figure>\n<h2>Đọc lại theo nhóm, đừng cộng nhầm thành doanh số</h2>\n<p>Cuối tuần, gom những dòng thật sự cùng mặt hàng. Một người hỏi lại nhiều lần không tự biến thành nhiều người mua. Nếu nhận ra lượt hỏi lặp, đánh dấu để không cộng máy móc.</p>\n<blockquote><p><strong>Ví dụ giả định:</strong> Có 6 lượt hỏi một món, gồm 2 lượt của cùng một khách quay lại. Chưa ai đặt mua. Tiệm có tín hiệu cần tìm hiểu thêm, chưa có căn cứ gọi đó là 6 đơn bị mất.</p></blockquote>\n<p>Đọc cả lý do: khách cần gói nhỏ, tìm một vị riêng hay muốn mua trong khoảng giá nào. Những ghi chú này giúp hỏi nhà cung cấp đúng sản phẩm, thay vì nhập món chỉ giống tên.</p>\n<h2>Chọn một việc tiếp theo cho từng nhóm</h2>\n<p>Món có sẵn trong kho thì bổ sung kệ. Món đang hết thì kiểm đơn hàng đang về. Món mới được hỏi nhiều lần thì tìm thông tin quy cách, điều kiện nhập và khả năng bán tại tiệm trước khi quyết định thử.</p>\n<p>Không hứa ngày có hàng khi nhà cung cấp chưa xác nhận. Nếu đã nhận lời báo lại, ghi người phụ trách và mốc phản hồi. Bắt đầu bằng một tờ giấy trong tuần này; mục đích là hiểu nhu cầu rõ hơn, không phải biến mọi lời hỏi thành một đơn nhập.</p>",
+      "ready_for_publish": true,
+      "content_hash": "6d8a2e3b381f7d2bcd1ebca238dc052c8b0614c257c1a5028065218ff80da5b6",
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "0caaa3c0948b08043c127ed37e75bf6627180437aeaa5eb10bae6583a105c02e",
+        "inline.webp": "d6e0f911d0fca1995ed857c8f4fef144425d0862f79cd88db57e7579caca6eb2"
+      }
+    },
+    {
+      "slot": 13,
+      "request_id": "lyhu-news:2026-10-21:13",
+      "title": "Tiệm đổi giờ mở cửa: sửa những chỗ nào để khách khỏi đến hụt?",
+      "slug": "tiem-doi-gio-mo-cua-sua-thong-tin-khach-khoi-den-hut",
+      "category_slug": "cua-hang-tien-loi",
+      "content": "<p>Tiệm quyết định mở muộn hơn vào một ngày có việc riêng. Tờ giấy đã dán ở cửa, nhưng khách tra trên điện thoại vẫn thấy giờ cũ. Khi họ tới, cửa đóng và chẳng biết bao giờ quay lại được.</p>\n<p>Đổi giờ bán cần đi cùng một lượt rà thông tin. Chỉ sửa nơi mình hay nhìn chưa chắc đã sửa đúng nơi khách thường xem.</p>\n<h2>Viết một bản giờ mới trước khi sửa từng nơi</h2>\n<p>Chốt thay đổi áp dụng riêng ngày nào hay lặp lại hằng tuần. Ghi đầy đủ ngày bắt đầu, khung mở cửa và lúc trở lại lịch thường nếu đây là thay đổi tạm thời. Nếu nghỉ giữa buổi, tách rõ hai khung bán.</p>\n<blockquote><p><strong>Ví dụ giả định:</strong> “Riêng ngày 25/10, tiệm mở từ 14:00 đến 21:00. Từ ngày 26/10, tiệm trở lại giờ bán thường lệ.” Đây chỉ là mẫu diễn đạt, không phải thông báo lịch của LYHU.</p></blockquote>\n<p>Tránh chỉ viết “mai mở muộn”. Người đọc lại bài sau vài ngày sẽ không biết đang nói tới hôm nào. Trong thông báo thực tế, dùng ngày cụ thể và giờ dễ đọc.</p>\n<h2>Rà theo đường khách tìm tới tiệm</h2>\n<table><thead><tr><th>Nơi khách xem</th><th>Việc cần kiểm</th></tr></thead><tbody><tr><td>Ngay cửa tiệm</td><td>Bảng giờ và thông báo có cùng nội dung mới.</td></tr><tr><td>Bản đồ, trang giới thiệu</td><td>Khung giờ hiển thị đúng ngày áp dụng.</td></tr><tr><td>Trang bán hàng, tin ghim</td><td>Không để thông báo cũ nổi hơn thông tin mới.</td></tr><tr><td>Người trực và bên giao hàng</td><td>Biết giờ có người nhận, tránh hẹn ngoài khung.</td></tr></tbody></table>\n<p>Chỉ rà những kênh tiệm đang dùng. Không cần mở thêm tài khoản chỉ để đăng một thông báo. Với đơn đã hẹn nhận tại cửa hàng trong giờ bị đổi, chủ động trao đổi riêng với đúng khách.</p>\n<figure><img src=\"__INLINE_IMAGE__\" alt=\"Phiếu rà thông tin khi cửa hàng thay đổi giờ hoạt động\" style=\"width:100%;height:auto\"/><figcaption>Ảnh minh họa</figcaption></figure>\n<h2>Trên Google, phân biệt giờ thường và giờ đặc biệt</h2>\n<p>Nếu tiệm có Hồ sơ doanh nghiệp trên Google, giờ hoạt động thông thường và giờ đặc biệt là hai phần khác nhau. Thay đổi chỉ áp dụng một số ngày thì kiểm mục giờ đặc biệt; lịch lặp lại hằng tuần thì kiểm giờ hoạt động chính.</p>\n<p>Sau khi lưu, xem lại thông tin khách có thể tìm trên Maps hoặc Tìm kiếm. Chưa thấy cập nhật thì kiểm trạng thái chỉnh sửa và hướng dẫn hỗ trợ, đừng coi thao tác bấm lưu là bằng chứng khách đã nhìn thấy giờ mới.</p>\n<h2>Giao một người kiểm lại và gỡ thông báo khi hết hạn</h2>\n<p>Nhờ người phụ trách đọc từng nơi dựa trên bản giờ đã chốt. Kiểm cả ngày, giờ mở, giờ đóng và trường hợp nghỉ giữa buổi. Chỗ chưa sửa được thì ghi lại để theo dõi, không chỉ báo “đã đăng rồi”.</p>\n<p>Khi trở lại lịch cũ, kiểm thông báo dán cửa, bài ghim và câu trả lời đang dùng. Một thông báo đúng lúc đăng vẫn có thể gây nhầm nếu treo mãi. Việc làm ngay: lập danh sách những nơi đang hiện giờ bán, rồi ghi tên người sẽ rà mỗi lần tiệm thay đổi lịch.</p>",
+      "ready_for_publish": true,
+      "content_hash": "97d1e45448ebf51e289f1b4bcd40d56a4f7f9c4e3e53ec25d6edca7f6e2d9c78",
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "8720ed10c9af32cf08aa6b4e74b20f08f75210299cd4fd12013eac69a1c9d749",
+        "inline.webp": "86eb0ea97d08732506325ba89fb5987bef78aa74905f32ec2064d1089849842e"
+      }
+    },
+    {
+      "slot": 19,
+      "request_id": "lyhu-news:2026-10-21:19",
+      "title": "Gửi mẫu cho điểm bán rồi: hỏi gì để nhận phản hồi có ích?",
+      "slug": "gui-mau-cho-diem-ban-hoi-gi-de-nhan-phan-hoi-co-ich",
+      "category_slug": "nha-phan-phoi-diem-ban",
+      "content": "<p>Telesales gọi lại sau khi gửi mẫu, hỏi “anh/chị thấy hàng ổn không?”. Chủ tiệm đáp “cũng được” rồi bận khách. Cuộc gọi kết thúc, người bán vẫn không biết điểm bán đã xem mẫu chưa và đang vướng điều gì.</p>\n<p>Một lần gửi mẫu nên có câu hỏi cần làm rõ. Ý kiến về sản phẩm và quyết định nhập hàng là hai việc khác nhau; lời khen chưa phải đơn đặt.</p>\n<h2>Hẹn người nhận và mục đích trước khi gửi</h2>\n<p>Xác nhận ai sẽ xem mẫu, nhận ở đâu và lúc nào tiện trao đổi lại. Gửi kèm đúng tên, vị, trọng lượng hoặc mã hàng để hai bên nói về cùng một sản phẩm. Điều kiện gửi mẫu có phí hay hỗ trợ phải thống nhất riêng, không mặc định mọi mẫu đều miễn phí.</p>\n<p>Chọn một mục đích: xem quy cách có hợp quầy, đọc thông tin bao bì, hay đánh giá trải nghiệm dùng theo hướng dẫn trên nhãn. Không biến buổi xem mẫu thành lời bảo đảm bán chạy.</p>\n<h2>Khi gọi lại, kiểm xem mẫu đã được xem chưa</h2>\n<p>Nếu người nhận chưa mở hoặc người quyết định chưa có mặt, hẹn mốc phù hợp thay vì hỏi dồn về nhập hàng. Nếu đã xem, hỏi đúng điều đã hẹn. Với thực phẩm, dùng theo hướng dẫn và điều kiện bảo quản trên nhãn; bài này không hướng dẫn tổ chức phát đồ ăn dùng thử cho khách.</p>\n<blockquote><p><strong>Hội thoại giả định:</strong> “Anh/chị đã xem gói mẫu mã A chưa ạ? Về cỡ gói, mình thấy hợp với khách đang mua ở tiệm không? Có điểm nào khiến mình chưa muốn đưa lên kệ?”</p></blockquote>\n<figure><img src=\"__INLINE_IMAGE__\" alt=\"Ba lớp phản hồi sau khi điểm bán nhận mẫu: đã xem, nhận xét, bước tiếp\" style=\"width:100%;height:auto\"/><figcaption>Ảnh minh họa</figcaption></figure>\n<h2>Ghi lời nhận xét cụ thể, giữ nguyên chỗ chưa biết</h2>\n<p>“Gói hơi lớn với khách của tiệm” có ích hơn ghi “không thích”. Nếu khách nói “giá khó bán”, hỏi họ đang so với sản phẩm hoặc cỡ nào. Chưa có giá bán dự kiến thì kiểm lại thông tin trước, không tự thêm ưu đãi để lấy câu trả lời tích cực.</p>\n<p>Tách lời của người nhận khỏi suy luận của sales. Chủ tiệm thích vị không có nghĩa khách mua cuối cùng sẽ thích. Nhận xét của một điểm bán cũng chưa đại diện cho cả khu vực.</p>\n<table><thead><tr><th>Ghi vào hồ sơ</th><th>Đừng tự suy ra</th></tr></thead><tbody><tr><td>Đã xem mẫu, thấy cỡ gói phù hợp.</td><td>Chắc chắn sẽ nhập.</td></tr><tr><td>Cần biết quy cách thùng trước khi cân nhắc.</td><td>Đã đồng ý số lượng.</td></tr><tr><td>Chưa phản hồi, đã hẹn gọi lại.</td><td>Không quan tâm.</td></tr></tbody></table>\n<h2>Khép cuộc gọi bằng một bước có người làm</h2>\n<p>Nếu điểm bán còn thiếu thông tin, ghi đúng tài liệu cần gửi và người kiểm. Nếu muốn đặt thử, xác nhận đơn riêng theo điều kiện đã được duyệt. Nếu chưa phù hợp, lưu lý do để lần sau không gửi lại cùng một lời chào.</p>\n<p>Cuối tuần, xem mẫu nào đã nhận, đã được xem và đã có phản hồi. Đừng chỉ đếm số gói gửi đi. Một câu nhận xét rõ cùng bước tiếp theo giúp cuộc gọi sau có điểm bắt đầu, dù lần này chưa có đơn.</p>",
+      "ready_for_publish": true,
+      "content_hash": "81074fd6457f91a101c755f276412ea270f88fb77056a21c689672754c142e84",
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "4ce2c0bbe03d0e4c68fb57ea76f7c233f7d8715e07760406fc4c60c6f2449349",
+        "inline.webp": "2348262324fcebe33af8ec02eba70f0e70066b457861a4ab01574c8aba3fedb1"
+      }
+    }
+  ]
+}
