@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "target_date_ict": "2026-10-22",
+  "articles": [
+    {
+      "slot": 7,
+      "request_id": "lyhu-news:2026-10-22:7",
+      "title": "Kệ còn tem giá cũ: kiểm một vòng sao cho khỏi tính nhầm?",
+      "slug": "ke-con-tem-gia-cu-kiem-mot-vong-truoc-khi-mo-ban",
+      "category_slug": "tap-hoa-gt",
+      "content": "<p>Đổi giá một món không khó. Khó là bảng giá mới đã vào sổ, còn trên kệ vẫn sót một tem cũ. Khách nhìn một giá, lúc tính tiền lại ra giá khác. Người bán phải dừng quầy để kiểm tra, còn khách thì không biết nên tin chỗ nào.</p><p>Cách gọn nhất là đừng sửa rải rác theo trí nhớ. Hãy gom việc đổi giá thành một vòng kiểm có điểm bắt đầu và điểm kết thúc rõ ràng.</p><h2>Chốt danh sách trước khi chạm vào kệ</h2><p>Viết ra từng món cần đổi theo ba thông tin: tên hoặc mã hàng, vị trí kệ và giá đang áp dụng. Nếu một món nằm ở hai chỗ, ghi đủ cả hai. Danh sách này là bản để đối chiếu, không phải tờ giấy ghi vội rồi bỏ.</p><p>Trước khi in hoặc viết tem mới, kiểm lại đúng đơn vị bán. Giá theo gói, lốc và thùng dễ bị nhìn nhầm nếu chỉ ghi tên món. Chưa chắc thông tin thì dừng món đó lại để hỏi, đừng đoán rồi sửa cả kệ.</p><h2>Đi một chiều, gỡ cũ rồi mới dán mới</h2><p>Chọn một đầu kệ và đi lần lượt đến cuối. Mỗi món làm theo thứ tự: tìm tất cả tem cũ, gỡ hoặc che hẳn, đặt tem mới đúng chỗ rồi đánh dấu đã xong trên danh sách. Không nên dán tem mới trước khi tìm tem cũ, vì rất dễ để lại hai mức giá cạnh nhau.</p><p>Nếu quầy vẫn đang bán, có thể chia kệ thành từng đoạn nhỏ. Làm xong đoạn nào kiểm đoạn đó, tránh tháo tem của cả dãy rồi bị khách gọi giữa chừng.</p>__INLINE_IMAGE__<h2>Kiểm bằng mắt khách, không chỉ bằng mắt người dán</h2><p>Sau vòng đầu, nhờ một người khác đi lại từ đầu kệ. Người này nhìn mặt hàng, tem ngay bên dưới và giá lúc quét hoặc tra trên hệ thống. Một người tự kiểm lại việc mình vừa làm thường dễ bỏ qua đúng chỗ đã nhầm.</p><p>Với món trưng bày ở đầu kệ, quầy tính tiền hoặc giỏ khuyến nghị, kiểm cả những điểm đó. Tem tại kệ chính đã đúng nhưng bảng nhỏ ở quầy còn cũ thì khách vẫn gặp hai giá.</p><h2>Giữ lại dấu vết vừa đủ</h2><p>Khi hoàn tất, ghi ngày, giờ và người đã kiểm. Tem cũ không cần chất thành một xấp lớn, nhưng danh sách đổi giá nên được giữ đến hết ca hoặc theo cách quản lý của tiệm. Nếu có thắc mắc, người sau biết món nào đã được rà và lúc nào.</p><p><strong>Việc làm ngay:</strong> trước giờ mở cửa hoặc lúc quầy vắng, chọn một dãy kệ có thay đổi giá gần nhất. Lập danh sách, đi một chiều, rồi nhờ người khác kiểm chéo. Mục tiêu không phải dán thật nhanh, mà là để khách chỉ nhìn thấy một mức giá rõ ràng.</p><p><em>Ảnh minh họa</em></p>",
+      "content_hash": "4a099e3266eaa693f47a68d99c399bdcbd210fbff105680eca4c47fc9053f36a",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "8e486145eab2aab607b45bd4cd2dae81c11e28f60b20bd53d134d9b04569ac0c",
+        "inline.webp": "319926a8e03d7f5fbdc3493341fafb0b8ff1f5345cb03ee3e1aac015e4c40052"
+      }
+    },
+    {
+      "slot": 13,
+      "request_id": "lyhu-news:2026-10-22:13",
+      "title": "Hàng bày mẫu và hàng để bán: đánh dấu sao để khỏi đưa nhầm?",
+      "slug": "hang-bay-mau-va-hang-de-ban-danh-dau-de-khoi-dua-nham",
+      "category_slug": "cua-hang-tien-loi",
+      "content": "<p>Một gói được mở để khách xem mùi, màu hoặc cách dùng. Một chai đặt riêng để nhân viên giới thiệu. Nếu những món này quay lại chung kệ với hàng bán, lúc đông khách rất dễ lấy nhầm. Đến khi phát hiện, cả người bán lẫn khách đều mất thời gian đổi lại.</p><p>Không cần một hệ thống phức tạp. Tiệm chỉ cần tách rõ “mẫu để xem” và “hàng nguyên để bán” bằng dấu hiệu mà ai đứng quầy cũng hiểu giống nhau.</p><h2>Quy định mẫu nào được mở</h2><p>Không tự mở hàng chỉ vì khách muốn xem. Trước hết, chọn đúng món được phép dùng làm mẫu và ghi ngày bắt đầu. Với thực phẩm, mỹ phẩm hoặc hàng có hướng dẫn bảo quản, chỉ minh họa trong phạm vi phù hợp với nhãn và quy định của tiệm; không dùng mẫu đã mở để bán lại như hàng nguyên.</p><p>Mỗi mã chỉ nên có số mẫu vừa đủ. Nhiều mẫu giống nhau đặt ở nhiều góc khiến tiệm khó biết món nào còn dùng để giới thiệu, món nào đã lẫn về kệ.</p><h2>Dùng hai dấu hiệu, không chỉ một mẩu giấy nhỏ</h2><p>Trên mẫu, dán nhãn lớn “HÀNG MẪU – KHÔNG BÁN” ở vị trí dễ thấy nhưng không che thông tin cần xem. Sau đó đặt mẫu vào khay hoặc ô riêng. Hai dấu hiệu cùng lúc giúp giảm nhầm khi nhãn bị xoay vào trong hoặc khi người mới chưa quen vị trí.</p><p>Hàng nguyên để bán vẫn ở kệ chính. Không đặt mẫu vào hàng đầu tiên của chồng hàng, vì thói quen lấy món phía trước sẽ kéo mẫu ra quầy.</p>__INLINE_IMAGE__<h2>Ghi ba dòng để bàn giao</h2><p>Một bảng nhỏ là đủ: tên hoặc mã món, ngày mở mẫu, tình trạng hiện tại. Nếu mẫu không còn phù hợp để giới thiệu, đánh dấu ngừng dùng và chuyển ra khỏi khu bán theo quy trình của tiệm. Đừng để một món đã cũ vẫn nằm đó chỉ vì chưa ai nhận phần xử lý.</p><p>Khi đổi ca, người bàn giao chỉ cần chỉ đúng khay mẫu và những món vừa thay. Người nhận ca không phải nhớ toàn bộ lịch sử, nhưng phải biết món nào tuyệt đối không được tính tiền cho khách.</p><h2>Thử đường đi của một đơn thật</h2><p>Trước giờ đông, nhờ một người đóng vai khách hỏi món. Người bán lấy mẫu để giới thiệu, sau đó lấy một món nguyên từ kệ để tính tiền. Nếu hai thao tác còn phải lục tìm hoặc có thể cầm nhầm, vị trí và nhãn chưa đủ rõ.</p><p><strong>Việc làm ngay:</strong> gom tất cả hàng mẫu đang có về một điểm kiểm. Dán nhãn thống nhất, tách khỏi hàng bán và ghi ba dòng bàn giao. Làm một lần cho rõ sẽ đỡ nhiều lần xin lỗi vì đưa nhầm món.</p><p><em>Ảnh minh họa</em></p>",
+      "content_hash": "64a3243a49b5e6d0f92a62db7d5f3261900ec728543219c72b2959505f0f63f3",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "b1fa7569318274c75261a0df4c32952e5b4f6003376f2c0e7035f96ea32f7330",
+        "inline.webp": "8c34ba31d1d2f7e3a153d9ab880f47b6a05daaf8aa9f221c7e9d14b59c077678"
+      }
+    },
+    {
+      "slot": 19,
+      "request_id": "lyhu-news:2026-10-22:19",
+      "title": "Đơn đã sửa ba lần: chốt một bản cuối trước khi kho soạn",
+      "slug": "don-sua-nhieu-lan-chot-mot-ban-cuoi-truoc-khi-kho-soan",
+      "category_slug": "nha-phan-phoi-diem-ban",
+      "content": "<p>Đại lý nhắn thêm hai thùng, lát sau bớt một mã, rồi gọi đổi giờ giao. Mỗi thay đổi đều hợp lý khi đứng riêng. Nhưng nếu người chốt đơn đọc tin nhắn mới còn kho vẫn cầm bản cũ, hàng soạn đúng từng dòng mà cả đơn lại sai.</p><p>Điểm cần sửa không phải là cấm khách thay đổi. Việc cần làm là cho cả người bán, kho và giao hàng cùng nhìn một bản cuối.</p><h2>Mỗi lần sửa phải nói rõ sửa vào đâu</h2><p>Khi nhận thay đổi, đừng chỉ trả lời “được”. Hãy nhắc lại đúng phần được sửa: mã nào, số lượng cũ, số lượng mới, đơn vị gói hay thùng. Nếu đổi địa chỉ hoặc giờ giao, ghi thành một dòng riêng. Phần không đổi cũng nên được giữ trong bản tổng, tránh người đọc phải ghép nhiều đoạn chat.</p><p>Ví dụ minh họa: “Bản 2 lúc 15:20: mã A còn 3 thùng; mã B thêm 1 thùng; các mục khác giữ nguyên; giao buổi sáng.” Đây là cách đặt tên bản, không phải xác nhận giá hay chính sách giao hàng.</p><h2>Khóa bản trước khi kho bắt đầu</h2><p>Chọn một trạng thái dễ hiểu như “CHỐT SOẠN”. Chỉ bản mang trạng thái này mới được đưa cho kho. Tin nhắn đến sau thời điểm khóa không tự chen vào phiếu đang làm. Người nhận thay đổi phải báo kho dừng hoặc tạo bản mới, tùy đơn đang ở bước nào.</p><p>Nếu kho đã lấy hàng, ghi rõ phần thay đổi nào đã làm được và phần nào chuyển sang lượt sau. Đừng xóa bản cũ khiến người soạn không còn dấu để đối chiếu.</p>__INLINE_IMAGE__<h2>Một nơi giữ bản cuối, một người báo thay đổi</h2><p>Nhóm chat có thể dùng để trao đổi, nhưng bản chốt nên nằm ở một nơi thống nhất: phiếu đơn, tệp chung hoặc màn hình đơn hàng mà đội đang dùng. Chỉ định một người cập nhật trạng thái. Nhiều người cùng sửa một bản mà không báo nhau sẽ tạo thêm phiên bản ngầm.</p><p>Trên bản cuối, nên có mã đơn, số phiên bản, giờ chốt và tên người chốt. Bốn thông tin này giúp kho biết mình đang cầm đúng bản nào, nhất là khi hai đại lý có tên gần giống nhau.</p><h2>Đọc lại trước khi xe đi</h2><p>Người kiểm cuối không cần mở lại toàn bộ đoạn chat. Họ đối chiếu số phiên bản trên phiếu soạn với bản “CHỐT SOẠN”, rồi kiểm các dòng đã thay đổi. Nếu hai số phiên bản khác nhau, đơn chưa sẵn sàng rời kho.</p><p><strong>Việc làm ngay:</strong> với đơn bị sửa gần nhất, gom tất cả thay đổi thành một bản tổng, đánh số phiên bản và ghi giờ chốt. Từ đơn sau, kho chỉ soạn theo bản có trạng thái thống nhất. Khách vẫn được đổi, còn đội của mình không phải đoán đâu là lời cuối.</p><p><em>Ảnh minh họa</em></p>",
+      "content_hash": "22d7a7770e51972fd8d9860b395240459cbb0fe4eba2c3f4bd4d90853bd5e8c8",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "09be98809450b6084afbfa25300695cede9dc36a026ac9c60d040d141bd5e60b",
+        "inline.webp": "c6db9d4f80ab647d028e33fd34f54709f924aa08946b06cbb0b921f349020c58"
+      }
+    }
+  ]
+}
