@@ -647,17 +647,18 @@ export default function SocialInboxPage() {
                                         </div>
                                     )}
                                     {/* Source Badges */}
-                                    <div className="mt-1 flex flex-wrap gap-1">
-                                        {Boolean(conv.ad_id) ? (
-                                            <div className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-100">
-                                                <span>QC</span>
-                                                {conv.ad_id && <span className="max-w-[80px] truncate">#{conv.ad_id}</span>}
-                                            </div>
-                                        ) : (
-                                            <div className="inline-flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded border border-slate-200">
-                                                <span>Tự nhiên</span>
-                                            </div>
-                                        )}
+                                        <div className="mt-1 flex flex-wrap gap-1">
+                                            {(conv.source_type === 'ads' || conv.referral_source === 'ADS' || Boolean(conv.ad_id)) ? (
+                                                <div className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-100 font-medium">
+                                                    <span>QC</span>
+                                                    {conv.ad_id && <span className="max-w-[80px] truncate">#{conv.ad_id.slice(-6)}</span>}
+                                                </div>
+                                            ) : (
+                                                <div className="inline-flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded border border-slate-200">
+                                                    <span>Tự nhiên</span>
+                                                </div>
+                                            )}
+                                        </div>
                                         {/* Tags */}
                                         {conv.tags && conv.tags.length > 0 && (
                                             <>
@@ -688,14 +689,14 @@ export default function SocialInboxPage() {
                         </div>
 
                         {/* Ad Context Banner */}
-                        {Boolean(selectedConv.ad_id) && (
+                        {(selectedConv.source_type === 'ads' || selectedConv.referral_source === 'ADS' || Boolean(selectedConv.ad_id)) && (
                             <div className="px-4 py-2.5 bg-blue-50 border-b border-blue-100 flex items-center gap-3 text-sm">
                                 <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                                     <span className="text-blue-600 text-xs font-bold">QC</span>
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <span className="text-blue-800 font-medium">Trả lời quảng cáo</span>
-                                    {selectedConv.ad_id && (
+                                    {selectedConv.ad_id ? (
                                         <a
                                             href={`https://www.facebook.com/ads/manager/account/campaigns?act=&selected_ad_ids=${selectedConv.ad_id}`}
                                             target="_blank"
@@ -704,10 +705,10 @@ export default function SocialInboxPage() {
                                         >
                                             Xem QC #{selectedConv.ad_id.slice(-6)}
                                         </a>
-                                    )}
+                                    ) : null}
                                 </div>
                                 {selectedConv.ad_title && (
-                                    <span className="text-xs text-blue-600 truncate max-w-[200px]">{selectedConv.ad_title}</span>
+                                    <span className="text-xs text-blue-600 truncate max-w-[250px]" title={selectedConv.ad_title}>{selectedConv.ad_title}</span>
                                 )}
                             </div>
                         )}

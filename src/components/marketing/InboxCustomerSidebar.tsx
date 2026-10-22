@@ -19,6 +19,22 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
     const [avatarError, setAvatarError] = useState(false);
     const [customerPhone, setCustomerPhone] = useState(conversation.customer_phone || '');
     const [customerRegion, setCustomerRegion] = useState(conversation.customer_region || '');
+    const isAdLead = conversation.source_type === 'ads' || conversation.referral_source === 'ADS' || Boolean(conversation.ad_id);
+
+    const handleToggleSourceType = async () => {
+        const nextIsAd = !isAdLead;
+        const updates: any = {
+            source_type: nextIsAd ? 'ads' : 'organic',
+            referral_source: nextIsAd ? 'ADS' : null
+        };
+        try {
+            await updateConversationMetadata(conversation.id, updates, token);
+            onUpdate(updates);
+            toast.success(nextIsAd ? 'Đã chuyển nguồn sang: Quảng cáo' : 'Đã chuyển nguồn sang: Tự nhiên');
+        } catch (e) {
+            toast.error('Lỗi cập nhật nguồn');
+        }
+    };
 
     // Reset avatar error when conversation changes
     useEffect(() => {
@@ -100,15 +116,21 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                     {conversation.platform === 'facebook' && (
                         <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Facebook User</span>
                     )}
-                    {Boolean(conversation.ad_id) ? (
-                        <span className="text-xs px-2 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200 font-medium">
-                            📢 Từ Quảng Cáo
-                        </span>
-                    ) : (
-                        <span className="text-xs px-2 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200 font-medium">
-                            🌱 Tự nhiên
-                        </span>
-                    )}
+                    <button
+                        onClick={handleToggleSourceType}
+                        title="Bấm để đổi nhanh nguồn (Tự nhiên / Quảng cáo)"
+                        className="transition hover:scale-105 active:scale-95"
+                    >
+                        {isAdLead ? (
+                            <span className="text-xs px-2 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200 font-medium">
+                                📢 Từ Quảng Cáo ⇄
+                            </span>
+                        ) : (
+                            <span className="text-xs px-2 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200 font-medium">
+                                🌱 Tự nhiên ⇄
+                            </span>
+                        )}
+                    </button>
                 </div>
                 {conversation.ad_id && (
                     <p className="text-xs text-slate-500 mt-1 font-mono">Ad ID: #{conversation.ad_id} {conversation.ad_title ? `(${conversation.ad_title})` : ''}</p>
@@ -195,15 +217,21 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                         <ExternalLink className="w-4 h-4 text-slate-400 flex-shrink-0" />
                         <div className="text-sm">
                             <span className="text-slate-400 text-xs">Nguồn:</span>{' '}
-                            {Boolean(conversation.ad_id) ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
-                                    📢 Quảng cáo
-                                </span>
-                            ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                                    🌱 Tự nhiên
-                                </span>
-                            )}
+                            <button
+                                onClick={handleToggleSourceType}
+                                title="Bấm để đổi nguồn"
+                                className="transition hover:opacity-80"
+                            >
+                                {isAdLead ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                                        📢 Quảng cáo {conversation.ad_id ? `#${conversation.ad_id.slice(-6)}` : ''} ⇄
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                                        🌱 Tự nhiên ⇄
+                                    </span>
+                                )}
+                            </button>
                         </div>
                     </div>
 
