@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "target_date_ict": "2026-10-23",
+  "articles": [
+    {
+      "slot": 7,
+      "title": "Thùng rỗng còn trong kho: dọn đúng chỗ để khỏi đếm thành hàng",
+      "slug": "thung-rong-trong-kho-tach-vo-thung-khoi-hang-con",
+      "category_slug": "tap-hoa-gt",
+      "content": "<p>Nhìn vào góc kho thấy mấy thùng xếp ngay ngắn, người bán tưởng món đó vẫn còn. Đến lúc khách hỏi mới mở ra: một thùng chỉ có vỏ, thùng kia còn vài gói. Vậy là số thùng nhìn thấy không nói được số hàng có thể bán.</p><p>Chuyện này dễ xảy ra khi tiệm vừa bán nguyên thùng, vừa lấy lẻ từ cùng một chỗ. Muốn đỡ tìm hụt, hãy cho vỏ thùng và thùng đang lấy dở có hai nơi ở khác nhau.</p><h2>Hết hàng là đưa vỏ ra khỏi ô chứa</h2><p>Khi lấy gói cuối cùng, chuyển vỏ thùng sang điểm gom riêng ngay trong lượt đó. Đừng úp nắp rồi để lại vị trí cũ với ý nghĩ lát nữa dọn. Người vào kho sau không biết chiếc thùng đã rỗng và có thể hứa với khách rằng vẫn còn hàng.</p><p>Nếu cần giữ vỏ để đóng đơn, dành một ô có nhãn “VỎ THÙNG”. Ô này nằm ngoài khu đếm hàng bán. Không dùng chính vỏ thùng của một mã làm dấu giữ chỗ cho mã đó; muốn giữ chỗ thì dùng nhãn kệ.</p><h2>Thùng đang lấy lẻ phải nhìn ra ngay</h2><p>Chọn một vị trí cho hàng mở thùng, ghi tên hoặc mã món cùng đơn vị đếm. Trên thùng có thể dán nhãn “ĐANG LẤY LẺ”. Khi kiểm, đếm số gói thực còn bên trong rồi ghi riêng, không tính chiếc thùng này như một thùng đủ.</p><p>Không cần mỗi lần bán một gói lại viết lên bìa. Điều quan trọng là người lấy hàng biết đây là thùng dở, còn số ghi để chốt tồn phải có thời điểm kiểm. Một con số cũ trên vỏ không thay cho lần đếm thực tế.</p><figure><img src=\"__INLINE_IMAGE__\" alt=\"Ảnh minh họa\" style=\"width:100%;height:auto;\"><figcaption>Ảnh minh họa</figcaption></figure><h2>Đếm phần nguyên và phần lẻ thành hai dòng</h2><p>Ví dụ minh họa: một mã có hai thùng nguyên, quy cách đã xác nhận là 20 gói mỗi thùng, cùng một thùng dở còn 7 gói. Tổng là 2 × 20 + 7 = 47 gói. Không ghi “3 thùng” rồi để người nhận ca tự hiểu.</p><p>Chỉ nhân theo quy cách sau khi đã xác nhận đúng mã và đúng loại thùng. Nếu bao bì giống nhau nhưng quy cách khác, tách dòng để kiểm. Có chênh lệch với sổ thì ghi nhận và đối chiếu trước khi sửa số tồn.</p><h2>Chốt một vòng nhỏ cuối ca</h2><p>Người đóng ca nhìn lại khu lấy lẻ: vỏ đã về điểm gom chưa, mỗi mã có bị mở nhiều thùng cùng lúc không, món đang lấy dở có nhãn dễ thấy không. Đây là bước dọn vị trí, không thay cho kiểm kê kho.</p><p><strong>Việc làm ngay:</strong> chọn góc kho hay báo “còn mà không thấy”. Tách vỏ thùng, đưa thùng dở về một chỗ và đếm lại phần lẻ. Người sau chỉ cần nhìn đúng khu là biết cần mở thùng nào để kiểm.</p>",
+      "request_id": "lyhu-news:2026-10-23:7",
+      "content_hash": "f1585bae6af910153cb0fe2a60bbe59d26ba50d065c9fff2cf41387653f542b2",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "545f4be9267af2fa16bf8c4a7124248d42542107a027eac5480c889336254686",
+        "inline.webp": "62b0034f5b9917f08ffb1c1fd445c87159a6452f4f2edba62727f1f7cf9724cb"
+      }
+    },
+    {
+      "slot": 13,
+      "title": "Ảnh gửi khách đã cũ: gom một bộ đúng trước khi chào hàng",
+      "slug": "anh-gui-khach-da-cu-gom-bo-anh-dung-truoc-khi-chao",
+      "category_slug": "cong-nghe-ban-le",
+      "content": "<p>Khách chọn đúng ảnh mình gửi, nhưng hàng soạn ra lại khác màu bao bì. Người bán biết đó là mẫu đang có, còn khách chỉ thấy một món không giống hình đã chọn. Có khi hàng không sai mã; bộ ảnh trong điện thoại mới là phần chưa được cập nhật.</p><p>Để tránh chuyện ấy, đừng tìm ảnh bằng cách kéo lại đoạn chat cũ mỗi lần chào hàng. Hãy giữ một bộ đang dùng, có thông tin đủ để biết ảnh thuộc món nào.</p><h2>Lấy hàng đang có để đối chiếu</h2><p>Chọn một mã hay gửi khách nhất. Đặt món đang bán cạnh ảnh đang dùng, kiểm tên, vị, khối lượng hoặc số lượng trong gói, hình dáng bao bì. Nếu có thay đổi mà mình chưa xác nhận được, hỏi nhà cung cấp trước khi gọi đó là “mẫu mới”.</p><p>Ảnh khác không tự chứng minh hai món có cùng thành phần, công dụng hay quy cách. Những thông tin đó phải đọc trên nhãn hoặc tài liệu được xác nhận. Không lấy ảnh đẹp của một size để đại diện cho size khác mà không nói rõ.</p><h2>Giữ một thư mục ảnh đang dùng</h2><p>Tạo nơi dễ tìm với tên như “ẢNH CHÀO HÀNG HIỆN TẠI”. Mỗi mã có một ảnh mặt trước rõ và ảnh thông tin cần thiết. Tên tệp nên có mã món, quy cách và ngày kiểm, thay vì những tên giống nhau như “ảnh mới”, “ảnh mới nhất”.</p><p>Ảnh cũ chuyển sang thư mục lưu trữ, bỏ khỏi album dùng nhanh. Giữ lịch sử khi cần đối chiếu, nhưng đừng để hai bộ đứng cạnh nhau rồi trông chờ mọi người nhớ ảnh nào mới hơn.</p><figure><img src=\"__INLINE_IMAGE__\" alt=\"Ảnh minh họa\" style=\"width:100%;height:auto;\"><figcaption>Ảnh minh họa</figcaption></figure><h2>Gửi ảnh cùng một dòng nhận diện</h2><p>Mỗi lần chào, gửi kèm tên món, vị và quy cách đúng với ảnh. Giá hoặc ưu đãi, nếu có, ghi thành dòng riêng theo thông tin đang áp dụng. Đừng viết giá cố định lên ảnh dùng lâu ngày rồi quên sửa khi điều kiện thay đổi.</p><p>Nếu kho đang có hai kiểu bao bì đã được xác nhận cùng mã, nói rõ loại sẽ giao cho đơn này và gửi đúng ảnh. Khi chưa biết kho sẽ lấy loại nào, kiểm lại rồi trả lời khách; đừng hứa theo bộ ảnh dễ tìm nhất.</p><h2>Cho người khác thử tìm</h2><p>Nhờ một người không vừa sắp xếp thư mục tìm ảnh của một mã cụ thể. Nếu họ phải hỏi “bản nào?” hoặc mở nhiều ảnh để đoán, tên tệp và cách chia thư mục vẫn chưa rõ. Sửa ngay ở bộ chung thay vì nhắn riêng cho từng người.</p><p><strong>Việc làm ngay:</strong> rà năm mã thường được gửi khách. Đối chiếu với hàng đang bán, đưa ảnh đúng vào một bộ và chuyển ảnh cũ khỏi nơi dùng nhanh. Bộ nhỏ nhưng đáng tin sẽ hữu ích hơn một album lớn mà mỗi lần gửi đều phải đoán.</p>",
+      "request_id": "lyhu-news:2026-10-23:13",
+      "content_hash": "a9a11a9999fce83732d172b98abf4071f3f3f30230006599793d9513f32d859a",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "a0c80e2d84ef2afda0404861ec154922f3a1c9cd1d5b73f55482d67300aef4d4",
+        "inline.webp": "b8d3d18024ff69d55cc57a9ac04133b9d7759d4993f5ed18b5ce0afc33069c37"
+      }
+    },
+    {
+      "slot": 19,
+      "title": "Đúng địa chỉ vẫn giao hụt: chốt cả cổng nhận hàng",
+      "slug": "dung-dia-chi-van-giao-hut-chot-ca-cong-nhan-hang",
+      "category_slug": "nha-phan-phoi-diem-ban",
+      "content": "<p>Xe đã tới đúng số nhà nhưng người nhận bảo đi vòng sang cổng sau. Có điểm bán nằm trong khu lớn, biển tên quay ra đường chính còn nơi nhận hàng ở một ngõ khác. Địa chỉ không sai, nhưng người giao vẫn phải gọi và quay đầu.</p><p>Với những điểm như vậy, hồ sơ giao hàng cần chỉ ra nơi dừng và người nhận, chứ không chỉ có tên cửa hàng cùng số điện thoại.</p><h2>Tách địa chỉ cửa hàng và lối nhận hàng</h2><p>Khi chốt đơn đầu tiên, hỏi một câu cụ thể: “Bên mình nhận hàng ở cửa bán hàng hay có cổng riêng?” Nếu có cổng riêng, ghi tên đường hoặc ngõ dẫn tới cổng đó, dấu hiệu dễ nhận và phần chỉ dẫn cuối đường.</p><p>Không dùng mỗi câu “cổng bên trái”. Trái hay phải còn tùy hướng xe tới. Một dấu hiệu cố định như tên ngõ hoặc biển của cổng giúp người mới đọc dễ hơn. Chỉ ghi những chi tiết người nhận đã xác nhận, đừng tự suy từ ảnh bản đồ.</p><h2>Xin điểm ghim tại đúng chỗ nhận</h2><p>Nhờ người nhận gửi điểm ghim của cổng nhận hàng thay vì chỉ tên cơ sở. Mở thử để đối chiếu với địa chỉ và lời chỉ dẫn. Điểm ghim hỗ trợ tìm vị trí; nó không bảo đảm xe được phép đi vào hay tuyến đường gợi ý phù hợp với mọi loại xe.</p><p>Nếu có giới hạn giờ nhận, nơi được dừng hoặc cần báo trước, ghi riêng và xác nhận lại với đầu mối tại điểm bán. Người chốt đơn không nên hẹn giờ chỉ dựa vào thời gian ước tính trên bản đồ.</p><figure><img src=\"__INLINE_IMAGE__\" alt=\"Ảnh minh họa\" style=\"width:100%;height:auto;\"><figcaption>Ảnh minh họa</figcaption></figure><h2>Làm một thẻ giao hàng ngắn</h2><p>Thẻ có bốn phần: địa chỉ, cổng nhận cùng điểm ghim, người liên hệ, khung giờ đã thống nhất. Chỉ dẫn dài có thể để bên dưới, còn bốn phần chính phải nhìn thấy ngay trên phiếu hoặc màn hình mà tài xế dùng.</p><p>Ví dụ minh họa: “Cửa hàng A; nhận tại cổng kho trên ngõ B; gọi đầu mối đã ghi trước khi tới; giờ nhận theo đơn đã xác nhận.” Tên và địa điểm ở đây chỉ để minh họa cách ghi, không phải một điểm giao có thật.</p><h2>Cập nhật sau chuyến đầu</h2><p>Sau lần giao đầu, hỏi người giao có tìm đúng cổng không và có chi tiết nào đã thay đổi. Đối chiếu lại với người phụ trách điểm bán rồi cập nhật vào hồ sơ chung, ghi ngày xác nhận. Đừng để kinh nghiệm ấy nằm riêng trong điện thoại của một tài xế.</p><p>Khi đổi người giao hoặc lâu ngày mới quay lại, đọc lại thẻ và xác nhận những phần dễ thay đổi. Chỉ chia sẻ số liên hệ và hướng dẫn cần cho công việc với người thực hiện chuyến đó.</p><p><strong>Việc làm ngay:</strong> chọn một điểm từng phải gọi nhiều lần ở đầu ngõ. Bổ sung đúng cổng nhận, điểm ghim và đầu mối xác nhận. Chuyến sau, người mới cũng có thể hiểu chỉ dẫn mà không cần nghe kể lại cả hành trình.</p>",
+      "request_id": "lyhu-news:2026-10-23:19",
+      "content_hash": "51112f6f2b53da0af08b6e50025764af6aef37c3ad413c06ff27553573f86a78",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "08541d2a767f5aaf23a84b81ccaf633484e5a564b70830d1913ddf07fcda235f",
+        "inline.webp": "df689681d4dbd5b333f6a5c09d4ccbf993009f1a3ff0ff88316c8889008b1ba5"
+      }
+    }
+  ]
+}
