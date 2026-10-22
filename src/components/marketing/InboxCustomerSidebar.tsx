@@ -135,8 +135,19 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                         )}
                     </button>
                 </div>
-                {conversation.ad_id && (
-                    <p className="text-xs text-slate-500 mt-1 font-mono">Ad ID: #{conversation.ad_id} {conversation.ad_title ? `(${conversation.ad_title})` : ''}</p>
+                {isAdLead && (conversation.ad_title || conversation.ad_id) && (
+                    <div className="mt-2 text-center space-y-1">
+                        {conversation.ad_title && (
+                            <p className="text-xs font-semibold text-blue-900 bg-blue-50 px-2 py-1 rounded border border-blue-200 inline-block max-w-[220px] truncate" title={conversation.ad_title}>
+                                🎯 {conversation.ad_title}
+                            </p>
+                        )}
+                        {conversation.ad_id && (
+                            <p className="text-[11px] text-slate-500 font-mono">
+                                Ad ID: #{conversation.ad_id}
+                            </p>
+                        )}
+                    </div>
                 )}
             </div>
 

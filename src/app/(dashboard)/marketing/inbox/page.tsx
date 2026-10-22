@@ -665,22 +665,25 @@ export default function SocialInboxPage() {
                                 <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                                     <span className="text-blue-600 text-xs font-bold">QC</span>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <span className="text-blue-800 font-medium">Trả lời quảng cáo</span>
-                                    {selectedConv.ad_id ? (
+                                <div className="flex-1 min-w-0 flex items-center flex-wrap gap-2">
+                                    <span className="text-blue-900 font-semibold">Trả lời quảng cáo:</span>
+                                    {selectedConv.ad_title && (
+                                        <span className="text-xs font-semibold text-blue-800 bg-blue-100/90 px-2 py-0.5 rounded border border-blue-200 shadow-sm">
+                                            🎯 {selectedConv.ad_title}
+                                        </span>
+                                    )}
+                                    {selectedConv.ad_id && (
                                         <a
                                             href={`https://www.facebook.com/ads/manager/account/campaigns?act=&selected_ad_ids=${selectedConv.ad_id}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="ml-2 text-blue-600 hover:underline text-xs"
+                                            className="text-blue-600 hover:underline text-xs flex items-center gap-0.5 font-mono bg-white px-1.5 py-0.5 rounded border border-blue-200"
+                                            title="Xem chiến dịch trên Facebook Ads Manager"
                                         >
-                                            Xem QC {shortAdId(selectedConv)}
+                                            Mã: {shortAdId(selectedConv)} ↗
                                         </a>
-                                    ) : null}
+                                    )}
                                 </div>
-                                {selectedConv.ad_title && (
-                                    <span className="text-xs text-blue-600 truncate max-w-[250px]" title={selectedConv.ad_title}>{selectedConv.ad_title}</span>
-                                )}
                             </div>
                         )}
 
