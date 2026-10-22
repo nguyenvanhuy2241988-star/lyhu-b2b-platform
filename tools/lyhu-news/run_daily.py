@@ -12,11 +12,21 @@ from publish import Http, ICT, process_job
 
 def select_target(now):
     local = now.astimezone(ICT)
-    if local.hour not in (7, 13, 19, 21):
+    h = local.hour
+    if 7 <= h < 13:
+        slot = 7
+    elif 13 <= h < 19:
+        slot = 13
+    elif h == 19:
+        slot = 19
+    elif h == 21:
+        slot = 21
+    else:
         return None
-    stage_only = local.hour == 21
+    stage_only = slot == 21
     date = (local + timedelta(days=int(stage_only))).strftime('%Y-%m-%d')
-    return date, stage_only, local.hour
+    return date, stage_only, slot
+
 
 def main():
     parser = argparse.ArgumentParser()
