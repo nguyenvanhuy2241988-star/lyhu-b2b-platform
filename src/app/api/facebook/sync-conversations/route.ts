@@ -69,36 +69,21 @@ export async function POST(request: Request) {
                 continue;
             }
 
-            // Detect ad source from messages
+            // Strictly detect ad source ONLY from message referral with valid ad_id
             let isFromAd = false;
             let adId = '';
             const messagesData = conv.messages?.data || [];
 
-            // Check first message from page (usually automated ad response)
-            // In Meta, ads create conversations starting with the page's welcome message
-            const firstPageMsg = [...messagesData].reverse().find((m: any) => m.from?.id === fbPageId);
-            if (firstPageMsg) {
-                const msgText = (firstPageMsg.message || '').toLowerCase();
-                // Page's first automated message often contains ad keywords
-                if (msgText.includes('quáº£ng cÃ¡o') || msgText.includes('Æ°u Ä‘Ã£i') ||
-                    msgText.includes('khuyáº¿n mÃ£i') || msgText.includes('npp') ||
-                    msgText.includes('Ä‘áº¡i lÃ½') || msgText.includes('tÃ¬m Ä‘áº¡i lÃ½') ||
-                    msgText.includes('nhÃ  phÃ¢n phá»‘i') || msgText.includes('mua 10 táº·ng')) {
-                    isFromAd = true;
-                }
-            }
-
-            // Also try to detect ad from first message's referral via Graph API
             const firstMsg = [...messagesData].reverse()[0];
-            if (firstMsg && !isFromAd) {
+            if (firstMsg) {
                 try {
                     const msgRes = await fetch(
                         `https://graph.facebook.com/v21.0/${firstMsg.id}?fields=referral&access_token=${pageData.access_token}`
                     );
                     const msgData = await msgRes.json();
-                    if (msgData.referral) {
+                    if (msgData.referral && msgData.referral.ad_id) {
                         isFromAd = true;
-                        adId = msgData.referral.ad_id || '';
+                        adId = msgData.referral.ad_id;
                     }
                 } catch (e) {
                     // Silently continue - referral check is optional
@@ -117,17 +102,11 @@ export async function POST(request: Request) {
                 last_message_at: conv.updated_time,
                 fb_thread_id: conv.id,
                 customer_profile_url: conv.link || null,
+                source_type: isFromAd ? 'ads' : 'organic',
+                referral_source: isFromAd ? 'ADS' : null,
+                ad_id: isFromAd ? adId : null,
+                ad_title: isFromAd ? `QC #${adId}` : null
             };
-
-            // Set ad source info
-            if (isFromAd) {
-                upsertData.referral_source = 'ADS';
-                upsertData.source_type = 'ads';
-                if (adId) {
-                    upsertData.ad_id = adId;
-                    upsertData.ad_title = `QC #${adId}`;
-                }
-            }
 
             const { data: insertedConv, error: insertError } = await supabase
                 .from('social_conversations')

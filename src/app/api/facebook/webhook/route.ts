@@ -475,27 +475,7 @@ export async function POST(request: Request) {
                                 referral = msgData.referral;
                             }
 
-                            // Method 2: Check conversation's FIRST message for referral (ad click creates postback)
-                            if (!referral) {
-                                try {
-                                    const convMsgRes = await fetch(
-                                        `https://graph.facebook.com/v21.0/${pageId}/conversations?user_id=${senderId}&fields=messages.limit(1){message,from,tags}&access_token=${pageData.access_token}`
-                                    );
-                                    const convMsgData = await convMsgRes.json();
-                                    const firstConv = convMsgData?.data?.[0];
-                                    if (firstConv?.messages?.data) {
-                                        // Check if conversation has ad-related tags
-                                        for (const msg of firstConv.messages.data) {
-                                            if (msg.tags?.some((t: any) => t.name === 'sponsored_message' || t.name === 'ads')) {
-                                                console.log("Found ad tag in conversation messages");
-                                                referral = { source: 'ADS', ad_id: null };
-                                            }
-                                        }
-                                    }
-                                } catch (e2) {
-                                    console.error("Conv message check failed:", e2);
-                                }
-                            }
+
                         } catch (e) {
                             console.error("Failed to fetch message details:", e);
                         }
@@ -595,30 +575,33 @@ export async function POST(request: Request) {
                         upsertData.fb_thread_id = fbThreadId;
                     }
 
-                    if (referral) {
+                    if (referral && referral.ad_id) {
                         upsertData.referral_source = referral.source || 'ADS';
                         upsertData.ad_id = referral.ad_id;
-                        upsertData.ref_parameter = referral.ref;
+                        upsertData.ref_parameter = referral.ref || null;
                         upsertData.source_type = 'ads';
-                        if (referral.ad_id) {
-                            upsertData.ad_title = `QC #${referral.ad_id}`;
-                            try {
-                                const adToken = process.env.FB_ADS_ACCESS_TOKEN || pageData.access_token;
-                                if (adToken) {
-                                    const adRes = await fetch(
-                                        `https://graph.facebook.com/v19.0/${referral.ad_id}?fields=name,campaign{name}&access_token=${adToken}`
-                                    );
-                                    const adJson = await adRes.json();
-                                    if (adJson.name) {
-                                        upsertData.ad_title = adJson.campaign?.name 
-                                            ? `${adJson.name} (${adJson.campaign.name})` 
-                                            : adJson.name;
-                                    }
+                        upsertData.ad_title = `QC #${referral.ad_id}`;
+                        try {
+                            const adToken = process.env.FB_ADS_ACCESS_TOKEN || pageData.access_token;
+                            if (adToken) {
+                                const adRes = await fetch(
+                                    `https://graph.facebook.com/v19.0/${referral.ad_id}?fields=name,campaign{name}&access_token=${adToken}`
+                                );
+                                const adJson = await adRes.json();
+                                if (adJson.name) {
+                                    upsertData.ad_title = adJson.campaign?.name 
+                                        ? `${adJson.name} (${adJson.campaign.name})` 
+                                        : adJson.name;
                                 }
-                            } catch (e) {
-                                console.error('Failed to fetch ad details:', e);
                             }
+                        } catch (e) {
+                            console.error('Failed to fetch ad details:', e);
                         }
+                    } else if (!existingConv || !existingConv.ad_id) {
+                        upsertData.source_type = 'organic';
+                        upsertData.referral_source = null;
+                        upsertData.ad_id = null;
+                        upsertData.ad_title = null;
                     }
 
                     const { data: conv, error: convError } = await supabase

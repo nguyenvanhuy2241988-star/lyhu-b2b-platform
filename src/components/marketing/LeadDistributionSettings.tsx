@@ -878,13 +878,10 @@ export default function LeadDistributionSettings() {
                                         <td className="px-4 py-3">
                                             {(() => {
                                                 const conv = (lead as any).social_conversations;
-                                                const isAd = conv?.referral_source === 'ADS' || conv?.ad_id || conv?.source_type === 'ads';
-                                                const isOrganic = conv?.source_type === 'organic';
+                                                const isAd = Boolean(conv?.ad_id);
                                                 return isAd
-                                                    ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">📎 Quảng cáo</span>
-                                                    : isOrganic
-                                                        ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700">🌿 Tự nhiên</span>
-                                                        : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500">❓ Chưa xác định</span>;
+                                                    ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">📎 Quảng cáo #{conv.ad_id}</span>
+                                                    : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700">🌿 Tự nhiên</span>;
                                             })()}
                                         </td>
                                         <td className="px-4 py-3">

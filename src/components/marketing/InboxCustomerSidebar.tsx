@@ -100,17 +100,18 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                     {conversation.platform === 'facebook' && (
                         <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Facebook User</span>
                     )}
-                    {conversation.source_type && (
-                        <span className={`text-xs px-2 py-1 rounded-full border ${conversation.source_type === 'ads' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                            conversation.source_type === 'post' ? 'bg-teal-50 text-[#00AFA9] border-teal-200' :
-                                'bg-slate-50 text-slate-600 border-slate-200'
-                            }`}>
-                            {conversation.source_type === 'ads' ? 'Từ Quảng Cáo' : conversation.source_type === 'post' ? 'Từ Bài viết' : 'Tự nhiên'}
+                    {Boolean(conversation.ad_id) ? (
+                        <span className="text-xs px-2 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200 font-medium">
+                            📢 Từ Quảng Cáo
+                        </span>
+                    ) : (
+                        <span className="text-xs px-2 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200 font-medium">
+                            🌱 Tự nhiên
                         </span>
                     )}
                 </div>
-                {conversation.source_detail?.ad_id && (
-                    <p className="text-xs text-slate-400 mt-1">Ads ID: {conversation.source_detail.ad_id}</p>
+                {conversation.ad_id && (
+                    <p className="text-xs text-slate-500 mt-1 font-mono">Ad ID: #{conversation.ad_id} {conversation.ad_title ? `(${conversation.ad_title})` : ''}</p>
                 )}
             </div>
 
