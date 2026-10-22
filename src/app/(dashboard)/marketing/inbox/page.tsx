@@ -17,6 +17,7 @@ import { MessageSquare, Send, User, Search, RefreshCw, Loader2, DownloadCloud, F
 import { createClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import InboxCustomerSidebar from '@/components/marketing/InboxCustomerSidebar';
+import { isAdConversation, shortAdId } from '@/lib/conversationSource';
 import { CreateDealModal } from '@/components/telesales/CreateDealModal';
 import { createDeal } from '@/lib/crmDealsStore';
 
@@ -100,7 +101,6 @@ export default function SocialInboxPage() {
         let detectedRegion = '';
         let detectedCustomerType = '';
         const detectedProducts = new Set<string>();
-        let detectedAdSource = false;
 
         // Customer type keywords
         const CUSTOMER_TYPES: Record<string, string> = {
@@ -124,16 +124,6 @@ export default function SocialInboxPage() {
             'báo giá': 'Báo giá chung',
             'bảng giá': 'Báo giá chung',
         };
-
-        // Ad detection keywords (in page's automated messages)
-        const AD_KEYWORDS = [
-            'ưu đãi', 'khuyến mãi', 'mua 10 tặng', 'mua 5 tặng',
-            'tìm đại lý', 'tìm npp', 'tìm nhà phân phối',
-            'toàn quốc', 'trả lời quảng cáo',
-            'đăng ký đại lý', 'nhận báo giá',
-            'snack nội địa', 'bao bì đẹp', 'siêu dễ bán',
-            'gửi thông tin đăng ký', 'kết nối zalo',
-        ];
 
         for (const msg of msgs) {
             if (!msg.content) continue;
@@ -176,24 +166,8 @@ export default function SocialInboxPage() {
                         detectedProducts.add(product);
                     }
                 }
-
-                // Customer ad-response patterns (e.g. "nhận báo giá sỉ", "đăng ký đại lý")
-                if (!detectedAdSource) {
-                    if (contentLower.includes('báo giá sỉ') || contentLower.includes('đăng ký đại lý') ||
-                        contentLower.includes('nhận báo giá') || contentLower.includes('giá sỉ')) {
-                        detectedAdSource = true;
-                    }
-                }
             } else {
                 // === PAGE MESSAGES (including automated ad messages) ===
-                if (!detectedAdSource) {
-                    for (const keyword of AD_KEYWORDS) {
-                        if (contentLower.includes(keyword)) {
-                            detectedAdSource = true;
-                            break;
-                        }
-                    }
-                }
 
                 // Also detect products from page ad messages
                 for (const [keyword, product] of Object.entries(PRODUCT_KEYWORDS)) {
@@ -206,7 +180,7 @@ export default function SocialInboxPage() {
 
         // Auto-save all detected info
         const productsArray = Array.from(detectedProducts);
-        if (detectedPhone || detectedRegion || detectedCustomerType || productsArray.length > 0 || detectedAdSource) {
+        if (detectedPhone || detectedRegion || detectedCustomerType || productsArray.length > 0) {
             setConversations(prev => {
                 const conv = prev.find(c => c.id === convId);
                 if (!conv) return prev;
@@ -217,8 +191,6 @@ export default function SocialInboxPage() {
                 if (productsArray.length > 0 && (!conv.interested_products || conv.interested_products.length === 0)) {
                     updates.interested_products = productsArray;
                 }
-                // Ad source detection
-                // Removed false-positive ad detection
 
                 if (Object.keys(updates).length > 0) {
                     updateConversationMetadata(convId, updates, session?.access_token)
@@ -648,17 +620,16 @@ export default function SocialInboxPage() {
                                     )}
                                     {/* Source Badges */}
                                         <div className="mt-1 flex flex-wrap gap-1">
-                                            {(conv.source_type === 'ads' || conv.referral_source === 'ADS' || Boolean(conv.ad_id)) ? (
+                                            {isAdConversation(conv) ? (
                                                 <div className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-100 font-medium">
                                                     <span>QC</span>
-                                                    {conv.ad_id && <span className="max-w-[80px] truncate">#{conv.ad_id.slice(-6)}</span>}
+                                                    {conv.ad_id && <span className="max-w-[80px] truncate">{shortAdId(conv)}</span>}
                                                 </div>
                                             ) : (
                                                 <div className="inline-flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded border border-slate-200">
                                                     <span>Tự nhiên</span>
                                                 </div>
                                             )}
-                                        </div>
                                         {/* Tags */}
                                         {conv.tags && conv.tags.length > 0 && (
                                             <>
@@ -689,7 +660,7 @@ export default function SocialInboxPage() {
                         </div>
 
                         {/* Ad Context Banner */}
-                        {(selectedConv.source_type === 'ads' || selectedConv.referral_source === 'ADS' || Boolean(selectedConv.ad_id)) && (
+                        {isAdConversation(selectedConv) && (
                             <div className="px-4 py-2.5 bg-blue-50 border-b border-blue-100 flex items-center gap-3 text-sm">
                                 <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                                     <span className="text-blue-600 text-xs font-bold">QC</span>
@@ -703,7 +674,7 @@ export default function SocialInboxPage() {
                                             rel="noopener noreferrer"
                                             className="ml-2 text-blue-600 hover:underline text-xs"
                                         >
-                                            Xem QC #{selectedConv.ad_id.slice(-6)}
+                                            Xem QC {shortAdId(selectedConv)}
                                         </a>
                                     ) : null}
                                 </div>

@@ -57,6 +57,20 @@ export async function POST(request: Request) {
 
         let count = 0;
 
+        // Nguồn hiện có trong DB, để không ghi đè dữ liệu quảng cáo đã lưu
+        const existingSource = new Map<string, { ad_title: string | null }>();
+        const senderIds = allConversations
+            .map((c: any) => (c.senders?.data || []).find((s: any) => s.id !== fbPageId)?.id)
+            .filter(Boolean);
+        for (let i = 0; i < senderIds.length; i += 500) {
+            const { data: rows } = await supabase
+                .from('social_conversations')
+                .select('external_id, ad_title')
+                .eq('platform', 'facebook')
+                .in('external_id', senderIds.slice(i, i + 500));
+            (rows || []).forEach((r: any) => existingSource.set(r.external_id, { ad_title: r.ad_title }));
+        }
+
         // 3. Sync to Database
         for (const conv of allConversations) {
             const senders = conv.senders?.data || [];
@@ -102,11 +116,20 @@ export async function POST(request: Request) {
                 last_message_at: conv.updated_time,
                 fb_thread_id: conv.id,
                 customer_profile_url: conv.link || null,
-                source_type: isFromAd ? 'ads' : 'organic',
-                referral_source: isFromAd ? 'ADS' : null,
-                ad_id: isFromAd ? adId : null,
-                ad_title: isFromAd ? `QC #${adId}` : null
             };
+
+            // Nguồn khách: chỉ NÂNG CẤP lên Quảng cáo khi tìm thấy referral.
+            // Không ghi 'organic' lên hội thoại đã có — Graph API chỉ trả về tin gần nhất,
+            // nên "tin đầu tiên" ở đây thường không phải tin đầu thật và không có referral.
+            if (isFromAd) {
+                upsertData.source_type = 'ads';
+                upsertData.referral_source = 'ADS';
+                upsertData.ad_id = adId;
+                if (!existingSource.get(customerId)?.ad_title) upsertData.ad_title = `QC #${adId}`;
+            } else if (!existingSource.has(customerId)) {
+                upsertData.source_type = 'organic';
+                upsertData.referral_source = null;
+            }
 
             const { data: insertedConv, error: insertError } = await supabase
                 .from('social_conversations')

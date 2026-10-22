@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { SocialConversation, SocialMessage, updateConversationMetadata } from '@/lib/marketingStore';
 import { User, Tag, FileText, ShoppingBag, ExternalLink, X, Phone, MapPin, Image } from 'lucide-react';
 import { toast } from 'sonner';
+import { isAdConversation, manualSourceUpdate, shortAdId } from '@/lib/conversationSource';
 
 interface InboxCustomerSidebarProps {
     conversation: SocialConversation;
@@ -19,16 +20,18 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
     const [avatarError, setAvatarError] = useState(false);
     const [customerPhone, setCustomerPhone] = useState(conversation.customer_phone || '');
     const [customerRegion, setCustomerRegion] = useState(conversation.customer_region || '');
-    const isAdLead = conversation.source_type === 'ads' || conversation.referral_source === 'ADS' || Boolean(conversation.ad_id);
+    const isAdLead = isAdConversation(conversation);
 
     const handleToggleSourceType = async () => {
         const nextIsAd = !isAdLead;
-        const updates: any = {
-            source_type: nextIsAd ? 'ads' : 'organic',
-            referral_source: nextIsAd ? 'ADS' : null
-        };
+        if (!nextIsAd && conversation.ad_id &&
+            !window.confirm(`Khách này có mã quảng cáo ${shortAdId(conversation)}. Chuyển về Tự nhiên sẽ xoá mã này. Tiếp tục?`)) {
+            return;
+        }
+        const updates: any = manualSourceUpdate(nextIsAd);
         try {
-            await updateConversationMetadata(conversation.id, updates, token);
+            const ok = await updateConversationMetadata(conversation.id, updates, token);
+            if (!ok) throw new Error('update failed');
             onUpdate(updates);
             toast.success(nextIsAd ? 'Đã chuyển nguồn sang: Quảng cáo' : 'Đã chuyển nguồn sang: Tự nhiên');
         } catch (e) {
@@ -224,7 +227,7 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                             >
                                 {isAdLead ? (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                                        📢 Quảng cáo {conversation.ad_id ? `#${conversation.ad_id.slice(-6)}` : ''} ⇄
+                                        📢 Quảng cáo {shortAdId(conversation)} ⇄
                                     </span>
                                 ) : (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">

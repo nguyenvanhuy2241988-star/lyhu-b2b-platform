@@ -451,7 +451,7 @@ export async function POST(request: Request) {
                     // Check if conversation already exists
                     const { data: existingConv } = await supabase
                         .from('social_conversations')
-                        .select('id, customer_name, ad_id, customer_phone')
+                        .select('id, customer_name, ad_id, customer_phone, source_type, referral_source')
                         .eq('platform', 'facebook')
                         .eq('external_id', senderId)
                         .single();
@@ -597,7 +597,9 @@ export async function POST(request: Request) {
                         } catch (e) {
                             console.error('Failed to fetch ad details:', e);
                         }
-                    } else if (!existingConv || !existingConv.ad_id) {
+                    } else if (isNewConversation) {
+                        // Chỉ gán Tự nhiên cho hội thoại MỚI. Hội thoại cũ giữ nguyên nguồn đã lưu
+                        // (trước đây nhánh này ghi đè 'organic' lên khách QC chưa có ad_id mỗi khi họ nhắn tiếp).
                         upsertData.source_type = 'organic';
                         upsertData.referral_source = null;
                         upsertData.ad_id = null;
