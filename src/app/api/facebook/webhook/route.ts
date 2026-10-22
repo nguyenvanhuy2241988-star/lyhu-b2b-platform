@@ -602,6 +602,22 @@ export async function POST(request: Request) {
                         upsertData.source_type = 'ads';
                         if (referral.ad_id) {
                             upsertData.ad_title = `QC #${referral.ad_id}`;
+                            try {
+                                const adToken = process.env.FB_ADS_ACCESS_TOKEN || pageData.access_token;
+                                if (adToken) {
+                                    const adRes = await fetch(
+                                        `https://graph.facebook.com/v19.0/${referral.ad_id}?fields=name,campaign{name}&access_token=${adToken}`
+                                    );
+                                    const adJson = await adRes.json();
+                                    if (adJson.name) {
+                                        upsertData.ad_title = adJson.campaign?.name 
+                                            ? `${adJson.name} (${adJson.campaign.name})` 
+                                            : adJson.name;
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('Failed to fetch ad details:', e);
+                            }
                         }
                     }
 

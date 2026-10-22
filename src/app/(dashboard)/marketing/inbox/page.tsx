@@ -218,10 +218,7 @@ export default function SocialInboxPage() {
                     updates.interested_products = productsArray;
                 }
                 // Ad source detection
-                if (detectedAdSource && !conv.ad_id && conv.referral_source !== 'ADS' && conv.source_type !== 'ads') {
-                    updates.referral_source = 'ADS';
-                    updates.source_type = 'ads';
-                }
+                // Removed false-positive ad detection
 
                 if (Object.keys(updates).length > 0) {
                     updateConversationMetadata(convId, updates, session?.access_token)
@@ -651,7 +648,7 @@ export default function SocialInboxPage() {
                                     )}
                                     {/* Source Badges */}
                                     <div className="mt-1 flex flex-wrap gap-1">
-                                        {(conv.referral_source === 'ADS' || conv.ad_id) ? (
+                                        {Boolean(conv.ad_id) ? (
                                             <div className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-100">
                                                 <span>QC</span>
                                                 {conv.ad_id && <span className="max-w-[80px] truncate">#{conv.ad_id}</span>}
@@ -691,7 +688,7 @@ export default function SocialInboxPage() {
                         </div>
 
                         {/* Ad Context Banner */}
-                        {(selectedConv.ad_id || selectedConv.referral_source === 'ADS') && (
+                        {Boolean(selectedConv.ad_id) && (
                             <div className="px-4 py-2.5 bg-blue-50 border-b border-blue-100 flex items-center gap-3 text-sm">
                                 <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                                     <span className="text-blue-600 text-xs font-bold">QC</span>

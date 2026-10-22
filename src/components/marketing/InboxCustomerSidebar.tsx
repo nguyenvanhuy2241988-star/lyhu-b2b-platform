@@ -194,7 +194,7 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                         <ExternalLink className="w-4 h-4 text-slate-400 flex-shrink-0" />
                         <div className="text-sm">
                             <span className="text-slate-400 text-xs">Nguồn:</span>{' '}
-                            {(conversation.ad_id || conversation.referral_source === 'ADS' || conversation.source_type === 'ads') ? (
+                            {Boolean(conversation.ad_id) ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
                                     📢 Quảng cáo
                                 </span>
