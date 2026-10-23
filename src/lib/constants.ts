@@ -48,6 +48,7 @@ import {
     Store,          // Retail Chains
     Mic,            // Voice Studio
     Film,           // Video Studio Auto-Cut
+    ShieldCheck,    // Clean AI
 } from "lucide-react";
 import { MODULES } from '@/modules/registry';
 
@@ -103,6 +104,7 @@ export const NAV_ITEMS = {
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
         { label: "Việc cần làm", href: "/sale-admin/tasks", icon: ListTodo },
         { label: "Thư viện Media", href: "/shared/media-library", icon: FolderOpen },
+        { label: "Khử nhãn AI Facebook", href: "/shared/clean-ai", icon: ShieldCheck },
         { label: "Sự kiện", href: "/events", icon: Calendar },
         { label: "Tài liệu", href: "/documents", icon: Book },
     ],
@@ -192,6 +194,7 @@ export const NAV_ITEMS = {
         { label: "Lồng tiếng AI (Voice)", href: "/media/voice-studio", icon: Mic },
         { label: "Dựng Video AI (Auto Cut)", href: "/media/video-studio", icon: Film },
         { label: "Tạo Motion Poster", href: "/admin/motion-maker", icon: Zap },
+        { label: "Khử nhãn AI Facebook", href: "/shared/clean-ai", icon: ShieldCheck },
         { label: "Tin tức & Blog", href: "/marketing/blog", icon: BookOpen },
         { label: "Chủ đề AI", href: "/marketing/ai-topics", icon: Sparkles },
         { label: "Tự động viết bài (AI)", href: "/marketing/ai-blog", icon: Sparkles },
@@ -332,6 +335,7 @@ export const NAV_ITEMS = {
         { label: "Nhóm FB Việc Làm", href: "/marketing/fb-job-groups", icon: Briefcase },
         { label: "Tự động hóa", href: "/marketing/automation", icon: Zap },
         { label: "AI Poster Studio", href: "/marketing/poster-studio", icon: Sparkles },
+        { label: "Khử nhãn AI Facebook", href: "/shared/clean-ai", icon: ShieldCheck },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
         { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
         { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
@@ -368,6 +372,7 @@ export const NAV_ITEMS = {
         { label: "Kịch bản Media", href: "/media/scripts", icon: FileInput },
         { label: "Lồng tiếng AI (Voice)", href: "/media/voice-studio", icon: Mic },
         { label: "Dựng Video AI (Auto Cut)", href: "/media/video-studio", icon: Film },
+        { label: "Khử nhãn AI Facebook", href: "/shared/clean-ai", icon: ShieldCheck },
         { label: "Thư viện Media", href: "/media/library", icon: FolderOpen },
         { label: "Dự án", href: "/media/projects", icon: ClipboardList },
         { label: "Thiết bị", href: "/media/equipment", icon: Wrench },
