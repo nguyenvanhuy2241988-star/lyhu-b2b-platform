@@ -252,43 +252,95 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                         </div>
                     </div>
 
-                    {/* Customer Type */}
+                    {/* Customer Type (Cho phép Sale đổi nhanh) */}
                     <div className="flex items-center gap-2">
                         <ShoppingBag className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                        {conversation.customer_type ? (
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${conversation.customer_type === 'Đại lý' ? 'bg-teal-50 text-[#00AFA9] border border-teal-200' :
-                                conversation.customer_type === 'Nhà phân phối' ? 'bg-blue-100 text-blue-700' :
-                                    conversation.customer_type === 'Siêu thị' ? 'bg-green-100 text-green-700' :
-                                        conversation.customer_type === 'Tạp hóa' ? 'bg-orange-100 text-orange-700' :
-                                            conversation.customer_type === 'Bán sỉ' ? 'bg-teal-100 text-[#00AFA9]' :
-                                                'bg-slate-100 text-slate-700'
-                                }`}>
-                                {conversation.customer_type === 'Đại lý' && '🏪'}
-                                {conversation.customer_type === 'Nhà phân phối' && '🏢'}
-                                {conversation.customer_type === 'Siêu thị' && '🛒'}
-                                {conversation.customer_type === 'Tạp hóa' && '🏠'}
-                                {conversation.customer_type === 'Bán sỉ' && '📦'}
-                                {conversation.customer_type === 'Cửa hàng' && '🏬'}
-                                {' '}{conversation.customer_type}
-                            </span>
-                        ) : (
-                            <span className="text-xs text-slate-400 italic">Chưa xác định loại KH</span>
-                        )}
+                        <select
+                            value={conversation.customer_type || ''}
+                            onChange={async (e) => {
+                                const newType = e.target.value || undefined;
+                                const updates = { customer_type: newType };
+                                try {
+                                    await updateConversationMetadata(conversation.id, updates, token);
+                                    onUpdate(updates);
+                                    toast.success('Đã cập nhật loại khách hàng');
+                                } catch {
+                                    toast.error('Lỗi cập nhật');
+                                }
+                            }}
+                            className="text-xs rounded-full px-2.5 py-1 border border-slate-200 bg-white font-medium text-slate-700 hover:border-blue-400 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        >
+                            <option value="">❓ Chưa xác định loại KH</option>
+                            <option value="Bán sỉ">📦 Bán sỉ</option>
+                            <option value="Mua lẻ">🛒 Mua lẻ</option>
+                            <option value="Đại lý">🏪 Đại lý</option>
+                            <option value="Nhà phân phối">🏢 Nhà phân phối</option>
+                            <option value="Tạp hóa">🏠 Tạp hóa</option>
+                            <option value="Cửa hàng">🏬 Cửa hàng / Shop</option>
+                            <option value="Quán ăn">🍜 Quán ăn / Điểm bán</option>
+                        </select>
                     </div>
 
-                    {/* Interested Products */}
-                    {conversation.interested_products && conversation.interested_products.length > 0 && (
-                        <div className="space-y-1">
-                            <div className="text-xs text-slate-400">Sản phẩm quan tâm:</div>
-                            <div className="flex flex-wrap gap-1">
-                                {conversation.interested_products.map((p, idx) => (
-                                    <span key={idx} className="px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 text-xs rounded-full">
-                                        🏷️ {p}
-                                    </span>
-                                ))}
-                            </div>
+                    {/* Interested Products (Cho phép xem, thêm nhiều món, xóa sản phẩm) */}
+                    <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs text-slate-400 font-medium">Sản phẩm quan tâm:</span>
+                            <select
+                                value=""
+                                onChange={async (e) => {
+                                    const val = e.target.value;
+                                    if (!val) return;
+                                    const current = (conversation.interested_products || []).filter(p => p !== 'Báo giá chung');
+                                    if (current.includes(val)) return;
+                                    const next = [...current, val];
+                                    const updates = { interested_products: next };
+                                    try {
+                                        await updateConversationMetadata(conversation.id, updates, token);
+                                        onUpdate(updates);
+                                        toast.success(`Đã thêm: ${val}`);
+                                    } catch {
+                                        toast.error('Lỗi thêm sản phẩm');
+                                    }
+                                }}
+                                className="text-[11px] text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded px-1.5 py-0.5 cursor-pointer focus:outline-none"
+                            >
+                                <option value="">+ Thêm món</option>
+                                <option value="Khoai môn sấy CVT">🥔 Khoai môn sấy CVT</option>
+                                <option value="Kẹo dẻo UHi">🍬 Kẹo dẻo UHi</option>
+                                <option value="Bột phô mai BOYO">🧀 Bột phô mai BOYO</option>
+                                <option value="Bánh tráng BOYO">🍘 Bánh tráng BOYO</option>
+                                <option value="Snack ăn vặt">🍿 Snack ăn vặt</option>
+                            </select>
                         </div>
-                    )}
+                        <div className="flex flex-wrap gap-1">
+                            {(!conversation.interested_products || conversation.interested_products.filter(p => p !== 'Báo giá chung').length === 0) ? (
+                                <span className="text-xs text-slate-400 italic">Chưa gắn sản phẩm</span>
+                            ) : (
+                                conversation.interested_products.filter(p => p !== 'Báo giá chung').map((p, idx) => (
+                                    <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-full">
+                                        🏷️ {p}
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                const next = (conversation.interested_products || []).filter(x => x !== p);
+                                                const updates = { interested_products: next };
+                                                try {
+                                                    await updateConversationMetadata(conversation.id, updates, token);
+                                                    onUpdate(updates);
+                                                } catch {
+                                                    toast.error('Lỗi xóa sản phẩm');
+                                                }
+                                            }}
+                                            className="hover:text-red-600 text-amber-500 font-bold ml-0.5 cursor-pointer"
+                                            title="Xóa sản phẩm này"
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                ))
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -130,7 +130,7 @@ export default function SocialInboxPage() {
         let detectedCustomerType = '';
         const detectedProducts = new Set<string>();
 
-        // Customer type keywords
+        // Customer type keywords (Sỉ vs Lẻ vs Đại lý)
         const CUSTOMER_TYPES: Record<string, string> = {
             'đại lý': 'Đại lý', 'dai ly': 'Đại lý', 'làm đại lý': 'Đại lý', 'đăng ký đại lý': 'Đại lý',
             'siêu thị': 'Siêu thị', 'sieu thi': 'Siêu thị',
@@ -139,96 +139,105 @@ export default function SocialInboxPage() {
             'cửa hàng': 'Cửa hàng', 'shop': 'Cửa hàng',
             'quán': 'Quán', 'quán ăn': 'Quán ăn',
             'bán sỉ': 'Bán sỉ', 'mua sỉ': 'Bán sỉ', 'giá sỉ': 'Bán sỉ', 'lấy sỉ': 'Bán sỉ',
-            'bán lẻ': 'Bán lẻ', 'mua lẻ': 'Bán lẻ',
+            'báo giá sỉ': 'Bán sỉ', 'bảng giá sỉ': 'Bán sỉ', 'nhận báo giá sỉ': 'Bán sỉ',
+            'báo giá': 'Bán sỉ', 'bảng giá': 'Bán sỉ', 'xin giá sỉ': 'Bán sỉ', 'thùng': 'Bán sỉ', 'nhập sỉ': 'Bán sỉ',
+            'bán lẻ': 'Bán lẻ', 'mua lẻ': 'Bán lẻ', 'mua 1': 'Bán lẻ', 'lấy 1': 'Bán lẻ', 'ăn thử': 'Bán lẻ', '1 gói': 'Bán lẻ', '1 bịch': 'Bán lẻ',
         };
 
-        // Product keywords (LYHU products)
+        // LYHU Standard Product Keywords (Chỉ sản phẩm thực tế)
         const PRODUCT_KEYWORDS: Record<string, string> = {
-            'khoai môn': 'Khoai môn sấy', 'khoai mon': 'Khoai môn sấy',
-            'cvt': 'CVT', 'chuối viên tẩm': 'CVT',
-            'kẹo dẻo': 'Kẹo dẻo', 'keo deo': 'Kẹo dẻo',
-            'snack': 'Snack', 'đồ ăn vặt': 'Snack',
-            'uhi': 'UHI', 'chua uhi': 'Chua UHI',
-            'báo giá': 'Báo giá chung',
-            'bảng giá': 'Báo giá chung',
+            'khoai môn': 'Khoai môn sấy CVT', 'khoai mon': 'Khoai môn sấy CVT',
+            'cvt': 'Khoai môn sấy CVT',
+            'kẹo dẻo': 'Kẹo dẻo UHi', 'keo deo': 'Kẹo dẻo UHi',
+            'uhi': 'Kẹo dẻo UHi',
+            'phô mai': 'Bột phô mai BOYO', 'pho mai': 'Bột phô mai BOYO',
+            'boyo': 'Bột phô mai BOYO', 'gia vị rắc': 'Bột phô mai BOYO',
+            'bánh tráng': 'Bánh tráng BOYO', 'banh trang': 'Bánh tráng BOYO',
+            'snack': 'Snack ăn vặt', 'ăn vặt': 'Snack ăn vặt',
         };
 
+        // 1. Ưu tiên sản phẩm từ bài quảng cáo gốc của khách
+        const targetConv = conversations.find(c => c.id === convId);
+        const adName = targetConv?.ad_title || (targetConv?.ad_id ? adInfo[targetConv.ad_id]?.ad_name : '');
+        if (adName) {
+            const adLower = adName.toLowerCase();
+            if (adLower.includes('khoai môn') || adLower.includes('cvt') || adLower.includes('lyhu')) {
+                detectedProducts.add('Khoai môn sấy CVT');
+            } else if (adLower.includes('kẹo') || adLower.includes('uhi')) {
+                detectedProducts.add('Kẹo dẻo UHi');
+            } else if (adLower.includes('phô mai') || adLower.includes('boyo')) {
+                detectedProducts.add('Bột phô mai BOYO');
+            }
+        }
+
+        // 2. Quét tin nhắn của KHÁCH HÀNG (chỉ quét khách, KHÔNG quét tin của bot)
         for (const msg of msgs) {
-            if (!msg.content) continue;
+            if (!msg.content || msg.is_from_page) continue;
             const contentLower = msg.content.toLowerCase();
 
-            if (!msg.is_from_page) {
-                // === CUSTOMER MESSAGES ===
-                // Phone detection
-                if (!detectedPhone) {
-                    const cleaned = msg.content.replace(/[\s\.\-]/g, '');
-                    const phoneMatch = cleaned.match(phoneRegex);
-                    if (phoneMatch) detectedPhone = phoneMatch[0];
-                }
+            // Phone detection
+            if (!detectedPhone) {
+                const cleaned = msg.content.replace(/[\s\.\-]/g, '');
+                const phoneMatch = cleaned.match(phoneRegex);
+                if (phoneMatch) detectedPhone = phoneMatch[0];
+            }
 
-                // Region detection
-                if (!detectedRegion) {
-                    for (const province of VN_PROVINCES) {
-                        if (contentLower.includes(province.toLowerCase())) {
-                            detectedRegion = province;
-                            if (province === 'HCM' || province === 'SG' || province === 'Sài Gòn') detectedRegion = 'Hồ Chí Minh';
-                            if (province === 'HN') detectedRegion = 'Hà Nội';
-                            break;
-                        }
+            // Region detection
+            if (!detectedRegion) {
+                for (const province of VN_PROVINCES) {
+                    if (contentLower.includes(province.toLowerCase())) {
+                        detectedRegion = province;
+                        if (province === 'HCM' || province === 'SG' || province === 'Sài Gòn') detectedRegion = 'Hồ Chí Minh';
+                        if (province === 'HN') detectedRegion = 'Hà Nội';
+                        break;
                     }
                 }
+            }
 
-                // Customer type detection
-                if (!detectedCustomerType) {
-                    for (const [keyword, type] of Object.entries(CUSTOMER_TYPES)) {
-                        if (contentLower.includes(keyword)) {
-                            detectedCustomerType = type;
-                            break;
-                        }
-                    }
-                }
-
-                // Product interest detection
-                for (const [keyword, product] of Object.entries(PRODUCT_KEYWORDS)) {
+            // Customer type detection (Sỉ vs Lẻ)
+            if (!detectedCustomerType) {
+                for (const [keyword, type] of Object.entries(CUSTOMER_TYPES)) {
                     if (contentLower.includes(keyword)) {
-                        detectedProducts.add(product);
+                        detectedCustomerType = type;
+                        break;
                     }
                 }
-            } else {
-                // === PAGE MESSAGES (including automated ad messages) ===
+            }
 
-                // Also detect products from page ad messages
-                for (const [keyword, product] of Object.entries(PRODUCT_KEYWORDS)) {
-                    if (contentLower.includes(keyword)) {
-                        detectedProducts.add(product);
-                    }
+            // Product interest detection (Khách hỏi thêm nhiều món)
+            for (const [keyword, product] of Object.entries(PRODUCT_KEYWORDS)) {
+                if (contentLower.includes(keyword)) {
+                    detectedProducts.add(product);
                 }
             }
         }
 
-        // Auto-save all detected info
+        // Auto-save all detected info & merge products
         const productsArray = Array.from(detectedProducts);
-        if (detectedPhone || detectedRegion || detectedCustomerType || productsArray.length > 0) {
-            setConversations(prev => {
-                const conv = prev.find(c => c.id === convId);
-                if (!conv) return prev;
-                const updates: any = {};
-                if (detectedPhone && !conv.customer_phone) updates.customer_phone = detectedPhone;
-                if (detectedRegion && !conv.customer_region) updates.customer_region = detectedRegion;
-                if (detectedCustomerType && !conv.customer_type) updates.customer_type = detectedCustomerType;
-                if (productsArray.length > 0 && (!conv.interested_products || conv.interested_products.length === 0)) {
-                    updates.interested_products = productsArray;
-                }
+        setConversations(prev => {
+            const conv = prev.find(c => c.id === convId);
+            if (!conv) return prev;
+            const updates: any = {};
+            if (detectedPhone && !conv.customer_phone) updates.customer_phone = detectedPhone;
+            if (detectedRegion && !conv.customer_region) updates.customer_region = detectedRegion;
+            if (detectedCustomerType && !conv.customer_type) updates.customer_type = detectedCustomerType;
 
-                if (Object.keys(updates).length > 0) {
-                    updateConversationMetadata(convId, updates, session?.access_token)
-                        .then(() => console.log('Auto-saved:', updates))
-                        .catch(e => console.error('Failed to save:', e));
-                    return prev.map(c => c.id === convId ? { ...c, ...updates } : c);
-                }
-                return prev;
-            });
-        }
+            // Merge sản phẩm: dọn dẹp "Báo giá chung" và cộng dồn các sản phẩm khách quan tâm
+            const existing = (conv.interested_products || []).filter(p => p !== 'Báo giá chung');
+            const merged = Array.from(new Set([...existing, ...productsArray]));
+            const hadBaoGia = (conv.interested_products || []).includes('Báo giá chung');
+            if (merged.length > existing.length || hadBaoGia) {
+                updates.interested_products = merged;
+            }
+
+            if (Object.keys(updates).length > 0) {
+                updateConversationMetadata(convId, updates, session?.access_token)
+                    .then(() => console.log('Auto-saved updates:', updates))
+                    .catch(e => console.error('Failed to save:', e));
+                return prev.map(c => c.id === convId ? { ...c, ...updates } : c);
+            }
+            return prev;
+        });
     };
 
     const scrollToBottom = () => {
