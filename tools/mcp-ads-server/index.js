@@ -51,6 +51,29 @@ function saveAccessToken(token) {
     fs.writeFileSync(envPath, content, 'utf8');
 }
 
+// Supabase configuration & helper for LYHU App database
+const SUPABASE_URL = ENV.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = ENV.SUPABASE_SERVICE_ROLE_KEY || ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+async function supabaseQuery(endpoint) {
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+        throw new Error('Chưa cấu hình NEXT_PUBLIC_SUPABASE_URL hoặc SUPABASE_KEY trong .env.local');
+    }
+    const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+    const res = await fetch(url, {
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+        }
+    });
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Supabase query error (${res.status}): ${text}`);
+    }
+    return await res.json();
+}
+
 // Helper: HTTP request
 function fbApi(endpoint, method = 'GET', body = null, token = null) {
     return new Promise((resolve, reject) => {
@@ -187,6 +210,57 @@ const TOOLS = [
                 new_access_token: {
                     type: 'string',
                     description: 'Mã Access Token mới của Facebook nếu muốn cập nhật'
+                }
+            }
+        }
+    },
+    {
+        name: 'lyhu_get_customer_lifecycle_funnel',
+        description: 'Lấy dữ liệu phân tích vòng đời khách hàng từ cơ sở dữ liệu LYHU App cho các bài quảng cáo (tổng số inbox, số khách để lại SĐT, phân loại khách Bán sỉ / Đại lý / NPP / Bán lẻ, và danh sách sản phẩm khách quan tâm). Dùng công cụ này để đo lường CHẤT LƯỢNG TỆP B2B thực tế của từng bài ads thay vì chỉ nhìn số liệu thô của Facebook.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                ad_id: {
+                    type: 'string',
+                    description: 'Mã bài quảng cáo (Ad ID) cụ thể cần lọc, ví dụ: 120237755410310060. Nếu để trống sẽ lấy báo cáo tổng hợp tất cả các bài quảng cáo.'
+                },
+                days: {
+                    type: 'number',
+                    description: 'Số ngày gần nhất cần phân tích (mặc định 30 ngày)',
+                    default: 30
+                }
+            }
+        }
+    },
+    {
+        name: 'lyhu_get_customer_conversations',
+        description: 'Đọc nội dung tin nhắn và câu hỏi thực tế của khách hàng từ một bài quảng cáo cụ thể. Giúp Claude đọc thấu hiểu insight khách hàng (khách hỏi giá sỉ bao nhiêu, chính sách vận chuyển, hỏi sản phẩm nào, lý do từ chối hoặc chốt đơn) để đưa ra đề xuất tối ưu nội dung và kịch bản quảng cáo.',
+        inputSchema: {
+            type: 'object',
+            required: ['ad_id'],
+            properties: {
+                ad_id: {
+                    type: 'string',
+                    description: 'Mã bài quảng cáo (Ad ID), ví dụ: 120237755410310060'
+                },
+                limit: {
+                    type: 'number',
+                    description: 'Số lượng cuộc hội thoại cần đọc (mặc định 5, tối đa 20)',
+                    default: 5
+                }
+            }
+        }
+    },
+    {
+        name: 'lyhu_get_unified_ad_roi_report',
+        description: 'Báo cáo hợp nhất tối ưu hóa quảng cáo: Kết hợp trực tiếp số liệu chi phí từ Facebook Ads Manager (Spend, Impressions, Clicks, CPC) với số liệu vòng đời kinh doanh thực tế từ LYHU App (Inbox, SĐT, Khách Bán Sỉ, Tỷ lệ Lead B2B). Tự động tính toán Chi phí trên 1 Khách Sỉ (Cost per B2B Lead) và đưa ra quyết định tối ưu: SCALE UP, PAUSE, hoặc FIX CONTENT.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                time_range: {
+                    type: 'string',
+                    description: 'Khoảng thời gian: today, yesterday, last_7d, last_30d',
+                    default: 'last_30d'
                 }
             }
         }
@@ -399,6 +473,236 @@ async function handleToolCall(name, args) {
             return {
                 isError: true,
                 content: [{ type: 'text', text: `Lỗi khi điều chỉnh AdSet: ${err.message}` }]
+            };
+        }
+    }
+
+    if (name === 'lyhu_get_customer_lifecycle_funnel') {
+        try {
+            const { ad_id: adIdFilter, days = 30 } = args;
+            const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+            let ep = `social_conversations?select=id,customer_name,customer_phone,customer_type,interested_products,ad_id,ad_title,source_type,created_at&created_at=gte.${cutoff}&order=created_at.desc&limit=2000`;
+            if (adIdFilter) ep += `&ad_id=eq.${adIdFilter}`;
+
+            const rows = await supabaseQuery(ep);
+            if (!rows || rows.length === 0) {
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `Không tìm thấy hội thoại nào trong ${days} ngày qua${adIdFilter ? ` cho bài QC ${adIdFilter}` : ''}.`
+                    }]
+                };
+            }
+
+            const groups = {};
+            rows.forEach(r => {
+                const key = r.ad_id || (r.source_type === 'organic' ? 'ORGANIC' : 'KHAC');
+                if (!groups[key]) {
+                    groups[key] = {
+                        ad_id: key,
+                        ad_title: r.ad_title || (key === 'ORGANIC' ? 'Khách tự nhiên (Organic)' : 'Chưa gắn mã QC'),
+                        total_inbox: 0,
+                        with_phone: 0,
+                        b2b_leads: 0,
+                        retail_leads: 0,
+                        unclassified: 0,
+                        types: {},
+                        products: {},
+                        sample_customers: []
+                    };
+                }
+                const g = groups[key];
+                g.total_inbox++;
+                if (r.customer_phone) g.with_phone++;
+
+                const ct = r.customer_type || 'Chưa phân loại';
+                g.types[ct] = (g.types[ct] || 0) + 1;
+
+                const isB2B = ['Bán sỉ', 'Đại lý', 'Nhà phân phối', 'Cửa hàng', 'Tạp hóa'].includes(ct);
+                if (isB2B) g.b2b_leads++;
+                else if (ct === 'Bán lẻ') g.retail_leads++;
+                else g.unclassified++;
+
+                if (Array.isArray(r.interested_products)) {
+                    r.interested_products.forEach(p => {
+                        g.products[p] = (g.products[p] || 0) + 1;
+                    });
+                }
+
+                if (g.sample_customers.length < 5) {
+                    g.sample_customers.push({
+                        name: r.customer_name,
+                        phone: r.customer_phone ? (r.customer_phone.slice(0, 4) + '***' + r.customer_phone.slice(-3)) : null,
+                        type: r.customer_type || 'Chưa phân loại',
+                        products: r.interested_products || []
+                    });
+                }
+            });
+
+            const formatted = Object.values(groups).map(g => {
+                const b2bRate = g.total_inbox ? ((g.b2b_leads / g.total_inbox) * 100).toFixed(1) : '0';
+                const phoneRate = g.total_inbox ? ((g.with_phone / g.total_inbox) * 100).toFixed(1) : '0';
+
+                let verdict = '⚪ Cần thêm dữ liệu';
+                if (Number(b2bRate) >= 25 && Number(phoneRate) >= 15) {
+                    verdict = '🟢 HIỆU QUẢ CAO: Tệp ra nhiều khách sỉ & số điện thoại. Đề xuất TĂNG NGÂN SÁCH (Scale Up)';
+                } else if (Number(b2bRate) < 10 && g.total_inbox >= 25) {
+                    verdict = '🔴 KÉM HIỆU QUẢ: Nhiều tin nhắn nhưng hầu như không có khách sỉ. Đề xuất TẮT HOẶC SỬA NỘI DUNG/TARGET';
+                }
+
+                return `📊 BÀI QUẢNG CÁO: ${g.ad_title} (ID: ${g.ad_id})
+  • Tổng Inbox (${days} ngày qua): ${g.total_inbox}
+  • Có số điện thoại: ${g.with_phone} (${phoneRate}%)
+  • Khách Sỉ / Đại lý / NPP: ${g.b2b_leads} (${b2bRate}%)
+  • Khách Bán Lẻ: ${g.retail_leads} | Chưa phân loại: ${g.unclassified}
+  • Sản phẩm quan tâm: ${Object.entries(g.products).map(([k,v]) => `${k} (${v})`).join(', ') || 'Chưa xác định'}
+  • Đánh giá Claude: ${verdict}
+  • Khách hàng mẫu:
+${g.sample_customers.map(c => `    - ${c.name} | SĐT: ${c.phone || 'Chưa có'} | Phân loại: ${c.type} | SP: ${c.products.join(', ') || 'N/A'}`).join('\n')}`;
+            }).join('\n\n' + '='.repeat(60) + '\n\n');
+
+            return {
+                content: [{
+                    type: 'text',
+                    text: `📈 BÁO CÁO VÒNG ĐỜI KHÁCH HÀNG & CHẤT LƯỢNG QUẢNG CÁO (${days} NGÀY QUA):\n\n${formatted}`
+                }]
+            };
+        } catch (err) {
+            return {
+                isError: true,
+                content: [{ type: 'text', text: `Lỗi khi lấy dữ liệu vòng đời: ${err.message}` }]
+            };
+        }
+    }
+
+    if (name === 'lyhu_get_customer_conversations') {
+        try {
+            const { ad_id: adId, limit = 5 } = args;
+            if (!adId) throw new Error('Vui lòng cung cấp ad_id');
+
+            const convs = await supabaseQuery(`social_conversations?select=id,customer_name,customer_phone,customer_type,interested_products,created_at&ad_id=eq.${adId}&order=created_at.desc&limit=${Math.min(20, limit)}`);
+            if (!convs || convs.length === 0) {
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `Không tìm thấy cuộc hội thoại nào cho bài quảng cáo ID ${adId}.`
+                    }]
+                };
+            }
+
+            const results = [];
+            for (const c of convs) {
+                const msgs = await supabaseQuery(`social_messages?conversation_id=eq.${c.id}&order=created_at.asc&limit=10&select=content,is_from_page,created_at`);
+                results.push({
+                    name: c.customer_name,
+                    phone: c.customer_phone,
+                    type: c.customer_type,
+                    products: c.interested_products,
+                    created_at: c.created_at,
+                    messages: (msgs || []).map(m => `[${m.is_from_page ? 'Fanpage' : 'Khách'}]: ${m.content}`)
+                });
+            }
+
+            const text = results.map((r, i) => `Khách #${i+1}: ${r.name} (${r.type || 'Chưa phân loại'}) - SĐT: ${r.phone || 'Không có'} - SP: ${(r.products || []).join(', ') || 'N/A'}\n` +
+                r.messages.map(m => `  ${m}`).join('\n')
+            ).join('\n\n--------------------------------------------\n\n');
+
+            return {
+                content: [{
+                    type: 'text',
+                    text: `💬 NỘI DUNG TRAO ĐỔI THỰC TẾ VỚI KHÁCH HÀNG (Bài QC: ${adId}):\n\n${text}`
+                }]
+            };
+        } catch (err) {
+            return {
+                isError: true,
+                content: [{ type: 'text', text: `Lỗi khi đọc tin nhắn khách hàng: ${err.message}` }]
+            };
+        }
+    }
+
+    if (name === 'lyhu_get_unified_ad_roi_report') {
+        try {
+            const timeRange = args.time_range || 'last_30d';
+            const daysMap = { today: 1, yesterday: 2, last_7d: 7, last_30d: 30 };
+            const days = daysMap[timeRange] || 30;
+
+            // 1. Fetch Meta Ads Insights
+            const endpoint = `${DEFAULT_AD_ACCOUNT_ID}/adsets?fields=id,name,status,daily_budget,campaign{id,name},insights.date_preset(${timeRange}){spend,impressions,clicks,cpc,actions}&limit=50`;
+            const fbRes = await fbApi(endpoint);
+            const adSets = fbRes.data || [];
+
+            // 2. Fetch LYHU App Database Funnel
+            const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+            const convs = await supabaseQuery(`social_conversations?select=id,customer_phone,customer_type,interested_products,ad_id&created_at=gte.${cutoff}&order=created_at.desc&limit=2000`);
+
+            // Map database stats by ad_id
+            const dbMap = {};
+            (convs || []).forEach(c => {
+                if (!c.ad_id) return;
+                if (!dbMap[c.ad_id]) {
+                    dbMap[c.ad_id] = { inboxes: 0, phones: 0, b2b: 0, retail: 0, products: {} };
+                }
+                const m = dbMap[c.ad_id];
+                m.inboxes++;
+                if (c.customer_phone) m.phones++;
+                if (['Bán sỉ', 'Đại lý', 'Nhà phân phối', 'Cửa hàng', 'Tạp hóa'].includes(c.customer_type)) m.b2b++;
+                else if (c.customer_type === 'Bán lẻ') m.retail++;
+                if (Array.isArray(c.interested_products)) {
+                    c.interested_products.forEach(p => { m.products[p] = (m.products[p] || 0) + 1; });
+                }
+            });
+
+            // 3. Merge Insights
+            const merged = adSets.map((ad, idx) => {
+                const ins = (ad.insights && ad.insights.data && ad.insights.data[0]) || {};
+                const spend = Number(ins.spend || 0);
+                const impressions = Number(ins.impressions || 0);
+                const clicks = Number(ins.clicks || 0);
+                const budget = ad.daily_budget ? Number(ad.daily_budget) : 0;
+
+                // Meta reported messages
+                let metaMsg = 0;
+                if (ins.actions) {
+                    const action = ins.actions.find(a => a.action_type.includes('message'));
+                    if (action) metaMsg = Number(action.value || 0);
+                }
+
+                // Check DB metrics by adset id or associated ad ids
+                const db = dbMap[ad.id] || { inboxes: metaMsg, phones: 0, b2b: 0, retail: 0, products: {} };
+                const costPerB2B = db.b2b > 0 ? Math.round(spend / db.b2b).toLocaleString('vi-VN') + ' đ' : (spend > 0 ? 'Chưa ra khách sỉ' : '0 đ');
+                const costPerPhone = db.phones > 0 ? Math.round(spend / db.phones).toLocaleString('vi-VN') + ' đ' : (spend > 0 ? 'Chưa có SĐT' : '0 đ');
+                const b2bQuality = db.inboxes > 0 ? ((db.b2b / db.inboxes) * 100).toFixed(1) + '%' : '0%';
+
+                let aiDecision = '⚪ THEO DÕI THÊM';
+                if (db.b2b >= 5 && spend > 0 && (spend / db.b2b) <= 300000) {
+                    aiDecision = '🚀 SCALE UP (TĂNG 20% NGÂN SÁCH): Chi phí trên 1 khách sỉ rất tốt, tệp chuẩn';
+                } else if (spend > 500000 && db.b2b === 0) {
+                    aiDecision = '🛑 PAUSE (TẮT QUẢNG CÁO): Chi tiêu đã cao nhưng 100% không ra khách sỉ';
+                }
+
+                return `[#${idx + 1}] AdSet: ${ad.name} (ID: ${ad.id})
+  • Trạng thái: ${ad.status === 'ACTIVE' ? '🟢 ĐANG BẬT' : '⚪ ĐANG TẮT'} | Ngân sách: ${budget.toLocaleString('vi-VN')} đ/ngày
+  • Chi tiêu (${timeRange}): ${spend.toLocaleString('vi-VN')} đ
+  • Lượt xem: ${impressions.toLocaleString('vi-VN')} | Clicks: ${clicks}
+  • 📥 Vòng đời LYHU App:
+    - Tổng Inbox: ${db.inboxes} | Có SĐT: ${db.phones}
+    - Khách Sỉ / Đại lý: ${db.b2b} (${b2bQuality})
+    - Chi phí trên 1 Khách Sỉ (CPBL): ${costPerB2B}
+    - Chi phí trên 1 SĐT: ${costPerPhone}
+  • 👉 QUYẾT ĐỊNH TỐI ƯU CỦA CLAUDE: ${aiDecision}`;
+            }).join('\n\n' + '-'.repeat(50) + '\n\n');
+
+            return {
+                content: [{
+                    type: 'text',
+                    text: `🎯 BÁO CÁO HỢP NHẤT HIỆU QUẢ QUẢNG CÁO & VÒNG ĐỜI KHÁCH HÀNG (${timeRange.toUpperCase()}):\n\n${merged}`
+                }]
+            };
+        } catch (err) {
+            return {
+                isError: true,
+                content: [{ type: 'text', text: `Lỗi khi tổng hợp báo cáo ROI: ${err.message}` }]
             };
         }
     }
