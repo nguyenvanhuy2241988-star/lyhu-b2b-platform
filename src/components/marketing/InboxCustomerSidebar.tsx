@@ -3,6 +3,8 @@ import { SocialConversation, SocialMessage, updateConversationMetadata } from '@
 import { User, Tag, FileText, ShoppingBag, ExternalLink, X, Phone, MapPin, Image } from 'lucide-react';
 import { toast } from 'sonner';
 import { isAdConversation, manualSourceUpdate, shortAdId } from '@/lib/conversationSource';
+import { FbAdInfo } from '@/lib/fbAds';
+import InboxAdDetails from '@/components/marketing/InboxAdDetails';
 
 interface InboxCustomerSidebarProps {
     conversation: SocialConversation;
@@ -10,9 +12,10 @@ interface InboxCustomerSidebarProps {
     onUpdate: (updates: Partial<SocialConversation>) => void;
     onCreateDeal?: () => void;
     token?: string;
+    adInfo?: FbAdInfo | null;
 }
 
-export default function InboxCustomerSidebar({ conversation, messages = [], onUpdate, onCreateDeal, token }: InboxCustomerSidebarProps) {
+export default function InboxCustomerSidebar({ conversation, messages = [], onUpdate, onCreateDeal, token, adInfo }: InboxCustomerSidebarProps) {
     const [notes, setNotes] = useState(conversation.notes || '');
     const [tags, setTags] = useState<string[]>(conversation.tags || []);
     const [newTag, setNewTag] = useState('');
@@ -135,18 +138,9 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                         )}
                     </button>
                 </div>
-                {isAdLead && (conversation.ad_title || conversation.ad_id) && (
-                    <div className="mt-2 text-center space-y-1">
-                        {conversation.ad_title && (
-                            <p className="text-xs font-semibold text-blue-900 bg-blue-50 px-2 py-1 rounded border border-blue-200 inline-block max-w-[220px] truncate" title={conversation.ad_title}>
-                                🎯 {conversation.ad_title}
-                            </p>
-                        )}
-                        {conversation.ad_id && (
-                            <p className="text-[11px] text-slate-500 font-mono">
-                                Ad ID: #{conversation.ad_id}
-                            </p>
-                        )}
+                {isAdLead && (
+                    <div className="mt-3">
+                        <InboxAdDetails variant="card" conversation={conversation} ad={adInfo} messages={messages} />
                     </div>
                 )}
             </div>

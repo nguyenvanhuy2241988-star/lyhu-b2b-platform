@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getAIResponse, extractPhoneNumber } from '@/lib/geminiService';
 import { createAndAssignLead } from '@/lib/leadDistributionService';
+import { getAdsInfo, adTitleFrom } from '@/lib/fbAdsServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -581,19 +582,11 @@ export async function POST(request: Request) {
                         upsertData.ref_parameter = referral.ref || null;
                         upsertData.source_type = 'ads';
                         upsertData.ad_title = `QC #${referral.ad_id}`;
+                        // Lấy chi tiết QC (tên, chiến dịch, nhóm QC, ảnh) và lưu vào bảng fb_ads
                         try {
-                            const adToken = process.env.FB_ADS_ACCESS_TOKEN || pageData.access_token;
-                            if (adToken) {
-                                const adRes = await fetch(
-                                    `https://graph.facebook.com/v19.0/${referral.ad_id}?fields=name,campaign{name}&access_token=${adToken}`
-                                );
-                                const adJson = await adRes.json();
-                                if (adJson.name) {
-                                    upsertData.ad_title = adJson.campaign?.name 
-                                        ? `${adJson.name} (${adJson.campaign.name})` 
-                                        : adJson.name;
-                                }
-                            }
+                            const ads = await getAdsInfo(supabase, [String(referral.ad_id)], { token: process.env.FB_ADS_ACCESS_TOKEN || pageData.access_token });
+                            const title = adTitleFrom(ads[String(referral.ad_id)]);
+                            if (title) upsertData.ad_title = title;
                         } catch (e) {
                             console.error('Failed to fetch ad details:', e);
                         }

@@ -18,6 +18,8 @@ import { createClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import InboxCustomerSidebar from '@/components/marketing/InboxCustomerSidebar';
 import { isAdConversation, shortAdId } from '@/lib/conversationSource';
+import { FbAdInfo, adShortLabel } from '@/lib/fbAds';
+import InboxAdDetails from '@/components/marketing/InboxAdDetails';
 import { CreateDealModal } from '@/components/telesales/CreateDealModal';
 import { createDeal } from '@/lib/crmDealsStore';
 
@@ -51,6 +53,32 @@ export default function SocialInboxPage() {
     useEffect(() => {
         selectedConvIdRef.current = selectedConvId;
     }, [selectedConvId]);
+
+    // Chi tiết quảng cáo (tên mẫu QC, chiến dịch, nhóm QC, ảnh) theo ad_id
+    const [adInfo, setAdInfo] = useState<Record<string, FbAdInfo>>({});
+    const requestedAdIds = useRef<Set<string>>(new Set());
+    useEffect(() => {
+        if (!session?.access_token) return;
+        const missing = Array.from(new Set(conversations.map(c => c.ad_id).filter(Boolean) as string[]))
+            .filter(id => !requestedAdIds.current.has(id));
+        if (missing.length === 0) return;
+        missing.forEach(id => requestedAdIds.current.add(id));
+        (async () => {
+            for (let i = 0; i < missing.length; i += 100) {
+                try {
+                    const res = await fetch('/api/facebook/ad-info', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+                        body: JSON.stringify({ ad_ids: missing.slice(i, i + 100) }),
+                    });
+                    const json = await res.json();
+                    if (json?.ads) setAdInfo(prev => ({ ...prev, ...json.ads }));
+                } catch (e) {
+                    console.error('Load ad info failed:', e);
+                }
+            }
+        })();
+    }, [conversations, session?.access_token]);
 
     const loadConversations = async () => {
         setIsLoading(true);
@@ -621,9 +649,15 @@ export default function SocialInboxPage() {
                                     {/* Source Badges */}
                                         <div className="mt-1 flex flex-wrap gap-1">
                                             {isAdConversation(conv) ? (
-                                                <div className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-100 font-medium">
-                                                    <span>QC</span>
-                                                    {conv.ad_id && <span className="max-w-[80px] truncate">{shortAdId(conv)}</span>}
+                                                <div
+                                                    className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-100 font-medium max-w-[220px]"
+                                                    title={conv.ad_id ? `Ad ID: ${conv.ad_id}` : 'Quảng cáo (không rõ mẫu)'}
+                                                >
+                                                    <span>📢</span>
+                                                    <span className="truncate">
+                                                        {adShortLabel(conv.ad_id ? adInfo[conv.ad_id] : null, conv.ad_title)
+                                                            || (conv.ad_id ? `QC ${shortAdId(conv)}` : 'QC không rõ mẫu')}
+                                                    </span>
                                                 </div>
                                             ) : (
                                                 <div className="inline-flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded border border-slate-200">
@@ -661,30 +695,12 @@ export default function SocialInboxPage() {
 
                         {/* Ad Context Banner */}
                         {isAdConversation(selectedConv) && (
-                            <div className="px-4 py-2.5 bg-blue-50 border-b border-blue-100 flex items-center gap-3 text-sm">
-                                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <span className="text-blue-600 text-xs font-bold">QC</span>
-                                </div>
-                                <div className="flex-1 min-w-0 flex items-center flex-wrap gap-2">
-                                    <span className="text-blue-900 font-semibold">Trả lời quảng cáo:</span>
-                                    {selectedConv.ad_title && (
-                                        <span className="text-xs font-semibold text-blue-800 bg-blue-100/90 px-2 py-0.5 rounded border border-blue-200 shadow-sm">
-                                            🎯 {selectedConv.ad_title}
-                                        </span>
-                                    )}
-                                    {selectedConv.ad_id && (
-                                        <a
-                                            href={`https://www.facebook.com/ads/manager/account/campaigns?act=&selected_ad_ids=${selectedConv.ad_id}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:underline text-xs flex items-center gap-0.5 font-mono bg-white px-1.5 py-0.5 rounded border border-blue-200"
-                                            title="Xem chiến dịch trên Facebook Ads Manager"
-                                        >
-                                            Mã: {shortAdId(selectedConv)} ↗
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
+                            <InboxAdDetails
+                                variant="banner"
+                                conversation={selectedConv}
+                                ad={selectedConv.ad_id ? adInfo[selectedConv.ad_id] : null}
+                                messages={messages}
+                            />
                         )}
 
                         {/* Messages */}
@@ -807,6 +823,7 @@ export default function SocialInboxPage() {
                 <InboxCustomerSidebar
                     conversation={{ ...selectedConv, fb_page_id: pages.find(p => p.id === selectedConv.page_id)?.page_id || '', page_name: pages.find(p => p.id === selectedConv.page_id)?.name || '' } as any}
                     messages={messages}
+                    adInfo={selectedConv.ad_id ? adInfo[selectedConv.ad_id] : null}
                     onUpdate={handleUpdateConversation}
                     token={session?.access_token}
                     onCreateDeal={() => setIsCreateDealOpen(true)}
