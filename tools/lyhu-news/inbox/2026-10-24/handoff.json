@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "target_date_ict": "2026-10-24",
+  "articles": [
+    {
+      "slot": 7,
+      "title": "Khách bỏ lại hàng ở quầy: gom đúng một chỗ, trả đúng một kệ",
+      "slug": "khach-bo-lai-hang-o-quay-gom-dung-mot-cho-tra-dung-mot-ke",
+      "category_slug": "tap-hoa-gt",
+      "content": "<p>Đang tính tiền, khách bảo: “Thôi, món này em chưa lấy.” Người bán đặt món đó sang bên rồi phục vụ người kế tiếp. Một lúc sau, quầy có cả hàng khách chưa mua, hàng đang chờ tính và hàng đã thanh toán. Nhìn qua thì món nào cũng giống nhau.</p>\n<p>Với hàng khô, đóng gói sẵn và không yêu cầu bảo quản đặc biệt, tiệm có thể thử một cách đơn giản: dành riêng một khay cho hàng khách bỏ lại trước thanh toán. Khay này chỉ là điểm gom tạm để trả hàng về đúng chỗ.</p>\n<h2>Hỏi rõ trước khi đưa vào khay</h2>\n<p>Có món khách bỏ hẳn, có món họ nhờ giữ để lát quyết tiếp. Hỏi một câu: “Món này mình không lấy nữa hay để em giữ riêng cho mình?” Nếu khách còn cân nhắc, để cùng phần hàng của khách và nói rõ với người đang phụ quầy.</p>\n<p>Chỉ đưa vào khay trả kệ khi đã xác nhận không mua. Hàng khách mua rồi quên mang về cần được giữ riêng theo việc đó. Hai tình huống không dùng chung một khay, vì người xử lý sau sẽ không biết món nào có thể đem bán tiếp.</p>\n<figure><img src=\"__INLINE_IMAGE__\" alt=\"Ảnh minh họa\" style=\"width:100%;height:auto;\"><figcaption>Ảnh minh họa</figcaption></figure>\n<h2>Trả kệ theo mã hàng, đừng theo khoảng trống</h2>\n<p>Chọn một vị trí trong tầm quan sát của người bán, đặt nhãn “Chờ trả kệ”. Đừng dùng luôn túi hàng của khách hoặc chiếc giỏ đang phục vụ đơn khác. Khi rảnh tay, người được phân công mang từng món về vị trí của đúng loại hàng.</p>\n<p>Trước khi đặt lại, nhìn tên, phiên bản và quy cách trên bao bì rồi đối chiếu với hàng cùng ô kệ. Chỗ nào đang trống chưa chắc là chỗ của món đang cầm. Ví dụ giả định, một gói khăn giấy nhỏ nằm cạnh loại lớn cùng màu; đặt theo màu rất dễ nhầm.</p>\n<p>Nếu bao bì bị mở, rách hoặc có dấu hiệu bất thường, để riêng cho người phụ trách kiểm tra. Hàng cần giữ lạnh hay điều kiện bảo quản khác phải được xử lý theo yêu cầu của mặt hàng, không đưa vào cách gom hàng khô này.</p>\n<h2>Chốt người làm, tránh khay đầy qua ca</h2>\n<p>Tiệm ít người có thể thống nhất kiểm khay lúc quầy vãn khách và trước khi bàn giao ca. Người nhận việc nhìn lại khay sau khi trả, báo những món còn vướng. Nếu chưa biết vị trí hoặc chưa rõ tình trạng hàng, ghi ngắn lý do để ca sau không tự đoán.</p>\n<p>Việc thử hôm nay rất nhỏ: chọn khay, đặt nhãn, thống nhất ai trả kệ. Cuối ca xem còn món nào lẫn với hàng chờ tính tiền không. Một chỗ gom rõ ràng chỉ hữu ích khi người trong tiệm hiểu cùng một cách dùng.</p>",
+      "request_id": "lyhu-news:2026-10-24:7",
+      "content_hash": "efb35e73ecfa0fdf8264aa71f961350a5d128b4dc636e2a3bc848a029532c33e",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "3697303e2f31d85f99ebf33da594ea60369bc8f344506001ba1ed90d95b13013",
+        "inline.webp": "4ef9065492f0d96f28ff496c7988b72a891127879e17d2b47031586b9596927b"
+      }
+    },
+    {
+      "slot": 13,
+      "title": "QR liên hệ của tiệm: quét thử bằng máy khác trước khi in",
+      "slug": "qr-lien-he-cua-tiem-quet-thu-bang-may-khac-truoc-khi-in",
+      "category_slug": "cong-nghe-ban-le",
+      "content": "<p>Tờ giới thiệu tiệm đã in đẹp, mã QR đặt ngay ngắn, nhưng khách quét lại gặp trang không mở được hoặc một tài khoản khác. Lúc ấy, chiếc mã vẫn có thể được điện thoại nhận ra; điều cần kiểm là nơi nó dẫn tới.</p>\n<p>Nếu tiệm dùng QR để khách mở trang liên hệ, hãy dành một lượt kiểm trước khi in nhiều bản. Bài này chỉ nói về QR liên hệ của cửa hàng. Các mã phục vụ thanh toán cần được kiểm theo đúng nghiệp vụ thanh toán riêng.</p>\n<h2>Chốt trang đích trước, làm hình mã sau</h2>\n<p>Chọn chính xác trang muốn khách mở: trang giới thiệu, trang cửa hàng hay kênh liên hệ đang được người của tiệm quản lý. Mở đường dẫn đó, đọc tên và thông tin hiện trên trang. Đừng lấy vội một liên kết trong lịch sử trò chuyện rồi mặc nhiên coi là bản đang dùng.</p>\n<p>Google có hướng dẫn tạo QR để chia sẻ một trang trong Chrome. Dù dùng cách tạo nào, tiệm vẫn nên lưu riêng đường dẫn gốc cùng bản thiết kế. Khi cần sửa, người làm sau biết mã này phục vụ việc gì và ai chịu trách nhiệm kiểm lại.</p>\n<figure><img src=\"__INLINE_IMAGE__\" alt=\"Ảnh minh họa\" style=\"width:100%;height:auto;\"><figcaption>Ảnh minh họa</figcaption></figure>\n<h2>Nhờ một người đứng ở vị trí khách</h2>\n<p>Dùng điện thoại khác quét thử bản mã, không chỉ nhìn bản xem trước trên máy đang thiết kế. Người thử mở trang rồi kiểm ba việc: đúng tên tiệm chưa, thông tin liên hệ có đúng không, và có thực hiện được việc mà dòng hướng dẫn bên cạnh đã nói không.</p>\n<p>Ví dụ giả định, tờ giới thiệu ghi “Quét để xem cách liên hệ”, nhưng trang đích chỉ hiện một bài đăng cũ. Khi đó cần sửa trang đích hoặc sửa lời hướng dẫn cho khớp. Đừng để khách phải đoán tiếp nên bấm vào đâu.</p>\n<p>Ưu tiên thử trong trạng thái gần với khách mới, chẳng hạn trên máy chưa đăng nhập tài khoản quản trị của tiệm. Nếu trang chỉ mở được khi người quản lý đang đăng nhập, dừng việc in để tìm nguyên nhân. Bài kiểm này là thao tác đề xuất, không phải bảo đảm mọi thiết bị đều hoạt động giống nhau.</p>\n<h2>Kiểm cả bản in và người nhận liên hệ</h2>\n<p>In thử một bản, đặt tại vị trí dự kiến rồi quét lại. Xem hình mã có bị cắt, mờ hoặc lóa không; giữ khoảng trống quanh mã, tránh để chữ và họa tiết lấn vào. Có thể thêm tên trang hoặc một cách liên hệ dễ đọc bên cạnh để người chưa quét được vẫn biết tìm tiệm.</p>\n<p>Cuối cùng, phân công ai nhận và kiểm tra các liên hệ đến. Một trang mở đúng nhưng không có người theo dõi vẫn để việc hỏi hàng dang dở. Lưu bản đã duyệt kèm ngày kiểm; khi đổi trang đích hoặc tài khoản phụ trách, quét thử lại trước khi dùng tiếp.</p>",
+      "request_id": "lyhu-news:2026-10-24:13",
+      "content_hash": "929489455fe61c8b20e3fcc5f66eef773f95ce3cacbf6574839b3a16af081a14",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "96a3291df739b6bc3928c2734f31690eab170ad1c8515d0018de2a1fb3ab5e2a",
+        "inline.webp": "64f7e8056ebd3dbd12ebe5a5d13e4612a100b272be948b994003f1c6c5b2396b"
+      }
+    },
+    {
+      "slot": 19,
+      "title": "Hết đúng mã khách đặt: hỏi trước khi thay bằng hàng khác",
+      "slug": "het-dung-ma-khach-dat-hoi-truoc-khi-thay-bang-hang-khac",
+      "category_slug": "nha-phan-phoi-diem-ban",
+      "content": "<p>Đại lý đặt một mã hàng quen, tới lúc soạn thì kho báo hết. Bên cạnh còn loại gần giống, cùng công dụng hoặc cùng màu bao bì. Người bán dễ nghĩ: “Đổi sang loại này chắc khách vẫn bán được.” Nhưng điều khách đã đặt và điều mình có sẵn là hai việc cần tách rõ.</p>\n<p>Nhà phân phối có thể chuẩn bị phương án thay thế, rồi để khách quyết trước khi kho lấy hàng. Đừng dùng sự im lặng của khách làm lời đồng ý. Một dòng còn chờ trả lời nên được ghi đúng là đang chờ xác nhận.</p>\n<h2>Nói hết đúng mã nào, khác ở đâu</h2>\n<p>Kiểm lại mã khách đã đặt và lượng kho thực sự có thể giao. Nếu chỉ thiếu một phần, báo rõ phần có và phần thiếu; tránh dùng câu “hết hàng” cho cả đơn khi chỉ một dòng đang vướng.</p>\n<p>Với mã được đề xuất thay, đặt cạnh nhau các điểm cần đối chiếu: tên, nhãn hiệu, phiên bản, lượng đóng gói, số đơn vị trong thùng và điều kiện giao dịch áp dụng cho chính phương án đó. Bao bì gần giống không đủ để kết luận hai mã đáp ứng cùng nhu cầu.</p>\n<p>Nếu chưa có thông tin giá hoặc điều kiện đã được xác nhận nội bộ, nói đang kiểm tra và hẹn cập nhật theo khả năng thực tế. Không tự điền một mức giá ước chừng để khách gật đầu cho nhanh.</p>\n<figure><img src=\"__INLINE_IMAGE__\" alt=\"Ảnh minh họa\" style=\"width:100%;height:auto;\"><figcaption>Ảnh minh họa</figcaption></figure>\n<h2>Cho khách lựa chọn rõ ràng</h2>\n<p>Ví dụ giả định, khách đặt mã A, còn kho chỉ có mã B với quy cách khác. Tin nhắn có thể viết: “Mã A hiện chưa đủ để giao. Bên em có mã B, khác ở phần quy cách em gửi kèm. Anh/chị muốn nhận phần A đang có, xem phương án B hay bỏ dòng này khỏi chuyến?” Chỉ đưa ra những lựa chọn mình thực sự làm được.</p>\n<p>Gửi thông tin đủ để khách trả lời theo từng dòng. Nếu khách hỏi thêm mà bên bán chưa rõ, quay lại kiểm tra thay vì khẳng định B giống hệt A. Nhu cầu của điểm bán có thể nằm ở đúng phiên bản hoặc đúng cách đóng gói khách đã chọn.</p>\n<h2>Kho chỉ nhận phần đã được chốt</h2>\n<p>Sau khi khách chọn, ghi lại mã cuối, số lượng, quy cách và điều kiện đã thống nhất. Chuyển cho kho phần được phép soạn; đánh dấu riêng dòng chưa có trả lời. Tránh để một câu “khách đang xem” nằm cạnh phiếu mà người soạn hiểu là đã được duyệt.</p>\n<p>Nếu khách chưa phản hồi trước lúc cần chốt chuyến, báo tình trạng và hỏi cách xử lý phần còn lại. Không hứa giữ hàng, giao bù hoặc giữ nguyên giá khi chưa kiểm được điều kiện tương ứng.</p>\n<p>Cuối buổi, xem lại các dòng đề xuất thay còn treo và người đang phụ trách hỏi khách. Mục tiêu của việc ghi này là để mọi người biết đang chờ quyết định nào, thay vì một người tự đổi hàng cho xong đơn.</p>",
+      "request_id": "lyhu-news:2026-10-24:19",
+      "content_hash": "458a28aa79d172ce7e2af761d0c44365c0333d86950a6f4041a7d2ff2902f880",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "52a0ae312944d8eabca7c06cefa16a545655db16026f577e9886f9b1372e8674",
+        "inline.webp": "b2a2c24164bf36c6aba51f8ba03db4833ee2687e2faedcffec33ea02c207ff59"
+      }
+    }
+  ]
+}
