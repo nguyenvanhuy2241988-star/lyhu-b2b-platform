@@ -13,6 +13,10 @@ export interface FbAdInfo {
     thumbnail_url: string | null;
     post_id: string | null;
     post_url: string | null;
+    post_message: string | null;
+    post_image_url: string | null;
+    post_video_url: string | null;
+    call_to_action: string | null;
     fetch_error: string | null;
     fetched_at: string;
 }

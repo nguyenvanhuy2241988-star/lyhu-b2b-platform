@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getAIResponse, extractPhoneNumber } from '@/lib/geminiService';
 import { createAndAssignLead } from '@/lib/leadDistributionService';
-import { getAdsInfo, adTitleFrom } from '@/lib/fbAdsServer';
+import { getAdsInfo, adTitleFrom, saveAdContextFromReferral } from '@/lib/fbAdsServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -584,6 +584,7 @@ export async function POST(request: Request) {
                         upsertData.ad_title = `QC #${referral.ad_id}`;
                         // Lấy chi tiết QC (tên, chiến dịch, nhóm QC, ảnh) và lưu vào bảng fb_ads
                         try {
+                            await saveAdContextFromReferral(supabase, referral);
                             const ads = await getAdsInfo(supabase, [String(referral.ad_id)], { token: process.env.FB_ADS_ACCESS_TOKEN || pageData.access_token });
                             const title = adTitleFrom(ads[String(referral.ad_id)]);
                             if (title) upsertData.ad_title = title;
