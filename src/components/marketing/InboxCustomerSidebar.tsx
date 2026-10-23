@@ -155,29 +155,38 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                     <span className="text-xs font-semibold">Tạo Đơn sales</span>
                 </button>
                 <button
-                    onClick={() => {
-                        // Use direct Facebook conversation link if available (most reliable)
-                        if (conversation.customer_profile_url) {
-                            const profileUrl = conversation.customer_profile_url.startsWith('http')
-                                ? conversation.customer_profile_url
-                                : `https://www.facebook.com${conversation.customer_profile_url}`;
-                            window.open(profileUrl, '_blank');
-                            return;
+                    onClick={async () => {
+                        // Mở ĐÚNG cuộc trò chuyện trên Facebook; từ đó bấm "Xem trang cá nhân".
+                        // (Meta không cấp link trang cá nhân của khách qua API.)
+                        const win = window.open('about:blank', '_blank'); // mở trước để không bị chặn popup
+                        const toUrl = (l: string) => (l.startsWith('http') ? l : `https://www.facebook.com${l}`);
+                        let url = conversation.customer_profile_url ? toUrl(conversation.customer_profile_url) : '';
+                        if (!url) {
+                            try {
+                                const res = await fetch('/api/facebook/conversation-link', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token || ''}` },
+                                    body: JSON.stringify({ conversation_id: conversation.id }),
+                                });
+                                const json = await res.json();
+                                url = json?.url || '';
+                                if (json?.exact) onUpdate({ customer_profile_url: url } as any);
+                                else toast.info('Không tìm được đúng cuộc trò chuyện, mở hộp thư của Fanpage.');
+                            } catch { /* dùng dự phòng bên dưới */ }
                         }
-                        // Fallback: Open Business Suite inbox for this page
-                        const pageId = (conversation as any).fb_page_id;
-                        const externalId = conversation.external_id;
-                        const url = pageId && externalId
-                            ? `https://business.facebook.com/latest/inbox/all?asset_id=${pageId}&selected_item_id=${externalId}`
-                            : pageId
+                        if (!url) {
+                            const pageId = (conversation as any).fb_page_id;
+                            url = pageId
                                 ? `https://business.facebook.com/latest/inbox/all?asset_id=${pageId}`
-                                : `https://business.facebook.com/latest/inbox/all`;
-                        window.open(url, '_blank');
+                                : 'https://business.facebook.com/latest/inbox/all';
+                        }
+                        if (win) win.location.href = url; else window.open(url, '_blank');
                     }}
+                    title="Mở cuộc trò chuyện trên Facebook, bấm 'Xem trang cá nhân' để xem profile khách"
                     className="flex flex-col items-center justify-center p-3 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 transition"
                 >
                     <ExternalLink className="w-5 h-5 mb-1" />
-                    <span className="text-xs font-semibold">Xem Profile</span>
+                    <span className="text-xs font-semibold">Xem Facebook khách</span>
                 </button>
             </div>
 
