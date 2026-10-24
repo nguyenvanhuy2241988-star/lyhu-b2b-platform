@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef, Suspense, useCallback } from 'react';
+import { toast } from 'sonner';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/lib/supabaseClient";
@@ -232,17 +233,17 @@ function DocumentsPageContent() {
 
     const handleUploadFiles = async (fileList: File[]) => {
         if (!selectedFolderId) {
-            alert("Vui lòng chọn thư mục để tải lên");
+            toast.error("Vui lòng chọn thư mục để tải lên");
             return;
         }
         setUploading(true);
         try {
-            await uploadFiles(selectedFolderId, fileList);
-            // Reload files
-            loadFiles(selectedFolderId);
+            const uploaded = await uploadFiles(selectedFolderId, fileList);
+            await loadFiles(selectedFolderId);
+            toast.success(`Đã tải lên thành công ${uploaded.length} file!`);
         } catch (error: any) {
             console.error(error);
-            alert("Lỗi tải file: " + (error?.message || "Unknown error"));
+            toast.error("Lỗi tải file: " + (error?.message || "Unknown error"));
         } finally {
             setUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -256,17 +257,18 @@ function DocumentsPageContent() {
 
     const handleFolderUploadFiles = async (fileList: File[]) => {
         if (!selectedFolderId) {
-            alert("Vui lòng chọn thư mục để tải lên");
+            toast.error("Vui lòng chọn thư mục để tải lên");
             return;
         }
         setUploading(true);
         try {
-            await uploadDirectory(selectedFolderId, fileList);
-            loadFiles(selectedFolderId);
-            loadFolders(true); // reload folders sidebar
+            const uploaded = await uploadDirectory(selectedFolderId, fileList);
+            await loadFiles(selectedFolderId);
+            loadFolders(true);
+            toast.success(`Đã tải thư mục thành công (${uploaded.length} file)!`);
         } catch (error: any) {
             console.error(error);
-            alert("Lỗi tải thư mục: " + (error?.message || "Unknown error"));
+            toast.error("Lỗi tải thư mục: " + (error?.message || "Unknown error"));
         } finally {
             setUploading(false);
             if (folderInputRef.current) folderInputRef.current.value = '';

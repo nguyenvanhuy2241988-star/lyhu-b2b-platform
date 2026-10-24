@@ -62,8 +62,27 @@ export interface DocumentActivity {
 
 // Store helpers
 async function getUserIdSafe(): Promise<string | null> {
-    const { data } = await supabase.auth.getSession();
-    return data.session?.user?.id ?? null;
+    try {
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) =>
+            setTimeout(() => resolve({ data: { session: null } }), 3000)
+        );
+        const { data } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        if (data?.session?.user?.id) return data.session.user.id;
+    } catch (e) {
+        console.warn('getSession error in getUserIdSafe:', e);
+    }
+
+    if (typeof window !== 'undefined') {
+        try {
+            const cached = localStorage.getItem('lyhu_user');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed?.id) return parsed.id;
+            }
+        } catch (e) {}
+    }
+    return null;
 }
 
 // ---------- FOLDERS ----------
@@ -465,7 +484,7 @@ export async function uploadFiles(folderId: string, files: File[]): Promise<Docu
 
         if (dbError) {
             console.error('DB Insert failed', dbError);
-            continue;
+            throw new Error('Lỗi lưu CSDL: ' + dbError.message);
         }
 
         if (data) {
