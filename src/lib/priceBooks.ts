@@ -729,3 +729,45 @@ export function getPriceByPriceBook(
     if (matched) return matched.supermarketPrice;
     return product.wholesalePrice || 0;
 }
+
+/**
+ * Lấy đơn giá theo Thùng tương ứng theo Bảng Giá được chọn
+ */
+export function getBoxPriceByPriceBook(
+    product: {
+        sku?: string;
+        name?: string;
+        boxPrice?: number;
+    },
+    priceBook: PriceBookType
+): number {
+    const matched = findMasterPriceItem(product.sku, product.name);
+
+    if (priceBook === 'npp') {
+        if (matched) return matched.boxPricePreVat;
+        return product.boxPrice ? Math.round(product.boxPrice * 0.92) : 0;
+    }
+
+    if (priceBook === 'npp_vat') {
+        if (matched) return matched.boxPrice;
+        return product.boxPrice || 0;
+    }
+
+    if (priceBook === 'supermarket') {
+        if (matched && matched.supermarketPricePreVat) {
+            const items = matched.packaging?.includes('30') ? 30 : matched.packaging?.includes('20') ? 20 : matched.packaging?.includes('50') ? 50 : 0;
+            return items > 0 ? matched.supermarketPricePreVat * items : 0;
+        }
+        return 0;
+    }
+
+    if (priceBook === 'supermarket_vat') {
+        if (matched && matched.supermarketPrice) {
+            const items = matched.packaging?.includes('30') ? 30 : matched.packaging?.includes('20') ? 20 : matched.packaging?.includes('50') ? 50 : 0;
+            return items > 0 ? matched.supermarketPrice * items : 0;
+        }
+        return 0;
+    }
+
+    return 0;
+}

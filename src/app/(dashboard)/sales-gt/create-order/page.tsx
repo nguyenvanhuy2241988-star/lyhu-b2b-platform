@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Product } from "@/mocks/data";
 import { loadProducts } from "@/lib/supabase/products";
-import { PriceBookType, PRICE_BOOKS, getPriceByPriceBook } from "@/lib/priceBooks";
+import { PriceBookType, PRICE_BOOKS, getPriceByPriceBook, getBoxPriceByPriceBook } from "@/lib/priceBooks";
 import { PriceBookSelector } from "@/components/orders/PriceBookSelector";
 import { toast } from "sonner";
 import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, Store, Gift, Search, Filter, ArrowUpDown, Eye, EyeOff, Package, Loader2, FileText, Building, Clock, AlertCircle, Calendar, Copy } from "lucide-react";
@@ -692,9 +692,9 @@ export default function GTCreateOrderPage() {
                                                                 <div className="font-bold text-teal-700">
                                                                     {formatPrice(getPriceByPriceBook(product, selectedPriceBook))}
                                                                 </div>
-                                                                {product.boxPrice && product.boxPrice > 0 ? (
+                                                                {getBoxPriceByPriceBook(product, selectedPriceBook) > 0 ? (
                                                                     <div className="text-[10px] text-slate-400 font-normal">
-                                                                        Thùng: {formatPrice(product.boxPrice)}
+                                                                        Thùng: {formatPrice(getBoxPriceByPriceBook(product, selectedPriceBook))}
                                                                     </div>
                                                                 ) : null}
                                                             </td>

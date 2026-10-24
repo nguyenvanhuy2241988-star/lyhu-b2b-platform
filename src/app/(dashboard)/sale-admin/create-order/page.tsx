@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Product } from "@/mocks/data";
 import { fetchCustomers, Customer, fetchDealItems } from "@/lib/crmDealsStore";
 import { loadProducts } from "@/lib/supabase/products";
-import { PriceBookType, PRICE_BOOKS, getPriceByPriceBook } from "@/lib/priceBooks";
+import { PriceBookType, PRICE_BOOKS, getPriceByPriceBook, getBoxPriceByPriceBook } from "@/lib/priceBooks";
 import { PriceBookSelector } from "@/components/orders/PriceBookSelector";
 import { toast } from "sonner";
 import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, Building, Gift, Tag, FileText, Search, Filter, ArrowUpDown, Eye, EyeOff, Package, Clock, AlertCircle, Calendar, Copy } from "lucide-react";
@@ -990,9 +990,9 @@ function SaleAdminCreateOrderContent() {
                                                                 <div className="font-bold text-teal-700">
                                                                     {formatPrice(getPriceByPriceBook(product, selectedPriceBook))}
                                                                 </div>
-                                                                {product.boxPrice && product.boxPrice > 0 ? (
+                                                                {getBoxPriceByPriceBook(product, selectedPriceBook) > 0 ? (
                                                                     <div className="text-[10px] text-slate-400 font-normal">
-                                                                        Thùng: {formatPrice(product.boxPrice)}
+                                                                        Thùng: {formatPrice(getBoxPriceByPriceBook(product, selectedPriceBook))}
                                                                     </div>
                                                                 ) : null}
                                                             </td>
