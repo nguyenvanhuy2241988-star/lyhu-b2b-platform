@@ -11,6 +11,7 @@ export default function SharedLayout({
     const pathname = usePathname();
 
     const getTitle = () => {
+        if (pathname?.includes("/short-videos")) return "Video Ngắn 9:16";
         if (pathname?.includes("/clean-ai")) return "Khử nhãn AI Facebook";
         if (pathname?.includes("/bot-center")) return "Trung tâm BOT Tự động";
         if (pathname?.includes("/media-library")) return "Thư viện Media";
