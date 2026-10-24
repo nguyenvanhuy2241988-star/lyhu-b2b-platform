@@ -17,7 +17,7 @@ import {
     Tag,
     ShoppingBag,
     Info,
-    ExternalLink
+    Percent
 } from "lucide-react";
 
 interface PriceBookModalProps {
@@ -40,7 +40,8 @@ export function PriceBookModal({
     currentPriceBook,
     onSelectPriceBook
 }: PriceBookModalProps) {
-    const [activeTab, setActiveTab] = useState<PriceBookType>(currentPriceBook === 'retail' ? 'npp' : currentPriceBook);
+    const isSupermarketInit = currentPriceBook === 'supermarket' || currentPriceBook === 'supermarket_vat';
+    const [channelTab, setChannelTab] = useState<'npp' | 'supermarket'>(isSupermarketInit ? 'supermarket' : 'npp');
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("all");
 
@@ -59,7 +60,7 @@ export function PriceBookModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
                 {/* Header */}
                 <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-teal-50 via-white to-slate-50">
                     <div className="flex items-center gap-3">
@@ -76,13 +77,13 @@ export function PriceBookModal({
                                 </span>
                             </div>
                             <p className="text-xs text-slate-500 mt-0.5">
-                                Giá chuẩn đã bao gồm 8% VAT. Lên đơn tự động lấy giá, telesales vẫn có thể điều chỉnh trên từng dòng đơn hàng.
+                                Đơn giá đã được tách thành: <strong>Chưa thuế (đã giảm 8% VAT)</strong> và <strong>Đã có 8% VAT</strong> theo yêu cầu.
                             </p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                        className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -93,68 +94,85 @@ export function PriceBookModal({
                     {/* Bảng giá selector tabs */}
                     <div className="flex items-center bg-slate-200/80 p-1 rounded-xl">
                         <button
-                            onClick={() => setActiveTab('npp')}
-                            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                activeTab === 'npp'
+                            onClick={() => setChannelTab('npp')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                channelTab === 'npp'
                                     ? 'bg-amber-500 text-white shadow-sm'
                                     : 'text-slate-700 hover:text-slate-900'
                             }`}
                         >
-                            <Tag className="w-3.5 h-3.5" />
-                            Báo giá NPP (Giá Sỉ)
+                            <Tag className="w-4 h-4" />
+                            <span>1. Báo Giá NPP (Đại lý / Sỉ)</span>
                         </button>
                         <button
-                            onClick={() => setActiveTab('supermarket')}
-                            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                activeTab === 'supermarket'
+                            onClick={() => setChannelTab('supermarket')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                channelTab === 'supermarket'
                                     ? 'bg-blue-600 text-white shadow-sm'
                                     : 'text-slate-700 hover:text-slate-900'
                             }`}
                         >
-                            <Store className="w-3.5 h-3.5" />
-                            Báo giá Siêu Thị
+                            <Store className="w-4 h-4" />
+                            <span>2. Báo Giá Siêu Thị (Mini Mart)</span>
                         </button>
                     </div>
 
-                    {/* Filter and Search */}
-                    <div className="flex items-center gap-2 flex-1 max-w-md">
-                        <div className="relative flex-1">
+                    {/* Quick Apply Action Buttons */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => {
+                                onSelectPriceBook(channelTab === 'npp' ? 'npp' : 'supermarket');
+                                onClose();
+                            }}
+                            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white shadow-xs transition-all cursor-pointer ${
+                                channelTab === 'npp' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'
+                            }`}
+                        >
+                            <Percent className="w-3.5 h-3.5" />
+                            Áp dụng giá Chưa VAT (-8%)
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                onSelectPriceBook(channelTab === 'npp' ? 'npp_vat' : 'supermarket_vat');
+                                onClose();
+                            }}
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-900 text-white shadow-xs transition-all cursor-pointer"
+                        >
+                            <Check className="w-3.5 h-3.5" />
+                            Áp dụng giá Đã có VAT (+8%)
+                        </button>
+                    </div>
+                </div>
+
+                {/* Filters */}
+                <div className="px-4 py-2.5 bg-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2 flex-1 max-w-sm">
+                        <div className="relative w-full">
                             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
                                 type="text"
-                                placeholder="Tìm theo tên SP hoặc mã vạch..."
+                                placeholder="Tìm mã vạch, tên sản phẩm..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-teal-500"
                             />
                         </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <span className="text-slate-500 font-medium">Ngành hàng:</span>
                         <select
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="text-xs bg-white border border-slate-200 rounded-lg py-1.5 px-2.5 text-slate-700 focus:outline-none focus:border-teal-500"
+                            className="bg-slate-50 border border-slate-200 text-slate-700 py-1.5 px-2.5 rounded-lg text-xs font-medium focus:outline-none focus:border-teal-500"
                         >
-                            <option value="all">Tất cả ngành hàng</option>
-                            {categories.filter(c => c !== "all").map(c => (
-                                <option key={c} value={c}>{c}</option>
+                            <option value="all">Tất cả ngành hàng (33 sản phẩm)</option>
+                            {categories.filter(c => c !== 'all').map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
                             ))}
                         </select>
                     </div>
-
-                    {/* Button chọn nhanh bảng giá này cho đơn */}
-                    <button
-                        onClick={() => {
-                            onSelectPriceBook(activeTab);
-                            onClose();
-                        }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white shadow-sm transition-all ${
-                            activeTab === 'npp'
-                                ? 'bg-amber-600 hover:bg-amber-700'
-                                : 'bg-blue-600 hover:bg-blue-700'
-                        }`}
-                    >
-                        <Check className="w-3.5 h-3.5" />
-                        Áp dụng Bảng {activeTab === 'npp' ? 'Giá Sỉ (NPP)' : 'Giá Siêu Thị'} cho đơn
-                    </button>
                 </div>
 
                 {/* Table Data */}
@@ -169,22 +187,30 @@ export function PriceBookModal({
                                     <th className="py-2.5 px-3 w-16 text-center">ĐVT</th>
                                     <th className="py-2.5 px-3 w-20 text-center">Trọng lượng</th>
                                     <th className="py-2.5 px-3 w-20 text-center">HSD</th>
-                                    <th className="py-2.5 px-3 w-36">Quy cách thùng</th>
-                                    <th className="py-2.5 px-3 text-right bg-teal-50/80 font-bold text-teal-900">
-                                        {activeTab === 'npp' ? 'Đơn giá chào NPP (+8% VAT)' : 'Đơn giá Siêu Thị (+8% VAT)'}
+                                    <th className="py-2.5 px-3 w-36">Quy cách</th>
+                                    <th className="py-2.5 px-3 text-right bg-amber-50/90 text-amber-900 font-bold">
+                                        Đơn giá Chưa VAT (-8%)
                                     </th>
-                                    {activeTab === 'npp' && (
-                                        <th className="py-2.5 px-3 text-right text-slate-600">
-                                            Giá theo thùng
-                                        </th>
+                                    <th className="py-2.5 px-3 text-right bg-teal-50/80 font-bold text-teal-900">
+                                        Đơn giá Có VAT (+8%)
+                                    </th>
+                                    {channelTab === 'npp' && (
+                                        <>
+                                            <th className="py-2.5 px-3 text-right text-slate-600 bg-amber-50/40">
+                                                Thùng Chưa VAT
+                                            </th>
+                                            <th className="py-2.5 px-3 text-right text-slate-700 bg-slate-50">
+                                                Thùng Có VAT
+                                            </th>
+                                        </>
                                     )}
                                     <th className="py-2.5 px-3 w-24 text-center">Xuất xứ</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {filteredItems.map((item, idx) => {
-                                    const isCurrentMatch = currentPriceBook === activeTab;
-                                    const currentPrice = activeTab === 'npp' ? item.nppPrice : item.supermarketPrice;
+                                    const preVatPrice = channelTab === 'npp' ? item.nppPricePreVat : item.supermarketPricePreVat;
+                                    const vatPrice = channelTab === 'npp' ? item.nppPrice : item.supermarketPrice;
 
                                     return (
                                         <tr key={item.barcode + idx} className="hover:bg-teal-50/30 transition-colors">
@@ -210,13 +236,21 @@ export function PriceBookModal({
                                             <td className="py-2 px-3 text-slate-600 text-[11px]">
                                                 {item.packaging}
                                             </td>
-                                            <td className="py-2 px-3 text-right font-bold text-teal-700 bg-teal-50/40 whitespace-nowrap">
-                                                {formatVND(currentPrice)}
+                                            <td className="py-2 px-3 text-right font-bold text-amber-700 bg-amber-50/40 whitespace-nowrap">
+                                                {formatVND(preVatPrice)}
                                             </td>
-                                            {activeTab === 'npp' && (
-                                                <td className="py-2 px-3 text-right font-semibold text-slate-700 whitespace-nowrap">
-                                                    {item.boxPrice > 0 ? formatVND(item.boxPrice) : "-"}
-                                                </td>
+                                            <td className="py-2 px-3 text-right font-bold text-teal-700 bg-teal-50/40 whitespace-nowrap">
+                                                {formatVND(vatPrice)}
+                                            </td>
+                                            {channelTab === 'npp' && (
+                                                <>
+                                                    <td className="py-2 px-3 text-right font-semibold text-amber-800 bg-amber-50/20 whitespace-nowrap">
+                                                        {item.boxPricePreVat > 0 ? formatVND(item.boxPricePreVat) : "-"}
+                                                    </td>
+                                                    <td className="py-2 px-3 text-right font-semibold text-slate-700 whitespace-nowrap">
+                                                        {item.boxPrice > 0 ? formatVND(item.boxPrice) : "-"}
+                                                    </td>
+                                                </>
                                             )}
                                             <td className="py-2 px-3 text-center text-slate-500 text-[11px]">
                                                 {item.origin}
@@ -230,17 +264,22 @@ export function PriceBookModal({
                 </div>
 
                 {/* Footer */}
-                <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500">
                     <div className="flex items-center gap-2">
-                        <Info className="w-4 h-4 text-teal-600 shrink-0" />
-                        <span>Tổng số: <strong>{filteredItems.length}</strong> sản phẩm trong Báo giá Tháng 10.2026.</span>
+                        <Info className="w-4 h-4 text-slate-400" />
+                        <span>
+                            Hiển thị <strong>{filteredItems.length}</strong> / {OCTOBER_2026_MASTER_PRICES.length} sản phẩm bảng giá tháng 10.2026
+                        </span>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 font-semibold transition-colors"
-                    >
-                        Đóng
-                    </button>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={onClose}
+                            className="px-4 py-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 font-medium transition-colors cursor-pointer"
+                        >
+                            Đóng
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
