@@ -15,6 +15,7 @@ import {
 } from "@/lib/crmDealsStore";
 import { fetchCampaigns, MarketingCampaign } from "@/lib/marketingStore";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { PROVINCES, fetchWards, LocationOption, fetchLegacyProvinces, fetchLegacyDistricts, fetchLegacyWards } from "@/lib/vn-locations";
 import { Loader2 } from "lucide-react";
 
@@ -398,14 +399,16 @@ export const CreateDealModal = ({
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-600 mb-1">Phường/Xã</label>
-                                    <div className="relative">
-                                        <select value={customerWard} onChange={(e) => setCustomerWard(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#00AFA9] disabled:bg-slate-100" disabled={!customerProvince || loadingWards}>
-                                            <option value="">-- Chọn Phường/Xã --</option>
-                                            {wards.map(w => <option key={w.code} value={w.value}>{w.label}</option>)}
-                                        </select>
-                                        {loadingWards && <Loader2 className="absolute right-8 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
-                                    </div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Phường/Xã (Gõ tìm)</label>
+                                    <SearchableSelect
+                                        options={wards}
+                                        value={customerWard}
+                                        onChange={(val) => setCustomerWard(val)}
+                                        placeholder={!customerProvince ? "-- Chọn Tỉnh trước --" : "-- Chọn Phường/Xã --"}
+                                        searchPlaceholder="Gõ tìm phường/xã..."
+                                        disabled={!customerProvince || loadingWards}
+                                        loading={loadingWards}
+                                    />
                                 </div>
                             </div>
 
@@ -460,20 +463,15 @@ export const CreateDealModal = ({
 
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-medium text-slate-700">Phường / Xã (Cũ)</label>
-                                            <div className="relative">
-                                                <select
-                                                    value={legacyW}
-                                                    onChange={(e) => onLegacyWardChange(e.target.value)}
-                                                    disabled={!legacyD || loadingLegacyWards}
-                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none bg-white disabled:bg-slate-100"
-                                                >
-                                                    <option value="">-- Chọn Phường/Xã cũ --</option>
-                                                    {legacyWards.map(w => (
-                                                        <option key={w.code} value={w.code}>{w.label}</option>
-                                                    ))}
-                                                </select>
-                                                {loadingLegacyWards && <Loader2 className="absolute right-8 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
-                                            </div>
+                                            <SearchableSelect
+                                                options={legacyWards}
+                                                value={legacyW}
+                                                onChange={(val) => onLegacyWardChange(val)}
+                                                placeholder={!legacyD ? "-- Chọn Quận/Huyện cũ trước --" : "-- Gõ tìm Phường/Xã cũ --"}
+                                                searchPlaceholder="Gõ tìm phường/xã cũ..."
+                                                disabled={!legacyD || loadingLegacyWards}
+                                                loading={loadingLegacyWards}
+                                            />
                                         </div>
                                     </div>
                                 </div>

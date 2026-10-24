@@ -5,6 +5,7 @@ import { X, Save, Loader2, Copy, User, MessageSquare, MapPin, Building, Info } f
 import { Customer, createCustomer, updateCustomer } from "@/lib/crmDealsStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { toast } from "sonner";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { PROVINCES, fetchWards, LocationOption, fetchLegacyProvinces, fetchLegacyDistricts, fetchLegacyWards } from "@/lib/vn-locations";
 
 const CUSTOMER_TYPES = [
@@ -403,21 +404,23 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-slate-700">Phường / Xã</label>
-                                <div className="relative">
-                                    <select
-                                        value={formData.ward}
-                                        onChange={(e) => handleChange('ward', e.target.value)}
-                                        disabled={!formData.province || loadingWards}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none bg-white disabled:bg-slate-100"
-                                    >
-                                        <option value="">-- Chọn Phường/Xã --</option>
-                                        {wards.map(w => (
-                                            <option key={w.code} value={w.value}>{w.label}</option>
-                                        ))}
-                                    </select>
-                                    {loadingWards && <Loader2 className="absolute right-8 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
-                                </div>
+                                <label className="text-sm font-medium text-slate-700 flex items-center justify-between">
+                                    <span>Phường / Xã <span className="text-xs text-slate-400 font-normal">(Gõ để tìm)</span></span>
+                                    {wards.length > 0 && (
+                                        <span className="text-[11px] text-[#00AFA9] font-medium">
+                                            {wards.length} phường/xã
+                                        </span>
+                                    )}
+                                </label>
+                                <SearchableSelect
+                                    options={wards}
+                                    value={formData.ward}
+                                    onChange={(val) => handleChange('ward', val)}
+                                    placeholder={!formData.province ? "-- Vui lòng chọn Tỉnh/Thành trước --" : "-- Chọn hoặc gõ tìm Phường/Xã --"}
+                                    searchPlaceholder="Gõ tìm tên phường/xã (VD: Ô Chợ Dừa, Giảng Võ...)"
+                                    disabled={!formData.province || loadingWards}
+                                    loading={loadingWards}
+                                />
                             </div>
 
                             <div className="space-y-1.5">
@@ -475,21 +478,23 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-sm font-medium text-slate-700">Phường / Xã (Cũ)</label>
-                                            <div className="relative">
-                                                <select
-                                                    value={legacyW}
-                                                    onChange={(e) => onLegacyWardChange(e.target.value)}
-                                                    disabled={!legacyD || loadingLegacyWards}
-                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#00AFA9]/20 outline-none bg-white disabled:bg-slate-100"
-                                                >
-                                                    <option value="">-- Chọn Phường/Xã cũ --</option>
-                                                    {legacyWards.map(w => (
-                                                        <option key={w.code} value={w.code}>{w.label}</option>
-                                                    ))}
-                                                </select>
-                                                {loadingLegacyWards && <Loader2 className="absolute right-8 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
-                                            </div>
+                                            <label className="text-sm font-medium text-slate-700 flex items-center justify-between">
+                                                <span>Phường / Xã (Cũ)</span>
+                                                {legacyWards.length > 0 && (
+                                                    <span className="text-[11px] text-[#00AFA9] font-medium">
+                                                        {legacyWards.length}
+                                                    </span>
+                                                )}
+                                            </label>
+                                            <SearchableSelect
+                                                options={legacyWards}
+                                                value={legacyW}
+                                                onChange={(val) => onLegacyWardChange(val)}
+                                                placeholder={!legacyD ? "-- Chọn Quận/Huyện cũ trước --" : "-- Gõ tìm Phường/Xã cũ --"}
+                                                searchPlaceholder="Gõ tìm phường/xã cũ..."
+                                                disabled={!legacyD || loadingLegacyWards}
+                                                loading={loadingLegacyWards}
+                                            />
                                         </div>
                                     </div>
                                 </div>
