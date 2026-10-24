@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "target_date_ict": "2026-10-25",
+  "articles": [
+    {
+      "slot": 7,
+      "title": "Máy in hết giấy giữa đơn: kiểm giao dịch rồi mới in lại",
+      "slug": "may-in-het-giay-giua-don-kiem-giao-dich-roi-moi-in-lai",
+      "category_slug": "cong-nghe-ban-le",
+      "content": "<p>Khách đang chờ lấy phiếu thì máy in dừng giữa chừng. Người ở quầy thay cuộn giấy, người đứng cạnh bấm in thêm lần nữa. Lát sau có hai bản cùng chạy ra, còn nhân viên không nhớ mình vừa thao tác trên đơn nào.</p>\n<p>Với sự cố hết giấy, hãy tách hai việc: khôi phục máy in và kiểm đúng giao dịch cần in. Một cuộn giấy mới giải quyết phần vật tư; người bán vẫn cần biết phiếu nào đã đủ, phiếu nào còn thiếu.</p>\n<h2>Giữ lại dấu của đơn đang làm</h2>\n<p>Trước khi chuyển sang màn hình khác, xem mã đơn, thời điểm và trạng thái đang hiển thị. Giữ phần phiếu bị in dở tại quầy để đối chiếu. Nếu có người phụ, nói rõ một người xử lý máy, một người tiếp khách; tránh cả hai cùng bấm lại.</p>\n<p>Đừng tạo một đơn mới chỉ để lấy bản giấy khi đơn cũ đã được lưu. Nếu chưa rõ thao tác có hoàn tất hay không, nhờ người phụ trách kiểm trên hệ thống đang dùng. Có thể nói với khách: “Máy vừa hết giấy, em kiểm đúng phiếu của mình rồi gửi lại ngay nhé.”</p>\n<figure><img src=\"__INLINE_IMAGE__\" alt=\"Ảnh minh họa\" style=\"width:100%;height:auto;\"><figcaption>Ảnh minh họa</figcaption></figure>\n<h2>Thay đúng cuộn theo hướng dẫn của máy</h2>\n<p>Kiểm loại giấy và kích thước được nhà sản xuất chấp nhận cho đúng mẫu máy. Cuộn nhìn vừa khe chưa chắc phù hợp. Làm theo hướng dẫn của thiết bị về mở nắp, chiều cuộn và phần giấy cần đưa ra ngoài; không lấy thao tác của máy khác làm chuẩn.</p>\n<p>Chờ máy dừng trước khi mở nắp, tránh chạm lưỡi cắt và đầu in còn nóng. Nếu giấy kẹt hoặc nắp không mở bình thường, dừng thao tác và xem hướng dẫn xử lý hoặc gọi hỗ trợ. Đừng cố kéo mạnh để lấy cho nhanh.</p>\n<p>Đặt cuộn đúng chiều, đóng nắp theo hướng dẫn rồi kiểm trạng thái máy. Nếu cần thử in, dùng chức năng kiểm tra mà thiết bị hoặc phần mềm hỗ trợ. Không tạo giao dịch bán hàng giả để thử giấy.</p>\n<h2>Đọc bản ra sau cùng trước khi đưa khách</h2>\n<p>Xem máy có tự in tiếp phần đang chờ hay không, rồi mới quyết định cần gọi chức năng in lại. Đối chiếu bản đầy đủ với mã đơn trên màn hình và phần phiếu dở. Khi đã có bản đúng, xử lý các bản thừa theo cách quản lý giấy tờ của tiệm.</p>\n<p>Ví dụ minh họa: một người ghi “đã kiểm, đã gửi bản đủ” vào chỗ theo dõi sự cố của ca. Người sau nhìn vào sẽ biết không cần bấm in thêm.</p>\n<p>Trước ca tới, kiểm cuộn đang dùng và chỗ để giấy dự phòng. Giữ nhãn quy cách cuộn phù hợp ở nơi người thay dễ tìm. Việc cần thống nhất là ai thay giấy, ai kiểm đơn và lúc nào mới bấm in lại.</p>",
+      "request_id": "lyhu-news:2026-10-25:7",
+      "content_hash": "e97df8924f65477a8ba3759e49d4ab3d91dd03c47ae57d11022b4c8243d7a703",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "9551b47bdadb0522a3db9d5329500cf28f49e715b0510ae97313073eed30ddba",
+        "inline.webp": "685d7439999c21b363737a8620478c61201628b4f4663cfc954f492c019b0eda"
+      }
+    },
+    {
+      "slot": 13,
+      "title": "Gửi ảnh màn hình nhờ hỗ trợ: giữ phần cần xem, che phần không cần gửi",
+      "slug": "gui-anh-man-hinh-nho-ho-tro-giu-phan-can-xem-che-phan-khong-can-gui",
+      "category_slug": "cong-nghe-ban-le",
+      "content": "<p>Phần mềm báo lỗi ở một dòng hàng. Người bán chụp cả màn hình rồi gửi vào nhóm nhờ xem giúp. Trong ảnh có đúng lỗi cần hỏi, nhưng cũng có tên khách, số liên hệ và vài cuộc trò chuyện nằm ở mép màn hình.</p>\n<p>Trước khi gửi, thử hỏi: người nhận cần nhìn phần nào để xử lý việc này? Với ảnh hỗ trợ thao tác, thường có thể chuẩn bị một bản chỉ giữ đúng vùng cần xem. Cách làm dưới đây dành cho việc chuẩn bị ảnh chia sẻ, không thay cho quy trình xử lý dữ liệu của đơn vị.</p>\n<h2>Chốt câu hỏi rồi chọn vùng ảnh</h2>\n<p>Viết một câu mô tả điều đang vướng. Ví dụ minh họa: “Dòng hàng này hiện sai đơn vị, nhờ kiểm giúp tên và đơn vị đang được gọi ra.” Khi câu hỏi rõ, mình dễ biết cần giữ dòng hàng và thông báo nào.</p>\n<p>Cắt bớt phần không liên quan như danh sách khách bên cạnh, cửa sổ chat khác hoặc thanh thông báo. Giữ đủ bối cảnh để người hỗ trợ hiểu lỗi: tên chức năng, dòng đang chọn và nội dung báo lỗi nếu có. Cắt quá sát khiến họ phải hỏi lại cũng chưa đạt.</p>\n<figure><img src=\"__INLINE_IMAGE__\" alt=\"Ảnh minh họa\" style=\"width:100%;height:auto;\"><figcaption>Ảnh minh họa</figcaption></figure>\n<h2>Che trên bản sao, rồi mở lại tệp xuất</h2>\n<p>Giữ bản gốc trong nơi lưu được phân quyền của đơn vị, nếu cần cho việc đối chiếu. Tạo bản riêng để gửi. Với thông tin không cần xuất hiện, có thể che kín bằng mảng màu đặc rồi xuất thành ảnh mới như PNG hoặc JPEG. Không chỉ đặt một lớp chữ hay một nét bút mờ lên phần cần che.</p>\n<p>Mở chính tệp vừa xuất, phóng to và rà lại mép ảnh, nền phía sau cửa sổ, phần tên tệp và các vùng đã xử lý. Chọn đúng tệp đã kiểm để đính kèm; đừng quay lại lấy nhầm bản gốc trong thư viện ảnh.</p>\n<p>Đây là một lượt kiểm phần nhìn thấy của ảnh. Tài liệu, tệp có nhiều lớp, nội dung ẩn hoặc thông tin đặc biệt nhạy cảm cần cách xử lý phù hợp hơn; không mặc nhiên coi việc che vài ô là đã kiểm hết mọi dạng dữ liệu.</p>\n<h2>Đúng ảnh vẫn cần đúng người nhận</h2>\n<p>Trước khi bấm gửi, nhìn lại tên nhóm hoặc người nhận. Nếu họ chỉ cần biết nội dung báo lỗi, cân nhắc gõ lại thông báo thay vì gửi cả ảnh. Nếu phải gửi thêm dữ liệu để xử lý, hỏi rõ cần phần nào và dùng kênh công việc đã được đơn vị chấp nhận.</p>\n<p>Khi người hỗ trợ đề nghị chuyển ảnh cho người khác, kiểm lại phạm vi cần chia sẻ. Bản đã dùng cho một việc không tự động phù hợp để đăng lên nhóm đông người hoặc dùng làm ảnh hướng dẫn công khai.</p>\n<p>Tiệm có thể thống nhất một thói quen ngắn: đọc câu hỏi, nhìn vùng ảnh, mở lại tệp, kiểm người nhận. Làm đủ trên chính ảnh sắp gửi, thay vì chỉ nhớ rằng “mình đã che rồi”.</p>",
+      "request_id": "lyhu-news:2026-10-25:13",
+      "content_hash": "046c188af7c991ca4ae2bb6d09b7159de448340ac131532e3d14e4e136393608",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "85ce0b6bc28af8586f68198d2fa505848ab090d2b10644f7a113fed5a6d358b4",
+        "inline.webp": "b04701479ddb4eaf8183f7a1612a681f9d8239b9545ec675628be2202ff5870c"
+      }
+    },
+    {
+      "slot": 19,
+      "title": "Khách đang bận: hẹn gọi lại sao cho khỏi gọi dồn và quên việc?",
+      "slug": "khach-dang-ban-hen-goi-lai-sao-cho-khoi-goi-don-va-quen-viec",
+      "category_slug": "nha-phan-phoi-diem-ban",
+      "content": "<p>Đang trao đổi dở chuyện hàng, khách nói: “Chị đang đông, lát gọi lại nhé.” Người bán ghi “gọi lại” vào sổ. Tới chiều mới nhớ ra, nhưng không biết “lát” là sau buổi bán hay ngày hôm sau; đồng đội cũng vừa gọi hỏi cùng việc.</p>\n<p>Với việc khách đã trao đổi và còn muốn xử lý tiếp, hãy chốt một cuộc hẹn vừa đủ rõ. Điều cần giữ là mốc gọi, nội dung sẽ nói và người phụ trách, thay vì cố nói hết lúc khách đang bận.</p>\n<h2>Hỏi một mốc khách thuận tiện</h2>\n<p>Khi khách bảo bận, dừng phần trình bày đang kéo dài. Hỏi ngắn: “Em gọi lại để chốt phần quy cách mình đang xem. Khoảng nào chị tiện nghe hơn ạ?” Nếu khách đưa một khoảng giờ, nhắc lại khoảng đó rồi kết thúc cuộc gọi.</p>\n<p>Ví dụ minh họa: “Dạ, em ghi chiều mai trong khoảng mình vừa thống nhất. Lúc gọi lại em chỉ trao đổi tiếp hai mã chị đang hỏi.” Câu trả lời cần khớp điều hai bên vừa nói; không tự biến một câu “để khi khác” thành lịch khách đã đồng ý.</p>\n<p>Nếu khách chưa chọn được lúc nào, hỏi họ muốn chủ động liên hệ lại hay nhận một tin nhắn ngắn về việc đang chờ. Khi khách không muốn tiếp tục, ghi đúng ý đó và dừng theo quy trình của đơn vị.</p>\n<figure><img src=\"__INLINE_IMAGE__\" alt=\"Ảnh minh họa\" style=\"width:100%;height:auto;\"><figcaption>Ảnh minh họa</figcaption></figure>\n<h2>Ghi để người khác cũng biết đang chờ gì</h2>\n<p>Một dòng theo dõi có thể gồm: điểm bán, việc đang trao đổi, khoảng giờ đã hẹn, người sẽ gọi và trạng thái. Ví dụ minh họa: “Tiệm A — xác nhận quy cách hai mã — chiều mai, khoảng đã thống nhất — Lan phụ trách — chưa gọi.” Đây là mẫu ghi việc, không phải dữ liệu khách thật.</p>\n<p>Để dòng này trong nơi theo dõi chung mà đội đang dùng, với quyền truy cập phù hợp. Trước khi người khác nhận việc, xem đã có ai giữ cuộc hẹn chưa. Nếu phải đổi người gọi, bàn giao cả nội dung khách đang hỏi và cập nhật người phụ trách.</p>\n<h2>Đến hẹn, mở lại đúng chuyện</h2>\n<p>Trước khi gọi, chuẩn bị câu trả lời cho phần đã hẹn: thông tin quy cách, phương án đang kiểm hoặc câu hỏi cần khách xác nhận. Đừng tới giờ mới lục lại toàn bộ đoạn chat rồi bắt khách kể từ đầu.</p>\n<p>Mở đầu bằng việc cũ: “Em gọi lại phần mình đang xem hôm trước, giờ chị tiện trao đổi không ạ?” Nếu khách vẫn bận hoặc không nghe máy, cập nhật trạng thái thực tế. Không ghi “đã liên hệ xong” chỉ vì đã bấm gọi, cũng không gọi dồn để hoàn thành một ô công việc.</p>\n<p>Sau trao đổi, ghi kết quả và bước tiếp theo; việc chưa xong thì giữ người phụ trách rõ ràng. Cuối buổi, xem riêng các cuộc hẹn chưa thực hiện và những việc cần xin lại mốc. Một cuộc gọi lại có ích bắt đầu từ việc nhớ đúng điều khách đang chờ.</p>",
+      "request_id": "lyhu-news:2026-10-25:19",
+      "content_hash": "ab581e508fd9121c04737e9c38cb9326004ab5def6b304d043443691ff58fc92",
+      "ready_for_publish": true,
+      "checks": {
+        "editorial": true,
+        "sources": true,
+        "dedup": true,
+        "images": true
+      },
+      "assets": {
+        "cover.webp": "581894dca2ffe84820ae6eef94b2e5b2eb64cde8ef691792bc36beaeec722e81",
+        "inline.webp": "41341d3cdfc93f18da18cfd25e5f54bca8819299f2023d50c55713536e16a2f7"
+      }
+    }
+  ]
+}
