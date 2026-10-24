@@ -1,4 +1,5 @@
 import { Product } from "@/mocks/data";
+import { findMasterPriceItem } from "@/lib/priceBooks";
 
 // Helper headers
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -21,41 +22,61 @@ export const loadProducts = async (token?: string): Promise<Product[]> => {
 
         const data = await res.json();
 
+        return data.map((p: any) => {
+            // Tra cứu bảng giá chuẩn Tháng 10.2026 (NPP & Siêu thị)
+            const matched = findMasterPriceItem(p.sku, p.name);
 
+            // Đơn giá bán sỉ / NPP (+8% VAT)
+            const wholesalePrice = matched
+                ? matched.nppPrice
+                : (p.cost_price && p.cost_price > 0 ? Number(p.cost_price) : Number(p.price || 0));
 
-        // Map DB fields to Frontend Product type if necessary
-        // Assuming DB has snake_case and Frontend used camelCase or specific logic.
-        // For now, let's assume direct mapping or simple transformation.
-        // NOTE: The mock Product type has complex fields like tiered pricing.
-        // If the DB schema is simple (per schema.sql), we might need to hardcode or adjust the mapping.
-        // Schema.sql only defined: id, name, sku, price, is_active. 
-        // BUT the app relies on tiered pricing etc. 
-        // COMPLEXITY WARNING: The user instructions for Schema were minimal: "tables: profiles, products..."
-        // They didn't specify all the tiered columns. 
-        // STRATEGY: Fetch basic info from DB, and for now, perhaps mock the tiers OR 
-        // update schema to support JSONB for tiers. 
-        // PROPOSAL: I'll stick to the requested schema.sql but fill the missing complex fields with defaults 
-        // so the frontend doesn't crash.
+            // Đơn giá siêu thị (+8% VAT)
+            const supermarketPrice = matched
+                ? matched.supermarketPrice
+                : Number(p.price || 0);
 
-        return data.map((p: any) => ({
-            id: p.id,
-            sku: p.sku,
-            name: p.name,
-            price: p.price,
-            // Filling missing fields required by Product interface using safe defaults or deprecated logic
-            brand: "LHU",
-            unit: "Cai",
-            wholesalePrice: p.price,
-            basePrice: p.price,
-            customerPrice: p.price * 1.2,
-            ctvSelfShipPrice: p.price,
-            basePricePerUnit: p.price,
-            ctvCommissionRate: 0.1,
-            customerPriceTiers: [], // No tiers in basic DB
-            ctvSelfShipPriceTiers: [],
+            // Đơn giá bán lẻ niêm yết
+            const retailPrice = Number(p.price || 0);
 
-            ...p // Spread any extra matches
-        })) as Product[];
+            // Đơn giá theo thùng (+8% VAT)
+            const boxPrice = matched ? matched.boxPrice : 0;
+
+            const unit = matched?.unit || p.unit || "Gói";
+            const packaging = matched?.packaging || p.packaging || "";
+            const category = matched?.category || p.description || "";
+            const weight = matched?.weight || p.weight || "";
+            const origin = matched?.origin || p.origin || "";
+            const brand = p.brand || (matched?.category?.includes("CVT") ? "CVT" : matched?.category?.includes("UHi") ? "UHi" : "LHU");
+
+            return {
+                ...p,
+                id: p.id,
+                sku: p.sku || "",
+                name: p.name,
+                price: retailPrice,
+                brand,
+                unit,
+                packaging,
+                category,
+                weight,
+                origin,
+
+                // 2 Bảng giá cốt lõi: Giá Sỉ (NPP) & Giá Siêu Thị tháng 10.2026
+                wholesalePrice,
+                supermarketPrice,
+                retailPrice,
+                boxPrice,
+
+                basePrice: wholesalePrice,
+                customerPrice: retailPrice,
+                ctvSelfShipPrice: wholesalePrice,
+                basePricePerUnit: wholesalePrice,
+                ctvCommissionRate: 0.1,
+                customerPriceTiers: [],
+                ctvSelfShipPriceTiers: []
+            } as Product;
+        });
     } catch (e) {
         console.error("Error loading products exception:", e);
         return [];

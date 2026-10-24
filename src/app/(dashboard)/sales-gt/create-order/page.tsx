@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Product } from "@/mocks/data";
 import { loadProducts } from "@/lib/supabase/products";
+import { PriceBookType, PRICE_BOOKS, getPriceByPriceBook } from "@/lib/priceBooks";
+import { PriceBookSelector } from "@/components/orders/PriceBookSelector";
+import { toast } from "sonner";
 import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, Store, Gift, Search, Filter, ArrowUpDown, Eye, EyeOff, Package, Loader2, FileText, Building, Clock, AlertCircle, Calendar } from "lucide-react";
 import { addOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -48,6 +51,7 @@ export default function GTCreateOrderPage() {
 
     // Flow
     const [selectedOutlet, setSelectedOutlet] = useState<Outlet | null>(null);
+    const [selectedPriceBook, setSelectedPriceBook] = useState<PriceBookType>("npp");
     const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
     const [orderNote, setOrderNote] = useState("");
     const [expectedDeliveryDate, setExpectedDeliveryDate] = useState("");
@@ -131,14 +135,31 @@ export default function GTCreateOrderPage() {
             switch (sortBy) {
                 case "name-asc": return a.name.localeCompare(b.name);
                 case "name-desc": return b.name.localeCompare(a.name);
-                case "price-asc": return (a.wholesalePrice || 0) - (b.wholesalePrice || 0);
-                case "price-desc": return (b.wholesalePrice || 0) - (a.wholesalePrice || 0);
+                case "price-asc": return getPriceByPriceBook(a, selectedPriceBook) - getPriceByPriceBook(b, selectedPriceBook);
+                case "price-desc": return getPriceByPriceBook(b, selectedPriceBook) - getPriceByPriceBook(a, selectedPriceBook);
                 case "stock-desc": return (inventory[b.id] ?? 0) - (inventory[a.id] ?? 0);
                 default: return 0;
             }
         });
 
     // Handlers
+    const handleSelectPriceBook = (newPriceBook: PriceBookType) => {
+        setSelectedPriceBook(newPriceBook);
+        if (orderItems.length > 0) {
+            setOrderItems(prev => prev.map(item => {
+                if (item.isGift) return item;
+                const newPrice = getPriceByPriceBook(item.product, newPriceBook);
+                return {
+                    ...item,
+                    price: newPrice
+                };
+            }));
+            toast.info(`Đã cập nhật đơn giá theo ${PRICE_BOOKS[newPriceBook].name}!`);
+        } else {
+            toast.success(`Đã chọn ${PRICE_BOOKS[newPriceBook].name}`);
+        }
+    };
+
     const handleAddProduct = (product: Product, qty: number = 1) => {
         const existingIdx = orderItems.findIndex(item => item.product.id === product.id && !item.isGift);
         const currentQty = orderItems.reduce((sum, item) => item.product.id === product.id ? sum + item.quantity : sum, 0);
@@ -157,7 +178,7 @@ export default function GTCreateOrderPage() {
             setOrderItems(prev => [...prev, {
                 product, 
                 quantity: qty, 
-                price: product.wholesalePrice || 0,
+                price: getPriceByPriceBook(product, selectedPriceBook), // Tự động điền giá theo bảng giá đã chọn
                 discount: 0, 
                 discountType: 'amount', 
                 discountValue: 0, 
@@ -472,6 +493,13 @@ export default function GTCreateOrderPage() {
                         </button>
                     </div>
 
+                    {/* Bảng Giá Áp Dụng: Giá Sỉ (NPP) hoặc Giá Siêu Thị */}
+                    <PriceBookSelector
+                        selectedPriceBook={selectedPriceBook}
+                        onSelectPriceBook={handleSelectPriceBook}
+                        itemCount={orderItems.length}
+                    />
+
                     {/* Split Panel */}
                     <div className="flex flex-col lg:flex-row gap-5">
                         {/* LEFT: Product Catalog */}
@@ -573,7 +601,14 @@ export default function GTCreateOrderPage() {
                                                                 </div>
                                                             </td>
                                                             <td className="px-3 py-2.5 text-right text-xs font-medium text-slate-700">
-                                                                {formatPrice(product.wholesalePrice || 0)}
+                                                                <div className="font-bold text-teal-700">
+                                                                    {formatPrice(getPriceByPriceBook(product, selectedPriceBook))}
+                                                                </div>
+                                                                {product.boxPrice && product.boxPrice > 0 ? (
+                                                                    <div className="text-[10px] text-slate-400 font-normal">
+                                                                        Thùng: {formatPrice(product.boxPrice)}
+                                                                    </div>
+                                                                ) : null}
                                                             </td>
                                                             <td className="px-3 py-2.5 text-center">
                                                                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isOutOfStock ? 'bg-red-100 text-red-600' : stock < 10 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>

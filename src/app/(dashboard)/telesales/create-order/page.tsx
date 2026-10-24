@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Product } from "@/mocks/data";
 import { fetchCustomers, Customer, fetchDealItems } from "@/lib/crmDealsStore";
 import { loadProducts } from "@/lib/supabase/products";
+import { PriceBookType, PRICE_BOOKS, getPriceByPriceBook } from "@/lib/priceBooks";
+import { PriceBookSelector } from "@/components/orders/PriceBookSelector";
+import { toast } from "sonner";
 import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, Building, Gift, Tag, FileText, Search, Filter, ArrowUpDown, Eye, EyeOff, Package, Clock, AlertCircle, Calendar } from "lucide-react";
 import { addOrderSupabase, updateOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -226,6 +229,7 @@ function TelesalesCreateOrderContent() {
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
     // Step 2 & 3: Add products and quantities
+    const [selectedPriceBook, setSelectedPriceBook] = useState<PriceBookType>("npp");
     const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
     const [vatRate, setVatRate] = useState<number>(0); // Percentage
     const [orderDiscountPercent, setOrderDiscountPercent] = useState<number>(0); // Order-level discount %
@@ -268,8 +272,8 @@ function TelesalesCreateOrderContent() {
             switch (sortBy) {
                 case "name-asc": return a.name.localeCompare(b.name);
                 case "name-desc": return b.name.localeCompare(a.name);
-                case "price-asc": return (a.wholesalePrice || 0) - (b.wholesalePrice || 0);
-                case "price-desc": return (b.wholesalePrice || 0) - (a.wholesalePrice || 0);
+                case "price-asc": return getPriceByPriceBook(a, selectedPriceBook) - getPriceByPriceBook(b, selectedPriceBook);
+                case "price-desc": return getPriceByPriceBook(b, selectedPriceBook) - getPriceByPriceBook(a, selectedPriceBook);
                 case "stock-desc": return (inventory[b.id] ?? 0) - (inventory[a.id] ?? 0);
                 default: return 0;
             }
@@ -280,6 +284,23 @@ function TelesalesCreateOrderContent() {
         setSelectedCustomer(customer || null);
         if (customer) {
             setCurrentStep(2);
+        }
+    };
+
+    const handleSelectPriceBook = (newPriceBook: PriceBookType) => {
+        setSelectedPriceBook(newPriceBook);
+        if (orderItems.length > 0) {
+            setOrderItems(prev => prev.map(item => {
+                if (item.isGift) return item;
+                const newPrice = getPriceByPriceBook(item.product, newPriceBook);
+                return {
+                    ...item,
+                    price: newPrice
+                };
+            }));
+            toast.info(`Đã cập nhật đơn giá theo ${PRICE_BOOKS[newPriceBook].name}!`);
+        } else {
+            toast.success(`Đã chọn ${PRICE_BOOKS[newPriceBook].name}`);
         }
     };
 
@@ -310,7 +331,7 @@ function TelesalesCreateOrderContent() {
                 {
                     product,
                     quantity: quantityToAdd,
-                    price: product.wholesalePrice || 0, // Initialize with default list price
+                    price: getPriceByPriceBook(product, selectedPriceBook), // Tự động lấy giá theo bảng giá đang chọn
                     discount: 0,
                     discountType: 'amount',
                     discountValue: 0,
@@ -722,6 +743,13 @@ function TelesalesCreateOrderContent() {
                         </button>
                     </div>
 
+                    {/* Bảng Giá Áp Dụng: Giá Sỉ (NPP) hoặc Giá Siêu Thị */}
+                    <PriceBookSelector
+                        selectedPriceBook={selectedPriceBook}
+                        onSelectPriceBook={handleSelectPriceBook}
+                        itemCount={orderItems.length}
+                    />
+
                     {/* Split-Panel: Product Catalog (left) + Order Cart (right) */}
                     <Group orientation={isDesktop ? "horizontal" : "vertical"} className="gap-6 lg:gap-0">
                         {/* LEFT PANEL: Product Catalog — Compact Table */}
@@ -819,7 +847,7 @@ function TelesalesCreateOrderContent() {
                                         <thead className="bg-slate-50 sticky top-0 z-10">
                                             <tr className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                                 <th className="px-4 py-3">Sản phẩm</th>
-                                                <th className="px-3 py-3 text-right whitespace-nowrap">Giá sỉ</th>
+                                                <th className="px-3 py-3 text-right whitespace-nowrap">Đơn giá ({PRICE_BOOKS[selectedPriceBook].shortName})</th>
                                                 <th className="px-3 py-3 text-center">Kho</th>
                                                 <th className="px-3 py-3 text-center">Số lượng</th>
                                                 <th className="px-3 py-3 text-center w-28"></th>
@@ -872,7 +900,14 @@ function TelesalesCreateOrderContent() {
 
                                                             {/* Price */}
                                                             <td className="px-3 py-3 text-right font-semibold text-slate-900 whitespace-nowrap">
-                                                                {formatPrice(product.wholesalePrice || 0)}
+                                                                <div className="font-bold text-teal-700">
+                                                                    {formatPrice(getPriceByPriceBook(product, selectedPriceBook))}
+                                                                </div>
+                                                                {product.boxPrice && product.boxPrice > 0 ? (
+                                                                    <div className="text-[10px] text-slate-400 font-normal">
+                                                                        Thùng: {formatPrice(product.boxPrice)}
+                                                                    </div>
+                                                                ) : null}
                                                             </td>
 
                                                             {/* Stock */}

@@ -93,8 +93,14 @@ export interface Product {
     name: string;
     brand: string;
     unit: string;
-    wholesalePrice: number; // Deprecated
-    retailPrice?: number;   // Deprecated
+    wholesalePrice: number; // Giá sỉ / NPP (Tháng 10.2026)
+    supermarketPrice?: number; // Giá siêu thị (Tháng 10.2026)
+    retailPrice?: number;   // Giá bán lẻ
+    boxPrice?: number;      // Giá theo thùng
+    price?: number;
+    packaging?: string;
+    category?: string;
+    origin?: string;
     stock?: number;
 
     // New fields for Flexible Pricing
