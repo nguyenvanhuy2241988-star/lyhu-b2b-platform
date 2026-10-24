@@ -42,6 +42,8 @@ export default function GTCreateOrderPage() {
     const supabase = createClient();
     const searchParams = useSearchParams();
     const preselectedOutlet = searchParams.get("outlet");
+    const editOrderId = searchParams.get("edit");
+    const cloneOrderId = searchParams.get("clone") || searchParams.get("copy");
     const { user, session } = useAuth();
 
     // Data
@@ -49,6 +51,8 @@ export default function GTCreateOrderPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [inventory, setInventory] = useState<Record<string, number>>({});
     const [isLoading, setIsLoading] = useState(true);
+
+    const [isClonePickerOpen, setIsClonePickerOpen] = useState(false);
 
     // Flow
     const [selectedOutlet, setSelectedOutlet] = useState<Outlet | null>(null);
@@ -377,13 +381,96 @@ export default function GTCreateOrderPage() {
 
     return (
         <div className="space-y-5 pb-20 lg:pb-6">
-            <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <ShoppingCart className="w-6 h-6 text-[#00AFA9]" />
-                    Tạo đơn hàng GT
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Tạo đơn sỉ trực tiếp cho điểm bán tuyến bán hàng</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <ShoppingCart className="w-6 h-6 text-[#00AFA9]" />
+                        {cloneOrderId ? "Nhân bản đơn hàng GT" : editOrderId ? "Cập nhật đơn hàng GT" : "Tạo đơn hàng GT"}
+                    </h1>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                        {cloneOrderId
+                            ? `Đang nhân bản từ đơn hàng cũ #${cloneOrderId.slice(0, 8)}... - Toàn bộ thông tin khách hàng và sản phẩm đã được sao chép sẵn.`
+                            : editOrderId
+                            ? `Đang chỉnh sửa đơn hàng #${editOrderId.slice(0, 8)}...`
+                            : "Tạo đơn sỉ trực tiếp cho điểm bán tuyến bán hàng"}
+                    </p>
+                </div>
+                {!editOrderId && (
+                    <button
+                        type="button"
+                        onClick={() => setIsClonePickerOpen(true)}
+                        className="flex items-center gap-2 px-3.5 py-2 bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-colors self-start sm:self-auto cursor-pointer"
+                    >
+                        <Copy className="w-4 h-4 text-amber-600" />
+                        <span>Nhân bản từ đơn cũ</span>
+                    </button>
+                )}
             </div>
+
+            <CloneOrderPickerModal
+                isOpen={isClonePickerOpen}
+                onClose={() => setIsClonePickerOpen(false)}
+                onSelectOrder={(orderId, orderData) => {
+                    setIsClonePickerOpen(false);
+                    if (orderData) {
+                        const foundOutlet = outlets.find(o => o.id === (orderData.customerId || orderData.customer_id));
+                        if (foundOutlet) {
+                            setSelectedOutlet(foundOutlet);
+                        } else if (orderData.customer) {
+                            setSelectedOutlet({
+                                id: orderData.customer.id || orderData.customerId || orderData.customer_id,
+                                name: orderData.customer.name || orderData.customerName || "Điểm bán",
+                                address: orderData.customer.address || orderData.receiverAddress || "",
+                                district: orderData.customer.district || "",
+                                outlet_type: "individual"
+                            });
+                        }
+
+                        const rawItems = orderData.items || [];
+                        const mappedItems: OrderItem[] = rawItems.map((item: any) => {
+                            const price = item.price || item.unitPrice || 0;
+                            const qty = item.quantity || 1;
+                            const discAmount = item.discount || 0;
+                            const dType = item.discount_type || item.discountType || 'amount';
+                            let dValue = discAmount;
+                            if (dType === 'percent' && price * qty > 0) {
+                                dValue = Math.round((discAmount / (price * qty)) * 100 * 100) / 100;
+                            }
+                            const pId = item.product_id || item.productId;
+                            const fullProduct = products.find(p => p.id === pId);
+                            const productObj = fullProduct || {
+                                ...item.product,
+                                id: pId,
+                                wholesalePrice: price,
+                            };
+                            return {
+                                product: productObj,
+                                quantity: qty,
+                                discount: discAmount,
+                                discountType: dType,
+                                discountValue: dValue,
+                                isGift: item.is_gift || item.isGift || false,
+                                price: price
+                            };
+                        });
+                        setOrderItems(mappedItems);
+
+                        const code = orderData.readableId || orderData.readable_id || orderId.slice(0, 8);
+                        const oldNote = orderData.notes || orderData.note || "";
+                        setOrderNote(oldNote ? `[Nhân bản từ đơn #${code}] ${oldNote}` : `[Nhân bản từ đơn #${code}]`);
+                        setPaymentMethod(orderData.paymentMethod || orderData.payment_method || "COD");
+                        setVatRate(orderData.vat_rate || orderData.vatRate || 0);
+                        setOrderDiscountPercent(orderData.order_discount_percent || orderData.orderDiscountPercent || 0);
+                        setCurrentStep(2);
+                        toast.success(`Đã nhân bản dữ liệu từ đơn #${code}! Bạn có thể chỉnh sửa trước khi tạo đơn.`);
+                        if (typeof window !== 'undefined') {
+                            window.history.replaceState(null, '', `/sales-gt/create-order?clone=${orderId}`);
+                        }
+                    } else {
+                        router.push(`/sales-gt/create-order?clone=${orderId}`);
+                    }
+                }}
+            />
 
             {/* Progress Steps */}
             <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200">

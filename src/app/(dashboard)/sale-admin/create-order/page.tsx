@@ -629,8 +629,70 @@ function SaleAdminCreateOrderContent() {
             <CloneOrderPickerModal
                 isOpen={isClonePickerOpen}
                 onClose={() => setIsClonePickerOpen(false)}
-                onSelectOrder={(orderId) => {
-                    router.push(`/sale-admin/create-order?clone=${orderId}`);
+                onSelectOrder={(orderId, orderData) => {
+                    setIsClonePickerOpen(false);
+                    if (orderData) {
+                        let customer = customers.find(c => c.id === (orderData.customerId || orderData.customer_id));
+                        if (!customer && orderData.customer) {
+                            customer = {
+                                id: orderData.customer.id || orderData.customerId || orderData.customer_id,
+                                name: orderData.customer.name || orderData.customerName || orderData.customer_name,
+                                phone: orderData.customer.phone || orderData.receiverPhone || "",
+                                address: orderData.customer.address || orderData.receiverAddress || "",
+                                source_category: "SALES_ADMIN",
+                                type: "individual",
+                                province: orderData.customer.province,
+                                district: orderData.customer.district,
+                                ward: orderData.customer.ward
+                            };
+                        }
+                        if (customer) {
+                            setSelectedCustomer(customer);
+                        }
+
+                        const rawItems = orderData.items || [];
+                        const mappedItems: OrderItem[] = rawItems.map((item: any) => {
+                            const price = item.price || item.unitPrice || 0;
+                            const qty = item.quantity || 1;
+                            const discAmount = item.discount || 0;
+                            const dType = item.discount_type || item.discountType || 'amount';
+                            let dValue = discAmount;
+                            if (dType === 'percent' && price * qty > 0) {
+                                dValue = Math.round((discAmount / (price * qty)) * 100 * 100) / 100;
+                            }
+                            const pId = item.product_id || item.productId;
+                            const fullProduct = products.find(p => p.id === pId);
+                            const productObj = fullProduct || {
+                                ...item.product,
+                                id: pId,
+                                wholesalePrice: price,
+                            };
+                            return {
+                                product: productObj,
+                                quantity: qty,
+                                discount: discAmount,
+                                discountType: dType,
+                                discountValue: dValue,
+                                isGift: item.is_gift || item.isGift,
+                                price: price
+                            };
+                        });
+                        setOrderItems(mappedItems);
+
+                        const code = orderData.readableId || orderData.readable_id || orderId.slice(0, 8);
+                        const oldNote = orderData.notes || orderData.note || "";
+                        setOrderNote(oldNote ? `[Nhân bản từ đơn #${code}] ${oldNote}` : `[Nhân bản từ đơn #${code}]`);
+                        setPaymentMethod(orderData.paymentMethod || orderData.payment_method || "COD");
+                        setVatRate(orderData.vat_rate || orderData.vatRate || 0);
+                        setOrderDiscountPercent(orderData.order_discount_percent || orderData.orderDiscountPercent || 0);
+                        setCurrentStep(2);
+                        toast.success(`Đã nhân bản dữ liệu từ đơn #${code}! Bạn có thể chỉnh sửa trước khi tạo đơn.`);
+                        if (typeof window !== 'undefined') {
+                            window.history.replaceState(null, '', `/sale-admin/create-order?clone=${orderId}`);
+                        }
+                    } else {
+                        router.push(`/sale-admin/create-order?clone=${orderId}`);
+                    }
                 }}
             />
 

@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, Copy, X, Loader2, Calendar, User, Package, FileText } from "lucide-react";
-import { createClient } from "@/lib/supabaseClient";
+import { Search, Copy, X, Loader2, Calendar, User, Package, FileText, RefreshCw } from "lucide-react";
+import { fetchOrders, Order } from "@/lib/ordersStore";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface CloneOrderPickerModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSelectOrder: (orderId: string) => void;
+    onSelectOrder: (orderId: string, orderData?: any) => void;
 }
 
 const formatPrice = (price: number) => {
@@ -36,46 +37,37 @@ export function CloneOrderPickerModal({
     onClose,
     onSelectOrder
 }: CloneOrderPickerModalProps) {
-    const supabase = createClient();
-    const [orders, setOrders] = useState<any[]>([]);
+    const { session } = useAuth();
+    const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
 
+    const loadRecentOrders = async () => {
+        setIsLoading(true);
+        try {
+            const data = await fetchOrders(session?.access_token, { limit: 200 });
+            setOrders(data || []);
+        } catch (err) {
+            console.error("Exception loading orders for cloning:", err);
+            setOrders([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (!isOpen) return;
-
-        const loadRecentOrders = async () => {
-            setIsLoading(true);
-            try {
-                const { data, error } = await supabase
-                    .from("orders")
-                    .select("id, readable_id, customer_name, customer_phone, total_amount, created_at, status, items")
-                    .order("created_at", { ascending: false })
-                    .limit(50);
-
-                if (error) {
-                    console.error("Error loading orders for cloning:", error);
-                } else if (data) {
-                    setOrders(data);
-                }
-            } catch (err) {
-                console.error("Exception loading orders for cloning:", err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         loadRecentOrders();
-    }, [isOpen]);
+    }, [isOpen, session?.access_token]);
 
     if (!isOpen) return null;
 
     const filtered = orders.filter((o) => {
         const term = searchTerm.toLowerCase().trim();
         if (!term) return true;
-        const name = (o.customer_name || "").toLowerCase();
-        const phone = (o.customer_phone || "").toLowerCase();
-        const code = String(o.readable_id || o.id || "").toLowerCase();
+        const name = (o.customerName || "").toLowerCase();
+        const phone = (o.customer?.phone || o.receiverPhone || "").toLowerCase();
+        const code = String(o.readableId || o.id || "").toLowerCase();
         return name.includes(term) || phone.includes(term) || code.includes(term);
     });
 
@@ -99,25 +91,32 @@ export function CloneOrderPickerModal({
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Search Input */}
-                <div className="p-3 border-b border-slate-100 bg-slate-50/50">
-                    <div className="relative">
+                <div className="p-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                    <div className="relative flex-1">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Tìm theo tên khách hàng, số điện thoại, mã đơn..."
+                            placeholder="Tìm theo tên khách hàng, số điện thoại, mã đơn (#655)..."
                             className="w-full pl-9 pr-4 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                             autoFocus
                         />
                     </div>
+                    <button
+                        onClick={loadRecentOrders}
+                        title="Tải lại danh sách"
+                        className="p-2 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 text-slate-600 transition-colors cursor-pointer"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                    </button>
                 </div>
 
                 {/* Orders List */}
@@ -131,30 +130,41 @@ export function CloneOrderPickerModal({
                         <div className="py-12 text-center text-slate-400">
                             <FileText className="w-10 h-10 mx-auto text-slate-300 mb-2" />
                             <p className="text-xs font-medium">Không tìm thấy đơn hàng nào phù hợp</p>
+                            {searchTerm && (
+                                <p className="text-[11px] text-slate-400 mt-1">
+                                    Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc tìm kiếm
+                                </p>
+                            )}
                         </div>
                     ) : (
                         filtered.map((order) => {
                             const itemCount = Array.isArray(order.items) ? order.items.length : 0;
+                            const phone = order.customer?.phone || order.receiverPhone || "";
                             return (
                                 <div
                                     key={order.id}
-                                    className="py-3 px-2 hover:bg-amber-50/40 rounded-xl transition-colors flex items-center justify-between gap-3"
+                                    className="py-3 px-3 hover:bg-amber-50/50 rounded-xl transition-colors flex items-center justify-between gap-3 border border-transparent hover:border-amber-200 mb-1"
                                 >
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-xs font-bold font-mono text-slate-800">
-                                                #{order.readable_id || order.id.slice(0, 8)}
+                                            <span className="text-xs font-bold font-mono text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md">
+                                                #{order.readableId || order.id.slice(0, 8)}
                                             </span>
                                             <span className="text-[11px] text-slate-400 flex items-center gap-1">
                                                 <Calendar className="w-3 h-3" />
-                                                {formatDate(order.created_at)}
+                                                {formatDate(order.createdAt)}
                                             </span>
+                                            {order.status && (
+                                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                                                    {order.status}
+                                                </span>
+                                            )}
                                         </div>
-                                        <div className="flex items-center gap-2 text-xs text-slate-700 font-medium truncate">
+                                        <div className="flex items-center gap-2 text-xs text-slate-800 font-semibold truncate">
                                             <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                            <span>{order.customer_name || "Khách lẻ"}</span>
-                                            {order.customer_phone && (
-                                                <span className="text-slate-400">({order.customer_phone})</span>
+                                            <span>{order.customerName || "Khách hàng"}</span>
+                                            {phone && (
+                                                <span className="text-slate-400 font-normal">({phone})</span>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-1">
@@ -162,18 +172,18 @@ export function CloneOrderPickerModal({
                                                 <Package className="w-3 h-3 text-slate-400" />
                                                 {itemCount} món
                                             </span>
-                                            <span className="text-teal-700 font-bold">
-                                                {formatPrice(order.total_amount || 0)}
+                                            <span className="text-emerald-700 font-bold">
+                                                {formatPrice(order.totalAmount || 0)}
                                             </span>
                                         </div>
                                     </div>
 
                                     <button
                                         onClick={() => {
-                                            onSelectOrder(order.id);
+                                            onSelectOrder(order.id, order);
                                             onClose();
                                         }}
-                                        className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-xs flex items-center gap-1.5 transition-all shrink-0"
+                                        className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-xs flex items-center gap-1.5 transition-all shrink-0 cursor-pointer"
                                     >
                                         <Copy className="w-3.5 h-3.5" />
                                         Nhân bản đơn này
@@ -186,10 +196,10 @@ export function CloneOrderPickerModal({
 
                 {/* Footer */}
                 <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500">
-                    <span>Hiển thị 50 đơn hàng gần nhất</span>
+                    <span>Tìm thấy {filtered.length} đơn hàng</span>
                     <button
                         onClick={onClose}
-                        className="px-3 py-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 font-medium transition-colors"
+                        className="px-3 py-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 font-medium transition-colors cursor-pointer"
                     >
                         Đóng
                     </button>
