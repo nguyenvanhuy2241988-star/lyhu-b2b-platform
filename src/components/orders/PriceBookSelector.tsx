@@ -53,7 +53,7 @@ export function PriceBookSelector({
                                     ? 'bg-amber-500 text-white shadow-xs'
                                     : 'text-amber-900 hover:bg-amber-100/60'
                             }`}
-                            title="Đơn giá NPP Chưa thuế (Đã giảm 8% VAT)"
+                            title="Đơn giá NPP Chưa thuế (Bóc tách 8% VAT chuẩn kế toán)"
                         >
                             <Tag className="w-3 h-3" />
                             <span>Sỉ NPP (Chưa VAT)</span>
@@ -82,7 +82,7 @@ export function PriceBookSelector({
                                     ? 'bg-blue-600 text-white shadow-xs'
                                     : 'text-blue-900 hover:bg-blue-100/60'
                             }`}
-                            title="Đơn giá Siêu Thị Chưa thuế (Đã giảm 8% VAT)"
+                            title="Đơn giá Siêu Thị Chưa thuế (Bóc tách 8% VAT chuẩn kế toán)"
                         >
                             <Store className="w-3 h-3" />
                             <span>Siêu Thị (Chưa VAT)</span>

@@ -77,7 +77,7 @@ export function PriceBookModal({
                                 </span>
                             </div>
                             <p className="text-xs text-slate-500 mt-0.5">
-                                Đơn giá đã được tách thành: <strong>Chưa thuế (đã giảm 8% VAT)</strong> và <strong>Đã có 8% VAT</strong> theo yêu cầu.
+                                Đơn giá đã được tách thành: <strong>Chưa thuế (chuẩn kế toán: Giá / 1.08)</strong> và <strong>Đã có 8% VAT</strong>.
                             </p>
                         </div>
                     </div>
@@ -129,7 +129,7 @@ export function PriceBookModal({
                             }`}
                         >
                             <Percent className="w-3.5 h-3.5" />
-                            Áp dụng giá Chưa VAT (-8%)
+                            Áp dụng giá Chưa VAT (Giá / 1.08)
                         </button>
 
                         <button
@@ -189,7 +189,7 @@ export function PriceBookModal({
                                     <th className="py-2.5 px-3 w-20 text-center">HSD</th>
                                     <th className="py-2.5 px-3 w-36">Quy cách</th>
                                     <th className="py-2.5 px-3 text-right bg-amber-50/90 text-amber-900 font-bold">
-                                        Đơn giá Chưa VAT (-8%)
+                                        Đơn giá Chưa VAT (/ 1.08)
                                     </th>
                                     <th className="py-2.5 px-3 text-right bg-teal-50/80 font-bold text-teal-900">
                                         Đơn giá Có VAT (+8%)
