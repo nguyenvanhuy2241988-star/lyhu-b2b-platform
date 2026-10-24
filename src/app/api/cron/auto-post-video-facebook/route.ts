@@ -18,12 +18,42 @@ const CATEGORY_TO_PAGE_MAP: Record<string, string> = {
     'uhi': 'UHi Việt Nam'
 };
 
+// Cấu hình thông tin liên hệ chuẩn cho từng thương hiệu
+const BRAND_INFO_MAP: Record<string, { hotline: string; website: string; shopee?: string; tiktok?: string; hashtags: string }> = {
+    'cvt': {
+        hotline: '0969069798',
+        website: 'https://cvt.com.vn',
+        shopee: 'https://shopee.vn/boyo.vn/',
+        tiktok: 'https://www.tiktok.com/@ly.khoai.mn.sy.cv',
+        hashtags: '#KhoaiMonCVT #CVT #KhoaiMonTrungCua #KhoaiMon100g #AnVat #xuhuong'
+    },
+    'boyo': {
+        hotline: '0969069798',
+        website: 'https://www.lyhu.com.vn',
+        shopee: 'https://shopee.vn/boyo.vn/',
+        tiktok: 'https://www.tiktok.com/@ly.khoai.mn.sy.cv',
+        hashtags: '#BOYO #BotPhoMai #BanhTrangBOYO #AnVat #xuhuong #reelsvn'
+    },
+    'uhi': {
+        hotline: '0969069798',
+        website: 'https://www.lyhu.com.vn',
+        shopee: 'https://shopee.vn/boyo.vn/',
+        hashtags: '#UHi #KeoDeoUHi #AnVat #LYHU #TapHoa #bansihangtieudung'
+    },
+    'lyhu': {
+        hotline: '0969069798',
+        website: 'https://www.lyhu.com.vn',
+        hashtags: '#LYHU #KinhDoanh #TapHoa #NhaPhanPhoi #FMCG #bansihangtieudung'
+    }
+};
+
 /**
  * Tự động tạo Caption & Tiêu đề chuẩn viral bằng AI nếu video chưa có hoặc caption thô
  */
-async function ensureRichAICaption(video: any, brandName: string): Promise<{ title: string; caption: string; isAiGenerated: boolean }> {
+async function ensureRichAICaption(video: any, brandKey: string, brandName: string): Promise<{ title: string; caption: string; isAiGenerated: boolean }> {
     let title = (video.title || '').trim();
     let caption = (video.caption || '').trim();
+    const info = BRAND_INFO_MAP[brandKey] || BRAND_INFO_MAP['lyhu'];
 
     // Kiểm tra xem caption có bị rỗng, quá ngắn hoặc là tên file thô không
     const isRawOrEmpty = !caption || 
@@ -41,7 +71,7 @@ async function ensureRichAICaption(video: any, brandName: string): Promise<{ tit
             .replace(/\d{6,}/g, '')
             .trim();
         if (title.length < 5) {
-            title = `${brandName.toUpperCase()} - Tuyệt Phẩm Ăn Vặt Giòn Ngon Đậm Vị`;
+            title = `${brandName.toUpperCase()} - Món Ngon Ăn Vặt Chuẩn Vị Giòn Rụm`;
         } else {
             title = title.charAt(0).toUpperCase() + title.slice(1);
         }
@@ -56,7 +86,7 @@ async function ensureRichAICaption(video: any, brandName: string): Promise<{ tit
     const apiKey = process.env.GEMINI_API_KEY;
     if (apiKey) {
         try {
-            const prompt = `Bạn là chuyên gia sáng tạo nội dung mạng xã hội (Facebook Reels / Video) cho thương hiệu ${brandName} (thuộc hệ thống phân phối LYHU - www.lyhu.com.vn).
+            const prompt = `Bạn là chuyên gia sáng tạo nội dung mạng xã hội (Facebook Reels / Video) cho thương hiệu ${brandName} (thuộc hệ thống phân phối LYHU).
 Hãy viết một đoạn Caption cực kỳ cuốn hút, tự nhiên, đúng chất Facebook cho video sau:
 - Tiêu đề/Chủ đề video: "${title}"
 - Thương hiệu: "${brandName}"
@@ -64,8 +94,9 @@ Hãy viết một đoạn Caption cực kỳ cuốn hút, tự nhiên, đúng ch
 Yêu cầu cấu trúc caption:
 1. Dòng 1: Câu Hook giật tít, tò mò hoặc đánh trúng cảm giác thèm ăn / sự chú ý (kèm emoji bắt mắt).
 2. Đoạn 2-3 câu: Mô tả ngắn gọn sức hấp dẫn, độ ngon, tính tiện lợi hoặc giá trị của sản phẩm / mẹo bán lẻ.
-3. Lời kêu gọi hành động (CTA): "👉 Đặt mua/nhập sỉ ngay tại www.lyhu.com.vn | Hotline: 0969.83.4568".
-4. Dòng cuối: 5 - 8 hashtags hot chuẩn SEO Facebook (gồm: #${brandName.toLowerCase().replace(/\s+/g, '')} #lyhu #anvat #xuhuong #reelsvn #hangtieudung).
+3. Thông tin mua hàng chuẩn:
+${info.shopee ? `🛒 Shopee: ${info.shopee}\n` : ''}${info.tiktok ? `🎵 TikTok: ${info.tiktok}\n` : ''}☎️ Hotline: ${info.hotline}\n🌐 Website: ${info.website}
+4. Dòng cuối: Hashtags chuẩn (${info.hashtags}).
 
 Chỉ trả về trực tiếp nội dung caption, không kèm giải thích thừa hay dấu ngoặc kép.`;
 
@@ -93,15 +124,14 @@ Chỉ trả về trực tiếp nội dung caption, không kèm giải thích th�
 
     // Fallback Smart Template chuyên biệt cho từng thương hiệu nếu AI không khả dụng
     if (!aiCaption) {
-        const tag = brandName.toLowerCase().replace(/\s+/g, '');
-        if (tag.includes('cvt') || tag.includes('khoaimon')) {
-            aiCaption = `🍠 ${title} – Giòn rụm bùi béo, ăn là ghiền!\n\n✨ Được làm từ những củ khoai môn tuyển chọn, sấy giòn đậm vị thơm ngon khó cưỡng. Món ăn vặt lý tưởng cho dân văn phòng, học sinh sinh viên hay tiệc tùng tụ tập cuối tuần!\n👉 Đặt mua ngay tại www.lyhu.com.vn | Hotline sỉ: 0969.83.4568\n\n#khoaimoncvt #khoaimonsay #anvat #cvt #lyhu #xuhuong #anvatngon`;
-        } else if (tag.includes('boyo')) {
-            aiCaption = `🧀 ${title} – Rắc là ngon, đậm vị phô mai!\n\n🔥 Món ngon bùng nổ hương vị cùng bột phô mai BOYO thơm béo ngậy. Thử ngay công thức siêu cuốn này cho bữa xế hôm nay nhé!\n👉 Đặt hàng sỉ & lẻ tại: www.lyhu.com.vn | Hotline: 0969.83.4568\n\n#boyo #botphomai #banhtrangboyo #lyhu #anvat #xuhuong #reelsvn`;
-        } else if (tag.includes('uhi')) {
-            aiCaption = `🍬 ${title} – Chua chua ngọt ngọt, bùng nổ sảng khoái!\n\n⚡ Kẹo dẻo UHi hương vị trái cây thơm lừng, ăn vui miệng cả ngày. Sản phẩm hot được yêu thích tại mọi kệ hàng tạp hóa!\n👉 Mua ngay tại www.lyhu.com.vn | Hotline sỉ: 0969.83.4568\n\n#uhi #keodeouhi #anvat #lyhu #taphoa #bansihangtieudung`;
+        if (brandKey === 'cvt') {
+            aiCaption = `🍠 ${title} – Giòn rụm bùi béo, ăn là ghiền!\n\n✨ Từng thanh khoai môn sấy giòn đậm vị bùi béo khó cưỡng. Món ăn vặt chân ái cho giờ giải lao văn phòng, tụ tập bạn bè hay xem phim cuối tuần!\n\n🛒 Shopee: ${info.shopee}\n🎵 TikTok: ${info.tiktok}\n☎️ Hotline: ${info.hotline}\n🌐 Website: ${info.website}\n\n${info.hashtags}`;
+        } else if (brandKey === 'boyo') {
+            aiCaption = `🧀 ${title} – Rắc là ngon, đậm vị phô mai!\n\n🔥 Món ngon bùng nổ hương vị cùng bột phô mai BOYO thơm béo ngậy. Thử ngay công thức siêu cuốn này cho bữa xế hôm nay nhé!\n\n🛒 Shopee: ${info.shopee}\n☎️ Hotline: ${info.hotline}\n🌐 Website: ${info.website}\n\n${info.hashtags}`;
+        } else if (brandKey === 'uhi') {
+            aiCaption = `🍬 ${title} – Chua chua ngọt ngọt, bùng nổ sảng khoái!\n\n⚡ Kẹo dẻo UHi hương vị trái cây thơm lừng, ăn vui miệng cả ngày. Sản phẩm hot được yêu thích tại mọi kệ hàng tạp hóa!\n\n🛒 Shopee: ${info.shopee}\n☎️ Hotline: ${info.hotline}\n🌐 Website: ${info.website}\n\n${info.hashtags}`;
         } else {
-            aiCaption = `💡 ${title} – Mẹo hay kinh doanh & tiêu dùng thông thái từ LYHU!\n\n📦 Đồng hành cùng hàng ngàn đại lý và tiệm tạp hóa trên toàn quốc với nguồn hàng sỉ uy tín, giá tận gốc.\n👉 Xem thêm chính sách phân phối tại: www.lyhu.com.vn | Hotline: 0969.83.4568\n\n#lyhu #kinhdoanh #taphoa #bansihangtieudung #fmcg #nhaphanphoi`;
+            aiCaption = `💡 ${title} – Mẹo hay kinh doanh & tiêu dùng thông thái từ LYHU!\n\n📦 Đồng hành cùng hàng ngàn đại lý và tiệm tạp hóa trên toàn quốc với nguồn hàng sỉ uy tín, giá tận gốc.\n\n☎️ Hotline: ${info.hotline}\n🌐 Website: ${info.website}\n\n${info.hashtags}`;
         }
     }
 
@@ -154,7 +184,7 @@ export async function GET(req: Request) {
         const page = pages[0];
 
         // 3. ĐẢM BẢO CAPTION & TIÊU ĐỀ ĐẠT CHUẨN XỊN (Tự động gọi AI nếu thiếu)
-        const { title, caption, isAiGenerated } = await ensureRichAICaption(video, targetPageName);
+        const { title, caption, isAiGenerated } = await ensureRichAICaption(video, category, targetPageName);
 
         // Nếu AI vừa tạo caption mới hoặc làm sạch title, cập nhật ngay vào Database để lưu trữ
         if (isAiGenerated || title !== video.title) {

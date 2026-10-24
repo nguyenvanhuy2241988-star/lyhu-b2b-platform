@@ -27,7 +27,7 @@ Thương hiệu: "${brandName}"
 Yêu cầu cấu trúc:
 1. Dòng 1: Một câu Hook giật tít, tò mò hoặc đánh trúng tim đen người xem (kèm icon bắt mắt).
 2. Dòng 2-3: Thông điệp giá trị ngắn gọn, đánh trúng tâm lý người thích đồ ăn vặt / người kinh doanh tạp hóa, đại lý hoặc người tiêu dùng thông thái.
-3. Dòng 4: Kêu gọi hành động (CTA) rõ ràng: "👉 Đặt mua/nhập sỉ ngay tại www.lyhu.com.vn | Hotline: 0969.83.4568" hoặc "Thả tim & Follow kênh để không bỏ lỡ ưu đãi!".
+3. Dòng 4: Kêu gọi hành động (CTA) rõ ràng: "👉 Đặt mua/nhập sỉ ngay tại www.lyhu.com.vn | Hotline: 0969069798" hoặc "Thả tim & Follow kênh để không bỏ lỡ ưu đãi!".
 4. Dòng cuối: 5 - 8 hashtags hot & chuẩn SEO TikTok (gồm: #${brandName.toLowerCase().replace(/\s+/g, '')} #lyhu #xuhuong #kinhdoanh #anvat).
 
 Chỉ trả về trực tiếp nội dung caption, không kèm giải thích thừa hay dấu ngoặc kép.`;
@@ -61,7 +61,7 @@ Chỉ trả về trực tiếp nội dung caption, không kèm giải thích th�
         const cleanTitle = title.replace(/\.[^/.]+$/, "");
         const tagBrand = brandName.toLowerCase().replace(/\s+/g, '');
         const fallbackCaptions = [
-            `🔥 ${cleanTitle} - Siêu phẩm ${brandName} cực hot!\n\n💡 Nguồn hàng sỉ lẻ chất lượng, giá tận gốc cho đại lý, tiệm tạp hóa và người tiêu dùng trên toàn quốc.\n👉 Xem chi tiết và đặt hàng tại: www.lyhu.com.vn | Hotline: 0969.83.4568\n\n#${tagBrand} #lyhu #hangtieudung #kinhdoanh #taphoa #bansihangtieudung #xuhuongtiktok`,
+            `🔥 ${cleanTitle} - Siêu phẩm ${brandName} cực hot!\n\n💡 Nguồn hàng sỉ lẻ chất lượng, giá tận gốc cho đại lý, tiệm tạp hóa và người tiêu dùng trên toàn quốc.\n👉 Xem chi tiết và đặt hàng tại: www.lyhu.com.vn | Hotline: 0969069798\n\n#${tagBrand} #lyhu #hangtieudung #kinhdoanh #taphoa #bansihangtieudung #xuhuongtiktok`,
             `⚡ CẬP NHẬT MỚI TỪ ${brandName.toUpperCase()}: ${cleanTitle}!\n\n📦 Nhập hàng giá gốc, nguồn hàng ổn định & chiết khấu cực tốt.\n👉 Đặt hàng ngay hôm nay tại www.lyhu.com.vn\n\n#${tagBrand} #lyhu #kinhdoanh #daily #taphoa #fmcg #xuhuong`,
             `🎯 Bạn đã thử trải nghiệm này chưa: ${cleanTitle}?\n\n✨ Thương hiệu ${brandName} đồng hành cùng sức khỏe và bữa ăn gia đình bạn.\n👉 Ghé ngay www.lyhu.com.vn để cập nhật bảng giá mới nhất!\n\n#${tagBrand} #lyhu #kinhdoanhtaphoa #fmcg #bansihangtieudung #meokinhdoanh`
         ];
