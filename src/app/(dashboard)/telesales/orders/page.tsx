@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Filter, Eye, FileText, MessageCircle, Pencil, Trash2, Clock, Package, CheckCircle, XCircle, Truck, RotateCcw, Scale, UserCheck, StickyNote, Plus } from "lucide-react";
+import { Search, Filter, Eye, FileText, MessageCircle, Pencil, Trash2, Clock, Package, CheckCircle, XCircle, Truck, RotateCcw, Scale, UserCheck, StickyNote, Plus, Copy } from "lucide-react";
 import { fetchOrders, SHIPPING_CARRIERS } from "@/lib/ordersStore";
 import { supabase } from "@/lib/supabaseClient"
 import type { Order } from "@/lib/ordersStore";
@@ -272,6 +272,13 @@ export default function TelesalesOrdersPage() {
                                                         )}
                                                     </button>
                                                     <button
+                                                        onClick={() => router.push(`/telesales/create-order?clone=${order.id}`)}
+                                                        className="text-slate-400 hover:text-amber-600 transition-colors bg-slate-50 hover:bg-amber-50 p-2 rounded-lg"
+                                                        title="Nhân bản đơn hàng này"
+                                                    >
+                                                        <Copy className="w-4 h-4" />
+                                                    </button>
+                                                    <button
                                                         onClick={() => setSelectedOrder(order)}
                                                         className="text-slate-400 hover:text-[#00AFA9] transition-colors bg-slate-50 hover:bg-teal-50 p-2 rounded-lg"
                                                         title="Xem chi tiết"
@@ -453,6 +460,14 @@ export default function TelesalesOrdersPage() {
                                     >
                                         <Eye className="w-4 h-4" />
                                         Chi tiết
+                                    </button>
+                                    <button
+                                        onClick={() => router.push(`/telesales/create-order?clone=${order.id}`)}
+                                        className="px-3 flex items-center justify-center bg-white border border-slate-200 text-amber-600 hover:bg-amber-50 py-2.5 rounded-lg transition-colors gap-1 text-xs font-semibold"
+                                        title="Nhân bản đơn hàng này"
+                                    >
+                                        <Copy className="w-4 h-4" />
+                                        Nhân bản
                                     </button>
                                     {order.status === 'pending' && (
                                         <button

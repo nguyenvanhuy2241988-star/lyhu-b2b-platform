@@ -8,7 +8,8 @@ import { loadProducts } from "@/lib/supabase/products";
 import { PriceBookType, PRICE_BOOKS, getPriceByPriceBook } from "@/lib/priceBooks";
 import { PriceBookSelector } from "@/components/orders/PriceBookSelector";
 import { toast } from "sonner";
-import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, Building, Gift, Tag, FileText, Search, Filter, ArrowUpDown, Eye, EyeOff, Package, Clock, AlertCircle, Calendar } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, Building, Gift, Tag, FileText, Search, Filter, ArrowUpDown, Eye, EyeOff, Package, Clock, AlertCircle, Calendar, Copy } from "lucide-react";
+import { CloneOrderPickerModal } from "@/components/orders/CloneOrderPickerModal";
 import { addOrderSupabase, updateOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClient } from "@/lib/supabaseClient";
@@ -44,6 +45,8 @@ function TelesalesCreateOrderContent() {
     const dealIdFromUrl = searchParams.get('deal_id');
     const customerIdFromUrl = searchParams.get('customer_id');
     const editOrderId = searchParams.get('edit');
+    const cloneOrderId = searchParams.get('clone') || searchParams.get('copy');
+    const [isClonePickerOpen, setIsClonePickerOpen] = useState(false);
 
     // Data State
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -126,8 +129,9 @@ function TelesalesCreateOrderContent() {
                     // if (data) setDealInfo(data);
                 }
 
-                // Handle Edit Mode
-                if (editOrderId) {
+                // Handle Edit / Clone Mode
+                const orderToLoad = editOrderId || cloneOrderId;
+                if (orderToLoad) {
                     // Use RPC to bypass RLS permissions
                     const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_orders_v3`, {
                         method: 'POST',
@@ -136,7 +140,7 @@ function TelesalesCreateOrderContent() {
                             'Authorization': `Bearer ${session.access_token}`,
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ p_id: editOrderId })
+                        body: JSON.stringify({ p_id: orderToLoad })
                     });
 
                     if (res.ok) {
@@ -204,10 +208,16 @@ function TelesalesCreateOrderContent() {
                             // Set Other Info - use stored rates directly
                             setVatRate(order.vat_rate || 0);
                             setOrderDiscountPercent(order.order_discount_percent || 0);
-                            setOrderNote(order.note || "");
-                            setPaymentMethod(order.payment_method || "COD");
-
-                            setCurrentStep(3); // Jump to final step
+                            if (cloneOrderId) {
+                                setOrderNote(order.note ? `[Nhân bản từ đơn #${order.readable_id || order.id?.slice(0, 8)}] ${order.note}` : `[Nhân bản từ đơn #${order.readable_id || order.id?.slice(0, 8)}]`);
+                                setPaymentMethod(order.payment_method || "COD");
+                                setCurrentStep(2); // Jump to product/order builder step so user can review and edit
+                                toast.success(`Đã nhân bản dữ liệu từ đơn #${order.readable_id || order.id?.slice(0, 8)}! Bạn có thể chỉnh sửa trước khi tạo đơn.`);
+                            } else {
+                                setOrderNote(order.note || "");
+                                setPaymentMethod(order.payment_method || "COD");
+                                setCurrentStep(3); // Jump to final step
+                            }
                         }
                     } else {
                         console.error("Failed to fetch order for edit:", await res.text());
@@ -223,7 +233,7 @@ function TelesalesCreateOrderContent() {
         if (session?.access_token) {
             fetchData();
         }
-    }, [customerIdFromUrl, dealIdFromUrl, user, session?.access_token]);
+    }, [customerIdFromUrl, dealIdFromUrl, editOrderId, cloneOrderId, user, session?.access_token]);
 
     // Step 1: Select customer
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -602,12 +612,38 @@ function TelesalesCreateOrderContent() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-slate-900">{editOrderId ? "Cập nhật đơn hàng" : "Tạo đơn hàng mới"}</h1>
-                <p className="text-sm text-slate-600 mt-1">
-                    {editOrderId ? `Đang chỉnh sửa đơn hàng #${editOrderId.slice(0, 8)}...` : "Tạo đơn hàng cho khách hàng trong danh sách của bạn"}
-                </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">
+                        {cloneOrderId ? "Nhân bản đơn hàng" : editOrderId ? "Cập nhật đơn hàng" : "Tạo đơn hàng mới"}
+                    </h1>
+                    <p className="text-sm text-slate-600 mt-1">
+                        {cloneOrderId
+                            ? `Đang nhân bản từ đơn hàng cũ #${cloneOrderId.slice(0, 8)}... - Toàn bộ thông tin khách hàng và sản phẩm đã được sao chép sẵn.`
+                            : editOrderId
+                            ? `Đang chỉnh sửa đơn hàng #${editOrderId.slice(0, 8)}...`
+                            : "Tạo đơn hàng cho khách hàng trong danh sách của bạn"}
+                    </p>
+                </div>
+                {!editOrderId && (
+                    <button
+                        type="button"
+                        onClick={() => setIsClonePickerOpen(true)}
+                        className="flex items-center gap-2 px-3.5 py-2 bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-colors self-start sm:self-auto"
+                    >
+                        <Copy className="w-4 h-4 text-amber-600" />
+                        <span>Nhân bản từ đơn cũ</span>
+                    </button>
+                )}
             </div>
+
+            <CloneOrderPickerModal
+                isOpen={isClonePickerOpen}
+                onClose={() => setIsClonePickerOpen(false)}
+                onSelectOrder={(orderId) => {
+                    router.push(`/telesales/create-order?clone=${orderId}`);
+                }}
+            />
 
             {/* Progress Steps */}
             <div className="bg-white p-6 rounded-xl border border-slate-200">
@@ -657,7 +693,7 @@ function TelesalesCreateOrderContent() {
                         </div>
                         <div>
                             <p className="font-medium text-slate-900">Xác nhận</p>
-                            <p className="text-xs text-slate-500">{editOrderId ? "Lưu thay đổi" : "Tạo đơn hàng"}</p>
+                            <p className="text-xs text-slate-500">{cloneOrderId ? "Tạo đơn mới từ bản sao" : editOrderId ? "Lưu thay đổi" : "Tạo đơn hàng"}</p>
                         </div>
                     </div>
                 </div>
@@ -1321,7 +1357,7 @@ function TelesalesCreateOrderContent() {
                                                     className="flex-[2] px-4 py-2.5 bg-[#00AFA9] hover:bg-[#009690] text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center gap-2"
                                                 >
                                                     <ShoppingCart className="w-4 h-4" />
-                                                    {editOrderId ? "Cập nhật đơn" : "Tạo đơn"}
+                                                    {cloneOrderId ? "Tạo đơn (Nhân bản)" : editOrderId ? "Cập nhật đơn" : "Tạo đơn"}
                                                 </button>
                                             </div>
                                         </div>

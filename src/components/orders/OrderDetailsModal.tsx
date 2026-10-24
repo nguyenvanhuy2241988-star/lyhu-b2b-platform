@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { X, Calendar, User, MapPin, ShoppingBag, CreditCard, Printer, Image as ImageIcon, RefreshCw, CheckCircle2, AlertOctagon, Truck } from "lucide-react";
+import { X, Calendar, User, MapPin, ShoppingBag, CreditCard, Printer, Image as ImageIcon, RefreshCw, CheckCircle2, AlertOctagon, Truck, Copy } from "lucide-react";
 import { Order } from "@/lib/ordersStore";
 import { OrderPrintTemplate } from "./OrderPrintTemplate";
 import { ShippingInfoPanel } from "./ShippingInfoPanel";
@@ -413,6 +413,25 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
 
                     {/* Footer Actions */}
                     <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 rounded-b-xl print:hidden">
+                        <button
+                            onClick={() => {
+                                onClose();
+                                const isGt = typeof window !== 'undefined' && window.location.pathname.includes('/sales-gt');
+                                const isSaleAdmin = typeof window !== 'undefined' && window.location.pathname.includes('/sale-admin');
+                                const targetUrl = isGt
+                                    ? `/sales-gt/create-order?clone=${order.id}`
+                                    : isSaleAdmin
+                                    ? `/sale-admin/create-order?clone=${order.id}`
+                                    : `/telesales/create-order?clone=${order.id}`;
+                                window.location.href = targetUrl;
+                            }}
+                            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium flex items-center gap-2 shadow-xs transition-colors"
+                            title="Nhân bản đơn hàng này thành đơn mới"
+                        >
+                            <Copy className="w-4 h-4" />
+                            Nhân bản đơn
+                        </button>
+
                         <button
                             onClick={handleSyncMisa}
                             disabled={isSyncing} // Force UNLOCKED for Debugging: removed || effectiveMisaStatus === 'synced'

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Filter, Eye, FileText, MessageCircle, Pencil, Trash2, Truck, RotateCcw, Package, UserCheck, Scale, StickyNote } from "lucide-react";
+import { Search, Filter, Eye, FileText, MessageCircle, Pencil, Trash2, Truck, RotateCcw, Package, UserCheck, Scale, StickyNote, Copy } from "lucide-react";
 import { fetchOrders, SHIPPING_CARRIERS } from "@/lib/ordersStore";
 import { supabase } from "@/lib/supabaseClient";
 import type { Order } from "@/lib/ordersStore";
@@ -224,6 +224,13 @@ export default function GTOrdersPage() {
                                                         )}
                                                     </button>
                                                     <button
+                                                        onClick={() => router.push(`/sales-gt/create-order?clone=${order.id}`)}
+                                                        className="text-slate-400 hover:text-amber-600 transition-colors bg-white border border-slate-200 hover:border-amber-400 p-2 rounded-lg"
+                                                        title="Nhân bản đơn hàng này"
+                                                    >
+                                                        <Copy className="w-4 h-4" />
+                                                    </button>
+                                                    <button
                                                         onClick={() => setSelectedOrder(order)}
                                                         className="text-slate-400 hover:text-[#00AFA9] transition-colors bg-white border border-slate-200 hover:border-[#00AFA9] p-2 rounded-lg"
                                                         title="Xem chi tiết"
@@ -394,6 +401,13 @@ export default function GTOrdersPage() {
                                         className="flex-1 py-1.5 flex items-center justify-center gap-1 text-slate-700 hover:text-[#00AFA9] bg-white border border-slate-200 rounded-lg text-xs font-medium transition-colors"
                                     >
                                         <Eye className="w-3.5 h-3.5" /> Chi tiết
+                                    </button>
+                                    <button
+                                        onClick={() => router.push(`/sales-gt/create-order?clone=${order.id}`)}
+                                        className="py-1.5 px-2 flex items-center justify-center gap-1 text-amber-600 hover:text-amber-700 bg-white border border-slate-200 rounded-lg text-xs font-medium transition-colors"
+                                        title="Nhân bản đơn"
+                                    >
+                                        <Copy className="w-3.5 h-3.5" /> Nhân bản
                                     </button>
                                     {order.status === 'pending' && (
                                         <button
